@@ -1,0 +1,149 @@
+﻿<UserControl x:Class="RegExpressWPF.UCMain"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RegExpressWPF"
+        mc:Ignorable="d"
+        Width="800" 
+        Height="550" 
+        Loaded="UserControl_Loaded" 
+        >
+
+    <Grid Margin="9 7 9 9">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="73" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="236" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0 0 0 1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}" >
+                <TextBlock Text="Pattern" Style="{StaticResource Labels}" VerticalAlignment="Center" />
+                <Button x:Name="btnNewTab" 
+                        Content="➕" 
+                        ToolTip="New Tab"
+                        Margin="14 0 0 2"
+                        Padding="5 1"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="BtnNewTab_Click"
+                        />
+            </StackPanel>
+            <local:UCPattern x:Name="ucPattern" Grid.Row="1" TextChanged="UcPattern_TextChanged"  />
+        </Grid>
+
+        <GridSplitter Grid.Row="1" />
+
+        <Grid Grid.Row="2" Margin="0 4 0 1">
+
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
+                    <TextBlock Text="Text" Style="{StaticResource Labels}"/>
+                    <TextBlock x:Name="lblTextLength" Text="(Length)" Margin="16 0 0 0" RenderTransformOrigin="0.5,0.5" >
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </StackPanel>
+                <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished"/>
+            </Grid>
+        </Grid>
+
+        <GridSplitter Grid.Row="3" />
+
+        <Grid Grid.Row="4" Margin="0 4 0 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="220"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Style="{StaticResource StackPanelWithLabels}">
+                    <TextBlock x:Name="lblMatches" Grid.Row="0" Text="Matches" Style="{StaticResource Labels}"/>
+                    <TextBlock x:Name="pnlShowAll" ToolTip="Find all of the matches" Margin="16 0 0 0">
+                        <Hyperlink x:Name="lnkShowAll" Click="LnkShowAll_Click">Show All</Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="pnlShowFirst" ToolTip="Find the first match only" Margin="16 0 0 0">
+                        <Hyperlink x:Name="lnkShowFirst" Click="LnkShowFirst_Click">Show First Only</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+                <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" LostFocus="UcMatches_LostFocus"/>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" />
+
+            <Grid Grid.Column="2">
+
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
+                        <TextBlock Text="Options" Style="{StaticResource Labels}"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3">
+                        <ScrollViewer Margin="5" VerticalScrollBarVisibility="Auto">
+                            <StackPanel >
+                                <StackPanel x:Name="pnlRegexOptions">
+                                    <!-- (filled programmatically) -->
+                                </StackPanel>
+                                <Separator/>
+                                <StackPanel>
+                                    <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                    <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                    <CheckBox x:Name="cbShowWhitespaces" Content="Show trailing whitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged" Visibility="Collapsed"/>
+                                    <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
+                                        <StackPanel.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
+                                                <SkewTransform/>
+                                                <RotateTransform/>
+                                                <TranslateTransform/>
+                                            </TransformGroup>
+                                        </StackPanel.RenderTransform>
+                                        <Label Content="Newline:" VerticalAlignment="Center"/>
+                                        <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
+                                            <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>
+                                            <ComboBoxItem Tag="&#x0D;">CR (‘\r’, 0D)</ComboBoxItem>
+                                            <ComboBoxItem Tag="&#x0A;">LF (‘\n’, 0A)</ComboBoxItem>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+            </Grid>
+        </Grid>
+
+    </Grid>
+</UserControl>

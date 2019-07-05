@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="RegExpressWPF.UCMatches"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RegExpressWPF"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded">
+    <Grid>
+        <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top"  Visibility="Hidden" Style="{StaticResource ProgressBar1}"  />
+
+        <RichTextBox x:Name="rtbMatches" Panel.ZIndex="1" Style="{StaticResource Matches}" SelectionChanged="RtbMatches_SelectionChanged" LostFocus="RtbMatches_LostFocus" IsUndoEnabled="False" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden" GotFocus="RtbMatches_GotFocus" >
+            <FlowDocument>
+                <Section x:Name="secMatches"/>
+            </FlowDocument>
+        </RichTextBox>
+
+        <RichTextBox x:Name="rtbNoMatches" Style="{StaticResource NoMatches}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
+            <FlowDocument>
+                <Paragraph>
+                    (No matches)
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+
+        <RichTextBox x:Name="rtbNoPattern" Style="{StaticResource NoMatches}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
+            <FlowDocument>
+                <Paragraph>
+                    (No pattern)
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+
+        <RichTextBox x:Name="rtbError" Style="{StaticResource Error}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
+            <FlowDocument>
+                <Paragraph>
+                    <Run x:Name="runError" />
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+
+    </Grid>
+</UserControl>
