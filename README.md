@@ -15,3 +15,9 @@ Sample:
 You can press “➕” to open more tabs.
 
 The contents is saved and reloaded automatically.
+
+<br/>
+
+* [Download Latest Release](https://github.com/Viorel/RegExpress/releases/latest)
+
+<br/>
