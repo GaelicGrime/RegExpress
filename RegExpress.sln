@@ -5,6 +5,11 @@ VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegExpressWPF", "RegExpressWPF\RegExpressWPF.csproj", "{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7AB6-44CD-A1C9-63566306D6FF}"
+	ProjectSection(SolutionItems) = preProject
+		Misc\Screenshot1.png = Misc\Screenshot1.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
