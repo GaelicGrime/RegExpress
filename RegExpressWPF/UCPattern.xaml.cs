@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,6 +26,8 @@ namespace RegExpressWPF
     /// </summary>
     public partial class UCPattern : UserControl
     {
+        const char WHITESPACE_CHAR = '\u00B7';
+
         readonly TaskHelper RecolouringTask = new TaskHelper( );
 
         readonly ChangeEventHelper ChangeEventHelper;
@@ -163,11 +166,6 @@ namespace RegExpressWPF
         }
 
 
-        private void Rtb_Copying( object sender, DataObjectCopyingEventArgs e )
-        {
-        }
-
-
         private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
         {
             if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
@@ -177,6 +175,30 @@ namespace RegExpressWPF
             else if( e.DataObject.GetDataPresent( DataFormats.Text ) )
             {
                 e.FormatToApply = DataFormats.Text;
+            }
+            else
+            {
+                e.CancelCommand( );
+            }
+        }
+
+
+        private void Rtb_Copying( object sender, DataObjectCopyingEventArgs e )
+        {
+        }
+
+
+        private void Rtb_SettingData( object sender, DataObjectSettingDataEventArgs e )
+        {
+            if( e.Format == DataFormats.Text || e.Format == DataFormats.UnicodeText )
+            {
+                string old_text = rtb.Selection.Text;
+                string new_text = old_text.Replace( WHITESPACE_CHAR, ' ' );
+
+                e.DataObject.SetData( e.Format, new_text, true );
+
+                e.Handled = true; //?
+                e.CancelCommand( );
             }
             else
             {
@@ -420,6 +442,7 @@ namespace RegExpressWPF
 
         void ApplyShowWhitespaces( CancellationToken ct, TextData td0 )
         {
+            /*
             Brush brush_rtb;
             Brush brush_para;
             Brush brush_runs;
@@ -479,6 +502,98 @@ namespace RegExpressWPF
                     }
                 } );
             } );
+            */
+
+            TextData td = td0 ?? rtb.GetTextData( "\n" );
+
+            ChangeEventHelper.Invoke( ct, ( ) =>
+            {
+                ShowWhitespaces( ct, td, rtb.Document.Blocks );//..........
+            } );
+
+        }
+
+
+        void ShowWhitespaces( CancellationToken ct, TextData td, BlockCollection blocks )
+        {
+            bool changed = false;
+            List<Run> runs_to_adjust = new List<Run>( );
+
+            try
+            {
+                foreach( var block in blocks )
+                {
+                    if( ct.IsCancellationRequested ) break;
+
+                    switch( block )
+                    {
+                    case Paragraph para:
+
+                        bool last_found = false;
+
+                        for( var inline = para.Inlines.LastInline; inline != null; inline = inline.PreviousInline )
+                        {
+                            if( ct.IsCancellationRequested ) break;
+
+                            switch( inline )
+                            {
+                            case Run run:
+                                if( run.Text.Length != 0 )
+                                {
+                                    if( !last_found )
+                                    {
+                                        if( run.Text.EndsWith( " " ) || run.Text.Contains( WHITESPACE_CHAR ) )
+                                        {
+                                            runs_to_adjust.Add( run );
+                                        }
+
+                                        last_found = true;
+                                    }
+                                }
+                                break;
+                            case LineBreak lb:
+                                last_found = false;
+                                break;
+                            }
+                        }
+
+                        break;
+                    case Section section:
+                        ShowWhitespaces( ct, td, section.Blocks );
+                        break;
+                    default:
+                        Debug.Fail( "NOT SUPPORTED: " + block.GetType( ) );
+                        break;
+                    }
+                }
+
+                foreach( var run in runs_to_adjust )
+                {
+                    var old_text = run.Text;
+                    var new_text = old_text.Replace( WHITESPACE_CHAR, ' ' );
+                    new_text = Regex.Replace( new_text, @"(\s+)$", ( m ) => new string( WHITESPACE_CHAR, m.Groups[1].Length ) );
+
+                    if( new_text != old_text )
+                    {
+                        run.Text = new_text;
+                        changed = true;
+                    }
+                }
+
+                if( changed )
+                {
+                    // have to rescan if text changed; 
+                    // example: the line was "     ", then a letter is typed in the middle;
+                    // otherwise the cursor goes to the start of line for unknown reasons
+                    TextData td2 = rtb.GetTextData( td.Eol );
+
+                    rtb.Selection.Select( td2.Pointers[td.SelectionStart], td2.Pointers[td.SelectionEnd] );
+                }
+            }
+            catch( Exception exc )
+            {
+                throw;
+            }
         }
     }
 }

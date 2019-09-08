@@ -24,6 +24,8 @@
                      TextChanged="Rtb_TextChanged" 
                      GotFocus="Rtb_GotFocus" 
                      DataObject.Pasting="Rtb_Pasting" 
+                     DataObject.Copying="Rtb_Copying"
+                     DataObject.SettingData="Rtb_SettingData"
                      IsUndoEnabled="False">
 
             <RichTextBox.Resources>
