@@ -127,9 +127,6 @@ namespace RegExpressWPF
 
             ucPattern.SetRegexOptions( GetRegexOptions( ) );
 
-            ucPattern.ShowTrailingWhitespaces = cbShowWhitespaces.IsChecked == true;
-            ucText.ShowTrailingWhitespaces = cbShowWhitespaces.IsChecked == true;
-
             ucPattern.SetFocus( );
 
             IsFullyLoaded = true;
@@ -221,8 +218,6 @@ namespace RegExpressWPF
         {
             if( !IsFullyLoaded ) return;
 
-            ucPattern.ShowTrailingWhitespaces = cbShowWhitespaces.IsChecked == true;
-            ucText.ShowTrailingWhitespaces = cbShowWhitespaces.IsChecked == true;
             Changed?.Invoke( this, null );
         }
 
@@ -336,7 +331,7 @@ namespace RegExpressWPF
                 {
                     Dispatcher.BeginInvoke( new Action( ( ) =>
                     {
-                        ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), cbShowCaptures.IsChecked == true, cbShowWhitespaces.IsChecked == true, GetEolOption( ) );
+                        ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
                         ucMatches.ShowNoPattern( );
                         lblMatches.Text = "Matches";
                         pnlShowAll.Visibility = Visibility.Collapsed;
@@ -356,7 +351,7 @@ namespace RegExpressWPF
 
                 Dispatcher.BeginInvoke( new Action( ( ) =>
                 {
-                    ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, cbShowWhitespaces.IsChecked == true, GetEolOption( ) );
+                    ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
                     ucMatches.SetMatches( text, matches_to_show, findAll, cbShowCaptures.IsChecked == true );
 
                     lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
@@ -371,7 +366,7 @@ namespace RegExpressWPF
             {
                 Dispatcher.BeginInvoke( new Action( ( ) =>
                 {
-                    ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, cbShowWhitespaces.IsChecked == true, GetEolOption( ) );
+                    ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
                     ucMatches.ShowError( ct, exc );
                     lblMatches.Text = "Error";
                 } ) );

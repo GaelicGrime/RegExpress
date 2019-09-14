@@ -9,10 +9,6 @@
     <Application.Resources>
 
         <SolidColorBrush x:Key="NormalBackground" Color="White"/>
-        <SolidColorBrush x:Key="BackgroundForWhitespaces" Color="Gainsboro" Opacity="0.7"/>
-        <SolidColorBrush x:Key="WhitespaceBackgroundForRichTextBox" Color="{Binding Color, Source={StaticResource NormalBackground}}"/>
-        <SolidColorBrush x:Key="WhitespaceBackgroundForParagraphs" Color="{Binding Color, Source={StaticResource NormalBackground}}"/>
-        <SolidColorBrush x:Key="WhitespaceBackgroundForRuns" Color="{Binding Color, Source={StaticResource BackgroundForWhitespaces}}"/>
 
         <Style x:Key="StackPanelWithLabels" TargetType="StackPanel" PresentationOptions:Freeze="True">
             <Setter Property="Orientation" Value="Horizontal"/>

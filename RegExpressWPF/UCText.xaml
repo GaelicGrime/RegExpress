@@ -10,10 +10,6 @@
 
     <UserControl.Resources>
 
-        <SolidColorBrush x:Key="DynamicBackgroundForRichTextBox" Color="{Binding Color, Source={StaticResource NormalBackground}}"/>
-        <SolidColorBrush x:Key="DynamicBackgroundForParagraphs" Color="{Binding Color, Source={StaticResource NormalBackground}}"/>
-        <SolidColorBrush x:Key="DynamicBackgroundForRuns" Color="{Binding Color, Source={StaticResource NormalBackground}}"/>
-
     </UserControl.Resources>
 
     <Grid>
@@ -33,20 +29,6 @@
                 <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
 
             </RichTextBox.Resources>
-
-            <RichTextBox.Style>
-                <Style TargetType="RichTextBox" BasedOn="{StaticResource RichTextBoxStyle}" >
-                    <Setter Property="Background" Value="{DynamicResource DynamicBackgroundForRichTextBox}"/>
-                    <Style.Resources>
-                        <Style TargetType="Paragraph" BasedOn="{StaticResource {x:Type Paragraph}}">
-                            <Setter Property="Background" Value="{DynamicResource DynamicBackgroundForParagraphs}"/>
-                        </Style>
-                        <Style TargetType="Run">
-                            <Setter Property="Background" Value="{DynamicResource DynamicBackgroundForRuns}"/>
-                        </Style>
-                    </Style.Resources>
-                </Style>
-            </RichTextBox.Style>
 
             <FlowDocument>
                 <Paragraph>

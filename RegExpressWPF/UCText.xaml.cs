@@ -36,18 +36,10 @@ namespace RegExpressWPF
 
         IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
         bool LastShowCaptures;
-        bool LastShowTrailingWhitespaces;
         string LastEol;
         IReadOnlyList<Segment> LastUnderlines;
 
         readonly StyleInfo[] HighlightStyleInfos;
-
-        readonly Brush NormalBackgroundBrush;
-        readonly Brush WhitespaceBackgroundForRichTextBox;
-        readonly Brush WhitespaceBackgroundForParagraphs;
-        readonly Brush WhitespaceBackgroundForRuns;
-
-        bool mShowTrailingWhitespaces = true;
 
         readonly TextDecorationCollection UnderlineTextDecorations;
         readonly LengthConverter LengthConverter = new LengthConverter( );
@@ -74,11 +66,6 @@ namespace RegExpressWPF
                 new StyleInfo( "MatchHighlight_2" )
             };
 
-            NormalBackgroundBrush = (Brush)App.Current.Resources["NormalBackground"];
-            WhitespaceBackgroundForRichTextBox = (Brush)App.Current.Resources["WhitespaceBackgroundForRichTextBox"];
-            WhitespaceBackgroundForParagraphs = (Brush)App.Current.Resources["WhitespaceBackgroundForParagraphs"];
-            WhitespaceBackgroundForRuns = (Brush)App.Current.Resources["WhitespaceBackgroundForRuns"];
-
             var text_decoration = (TextDecoration)App.Current.Resources["Underline"];
             UnderlineTextDecorations = new TextDecorationCollection( );
             UnderlineTextDecorations.Add( text_decoration );
@@ -103,21 +90,7 @@ namespace RegExpressWPF
         }
 
 
-        public bool ShowTrailingWhitespaces
-        {
-            set
-            {
-                mShowTrailingWhitespaces = value; // (atomic)
-
-                if( IsLoaded )
-                {
-                    ApplyShowWhitespaces( CancellationToken.None, null );
-                }
-            }
-        }
-
-
-        public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, bool showTrailingWhitespaces, string eol )
+        public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, string eol )
         {
             if( matches == null ) throw new ArgumentNullException( "matches" );
 
@@ -130,7 +103,6 @@ namespace RegExpressWPF
 
                     if( new_groups.SequenceEqual( old_groups ) &&
                         showCaptures == LastShowCaptures &&
-                        showTrailingWhitespaces == LastShowTrailingWhitespaces &&
                         eol == LastEol )
                     {
                         LastMatches = matches;
@@ -147,7 +119,7 @@ namespace RegExpressWPF
             LastEol = null;
             LastUnderlines = null;
 
-            RestartRecolouring( matches, showCaptures, showTrailingWhitespaces, eol );
+            RestartRecolouring( matches, showCaptures, eol );
         }
 
 
@@ -212,7 +184,7 @@ namespace RegExpressWPF
 
             lock( this )
             {
-                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastShowTrailingWhitespaces, LastEol );
+                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
             }
 
             UndoRedoHelper.HandleSelectionChanged( );
@@ -243,7 +215,7 @@ namespace RegExpressWPF
         {
             lock( this )
             {
-                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastShowTrailingWhitespaces, LastEol );
+                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
             }
         }
 
@@ -252,7 +224,7 @@ namespace RegExpressWPF
         {
             lock( this )
             {
-                if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), LastShowCaptures, LastShowTrailingWhitespaces, LastEol );
+                if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), LastShowCaptures, LastEol );
             }
         }
 
@@ -287,18 +259,18 @@ namespace RegExpressWPF
         }
 
 
-        void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, bool showTrailingWhitespaces, string eol )
+        void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
         {
-            RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, showTrailingWhitespaces, eol ) );
+            RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, eol ) );
 
             if( rtb.IsFocused )
             {
-                RestartLocalUnderlining( matches, showCaptures, showTrailingWhitespaces, eol ); // (started as a continuation of previous 'RecolouringTask')
+                RestartLocalUnderlining( matches, showCaptures, eol ); // (started as a continuation of previous 'RecolouringTask')
             }
         }
 
 
-        void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, bool showTrailingWhitespaces, string eol )
+        void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
         {
             try
             {
@@ -358,16 +330,12 @@ namespace RegExpressWPF
                 } );
 
 
-                // decide about whitespaces
-                ApplyShowWhitespaces( ct, td );
-
                 Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 
                 lock( this )
                 {
                     LastMatches = matches;
                     LastShowCaptures = showCaptures;
-                    LastShowTrailingWhitespaces = showTrailingWhitespaces;
                     LastEol = eol;
                 }
             }
@@ -382,9 +350,9 @@ namespace RegExpressWPF
         }
 
 
-        void RestartLocalUnderlining( IReadOnlyList<Match> matches, bool showCaptures, bool showTrailingWhitespaces, string eol )
+        void RestartLocalUnderlining( IReadOnlyList<Match> matches, bool showCaptures, string eol )
         {
-            UnderliningTask.RestartAfter( RecolouringTask, ct => LocalUnderlineTaskProc( ct, matches, showCaptures, showTrailingWhitespaces, eol ) );
+            UnderliningTask.RestartAfter( RecolouringTask, ct => LocalUnderlineTaskProc( ct, matches, showCaptures, eol ) );
         }
 
 
@@ -394,7 +362,7 @@ namespace RegExpressWPF
         }
 
 
-        void LocalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, bool showTrailingWhitespaces, string eol )
+        void LocalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
         {
             try
             {
@@ -605,51 +573,6 @@ namespace RegExpressWPF
             }
 
             return items;
-        }
-
-
-        bool ShouldShowWhitespaces( string text )
-        {
-            return Regex.IsMatch( text, @"(^|\r|\n)( |\t)|( |\t)(\r|\n|$)", RegexOptions.ExplicitCapture );
-        }
-
-
-        void ApplyShowWhitespaces( CancellationToken ct, TextData td0 )
-        {
-            Brush brush_rtb;
-            Brush brush_para;
-            Brush brush_runs;
-
-            if( mShowTrailingWhitespaces )
-            {
-                TextData td = td0 ?? rtb.GetTextData( "\n" );
-
-                if( ShouldShowWhitespaces( td.Text ) )
-                {
-                    brush_rtb = WhitespaceBackgroundForRichTextBox;
-                    brush_para = WhitespaceBackgroundForParagraphs;
-                    brush_runs = WhitespaceBackgroundForRuns;
-                }
-                else
-                {
-                    brush_rtb = NormalBackgroundBrush;
-                    brush_para = NormalBackgroundBrush;
-                    brush_runs = NormalBackgroundBrush;
-                }
-            }
-            else
-            {
-                brush_rtb = NormalBackgroundBrush;
-                brush_para = NormalBackgroundBrush;
-                brush_runs = NormalBackgroundBrush;
-            }
-
-            ChangeEventHelper.BeginInvoke( ct, ( ) =>
-            {
-                if( rtb.Resources["DynamicBackgroundForRichTextBox"] != brush_rtb ) rtb.Resources["DynamicBackgroundForRichTextBox"] = brush_rtb;
-                if( rtb.Resources["DynamicBackgroundForParagraphs"] != brush_para ) rtb.Resources["DynamicBackgroundForParagraphs"] = brush_para;
-                if( rtb.Resources["DynamicBackgroundForRuns"] != brush_runs ) rtb.Resources["DynamicBackgroundForRuns"] = brush_runs;
-            } );
         }
     }
 }

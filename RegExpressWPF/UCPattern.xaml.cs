@@ -37,14 +37,7 @@ namespace RegExpressWPF
         readonly StyleInfo PatternGroupHighlightStyleInfo;
         readonly StyleInfo CommentStyleInfo;
 
-        readonly Brush NormalBackgroundBrush;
-        readonly Brush WhitespaceBackgroundForRichTextBox;
-        readonly Brush WhitespaceBackgroundForParagraphs;
-        readonly Brush WhitespaceBackgroundForRuns;
-
         RegexOptions mRegexOptions;
-        bool mShowTrailingWhitespaces = true;
-
 
         public event EventHandler TextChanged;
 
@@ -62,11 +55,6 @@ namespace RegExpressWPF
             PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
             PatternGroupHighlightStyleInfo = new StyleInfo( "PatternGroupHighlight" );
             CommentStyleInfo = new StyleInfo( "PatternComment" );
-
-            NormalBackgroundBrush = (Brush)App.Current.Resources["NormalBackground"];
-            WhitespaceBackgroundForRichTextBox = (Brush)App.Current.Resources["WhitespaceBackgroundForRichTextBox"];
-            WhitespaceBackgroundForParagraphs = (Brush)App.Current.Resources["WhitespaceBackgroundForParagraphs"];
-            WhitespaceBackgroundForRuns = (Brush)App.Current.Resources["WhitespaceBackgroundForRuns"];
         }
 
 
@@ -94,20 +82,6 @@ namespace RegExpressWPF
             StopAll( );
             mRegexOptions = regexOptions;
             if( IsLoaded ) RestartRecolouring( );
-        }
-
-
-        public bool ShowTrailingWhitespaces
-        {
-            set
-            {
-                mShowTrailingWhitespaces = value; // (atomic)
-
-                if( IsLoaded )
-                {
-                    ApplyShowWhitespaces( CancellationToken.None, null );
-                }
-            }
         }
 
 
@@ -375,9 +349,6 @@ namespace RegExpressWPF
 
                 RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
                 //RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
-
-                // decide about whitespaces
-                ApplyShowWhitespaces( ct, td );
             }
             catch( OperationCanceledException ) // also 'TaskCanceledException'
             {
@@ -405,52 +376,6 @@ namespace RegExpressWPF
                 ct.ThrowIfCancellationRequested( );
                 list.Add( new Segment( start + m.Index, m.Length ) );
             }
-        }
-
-
-        bool ShouldShowWhitespaces( string text )
-        {
-            return Regex.IsMatch( text, @"(^|\r|\n)( |\t)|( |\t)(\r|\n|$)", RegexOptions.ExplicitCapture );
-        }
-
-
-        void ApplyShowWhitespaces( CancellationToken ct, TextData td0 )
-        {
-            Brush brush_rtb;
-            Brush brush_para;
-            Brush brush_runs;
-            Style style_last_para;
-
-            if( mShowTrailingWhitespaces && ( mRegexOptions & RegexOptions.IgnorePatternWhitespace ) == 0 )
-            {
-                TextData td = td0 ?? rtb.GetTextData( "\n" );
-
-                if( ShouldShowWhitespaces( td.Text ) )
-                {
-                    brush_rtb = WhitespaceBackgroundForRichTextBox;
-                    brush_para = WhitespaceBackgroundForParagraphs;
-                    brush_runs = WhitespaceBackgroundForRuns;
-                }
-                else
-                {
-                    brush_rtb = NormalBackgroundBrush;
-                    brush_para = NormalBackgroundBrush;
-                    brush_runs = NormalBackgroundBrush;
-                }
-            }
-            else
-            {
-                brush_rtb = NormalBackgroundBrush;
-                brush_para = NormalBackgroundBrush;
-                brush_runs = NormalBackgroundBrush;
-            }
-
-            ChangeEventHelper.BeginInvoke( ct, ( ) =>
-            {
-                if( rtb.Resources["DynamicBackgroundForRichTextBox"] != brush_rtb ) rtb.Resources["DynamicBackgroundForRichTextBox"] = brush_rtb;
-                if( rtb.Resources["DynamicBackgroundForParagraphs"] != brush_para ) rtb.Resources["DynamicBackgroundForParagraphs"] = brush_para;
-                if( rtb.Resources["DynamicBackgroundForRuns"] != brush_runs ) rtb.Resources["DynamicBackgroundForRuns"] = brush_runs;
-            } );
         }
     }
 }
