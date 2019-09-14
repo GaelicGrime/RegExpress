@@ -16,7 +16,8 @@ namespace RegExpressWPF.Code
 {
     public class TextData
     {
-        public string Text; // (lines are separated by EOL specified in the call of 'GetText' )
+        public string Text; // (lines are separated by EOL specified in the call of 'GetText',
+        public string Eol;  //  which is also kept in 'Eol')
         public List<TextPointer> Pointers; // (maps string index to TextPointer)
         public int SelectionStart;
         public int SelectionEnd;
@@ -49,7 +50,7 @@ namespace RegExpressWPF.Code
             TextPointer selection_start = selection.Start;
             TextPointer selection_end = selection.End;
 
-            var td = new TextData { Pointers = new List<TextPointer>( ) };
+            var td = new TextData { Eol = eol, Pointers = new List<TextPointer>( ) };
 
             StringBuilder sb = new StringBuilder( );
 

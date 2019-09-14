@@ -51,8 +51,11 @@
                     <Setter Property="Padding" Value="1 0 0 0"/>
                     <!-- line spacing -->
                     <Setter Property="LineHeight" Value="20"/>
-                    <!-- paragraph spacing and left margin -->
-                    <Setter Property="Margin" Value="2 0 0 0"/>
+                    <!-- paragraph spacing and left margin;
+                    Note. Left margin should be zero, otherwise <Backspace> does not work
+                    well at the start of the lines.
+                    -->
+                    <Setter Property="Margin" Value="0 0 0 0"/>
                 </Style>
             </Style.Resources>
         </Style>

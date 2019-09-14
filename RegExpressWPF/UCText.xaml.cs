@@ -26,6 +26,8 @@ namespace RegExpressWPF
     /// </summary>
     public partial class UCText : UserControl
     {
+        readonly RtbAdorner RtbAdorner;
+
         readonly TaskHelper RecolouringTask = new TaskHelper( );
         readonly TaskHelper UnderliningTask = new TaskHelper( );
 
@@ -44,8 +46,6 @@ namespace RegExpressWPF
         readonly Brush WhitespaceBackgroundForRichTextBox;
         readonly Brush WhitespaceBackgroundForParagraphs;
         readonly Brush WhitespaceBackgroundForRuns;
-        readonly Style NormalParagraphStyle;
-        readonly Style LastEmptyParagraphStyle;
 
         bool mShowTrailingWhitespaces = true;
 
@@ -62,6 +62,8 @@ namespace RegExpressWPF
         {
             InitializeComponent( );
 
+            RtbAdorner = new RtbAdorner( rtb );
+
             ChangeEventHelper = new ChangeEventHelper( this.rtb );
             UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
@@ -76,8 +78,6 @@ namespace RegExpressWPF
             WhitespaceBackgroundForRichTextBox = (Brush)App.Current.Resources["WhitespaceBackgroundForRichTextBox"];
             WhitespaceBackgroundForParagraphs = (Brush)App.Current.Resources["WhitespaceBackgroundForParagraphs"];
             WhitespaceBackgroundForRuns = (Brush)App.Current.Resources["WhitespaceBackgroundForRuns"];
-            NormalParagraphStyle = (Style)rtb.Style.Resources["NormalParagraphStyle"];
-            LastEmptyParagraphStyle = (Style)rtb.Style.Resources["LastEmptyParagraphStyle"];
 
             var text_decoration = (TextDecoration)App.Current.Resources["Underline"];
             UnderlineTextDecorations = new TextDecorationCollection( );
@@ -198,6 +198,9 @@ namespace RegExpressWPF
         private void UserControl_Loaded( object sender, RoutedEventArgs e )
         {
             rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
+
+            var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
+            adorner_layer.Add( RtbAdorner );
         }
 
 
@@ -611,18 +614,11 @@ namespace RegExpressWPF
         }
 
 
-        bool ShouldShowLastParagraphAsEmpty( string text )
-        {
-            return Regex.IsMatch( text, @"(\r|\n)$", RegexOptions.ExplicitCapture );
-        }
-
-
         void ApplyShowWhitespaces( CancellationToken ct, TextData td0 )
         {
             Brush brush_rtb;
             Brush brush_para;
             Brush brush_runs;
-            Style style_last_para;
 
             if( mShowTrailingWhitespaces )
             {
@@ -640,22 +636,12 @@ namespace RegExpressWPF
                     brush_para = NormalBackgroundBrush;
                     brush_runs = NormalBackgroundBrush;
                 }
-
-                if( ShouldShowLastParagraphAsEmpty( td.Text ) )
-                {
-                    style_last_para = LastEmptyParagraphStyle;
-                }
-                else
-                {
-                    style_last_para = NormalParagraphStyle;
-                }
             }
             else
             {
                 brush_rtb = NormalBackgroundBrush;
                 brush_para = NormalBackgroundBrush;
                 brush_runs = NormalBackgroundBrush;
-                style_last_para = NormalParagraphStyle;
             }
 
             ChangeEventHelper.BeginInvoke( ct, ( ) =>
@@ -663,20 +649,6 @@ namespace RegExpressWPF
                 if( rtb.Resources["DynamicBackgroundForRichTextBox"] != brush_rtb ) rtb.Resources["DynamicBackgroundForRichTextBox"] = brush_rtb;
                 if( rtb.Resources["DynamicBackgroundForParagraphs"] != brush_para ) rtb.Resources["DynamicBackgroundForParagraphs"] = brush_para;
                 if( rtb.Resources["DynamicBackgroundForRuns"] != brush_runs ) rtb.Resources["DynamicBackgroundForRuns"] = brush_runs;
-
-                Paragraph last_para_helper = null;
-
-                RtbUtilities.ForEachParagraphBackward( ct, rtb.Document.Blocks, ref last_para_helper, ( p, l ) =>
-                 {
-                     if( l )
-                     {
-                         if( p.Style != style_last_para ) p.Style = style_last_para;
-                     }
-                     else
-                     {
-                         if( p.Style != NormalParagraphStyle ) p.Style = NormalParagraphStyle;
-                     }
-                 } );
             } );
         }
     }

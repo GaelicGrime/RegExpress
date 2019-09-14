@@ -44,14 +44,6 @@
                         <Style TargetType="Run">
                             <Setter Property="Background" Value="{DynamicResource DynamicBackgroundForRuns}"/>
                         </Style>
-
-                        <Style x:Key="NormalParagraphStyle" TargetType="Paragraph" BasedOn="{StaticResource {x:Type Paragraph}}"/>
-
-                        <Style x:Key="LastEmptyParagraphStyle" TargetType="Paragraph" BasedOn="{StaticResource {x:Type Paragraph}}">
-                            <Setter Property="BorderThickness" Value="2 0 0 1"/>
-                            <Setter Property="BorderBrush" Value="Red"/>
-                            <Setter Property="Margin" Value="0"/>
-                        </Style>
                     </Style.Resources>
                 </Style>
             </RichTextBox.Style>

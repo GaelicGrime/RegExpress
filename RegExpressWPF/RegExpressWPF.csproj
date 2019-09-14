@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Code\RtbAdorner.cs" />
     <Compile Include="Code\TaskHelper.cs" />
     <Compile Include="Code\NaiveRanges.cs" />
     <Compile Include="Code\Segment.cs" />
