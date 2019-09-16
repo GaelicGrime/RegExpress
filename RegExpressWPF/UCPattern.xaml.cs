@@ -15,6 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
 
@@ -25,7 +26,7 @@ namespace RegExpressWPF
     /// </summary>
     public partial class UCPattern : UserControl
     {
-        readonly RtbAdorner RtbAdorner;
+        readonly WhitespaceAdorner WhitespaceAdorner;
 
         readonly TaskHelper RecolouringTask = new TaskHelper( );
 
@@ -48,7 +49,7 @@ namespace RegExpressWPF
         {
             InitializeComponent( );
 
-            RtbAdorner = new RtbAdorner( rtb );
+            WhitespaceAdorner = new WhitespaceAdorner( rtb );
 
             ChangeEventHelper = new ChangeEventHelper( this.rtb );
             UndoRedoHelper = new UndoRedoHelper( this.rtb );
@@ -105,7 +106,7 @@ namespace RegExpressWPF
             if( AlreadyLoaded ) return;
 
             var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
-            adorner_layer.Add( RtbAdorner );
+            adorner_layer.Add( WhitespaceAdorner );
 
             AlreadyLoaded = true;
         }

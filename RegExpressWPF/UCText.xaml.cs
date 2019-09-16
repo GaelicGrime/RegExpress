@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
 
@@ -26,7 +27,8 @@ namespace RegExpressWPF
     /// </summary>
     public partial class UCText : UserControl
     {
-        readonly RtbAdorner RtbAdorner;
+        readonly WhitespaceAdorner WhitespaceAdorner;
+        readonly UnderliningAdorner UnderliningAdorner;
 
         readonly TaskHelper RecolouringTask = new TaskHelper( );
         readonly TaskHelper UnderliningTask = new TaskHelper( );
@@ -42,7 +44,6 @@ namespace RegExpressWPF
 
         readonly StyleInfo[] HighlightStyleInfos;
 
-        readonly TextDecorationCollection UnderlineTextDecorations;
         readonly LengthConverter LengthConverter = new LengthConverter( );
 
 
@@ -55,7 +56,8 @@ namespace RegExpressWPF
         {
             InitializeComponent( );
 
-            RtbAdorner = new RtbAdorner( rtb );
+            WhitespaceAdorner = new WhitespaceAdorner( rtb );
+            UnderliningAdorner = new UnderliningAdorner( rtb );
 
             ChangeEventHelper = new ChangeEventHelper( this.rtb );
             UndoRedoHelper = new UndoRedoHelper( this.rtb );
@@ -66,10 +68,6 @@ namespace RegExpressWPF
                 new StyleInfo( "MatchHighlight_1" ),
                 new StyleInfo( "MatchHighlight_2" )
             };
-
-            var text_decoration = (TextDecoration)App.Current.Resources["Underline"];
-            UnderlineTextDecorations = new TextDecorationCollection( );
-            UnderlineTextDecorations.Add( text_decoration );
         }
 
 
@@ -175,7 +173,8 @@ namespace RegExpressWPF
             rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
 
             var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
-            adorner_layer.Add( RtbAdorner );
+            adorner_layer.Add( WhitespaceAdorner );
+            adorner_layer.Add( UnderliningAdorner );
 
             AlreadyLoaded = true;
         }
@@ -386,43 +385,13 @@ namespace RegExpressWPF
 
                 List<Segment> segments_to_underline = GetUnderliningInfo( ct, td, matches, showCaptures ).ToList( );
 
-                if( LastUnderlines == null )
-                {
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, segments_to_underline, Inline.TextDecorationsProperty, UnderlineTextDecorations );
-
-                    var underlined_ranges = new NaiveRanges( td.Text.Length );
-                    underlined_ranges.Set( segments_to_underline );
-
-                    var segments_to_deunderline = underlined_ranges.GetSegments( ct, false ).ToList( );
-
-                    ct.ThrowIfCancellationRequested( );
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, segments_to_deunderline, Inline.TextDecorationsProperty, null );
-
-                    ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                    {
-                        LocalUnderliningFinished?.Invoke( this, null );
-                    } );
-                }
-                else
-                {
-                    var old_ranges = new NaiveRanges( td.Text.Length );
-                    old_ranges.Set( LastUnderlines );
-
-                    var new_ranges = new NaiveRanges( td.Text.Length );
-                    new_ranges.Set( segments_to_underline );
-
-                    var ranges_to_deunderline = old_ranges.MaterialNonimplication( new_ranges ); // (1x0=>1)
-                    var ranges_to_underline = old_ranges.ConverseNonimplication( new_ranges ); // (0x1=>1)
-
-                    LastUnderlines = null; // (stay null if cancelled)
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, ranges_to_deunderline.GetSegments( ct, true ).ToList( ), Inline.TextDecorationsProperty, null );
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, ranges_to_underline.GetSegments( ct, true ).ToList( ), Inline.TextDecorationsProperty, UnderlineTextDecorations );
-                }
-
                 LastUnderlines = segments_to_underline;
+                UnderliningAdorner.SetSegmentsToUnderline( segments_to_underline, td.Eol );
+
+                ChangeEventHelper.BeginInvoke( ct, ( ) =>
+                {
+                    LocalUnderliningFinished?.Invoke( this, null );
+                } );
 
                 Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
             }
@@ -463,38 +432,8 @@ namespace RegExpressWPF
                     td = rtb.GetTextData( eol );
                 } );
 
-                if( LastUnderlines == null )
-                {
-                    var underlined_ranges = new NaiveRanges( td.Text.Length );
-                    underlined_ranges.Set( segments_to_underline );
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, segments_to_underline, Inline.TextDecorationsProperty, UnderlineTextDecorations );
-
-                    var segments_to_deunderline = underlined_ranges.GetSegments( ct, false ).ToList( );
-
-                    ct.ThrowIfCancellationRequested( );
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, segments_to_deunderline, Inline.TextDecorationsProperty, null );
-                }
-                else
-                {
-                    var old_ranges = new NaiveRanges( td.Text.Length );
-                    old_ranges.Set( LastUnderlines );
-
-                    var new_ranges = new NaiveRanges( td.Text.Length );
-                    new_ranges.Set( segments_to_underline );
-
-                    var ranges_to_deunderline = old_ranges.MaterialNonimplication( new_ranges ); // (1x0=>1)
-                    var ranges_to_underline = old_ranges.ConverseNonimplication( new_ranges ); // (0x1=>1)
-
-                    LastUnderlines = null; // (stay null if cancelled)
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, ranges_to_deunderline.GetSegments( ct, true ).ToList( ), Inline.TextDecorationsProperty, null );
-
-                    RtbUtilities.ApplyProperty( ct, ChangeEventHelper, td, ranges_to_underline.GetSegments( ct, true ).ToList( ), Inline.TextDecorationsProperty, UnderlineTextDecorations );
-                }
-
                 LastUnderlines = segments_to_underline;
+                UnderliningAdorner.SetSegmentsToUnderline( segments_to_underline, td.Eol );
 
                 if( segments.Count > 0 )
                 {

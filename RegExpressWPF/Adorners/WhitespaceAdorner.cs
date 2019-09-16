@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegExpressWPF.Code;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,9 +12,10 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace RegExpressWPF.Code
+
+namespace RegExpressWPF.Adorners
 {
-    class RtbAdorner : Adorner
+    class WhitespaceAdorner : Adorner
     {
         readonly Pen WsPen = new Pen( Brushes.Transparent, 0 );
         readonly Brush WsBrush = Brushes.LightSeaGreen;
@@ -22,7 +24,7 @@ namespace RegExpressWPF.Code
         readonly Brush EofBrush = Brushes.Transparent;
 
 
-        public RtbAdorner( UIElement adornedElement ) : base( adornedElement )
+        public WhitespaceAdorner( UIElement adornedElement ) : base( adornedElement )
         {
             Debug.Assert( adornedElement is RichTextBox );
 
