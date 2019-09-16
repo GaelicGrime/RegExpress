@@ -59,24 +59,6 @@ namespace RegExpressWPF.Adorners
             var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
             dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-            //.............
-
-            //Pen TabPen = new Pen( Brushes.Red, 2 );
-
-            //if( td.Text.Length > 20 )
-            //{
-            //    var start = td.Pointers[7];
-            //    var end = td.Pointers[17];
-
-            //    if( start.HasValidLayout )
-            //    {
-            //        var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
-            //        var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
-
-            //        dc.DrawLine( TabPen, start_rect.BottomLeft, end_rect.BottomRight );
-            //    }
-            //}
-
             lock( this )
             {
                 if( Segments != null && Segments.Any() )
@@ -85,7 +67,7 @@ namespace RegExpressWPF.Adorners
 
                     foreach( var segment in Segments )
                     {
-                        if( segment.Index + segment.Length < td.Text.Length ) //...
+                        if( segment.Index + segment.Length <= td.Text.Length ) //
                         {
                             var start = td.Pointers[segment.Index];
                             var end = td.Pointers[segment.Index + segment.Length];
@@ -107,7 +89,6 @@ namespace RegExpressWPF.Adorners
                     }
                 }
             }
-
 
             dc.Pop( );
         }
