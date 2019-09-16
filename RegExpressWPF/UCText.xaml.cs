@@ -34,6 +34,7 @@ namespace RegExpressWPF
         readonly ChangeEventHelper ChangeEventHelper;
         readonly UndoRedoHelper UndoRedoHelper;
 
+        bool AlreadyLoaded = false;
         IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
         bool LastShowCaptures;
         string LastEol;
@@ -169,10 +170,14 @@ namespace RegExpressWPF
 
         private void UserControl_Loaded( object sender, RoutedEventArgs e )
         {
+            if( AlreadyLoaded ) return;
+
             rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
 
             var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
             adorner_layer.Add( RtbAdorner );
+
+            AlreadyLoaded = true;
         }
 
 

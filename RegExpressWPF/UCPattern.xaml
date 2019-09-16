@@ -13,8 +13,8 @@
     </UserControl.Resources>
 
     <Grid>
-
-        <RichTextBox x:Name="rtb" 
+        <AdornerDecorator>
+            <RichTextBox x:Name="rtb" 
                      Margin="0" 
                      SelectionChanged="Rtb_SelectionChanged" 
                      TextChanged="Rtb_TextChanged" 
@@ -22,17 +22,18 @@
                      DataObject.Pasting="Rtb_Pasting" 
                      IsUndoEnabled="False">
 
-            <RichTextBox.Resources>
+                <RichTextBox.Resources>
 
-                <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
+                    <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
 
-            </RichTextBox.Resources>
+                </RichTextBox.Resources>
 
-            <FlowDocument>
-                <Paragraph>
-                    <Run Text=""/>
-                </Paragraph>
-            </FlowDocument>
-        </RichTextBox>
+                <FlowDocument>
+                    <Paragraph>
+                        <Run Text=""/>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+        </AdornerDecorator>
     </Grid>
 </UserControl>

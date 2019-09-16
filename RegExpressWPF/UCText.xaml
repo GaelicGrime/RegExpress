@@ -15,7 +15,8 @@
     <Grid>
         <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top" Style="{StaticResource ProgressBar1}" />
 
-        <RichTextBox x:Name="rtb" 
+        <AdornerDecorator>
+            <RichTextBox x:Name="rtb" 
                      Panel.ZIndex="1" 
                      TextChanged="Rtb_TextChanged" 
                      SelectionChanged="Rtb_SelectionChanged" 
@@ -24,18 +25,19 @@
                      DataObject.Pasting="Rtb_Pasting" 
                      IsUndoEnabled="False" >
 
-            <RichTextBox.Resources>
+                <RichTextBox.Resources>
 
-                <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
+                    <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
 
-            </RichTextBox.Resources>
+                </RichTextBox.Resources>
 
-            <FlowDocument>
-                <Paragraph>
-                    <Run Text=""/>
-                </Paragraph>
-            </FlowDocument>
-        </RichTextBox>
+                <FlowDocument>
+                    <Paragraph>
+                        <Run Text=""/>
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+        </AdornerDecorator>
 
         <Button x:Name="btnDbgSave" Content="(SAVE)" Panel.ZIndex="10" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="14" Click="BtnDbgSave_Click" Visibility="Hidden"/>
 

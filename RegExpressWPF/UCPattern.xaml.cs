@@ -32,6 +32,8 @@ namespace RegExpressWPF
         readonly ChangeEventHelper ChangeEventHelper;
         readonly UndoRedoHelper UndoRedoHelper;
 
+        bool AlreadyLoaded = false;
+
         readonly StyleInfo PatternParaHighlightStyleInfo;
         readonly StyleInfo PatternEscapeStyleInfo;
         readonly StyleInfo PatternGroupHighlightStyleInfo;
@@ -100,8 +102,12 @@ namespace RegExpressWPF
 
         private void UserControl_Loaded( object sender, RoutedEventArgs e )
         {
+            if( AlreadyLoaded ) return;
+
             var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
             adorner_layer.Add( RtbAdorner );
+
+            AlreadyLoaded = true;
         }
 
 
