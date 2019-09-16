@@ -16,7 +16,7 @@ namespace RegExpressWPF.Adorners
 {
     class UnderliningAdorner : Adorner
     {
-        readonly Pen Pen = new Pen( Brushes.MediumVioletRed, 1 );
+        readonly Pen Pen = new Pen( Brushes.MediumVioletRed, 2 );
 
         List<Segment> Segments = null;
         string Eol;
@@ -31,6 +31,7 @@ namespace RegExpressWPF.Adorners
             Rtb.TextChanged += Rtb_TextChanged;
             Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
         }
+
 
         RichTextBox Rtb
         {
@@ -61,7 +62,7 @@ namespace RegExpressWPF.Adorners
 
             lock( this )
             {
-                if( Segments != null && Segments.Any() )
+                if( Segments != null && Segments.Any( ) )
                 {
                     var td = RtbUtilities.GetTextData( rtb, Eol );
 
@@ -72,7 +73,7 @@ namespace RegExpressWPF.Adorners
                             var start = td.Pointers[segment.Index];
                             var end = td.Pointers[segment.Index + segment.Length];
 
-                            if( start.HasValidLayout )
+                            if( start.HasValidLayout && end.HasValidLayout )
                             {
                                 var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
                                 var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
@@ -80,9 +81,50 @@ namespace RegExpressWPF.Adorners
                                 var u = Rect.Union( start_rect, end_rect );
                                 if( u.IntersectsWith( clip_rect ) )
                                 {
-                                    dc.DrawLine( Pen, start_rect.BottomLeft, end_rect.BottomRight );
-                                    dc.DrawLine( Pen, start_rect.BottomLeft, new Point( start_rect.Left, start_rect.Bottom - 3 ) );
-                                    dc.DrawLine( Pen, end_rect.BottomRight, new Point( end_rect.Right, end_rect.Bottom - 3 ) );
+                                    if( start_rect.Bottom > end_rect.Top ) // no wrap, draw quickly
+                                    {
+                                        dc.DrawLine( Pen, start_rect.BottomLeft, end_rect.BottomRight );
+                                        dc.DrawLine( Pen, start_rect.BottomLeft, new Point( start_rect.Left, start_rect.Bottom - 3 ) );
+                                        dc.DrawLine( Pen, end_rect.BottomRight, new Point( end_rect.Right, end_rect.Bottom - 3 ) );
+                                    }
+                                    else
+                                    {
+                                        // wrap; needs more work
+
+                                        TextPointer left = start;
+
+                                        while( left.CompareTo( end ) < 0 )
+                                        {
+                                            Rect left_rect = left.GetCharacterRect( LogicalDirection.Forward );
+                                            var right = left.GetNextInsertionPosition( LogicalDirection.Forward );
+
+                                            for( ; right != null; )
+                                            {
+                                                if( right.CompareTo( end ) >= 0 ) break;
+
+                                                var right_rect_forward = right.GetCharacterRect( LogicalDirection.Forward );
+                                                if( right_rect_forward.Top > left_rect.Bottom ) break;
+
+                                                right = right.GetNextInsertionPosition( LogicalDirection.Forward );
+                                            }
+
+                                            if( right == null || right.CompareTo( end ) > 0 ) right = end;
+
+                                            var right_rect_backward = right.GetCharacterRect( LogicalDirection.Backward );
+
+                                            dc.DrawLine( Pen, left_rect.BottomLeft, right_rect_backward.BottomRight );
+                                            if( left == start )
+                                            {
+                                                dc.DrawLine( Pen, left_rect.BottomLeft, new Point( left_rect.Left, left_rect.Bottom - 3 ) );
+                                            }
+                                            if( right.CompareTo( end ) == 0 )
+                                            {
+                                                dc.DrawLine( Pen, right_rect_backward.BottomRight, new Point( right_rect_backward.Right, right_rect_backward.Bottom - 3 ) );
+                                            }
+
+                                            left = right;
+                                        }
+                                    }
                                 }
                             }
                         }
