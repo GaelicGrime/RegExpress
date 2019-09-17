@@ -9,11 +9,13 @@
     <Grid>
         <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top"  Visibility="Hidden" Style="{StaticResource ProgressBar1}"  />
 
-        <RichTextBox x:Name="rtbMatches" Panel.ZIndex="1" Style="{StaticResource Matches}" SelectionChanged="RtbMatches_SelectionChanged" LostFocus="RtbMatches_LostFocus" IsUndoEnabled="False" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden" GotFocus="RtbMatches_GotFocus" >
-            <FlowDocument>
-                <Section x:Name="secMatches"/>
-            </FlowDocument>
-        </RichTextBox>
+        <AdornerDecorator>
+            <RichTextBox x:Name="rtbMatches" Panel.ZIndex="1" Style="{StaticResource Matches}" SelectionChanged="RtbMatches_SelectionChanged" LostFocus="RtbMatches_LostFocus" IsUndoEnabled="False" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden" GotFocus="RtbMatches_GotFocus" >
+                <FlowDocument>
+                    <Section x:Name="secMatches"/>
+                </FlowDocument>
+            </RichTextBox>
+        </AdornerDecorator>
 
         <RichTextBox x:Name="rtbNoMatches" Style="{StaticResource NoMatches}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
             <FlowDocument>

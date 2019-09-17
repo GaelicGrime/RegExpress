@@ -175,13 +175,5 @@
             <Setter Property="Background" Value="{StaticResource Highlight_2_Light}"/>
         </Style>
 
-        <TextDecoration x:Key="Underline" PenThicknessUnit="Pixel" PenOffset="0" PenOffsetUnit="FontRecommended" PresentationOptions:Freeze="True">
-            <TextDecoration.Pen>
-                <Pen Brush="MediumVioletRed" 
-                     Thickness="2" 
-                     StartLineCap="Square" EndLineCap="Square" />
-            </TextDecoration.Pen>
-        </TextDecoration>
-
     </Application.Resources>
 </Application>

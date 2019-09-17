@@ -386,7 +386,11 @@ namespace RegExpressWPF
                 List<Segment> segments_to_underline = GetUnderliningInfo( ct, td, matches, showCaptures ).ToList( );
 
                 LastUnderlines = segments_to_underline;
-                UnderliningAdorner.SetSegmentsToUnderline( segments_to_underline, td.Eol );
+                UnderliningAdorner.SetRangesToUnderline(
+                    segments_to_underline
+                        .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+                        .ToList( )
+                        .AsReadOnly( ) );
 
                 ChangeEventHelper.BeginInvoke( ct, ( ) =>
                 {
@@ -433,7 +437,11 @@ namespace RegExpressWPF
                 } );
 
                 LastUnderlines = segments_to_underline;
-                UnderliningAdorner.SetSegmentsToUnderline( segments_to_underline, td.Eol );
+                UnderliningAdorner.SetRangesToUnderline(
+                    segments_to_underline
+                        .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+                        .ToList( )
+                        .AsReadOnly( ) );
 
                 if( segments.Count > 0 )
                 {

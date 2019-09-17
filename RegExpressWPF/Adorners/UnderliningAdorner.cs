@@ -18,8 +18,7 @@ namespace RegExpressWPF.Adorners
     {
         readonly Pen Pen = new Pen( Brushes.MediumVioletRed, 2 );
 
-        List<Segment> Segments = null;
-        string Eol;
+        IReadOnlyList<(TextPointer start, TextPointer end)> Ranges = null;
 
 
         public UnderliningAdorner( UIElement adornedElement ) : base( adornedElement )
@@ -62,68 +61,100 @@ namespace RegExpressWPF.Adorners
 
             lock( this )
             {
-                if( Segments != null && Segments.Any( ) )
+                if( Ranges != null )
                 {
-                    var td = RtbUtilities.GetTextData( rtb, Eol );
+                    var start_doc = rtb.Document.ContentStart;
 
-                    foreach( var segment in Segments )
+                    // TODO: clean 'Ranges' if document was changed (release old document)
+
+                    foreach( var (start, end) in Ranges )
                     {
-                        if( segment.Index + segment.Length <= td.Text.Length ) //
+                        if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
                         {
-                            var start = td.Pointers[segment.Index];
-                            var end = td.Pointers[segment.Index + segment.Length];
-
                             if( start.HasValidLayout && end.HasValidLayout )
                             {
                                 var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
                                 var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
 
-                                var u = Rect.Union( start_rect, end_rect );
-                                if( u.IntersectsWith( clip_rect ) )
+                                if( ! (end_rect.Bottom < clip_rect.Top || start_rect.Top > clip_rect.Bottom ) )
                                 {
-                                    if( start_rect.Bottom > end_rect.Top ) // no wrap, draw quickly
+                                    if( start_rect.Bottom > end_rect.Top ) 
                                     {
-                                        dc.DrawLine( Pen, start_rect.BottomLeft, end_rect.BottomRight );
+                                        // no wrap, draw quickly
+
+                                        var guidelines = new GuidelineSet( );
+                                        guidelines.GuidelinesY.Add( start_rect.Bottom );
+
+                                        dc.PushGuidelineSet( guidelines );
+
+                                        dc.DrawLine( Pen, start_rect.BottomLeft, end_rect.BottomLeft );
                                         dc.DrawLine( Pen, start_rect.BottomLeft, new Point( start_rect.Left, start_rect.Bottom - 3 ) );
-                                        dc.DrawLine( Pen, end_rect.BottomRight, new Point( end_rect.Right, end_rect.Bottom - 3 ) );
+                                        dc.DrawLine( Pen, end_rect.BottomLeft, new Point( end_rect.Left, end_rect.Bottom - 3 ) );
+
+                                        dc.Pop( );
                                     }
                                     else
                                     {
                                         // wrap; needs more work
 
+                                        var guidelines = new GuidelineSet( );
+
                                         TextPointer left = start;
 
-                                        while( left.CompareTo( end ) < 0 )
+                                        do
                                         {
+                                            TextPointer prev_right;
+                                            Rect right_rect;
+
                                             Rect left_rect = left.GetCharacterRect( LogicalDirection.Forward );
-                                            var right = left.GetNextInsertionPosition( LogicalDirection.Forward );
+                                            TextPointer right = left;
 
-                                            for( ; right != null; )
+                                            for(; ; )
                                             {
-                                                if( right.CompareTo( end ) >= 0 ) break;
-
-                                                var right_rect_forward = right.GetCharacterRect( LogicalDirection.Forward );
-                                                if( right_rect_forward.Top > left_rect.Bottom ) break;
-
+                                                prev_right = right;
                                                 right = right.GetNextInsertionPosition( LogicalDirection.Forward );
+                                                if( right == null || right.CompareTo( end ) >= 0 )
+                                                {
+                                                    right = end;
+                                                    break;
+                                                }
+
+                                                right_rect = right.GetCharacterRect( LogicalDirection.Forward );
+                                                if( right_rect.Top > left_rect.Bottom ) break;
                                             }
 
-                                            if( right == null || right.CompareTo( end ) > 0 ) right = end;
+                                            if( right == end )
+                                            {
+                                                right_rect = end.GetCharacterRect( LogicalDirection.Forward );
+                                            }
+                                            else
+                                            {
+                                                right_rect = prev_right.GetCharacterRect( LogicalDirection.Forward ); // (does not include width)
+                                                                                                                      // TODO: offset in case of wrapped text; now the last character is not underlined
+                                            }
 
-                                            var right_rect_backward = right.GetCharacterRect( LogicalDirection.Backward );
+                                            guidelines.GuidelinesY.Clear( );
+                                            guidelines.GuidelinesY.Add( left_rect.Bottom );
 
-                                            dc.DrawLine( Pen, left_rect.BottomLeft, right_rect_backward.BottomRight );
+                                            dc.PushGuidelineSet( guidelines );
+
+                                            dc.DrawLine( Pen, left_rect.BottomLeft, right_rect.BottomRight );
                                             if( left == start )
                                             {
                                                 dc.DrawLine( Pen, left_rect.BottomLeft, new Point( left_rect.Left, left_rect.Bottom - 3 ) );
                                             }
-                                            if( right.CompareTo( end ) == 0 )
+                                            if( right == end )
                                             {
-                                                dc.DrawLine( Pen, right_rect_backward.BottomRight, new Point( right_rect_backward.Right, right_rect_backward.Bottom - 3 ) );
+                                                dc.DrawLine( Pen, right_rect.BottomRight, new Point( right_rect.Right, right_rect.Bottom - 3 ) );
                                             }
 
+                                            dc.Pop( );
+
                                             left = right;
-                                        }
+
+                                            Debug.Assert( left != null );
+
+                                        } while( left != end );
                                     }
                                 }
                             }
@@ -142,14 +173,14 @@ namespace RegExpressWPF.Adorners
         }
 
 
-        internal void SetSegmentsToUnderline( List<Segment> segments_to_underline, string eol )
+        internal void SetRangesToUnderline( IReadOnlyList<(TextPointer start, TextPointer end)> ranges )
         {
             lock( this )
             {
-                Segments = segments_to_underline;
-                Eol = eol;
-                Dispatcher.Invoke( new Action( ( ) => Invalidate( ) ) );
+                Ranges = ranges;
             }
+
+            Invalidate( );
         }
     }
 }

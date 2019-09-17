@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
 
@@ -26,6 +27,8 @@ namespace RegExpressWPF
     /// </summary>
     public partial class UCMatches : UserControl
     {
+        readonly UnderliningAdorner UnderliningAdorner;
+
         readonly TaskHelper ShowMatchesTask = new TaskHelper( );
         readonly TaskHelper UnderliningTask = new TaskHelper( );
 
@@ -41,8 +44,9 @@ namespace RegExpressWPF
         readonly StyleInfo GroupSiblingValueStyleInfo;
         readonly StyleInfo GroupValueStyleSinfo;
 
-        readonly TextDecorationCollection UnderlineTextDecorations;
         readonly LengthConverter LengthConverter = new LengthConverter( );
+
+        bool AlreadyLoaded = false;
 
         IReadOnlyList<Match> LastMatches; // null if no data or processes unfinished
         bool LastIsAll;
@@ -52,6 +56,7 @@ namespace RegExpressWPF
         {
             internal abstract MatchInfo GetMatchInfo( );
         }
+
         class MatchInfo : Info
         {
             internal Segment MatchSegment;
@@ -84,7 +89,6 @@ namespace RegExpressWPF
         }
 
         readonly List<MatchInfo> MatchInfos = new List<MatchInfo>( );
-        readonly List<Inline> UnderlinedRuns = new List<Inline>( );
 
 
         public event EventHandler SelectionChanged;
@@ -93,6 +97,8 @@ namespace RegExpressWPF
         public UCMatches( )
         {
             InitializeComponent( );
+
+            UnderliningAdorner = new UnderliningAdorner( rtbMatches );
 
             ChangeEventHelper = new ChangeEventHelper( this.rtbMatches );
 
@@ -117,10 +123,6 @@ namespace RegExpressWPF
             GroupNameStyleInfo = new StyleInfo( "MatchGroupName" );
             GroupSiblingValueStyleInfo = new StyleInfo( "MatchGroupSiblingValue" );
             GroupValueStyleSinfo = new StyleInfo( "MatchGroupValue" );
-
-            var text_decoration = (TextDecoration)App.Current.Resources["Underline"];
-            UnderlineTextDecorations = new TextDecorationCollection( );
-            UnderlineTextDecorations.Add( text_decoration );
         }
 
 
@@ -250,7 +252,14 @@ namespace RegExpressWPF
 
         private void UserControl_Loaded( object sender, RoutedEventArgs e )
         {
+            if( AlreadyLoaded ) return;
+
             rtbMatches.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
+
+            var adorner_layer = AdornerLayer.GetAdornerLayer( rtbMatches );
+            adorner_layer.Add( UnderliningAdorner );
+
+            AlreadyLoaded = true;
         }
 
 
@@ -284,7 +293,6 @@ namespace RegExpressWPF
             UnderliningTask.Stop( );
 
             MatchInfos.Clear( );
-            UnderlinedRuns.Clear( );
 
             ShowMatchesTask.Restart( ct => ShowMatchesTaskProc( ct, text, matches, isAll, showCaptures ) );
         }
@@ -679,9 +687,9 @@ namespace RegExpressWPF
         }
 
 
-        List<object> GetUnderliningInfos( CancellationToken ct )
+        List<Info> GetUnderliningInfos( CancellationToken ct )
         {
-            List<object> infos = new List<object>( );
+            List<Info> infos = new List<Info>( );
 
             TextSelection sel = rtbMatches.Selection;
 
@@ -768,32 +776,19 @@ namespace RegExpressWPF
                     }
                 }
 
-
                 ct.ThrowIfCancellationRequested( );
 
                 ChangeEventHelper.Invoke( ct, ( ) =>
                 {
-                    foreach( var inline in UnderlinedRuns.Where( r => !inlines_to_underline.Any( d => d.inline == r ) ).ToArray( ) )
-                    {
-                        if( ct.IsCancellationRequested ) return;
+                    UnderliningAdorner.SetRangesToUnderline(
+                        inlines_to_underline
+                            .Select( r => (r.inline.ContentStart, r.inline.ContentEnd) )
+                            .ToList( )
+                            .AsReadOnly( ) );
 
-                        inline.TextDecorations = null;
-                        UnderlinedRuns.Remove( inline );
-                    }
-
-                    foreach( var run_data in inlines_to_underline )
-                    {
-                        if( ct.IsCancellationRequested ) return;
-
-                        run_data.inline.TextDecorations = UnderlineTextDecorations;
-                        UnderlinedRuns.Add( run_data.inline );
-                    }
+                    inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
                 } );
 
-                ChangeEventHelper.Invoke( ct, ( ) =>
-                 {
-                     inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
-                 } );
                 ChangeEventHelper.Invoke( ct, ( ) =>
                 {
                     inlines_to_underline.FirstOrDefault( ).inline?.BringIntoView( );
@@ -823,7 +818,7 @@ namespace RegExpressWPF
                 if( ct.WaitHandle.WaitOne( 111 ) ) return;
                 ct.ThrowIfCancellationRequested( );
 
-                List<object> infos = null;
+                List<Info> infos = null;
                 ChangeEventHelper.Invoke( ct, ( ) =>
                 {
                     infos = GetUnderliningInfos( ct );
@@ -857,23 +852,12 @@ namespace RegExpressWPF
 
                 ChangeEventHelper.Invoke( ct, ( ) =>
                 {
-                    foreach( var run in UnderlinedRuns.Except( inlines_to_underline ) )
-                    {
-                        if( ct.IsCancellationRequested ) return;
-
-                        run.TextDecorations = null;
-                    }
-
-                    foreach( var run in inlines_to_underline )
-                    {
-                        if( ct.IsCancellationRequested ) return;
-
-                        run.TextDecorations = UnderlineTextDecorations;
-                    }
+                    UnderliningAdorner.SetRangesToUnderline(
+                        inlines_to_underline
+                            .Select( i => (i.ContentStart, i.ContentEnd) )
+                            .ToList( )
+                            .AsReadOnly( ) );
                 } );
-
-                UnderlinedRuns.Clear( );
-                UnderlinedRuns.AddRange( inlines_to_underline );
             }
             catch( OperationCanceledException ) // also 'TaskCanceledException'
             {
