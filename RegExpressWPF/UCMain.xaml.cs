@@ -361,6 +361,8 @@ namespace RegExpressWPF
                     ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
                     ucMatches.ShowError( ct, exc );
                     lblMatches.Text = "Error";
+                    pnlShowAll.Visibility = Visibility.Collapsed;
+                    pnlShowFirst.Visibility = Visibility.Collapsed;
                 } ) );
             }
         }
