@@ -49,7 +49,6 @@ namespace RegExpressWPF
 
         public event EventHandler TextChanged;
         public event EventHandler SelectionChanged;
-        public event EventHandler LocalUnderliningFinished;
 
 
         public UCText( )
@@ -391,11 +390,6 @@ namespace RegExpressWPF
                         .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
                         .ToList( )
                         .AsReadOnly( ) );
-
-                ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                {
-                    LocalUnderliningFinished?.Invoke( this, null );
-                } );
 
                 Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
             }

@@ -178,14 +178,6 @@ namespace RegExpressWPF
         }
 
 
-        private void UcText_LocalUnderliningFinished( object sender, EventArgs e )
-        {
-            var underlining_info = ucText.GetUnderliningInfo( );
-
-            ucMatches.SetUnderlining( underlining_info );
-        }
-
-
         private void UcMatches_SelectionChanged( object sender, EventArgs e )
         {
             if( !IsFullyLoaded ) return;
