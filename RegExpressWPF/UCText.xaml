@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RegExpressWPF"
+             xmlns:local_controls="clr-namespace:RegExpressWPF.Controls"
              xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded">
@@ -16,7 +17,7 @@
         <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top" Style="{StaticResource ProgressBar1}" />
 
         <AdornerDecorator>
-            <RichTextBox x:Name="rtb" 
+            <local_controls:MyRichTextBox x:Name="rtb" 
                      Panel.ZIndex="1" 
                      TextChanged="Rtb_TextChanged" 
                      SelectionChanged="Rtb_SelectionChanged" 
@@ -25,18 +26,12 @@
                      DataObject.Pasting="Rtb_Pasting" 
                      IsUndoEnabled="False" >
 
-                <RichTextBox.Resources>
-
-                    <Style x:Key="RichTextBoxStyle" TargetType="RichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}"/>
-
-                </RichTextBox.Resources>
-
                 <FlowDocument>
                     <Paragraph>
                         <Run Text=""/>
                     </Paragraph>
                 </FlowDocument>
-            </RichTextBox>
+            </local_controls:MyRichTextBox>
         </AdornerDecorator>
 
         <Button x:Name="btnDbgSave" Content="(SAVE)" Panel.ZIndex="10" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="14" Click="BtnDbgSave_Click" Visibility="Hidden"/>

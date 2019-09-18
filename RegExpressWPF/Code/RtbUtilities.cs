@@ -27,7 +27,7 @@ namespace RegExpressWPF.Code
     public static class RtbUtilities
     {
 
-        public static void SetText( this RichTextBox rtb, string text )
+        public static void SetText( RichTextBox rtb, string text )
         {
             using( rtb.DeclareChangeBlock( ) )
             {
@@ -41,14 +41,11 @@ namespace RegExpressWPF.Code
         }
 
 
-        public static TextData GetTextData( this RichTextBox rtb, string eol )
+        public static TextData GetTextData( RichTextBox rtb, string eol )
         {
             Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
 
             FlowDocument doc = rtb.Document;
-            TextSelection selection = rtb.Selection;
-            TextPointer selection_start = selection.Start;
-            TextPointer selection_end = selection.End;
 
             var td = new TextData { Eol = eol, Pointers = new List<TextPointer>( ) };
 
@@ -61,8 +58,21 @@ namespace RegExpressWPF.Code
 
             td.Text = sb.ToString( );
 
+            UpdateSelection( rtb, td );
+
+            return td;
+        }
+
+
+        public static void UpdateSelection( RichTextBox rtb, TextData td )
+        {
+            TextSelection selection = rtb.Selection;
+            TextPointer selection_start = selection.Start;
+            TextPointer selection_end = selection.End;
+
             td.SelectionStart = 0;
             td.SelectionEnd = 0;
+
             for( int i = 0; i < td.Pointers.Count; i++ )
             {
                 TextPointer ptr = td.Pointers[i];
@@ -73,6 +83,7 @@ namespace RegExpressWPF.Code
 
                 ++td.SelectionStart;
             }
+
             for( int i = 0; i < td.Pointers.Count; i++ )
             {
                 TextPointer ptr = td.Pointers[i];
@@ -83,8 +94,6 @@ namespace RegExpressWPF.Code
 
                 ++td.SelectionEnd;
             }
-
-            return td;
         }
 
 

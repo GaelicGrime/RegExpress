@@ -187,7 +187,7 @@ namespace RegExpressWPF
 
                 ChangeEventHelper.Invoke( ct, ( ) =>
                 {
-                    td = rtb.GetTextData( "\n" );
+                    td = rtb.GetTextData( null );
                 } );
 
                 ct.ThrowIfCancellationRequested( );
