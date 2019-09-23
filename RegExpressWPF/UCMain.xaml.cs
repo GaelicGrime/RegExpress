@@ -162,11 +162,6 @@ namespace RegExpressWPF
         private void UcText_SelectionChanged( object sender, EventArgs e )
         {
             if( !IsFullyLoaded ) return;
-
-            var underlining_info = ucText.GetUnderliningInfo( );
-            var segments = underlining_info.Select( c => new Segment( c.Index, c.Length ) ).ToList( );
-
-            ucMatches.SetUnderlining( segments );
         }
 
 
@@ -175,6 +170,15 @@ namespace RegExpressWPF
             if( !IsFullyLoaded ) return;
 
             ucMatches.SetUnderlining( null );
+        }
+
+
+        private void UcText_LocalUnderliningFinished( object sender, EventArgs e )
+        {
+            var underlining_info = ucText.GetUnderliningInfo( );
+            var segments = underlining_info.Select( c => new Segment( c.Index, c.Length ) ).ToList( );
+
+            ucMatches.SetUnderlining( segments );
         }
 
 

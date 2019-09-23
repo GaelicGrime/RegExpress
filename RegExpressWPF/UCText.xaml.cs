@@ -40,7 +40,6 @@ namespace RegExpressWPF
         IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
         bool LastShowCaptures;
         string LastEol;
-        IReadOnlyList<Segment> LastUnderlines;
 
         readonly StyleInfo[] HighlightStyleInfos;
 
@@ -49,6 +48,7 @@ namespace RegExpressWPF
 
         public event EventHandler TextChanged;
         public event EventHandler SelectionChanged;
+        public event EventHandler LocalUnderliningFinished;
 
 
         public UCText( )
@@ -115,7 +115,6 @@ namespace RegExpressWPF
 
             LastMatches = null;
             LastEol = null;
-            LastUnderlines = null;
 
             RestartRecolouring( matches, showCaptures, eol );
         }
@@ -208,7 +207,6 @@ namespace RegExpressWPF
 
             LastMatches = null;
             LastEol = null;
-            LastUnderlines = null;
 
             TextChanged?.Invoke( this, null );
         }
@@ -384,12 +382,16 @@ namespace RegExpressWPF
 
                 List<Segment> segments_to_underline = GetUnderliningInfo( ct, td, matches, showCaptures ).ToList( );
 
-                LastUnderlines = segments_to_underline;
                 UnderliningAdorner.SetRangesToUnderline(
                     segments_to_underline
                         .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
                         .ToList( )
                         .AsReadOnly( ) );
+
+                ChangeEventHelper.BeginInvoke( ct, ( ) =>
+                {
+                    LocalUnderliningFinished?.Invoke( this, null );
+                } );
 
                 Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
             }
@@ -430,7 +432,6 @@ namespace RegExpressWPF
                     td = rtb.GetTextData( eol );
                 } );
 
-                LastUnderlines = segments_to_underline;
                 UnderliningAdorner.SetRangesToUnderline(
                     segments_to_underline
                         .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )

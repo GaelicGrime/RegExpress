@@ -181,6 +181,7 @@ namespace RegExpressWPF
 
             ShowMatchesTask.Stop( );
             UnderliningTask.Stop( );
+            UnderliningAdorner.SetRangesToUnderline( null );
 
             LastMatches = null;
 
@@ -215,27 +216,27 @@ namespace RegExpressWPF
 
                 switch( parent )
                 {
-                case FrameworkElement fe:
-                    tag = fe.Tag;
-                    parent = fe.Parent;
-                    break;
-                case FrameworkContentElement fce:
-                    tag = fce.Tag;
-                    parent = fce.Parent;
-                    break;
+                    case FrameworkElement fe:
+                        tag = fe.Tag;
+                        parent = fe.Parent;
+                        break;
+                    case FrameworkContentElement fce:
+                        tag = fce.Tag;
+                        parent = fce.Parent;
+                        break;
                 }
 
                 switch( tag )
                 {
-                case MatchInfo mi:
-                    segments.Add( mi.MatchSegment );
-                    return segments;
-                case GroupInfo gi:
-                    segments.Add( gi.GroupSegment );
-                    return segments;
-                case CaptureInfo ci:
-                    segments.Add( ci.CaptureSegment );
-                    return segments;
+                    case MatchInfo mi:
+                        segments.Add( mi.MatchSegment );
+                        return segments;
+                    case GroupInfo gi:
+                        segments.Add( gi.GroupSegment );
+                        return segments;
+                    case CaptureInfo ci:
+                        segments.Add( ci.CaptureSegment );
+                        return segments;
                 }
             }
 
@@ -291,6 +292,7 @@ namespace RegExpressWPF
         {
             ShowMatchesTask.Stop( );
             UnderliningTask.Stop( );
+            UnderliningAdorner.SetRangesToUnderline( null );
 
             MatchInfos.Clear( );
 
@@ -701,27 +703,27 @@ namespace RegExpressWPF
 
                 switch( parent )
                 {
-                case FrameworkElement fe:
-                    tag = fe.Tag;
-                    parent = fe.Parent;
-                    break;
-                case FrameworkContentElement fce:
-                    tag = fce.Tag;
-                    parent = fce.Parent;
-                    break;
+                    case FrameworkElement fe:
+                        tag = fe.Tag;
+                        parent = fe.Parent;
+                        break;
+                    case FrameworkContentElement fce:
+                        tag = fce.Tag;
+                        parent = fce.Parent;
+                        break;
                 }
 
                 switch( tag )
                 {
-                case MatchInfo mi:
-                    infos.Add( mi );
-                    return infos;
-                case GroupInfo gi:
-                    infos.Add( gi );
-                    return infos;
-                case CaptureInfo ci:
-                    infos.Add( ci );
-                    return infos;
+                    case MatchInfo mi:
+                        infos.Add( mi );
+                        return infos;
+                    case GroupInfo gi:
+                        infos.Add( gi );
+                        return infos;
+                    case CaptureInfo ci:
+                        infos.Add( ci );
+                        return infos;
                 }
             }
 
@@ -835,15 +837,15 @@ namespace RegExpressWPF
 
                         switch( info )
                         {
-                        case MatchInfo mi:
-                            inlines_to_underline.Add( mi.ValueInline );
-                            break;
-                        case GroupInfo gi:
-                            inlines_to_underline.Add( gi.ValueInline );
-                            break;
-                        case CaptureInfo ci:
-                            inlines_to_underline.Add( ci.ValueInline );
-                            break;
+                            case MatchInfo mi:
+                                inlines_to_underline.Add( mi.ValueInline );
+                                break;
+                            case GroupInfo gi:
+                                inlines_to_underline.Add( gi.ValueInline );
+                                break;
+                            case CaptureInfo ci:
+                                inlines_to_underline.Add( ci.ValueInline );
+                                break;
                         }
                     }
                 }
