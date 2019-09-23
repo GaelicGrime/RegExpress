@@ -12,14 +12,11 @@ namespace RegExpressWPF.Controls
 {
     internal class MyRichTextBox : RichTextBox
     {
-        readonly Dictionary<string /* eol */, WeakReference<TextData>> mTextDataByEol = new Dictionary<string, WeakReference<TextData>>( );
+        readonly WeakReference<BaseTextData> mCachedTextData = new WeakReference<BaseTextData>( null );
 
 
         public MyRichTextBox( )
         {
-            mTextDataByEol.Add( "\n", new WeakReference<TextData>( null ) );
-            mTextDataByEol.Add( "\r", new WeakReference<TextData>( null ) );
-            mTextDataByEol.Add( "\r\n", new WeakReference<TextData>( null ) );
         }
 
 
@@ -30,59 +27,25 @@ namespace RegExpressWPF.Controls
 
         internal TextData GetTextData( string eol )
         {
-            TextData td;
+            return GetTextData0( eol );
+        }
 
-            if( eol == null )
+
+        internal TextData GetTextData0( string eol )
+        {
+            if( !mCachedTextData.TryGetTarget( out BaseTextData btd ) )
             {
-                // try any
-
-                foreach( var v in mTextDataByEol.Values )
-                {
-                    if( v.TryGetTarget( out td ) )
-                    {
-                        Debug.Assert( td != null );
-
-                        RtbUtilities.UpdateSelection( this, td );
-
-                        return td;
-                    }
-                }
-
-                eol = "\n";
+                btd = RtbUtilities.GetBaseTextData( this, eol ?? "\n" );
+                mCachedTextData.SetTarget( btd );
             }
 
-            Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
-
-            if( !mTextDataByEol.TryGetValue( eol, out WeakReference<TextData> wr ) )
-            {
-                td = RtbUtilities.GetTextData( this, eol );
-
-                mTextDataByEol.Add( eol, new WeakReference<TextData>( td ) );
-            }
-            else
-            {
-                if( !wr.TryGetTarget( out td ) )
-                {
-                    td = RtbUtilities.GetTextData( this, eol );
-
-                    wr.SetTarget( td );
-                }
-            }
-
-            Debug.Assert( td != null );
-            Debug.Assert( td.Eol == eol );
-            Debug.Assert( mTextDataByEol.ContainsKey( eol ) );
-            Debug.Assert( mTextDataByEol[eol].TryGetTarget( out TextData dbg_td ) && object.ReferenceEquals( dbg_td, td ) );
-
-            RtbUtilities.UpdateSelection( this, td );
-
-            return td;
+            return RtbUtilities.GetTextData( this, btd, eol ?? btd.Eol );
         }
 
 
         protected override void OnTextChanged( TextChangedEventArgs e )
         {
-            foreach( var wr in mTextDataByEol.Values ) wr.SetTarget( null );
+            mCachedTextData.SetTarget( null );
 
             base.OnTextChanged( e );
         }

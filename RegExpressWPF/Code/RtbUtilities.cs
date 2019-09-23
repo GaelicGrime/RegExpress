@@ -14,13 +14,32 @@ using System.Windows.Media;
 
 namespace RegExpressWPF.Code
 {
-    public class TextData
+    public class BaseTextData
     {
-        public string Text; // (lines are separated by EOL specified in the call of 'GetText',
-        public string Eol;  //  which is also kept in 'Eol')
-        public List<TextPointer> Pointers; // (maps string index to TextPointer)
-        public int SelectionStart;
-        public int SelectionEnd;
+        public readonly string Text; // (lines are separated by EOL specified in the call of 'GetBaseTextData' and 'GetTextData',
+        public readonly string Eol;  //  which is also kept in 'Eol')
+        public readonly IReadOnlyList<TextPointer> Pointers; // (maps string index of 'Text' to 'TextPointer')
+
+        public BaseTextData( string text, string eol, IReadOnlyList<TextPointer> pointers )
+        {
+            Text = text;
+            Eol = eol;
+            Pointers = pointers;
+        }
+    }
+
+
+    public class TextData : BaseTextData
+    {
+        public readonly int SelectionStart;
+        public readonly int SelectionEnd;
+
+        public TextData( string text, string eol, IReadOnlyList<TextPointer> pointers, int selectionStart, int selectionEnd )
+            : base( text, eol, pointers )
+        {
+            SelectionStart = selectionStart;
+            SelectionEnd = selectionEnd;
+        }
     }
 
 
@@ -41,59 +60,150 @@ namespace RegExpressWPF.Code
         }
 
 
-        public static TextData GetTextData( RichTextBox rtb, string eol )
+        public static BaseTextData GetBaseTextData( RichTextBox rtb, string eol )
         {
             Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
 
             FlowDocument doc = rtb.Document;
 
-            var td = new TextData { Eol = eol, Pointers = new List<TextPointer>( ) };
+            var pointers = new List<TextPointer>( );
 
             StringBuilder sb = new StringBuilder( );
 
             Paragraph prevPara = null;
-            ProcessBlocks( sb, td.Pointers, ref prevPara, doc.Blocks, eol );
+            ProcessBlocks( sb, pointers, ref prevPara, doc.Blocks, eol );
 
-            td.Pointers.Add( doc.ContentEnd );
+            pointers.Add( doc.ContentEnd );
+            string text = sb.ToString( );
 
-            td.Text = sb.ToString( );
+            Debug.Assert( text.Length <= pointers.Count );
 
-            UpdateSelection( rtb, td );
-
-            return td;
+            return new BaseTextData( text, eol, pointers );
         }
 
 
-        public static void UpdateSelection( RichTextBox rtb, TextData td )
+        public static TextData GetTextData( RichTextBox rtb, BaseTextData btd, string eol )
+        {
+            Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
+            Debug.Assert( btd.Eol == "\r\n" || btd.Eol == "\n\r" || btd.Eol == "\r" || btd.Eol == "\n" );
+            Debug.Assert( !btd.Pointers.Any( ) || btd.Pointers.All( p => p.IsInSameDocument( rtb.Document.ContentStart ) ) );
+
+            if( eol.Length == btd.Eol.Length )
+            {
+                string text;
+
+                if( btd.Eol == eol )
+                {
+                    text = btd.Text;
+                }
+                else
+                {
+                    text = btd.Text.Replace( btd.Eol, eol );
+                }
+
+                var (selection_start, selection_end) = GetSelection( rtb, btd.Pointers );
+
+                Debug.Assert( text.Length <= btd.Pointers.Count );
+
+                return new TextData( text, eol, btd.Pointers, selection_start, selection_end );
+            }
+            else
+            {
+                var pointers = new List<TextPointer>( btd.Pointers.Count );
+                var sb = new StringBuilder( btd.Text.Length );
+
+                if( btd.Eol.Length < eol.Length )
+                {
+                    // (e.g. '\n' ==> '\r\n')
+
+                    int j = 0;
+                    for( int i = 0; i < btd.Text.Length; ++i, ++j )
+                    {
+                        char c = btd.Text[i];
+                        if( c == '\r' || c == '\n' )
+                        {
+                            sb.Append( eol );
+                            pointers.Add( btd.Pointers[j] );
+                            pointers.Add( btd.Pointers[j] );
+                        }
+                        else
+                        {
+                            sb.Append( c );
+                            pointers.Add( btd.Pointers[j] );
+                        }
+                    }
+
+                    for( ; j < btd.Pointers.Count; ++j ) pointers.Add( btd.Pointers[j] );
+                }
+                else
+                {
+                    // (e.g. '\r\n' ==> '\n')
+
+                    Debug.Assert( btd.Eol.Length > eol.Length );
+
+                    int j = 0;
+                    for( int i = 0; i < btd.Text.Length; ++i, ++j )
+                    {
+                        char c = btd.Text[i];
+                        if( c == '\r' || c == '\n' )
+                        {
+                            sb.Append( eol );
+                            pointers.Add( btd.Pointers[j] );
+                            ++i;
+                            ++j;
+                        }
+                        else
+                        {
+                            sb.Append( c );
+                            pointers.Add( btd.Pointers[j] );
+                        }
+                    }
+
+                    for( ; j < btd.Pointers.Count; ++j ) pointers.Add( btd.Pointers[j] );
+                }
+
+                string text = sb.ToString( );
+                var (selection_start, selection_end) = GetSelection( rtb, pointers );
+
+                Debug.Assert( text.Length <= pointers.Count );
+
+                return new TextData( text, eol, pointers, selection_start, selection_end );
+            }
+        }
+
+
+        private static (int start_selection, int selection_end) GetSelection( RichTextBox rtb, IReadOnlyList<TextPointer> pointers )
         {
             TextSelection selection = rtb.Selection;
-            TextPointer selection_start = selection.Start;
-            TextPointer selection_end = selection.End;
+            TextPointer selection_start_ptr = selection.Start;
+            TextPointer selection_end_ptr = selection.End;
 
-            td.SelectionStart = 0;
-            td.SelectionEnd = 0;
+            int selection_start = 0;
+            int selection_end = 0;
 
-            for( int i = 0; i < td.Pointers.Count; i++ )
+            for( int i = 0; i < pointers.Count; i++ )
             {
-                TextPointer ptr = td.Pointers[i];
-                if( ptr.CompareTo( selection_start ) >= 0 )
+                TextPointer ptr = pointers[i];
+                if( ptr.CompareTo( selection_start_ptr ) >= 0 )
                 {
                     break;
                 }
 
-                ++td.SelectionStart;
+                ++selection_start;
             }
 
-            for( int i = 0; i < td.Pointers.Count; i++ )
+            for( int i = 0; i < pointers.Count; i++ )
             {
-                TextPointer ptr = td.Pointers[i];
-                if( ptr.CompareTo( selection_end ) >= 0 )
+                TextPointer ptr = pointers[i];
+                if( ptr.CompareTo( selection_end_ptr ) >= 0 )
                 {
                     break;
                 }
 
-                ++td.SelectionEnd;
+                ++selection_end;
             }
+
+            return (selection_start, selection_end);
         }
 
 
@@ -127,17 +237,17 @@ namespace RegExpressWPF.Code
 
                 switch( block )
                 {
-                case Paragraph para:
-                    bool is_last = lastPara == null;
-                    lastPara = para;
-                    action( para, is_last );
-                    break;
-                case Section section:
-                    ForEachParagraphBackward( ct, section.Blocks, ref lastPara, action );
-                    break;
-                default:
-                    Debug.Fail( "NOT SUPPORTED: " + block.GetType( ) );
-                    break;
+                    case Paragraph para:
+                        bool is_last = lastPara == null;
+                        lastPara = para;
+                        action( para, is_last );
+                        break;
+                    case Section section:
+                        ForEachParagraphBackward( ct, section.Blocks, ref lastPara, action );
+                        break;
+                    default:
+                        Debug.Fail( "NOT SUPPORTED: " + block.GetType( ) );
+                        break;
                 }
             }
         }
@@ -149,23 +259,23 @@ namespace RegExpressWPF.Code
             {
                 switch( block )
                 {
-                case Section section:
-                    ProcessBlocks( sb, pointers, ref prevPara, section.Blocks, eol );
-                    break;
-                case Paragraph para:
-                {
-                    if( prevPara != null )
+                    case Section section:
+                        ProcessBlocks( sb, pointers, ref prevPara, section.Blocks, eol );
+                        break;
+                    case Paragraph para:
                     {
-                        sb.Append( eol );
-                        for( var i = 0; i < eol.Length; ++i ) pointers.Add( prevPara.ContentEnd );
+                        if( prevPara != null )
+                        {
+                            sb.Append( eol );
+                            for( var i = 0; i < eol.Length; ++i ) pointers.Add( prevPara.ContentEnd );
+                        }
+                        ProcessInlines( sb, pointers, para.Inlines, eol );
+                        prevPara = para;
                     }
-                    ProcessInlines( sb, pointers, para.Inlines, eol );
-                    prevPara = para;
-                }
-                break;
-                default:
-                    Debug.Assert( false );
                     break;
+                    default:
+                        Debug.Assert( false );
+                        break;
                 }
             }
         }
@@ -177,43 +287,43 @@ namespace RegExpressWPF.Code
             {
                 switch( inline )
                 {
-                case Run run:
-                    var start = run.ContentStart;
+                    case Run run:
+                        var start = run.ContentStart;
 
-                    for( int i = 0; i < run.Text.Length; ++i )
-                    {
-                        var c = run.Text[i];
-                        var p = start.GetPositionAtOffset( i );
-                        int next_i;
-
-                        switch( c )
+                        for( int i = 0; i < run.Text.Length; ++i )
                         {
-                        case '\r':
-                            sb.Append( eol );
-                            for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
-                            next_i = i + 1;
-                            if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
-                            break;
-                        case '\n':
-                            sb.Append( eol );
-                            for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
-                            next_i = i + 1;
-                            if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
-                            break;
-                        default:
-                            sb.Append( c );
-                            pointers.Add( p );
-                            break;
+                            var c = run.Text[i];
+                            var p = start.GetPositionAtOffset( i );
+                            int next_i;
+
+                            switch( c )
+                            {
+                                case '\r':
+                                    sb.Append( eol );
+                                    for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+                                    next_i = i + 1;
+                                    if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
+                                    break;
+                                case '\n':
+                                    sb.Append( eol );
+                                    for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+                                    next_i = i + 1;
+                                    if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
+                                    break;
+                                default:
+                                    sb.Append( c );
+                                    pointers.Add( p );
+                                    break;
+                            }
                         }
-                    }
-                    break;
-                case Span span:
-                    ProcessInlines( sb, pointers, span.Inlines, eol );
-                    break;
-                case LineBreak lb:
-                    sb.Append( eol );
-                    for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
-                    break;
+                        break;
+                    case Span span:
+                        ProcessInlines( sb, pointers, span.Inlines, eol );
+                        break;
+                    case LineBreak lb:
+                        sb.Append( eol );
+                        for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
+                        break;
                 }
             }
         }

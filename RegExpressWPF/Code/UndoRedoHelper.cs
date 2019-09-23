@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegExpressWPF.Controls;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,7 +14,7 @@ using System.Windows.Input;
 
 namespace RegExpressWPF.Code
 {
-    public class UndoRedoHelper
+    internal class UndoRedoHelper
     {
         class Diff
         {
@@ -53,7 +54,7 @@ namespace RegExpressWPF.Code
             internal SelectionInfo SelectionInfoB;
         }
 
-        readonly RichTextBox Rtb;
+        readonly MyRichTextBox Rtb;
         readonly List<UndoItem> UndoList = new List<UndoItem>( );
         readonly List<UndoItem> RedoList = new List<UndoItem>( );
         string PreviousText;
@@ -62,7 +63,7 @@ namespace RegExpressWPF.Code
         bool IsTrackingTextChange = false;
 
 
-        public UndoRedoHelper( RichTextBox rtb )
+        public UndoRedoHelper( MyRichTextBox rtb )
         {
             Rtb = rtb;
             Rtb.CommandBindings.Add( new CommandBinding( ApplicationCommands.Undo, HandleUndo ) );
@@ -76,7 +77,7 @@ namespace RegExpressWPF.Code
 
         public void Init( )
         {
-            var td = RtbUtilities.GetTextData( Rtb, "\n" );
+            var td = Rtb.GetTextData( null );
 
             PreviousText = td.Text;
             UndoList.Clear( );
@@ -95,7 +96,7 @@ namespace RegExpressWPF.Code
         {
             if( IsUndoOrRedo ) return;
 
-            var td = RtbUtilities.GetTextData( Rtb, "\n" );
+            var td = Rtb.GetTextData( null );
 
             var si = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 
@@ -134,7 +135,7 @@ namespace RegExpressWPF.Code
         {
             if( IsUndoOrRedo ) return;
 
-            var td = RtbUtilities.GetTextData( Rtb, "\n" );
+            var td = Rtb.GetTextData( null );
 
             PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
         }
@@ -154,7 +155,7 @@ namespace RegExpressWPF.Code
 
             try
             {
-                var td = RtbUtilities.GetTextData( Rtb, "\n" );
+                var td = Rtb.GetTextData( null );
 
                 using( Rtb.DeclareChangeBlock( ) )
                 {
@@ -162,7 +163,7 @@ namespace RegExpressWPF.Code
                     range.Text = Regex.Replace( last.Diff.Remove, @"\r\n|\n", "\r" ); // (it does not like '\n')
                     range.ClearAllProperties( );
 
-                    td = RtbUtilities.GetTextData( Rtb, "\n" );
+                    td = Rtb.GetTextData( null );
                     Rtb.Selection.Select( td.Pointers[last.SelectionInfoA.SelectionStart], td.Pointers[Math.Min( last.SelectionInfoA.SelectionEnd, td.Pointers.Count - 1 )] );
                 }
 
@@ -195,7 +196,7 @@ namespace RegExpressWPF.Code
 
             try
             {
-                var td = RtbUtilities.GetTextData( Rtb, "\n" );
+                var td = Rtb.GetTextData( null );
 
                 using( Rtb.DeclareChangeBlock( ) )
                 {
@@ -203,7 +204,7 @@ namespace RegExpressWPF.Code
                     range.Text = Regex.Replace( last.Diff.Add, @"\r\n|\n", "\r" ); // (it does not like '\n')
                     range.ClearAllProperties( );
 
-                    td = RtbUtilities.GetTextData( Rtb, "\n" );
+                    td = Rtb.GetTextData( null );
                     Rtb.Selection.Select( td.Pointers[Math.Min( last.SelectionInfoB.SelectionStart, td.Pointers.Count - 1 )], td.Pointers[Math.Min( last.SelectionInfoB.SelectionEnd, td.Pointers.Count - 1 )] );
                 }
 

@@ -1,4 +1,5 @@
 ﻿using RegExpressWPF.Code;
+using RegExpressWPF.Controls;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,7 +27,7 @@ namespace RegExpressWPF.Adorners
 
         public WhitespaceAdorner( UIElement adornedElement ) : base( adornedElement )
         {
-            Debug.Assert( adornedElement is RichTextBox );
+            Debug.Assert( adornedElement is MyRichTextBox );
 
             IsHitTestVisible = false;
 
@@ -35,9 +36,9 @@ namespace RegExpressWPF.Adorners
         }
 
 
-        RichTextBox Rtb
+        MyRichTextBox Rtb
         {
-            get { return (RichTextBox)AdornedElement; }
+            get { return (MyRichTextBox)AdornedElement; }
         }
 
 
@@ -59,7 +60,7 @@ namespace RegExpressWPF.Adorners
 
             var dc = drawingContext;
             var rtb = Rtb;
-            var td = RtbUtilities.GetTextData( rtb, "\n" );
+            var td = rtb.GetTextData( null );
 
             ShowSpaces( dc, td );
             ShowTabs( dc, td );
