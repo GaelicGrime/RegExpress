@@ -158,7 +158,7 @@ namespace RegExpressWPF.Adorners
                                             } while( left != end );
                                         */
 
-                                        
+
 
                                         var adjusted_end = end.GetInsertionPosition( LogicalDirection.Backward );
                                         Debug.Assert( adjusted_end != null );
@@ -246,9 +246,12 @@ namespace RegExpressWPF.Adorners
             }
             else
             {
+                char[] c = new char[1];
+                int n = thisPointer.GetTextInRun( LogicalDirection.Forward, c, 0, 1 );
+
                 return new RectInfo
                 {
-                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( 10, thisLeadingRect.Height ) ), //.......... 10?
+                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( n == 0 ? 0 : 10, thisLeadingRect.Height ) ), //.......... 10?
                     nextPointer = nextPointer,
                     nextRect = next_rect,
                     nextIsSameLine = false
