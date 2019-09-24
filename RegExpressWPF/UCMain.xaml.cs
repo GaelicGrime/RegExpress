@@ -175,10 +175,16 @@ namespace RegExpressWPF
 
         private void UcText_LocalUnderliningFinished( object sender, EventArgs e )
         {
-            var underlining_info = ucText.GetUnderliningInfo( );
-            var segments = underlining_info.Select( c => new Segment( c.Index, c.Length ) ).ToList( );
-
-            ucMatches.SetUnderlining( segments );
+            if( ucText.IsKeyboardFocusWithin )
+            {
+                var underlining_info = ucText.GetUnderliningInfo( );
+                var segments = underlining_info.Select( c => new Segment( c.Index, c.Length ) ).ToList( );
+                ucMatches.SetUnderlining( segments );
+            }
+            else
+            {
+                ucMatches.SetUnderlining( null );
+            }
         }
 
 
