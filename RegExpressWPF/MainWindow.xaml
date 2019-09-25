@@ -47,7 +47,8 @@
                                 ToolTip="Close tab"
                                 Margin="3 0 0 0"
                                 Command="{x:Static local:MainWindow.CloseTabCommand}"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=.}"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=.}" 
+                                IsTabStop="False"
                                 >
 
                             <Button.Template>
@@ -129,6 +130,7 @@
                                     BorderThickness="0"
                                     BorderBrush="Transparent"
                                     Command="{x:Static local:MainWindow.NewTabCommand}"
+                                    IsTabStop="False"
                                     >
                             </Button>
                         </Border>

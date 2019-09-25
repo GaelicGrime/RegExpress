@@ -35,13 +35,13 @@
                         VerticalAlignment="Center"
                         Background="Transparent"
                         BorderThickness="0"
-                        Click="BtnNewTab_Click"
+                        Click="BtnNewTab_Click" IsTabStop="False"
                         />
             </StackPanel>
             <local:UCPattern x:Name="ucPattern" Grid.Row="1" TextChanged="UcPattern_TextChanged"  />
         </Grid>
 
-        <GridSplitter Grid.Row="1" />
+        <GridSplitter Grid.Row="1" IsTabStop="False" />
 
         <Grid Grid.Row="2" Margin="0 4 0 1">
 
@@ -68,7 +68,7 @@
             </Grid>
         </Grid>
 
-        <GridSplitter Grid.Row="3" />
+        <GridSplitter Grid.Row="3" IsTabStop="False" />
 
         <Grid Grid.Row="4" Margin="0 4 0 0">
             <Grid.ColumnDefinitions>
@@ -85,17 +85,17 @@
 
                 <StackPanel Style="{StaticResource StackPanelWithLabels}">
                     <TextBlock x:Name="lblMatches" Grid.Row="0" Text="Matches" Style="{StaticResource Labels}"/>
-                    <TextBlock x:Name="pnlShowAll" ToolTip="Find all of the matches" Margin="16 0 0 0">
-                        <Hyperlink x:Name="lnkShowAll" Click="LnkShowAll_Click">Show All</Hyperlink>
+                    <TextBlock x:Name="pnlShowAll" ToolTip="Find all of the matches" Margin="16 0 0 0" >
+                        <Hyperlink x:Name="lnkShowAll" Click="LnkShowAll_Click" KeyboardNavigation.IsTabStop='False'>Show All</Hyperlink>
                     </TextBlock>
                     <TextBlock x:Name="pnlShowFirst" ToolTip="Find the first match only" Margin="16 0 0 0">
-                        <Hyperlink x:Name="lnkShowFirst" Click="LnkShowFirst_Click">Show First Only</Hyperlink>
+                        <Hyperlink x:Name="lnkShowFirst" Click="LnkShowFirst_Click" KeyboardNavigation.IsTabStop='False'>Show First Only</Hyperlink>
                     </TextBlock>
                 </StackPanel>
                 <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" LostFocus="UcMatches_LostFocus"/>
             </Grid>
 
-            <GridSplitter Grid.Column="1" />
+            <GridSplitter Grid.Column="1" IsTabStop="False" />
 
             <Grid Grid.Column="2">
 
