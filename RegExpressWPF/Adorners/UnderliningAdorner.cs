@@ -78,88 +78,14 @@ namespace RegExpressWPF.Adorners
 
                                 if( !( end_rect.Bottom < clip_rect.Top || start_rect.Top > clip_rect.Bottom ) )
                                 {
-                                    //if( start_rect.Bottom > end_rect.Top )
-                                    //{
-                                    //    // no wrap, draw quickly
-
-                                    //    var guidelines = new GuidelineSet( );
-                                    //    guidelines.GuidelinesY.Add( start_rect.Bottom );
-
-                                    //    dc.PushGuidelineSet( guidelines );
-
-                                    //    dc.DrawLine( Pen, start_rect.BottomLeft, end_rect.BottomLeft );
-                                    //    dc.DrawLine( Pen, start_rect.BottomLeft, new Point( start_rect.Left, start_rect.Bottom - 3 ) );
-                                    //    dc.DrawLine( Pen, end_rect.BottomLeft, new Point( end_rect.Left, end_rect.Bottom - 3 ) );
-
-                                    //    dc.Pop( );
-                                    //}
-                                    //else
+                                    if( start_rect.Bottom > end_rect.Top )
                                     {
-                                        /*
-                                            // wrap; needs more work
+                                        // no wrap, draw quickly
 
-                                            var guidelines = new GuidelineSet( );
-
-                                            TextPointer left = start;
-
-                                            do
-                                            {
-                                                TextPointer prev_right;
-                                                Rect right_rect;
-
-                                                Rect left_rect = left.GetCharacterRect( LogicalDirection.Forward );
-                                                TextPointer right = left;
-
-                                                for(; ; )
-                                                {
-                                                    prev_right = right;
-                                                    right = right.GetNextInsertionPosition( LogicalDirection.Forward );
-                                                    if( right == null || right.CompareTo( end ) >= 0 )
-                                                    {
-                                                        right = end;
-                                                        break;
-                                                    }
-
-                                                    right_rect = right.GetCharacterRect( LogicalDirection.Forward );
-                                                    if( right_rect.Top > left_rect.Bottom ) break;
-                                                }
-
-                                                if( right == end )
-                                                {
-                                                    right_rect = end.GetCharacterRect( LogicalDirection.Forward );
-                                                }
-                                                else
-                                                {
-                                                    right_rect = prev_right.GetCharacterRect( LogicalDirection.Forward ); // (does not include width)
-                                                                                                                          // TODO: offset in case of wrapped text; now the last character is not underlined
-                                                }
-
-                                                guidelines.GuidelinesY.Clear( );
-                                                guidelines.GuidelinesY.Add( left_rect.Bottom );
-
-                                                dc.PushGuidelineSet( guidelines );
-
-                                                dc.DrawLine( Pen, left_rect.BottomLeft, right_rect.BottomRight );
-                                                if( left == start )
-                                                {
-                                                    dc.DrawLine( Pen, left_rect.BottomLeft, new Point( left_rect.Left, left_rect.Bottom - 3 ) );
-                                                }
-                                                if( right == end )
-                                                {
-                                                    dc.DrawLine( Pen, right_rect.BottomRight, new Point( right_rect.Right, right_rect.Bottom - 3 ) );
-                                                }
-
-                                                dc.Pop( );
-
-                                                left = right;
-
-                                                Debug.Assert( left != null );
-
-                                            } while( left != end );
-                                        */
-
-
-
+                                        DrawUnderline( dc, new Rect( start_rect.TopLeft, end_rect.BottomLeft ), isLeftStart: true, isRightEnd: true );
+                                    }
+                                    else
+                                    {
                                         var adjusted_end = end.GetInsertionPosition( LogicalDirection.Backward );
                                         Debug.Assert( adjusted_end != null );
                                         Debug.Assert( adjusted_end.IsAtInsertionPosition );
@@ -170,13 +96,15 @@ namespace RegExpressWPF.Adorners
 
                                         RectInfo rect_info = new RectInfo { nextRect = start_rect };
 
+                                        bool is_left_start = true;
+
                                         for(; ; )
                                         {
                                             Rect r = Rect.Empty;
 
                                             for(; ; )
                                             {
-                                                rect_info = GetRect( tp, rect_info.nextRect );
+                                                rect_info = GetRectInfo( tp, rect_info.nextRect );
                                                 r.Union( rect_info.thisRect );
 
                                                 if( rect_info.nextPointer == null || !IsBefore( rect_info.nextPointer, adjusted_end ) ) { tp = null; break; }
@@ -184,9 +112,11 @@ namespace RegExpressWPF.Adorners
                                                 if( !rect_info.nextIsSameLine ) { break; }
                                             }
 
-                                            dc.DrawLine( Pen, r.BottomLeft, r.BottomRight );
+                                            DrawUnderline( dc, r, is_left_start, tp == null );
 
                                             if( tp == null ) break;
+
+                                            is_left_start = false;
                                         }
                                     }
                                 }
@@ -200,9 +130,68 @@ namespace RegExpressWPF.Adorners
         }
 
 
-        void Invalidate( )
+        void DrawUnderline( DrawingContext dc, Rect rect, bool isLeftStart, bool isRightEnd )
         {
-            Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
+            var guidelines = new GuidelineSet( );
+
+            guidelines.GuidelinesX.Add( rect.Left );
+            guidelines.GuidelinesX.Add( rect.Right );
+            guidelines.GuidelinesY.Add( rect.Bottom );
+
+            guidelines.Freeze( );
+
+            dc.PushGuidelineSet( guidelines );
+
+            /*
+              
+            Too academic and does not look great: 
+
+            var geo = new StreamGeometry( );
+
+            using( var ctx = geo.Open( ) )
+            {
+                if( isLeftStart )
+                {
+                    ctx.BeginFigure( rect.BottomLeft + new Vector( 0, -3 ), isFilled: false, isClosed: false );
+                    ctx.LineTo( rect.BottomLeft, isStroked: true, isSmoothJoin: true );
+                }
+                else
+                {
+                    ctx.BeginFigure( rect.BottomLeft, true, false );
+                }
+
+                ctx.LineTo( rect.BottomRight, isStroked: true, isSmoothJoin: true );
+
+                if( isRightEnd )
+                {
+                    ctx.LineTo( rect.BottomRight + new Vector( 0, -3 ), isStroked: true, isSmoothJoin: true );
+                }
+            }
+
+            geo.Freeze( );
+
+            dc.DrawGeometry( null, Pen, geo );
+
+            */
+
+            // "Worse is better":
+
+            var bottom_left = rect.BottomLeft;
+            var bottom_right = rect.BottomRight;
+
+            dc.DrawLine( Pen, bottom_left, bottom_right );
+
+            if( isLeftStart )
+            {
+                dc.DrawLine( Pen, bottom_left, bottom_left + new Vector( 0, -3 ) );
+            }
+
+            if( isRightEnd )
+            {
+                dc.DrawLine( Pen, bottom_right, bottom_right + new Vector( 0, -3 ) );
+            }
+
+            dc.Pop( );
         }
 
 
@@ -215,17 +204,16 @@ namespace RegExpressWPF.Adorners
         }
 
 
-        RectInfo GetRect( TextPointer thisPointer, Rect thisLeadingRect )
+        RectInfo GetRectInfo( TextPointer thisPointer, Rect thisLeadingRect )
         {
             Debug.Assert( thisPointer.IsAtInsertionPosition );
             var nextPointer = thisPointer.GetNextInsertionPosition( LogicalDirection.Forward );
-            Debug.Assert( nextPointer.IsAtInsertionPosition ); //.....
 
             if( nextPointer == null )
             {
                 return new RectInfo
                 {
-                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( 0, thisLeadingRect.Height ) ), //.......... 10?
+                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( 0, thisLeadingRect.Height ) ),
                     nextPointer = null,
                     nextRect = Rect.Empty,
                     nextIsSameLine = false
@@ -251,7 +239,8 @@ namespace RegExpressWPF.Adorners
 
                 return new RectInfo
                 {
-                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( n == 0 ? 0 : 10, thisLeadingRect.Height ) ), //.......... 10?
+                    // TODO: avoid hardcoded width
+                    thisRect = new Rect( thisLeadingRect.TopLeft, new Size( n == 0 ? 0 : 10, thisLeadingRect.Height ) ),
                     nextPointer = nextPointer,
                     nextRect = next_rect,
                     nextIsSameLine = false
@@ -260,34 +249,15 @@ namespace RegExpressWPF.Adorners
         }
 
 
-        //(TextPointer nextLeft, Rect rect) Advance(TextPointer left, TextPointer end)
-        //{
-        //    Debug.Assert( left.IsAtInsertionPosition );
-
-        //    if( !IsBefore( left, end ) ) return (null, Rect.Empty);
-
-        //    Rect r_left = left.GetCharacterRect( LogicalDirection.Forward );
-
-        //    TextPointer tp = left;
-
-        //    for( ; ;)
-        //    {
-        //        var tp_next = tp.GetNextInsertionPosition( LogicalDirection.Forward );
-        //        Debug.Assert( tp_next != null );
-
-        //        Rect r_next = tp_next.GetCharacterRect( LogicalDirection.Forward );
-
-        //        if( tp.GetLineStartPosition)
-
-        //    }
-
-        //    return null;
-        //}
-
-
         static bool IsBefore( TextPointer tp1, TextPointer tp2 )
         {
             return tp1.CompareTo( tp2 ) < 0;
+        }
+
+
+        void Invalidate( )
+        {
+            Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
         }
 
 
