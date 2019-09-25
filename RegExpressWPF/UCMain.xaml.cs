@@ -210,6 +210,8 @@ namespace RegExpressWPF
         {
             if( !IsFullyLoaded ) return;
 
+            UpdateRegexOptionsControls( );
+
             ucPattern.SetRegexOptions( GetRegexOptions( ) );
             RestartFindMatches( );
             Changed?.Invoke( this, null );
@@ -266,6 +268,8 @@ namespace RegExpressWPF
                 }
             }
 
+            UpdateRegexOptionsControls( );
+
             cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
             cbShowCaptures.IsChecked = tabData.ShowCaptures;
             cbShowWhitespaces.IsChecked = true; //
@@ -278,7 +282,7 @@ namespace RegExpressWPF
         }
 
 
-        RegexOptions GetRegexOptions( )
+        RegexOptions GetRegexOptions( bool excludeIncompatibility = false )
         {
             RegexOptions regex_options = RegexOptions.None;
 
@@ -291,7 +295,39 @@ namespace RegExpressWPF
                 }
             }
 
+            if( excludeIncompatibility )
+            {
+                if( regex_options.HasFlag( RegexOptions.ECMAScript ) )
+                {
+                    regex_options &= ~(
+                        RegexOptions.ExplicitCapture |
+                        RegexOptions.IgnorePatternWhitespace |
+                        RegexOptions.RightToLeft
+                        );
+                }
+            }
+
             return regex_options;
+        }
+
+
+        void UpdateRegexOptionsControls( )
+        {
+            RegexOptions regex_options = GetRegexOptions( );
+            bool is_ecma = regex_options.HasFlag( RegexOptions.ECMAScript );
+            RegexOptions ecma_incompatible =
+                RegexOptions.ExplicitCapture |
+                RegexOptions.IgnorePatternWhitespace |
+                RegexOptions.RightToLeft;
+
+            foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
+            {
+                var opt = cb.Tag as RegexOptions?;
+                if( opt != null )
+                {
+                    cb.IsEnabled = opt == RegexOptions.ECMAScript || !( is_ecma && ecma_incompatible.HasFlag( opt ) );
+                }
+            }
         }
 
 
@@ -313,7 +349,7 @@ namespace RegExpressWPF
             string pattern = ucPattern.GetText( eol );
             string text = ucText.GetText( eol );
             bool find_all = cbShowFirstOnly.IsChecked != true;
-            RegexOptions options = GetRegexOptions( );
+            RegexOptions options = GetRegexOptions( excludeIncompatibility: true );
 
             FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct, pattern, text, find_all, options ) );
 

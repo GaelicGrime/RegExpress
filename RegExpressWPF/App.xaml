@@ -82,6 +82,15 @@
         </Style>
 
 
+        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+
         <!-- Inline Styles -->
 
         <SolidColorBrush x:Key="Highlight_0" Color="Yellow" Opacity="0.75" PresentationOptions:Freeze="True"/>
