@@ -16,6 +16,7 @@ namespace RegExpressWPF.Code
         public RegexOptions RegexOptions;
         public bool ShowFirstMatchOnly;
         public bool ShowCaptures;
+        public bool ShowWhitespaces;
         public string Eol;
     }
 }

@@ -119,7 +119,7 @@
                                 <StackPanel>
                                     <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                    <CheckBox x:Name="cbShowWhitespaces" Content="Show trailing whitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged" Visibility="Collapsed"/>
+                                    <CheckBox x:Name="cbShowWhitespaces" Content="Show whitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged"/>
                                     <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
                                         <StackPanel.RenderTransform>
                                             <TransformGroup>

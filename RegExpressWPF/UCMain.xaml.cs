@@ -68,8 +68,6 @@ namespace RegExpressWPF
             lblTextLength.Visibility = Visibility.Collapsed;
             pnlShowAll.Visibility = Visibility.Collapsed;
             pnlShowFirst.Visibility = Visibility.Collapsed;
-
-            cbShowWhitespaces.IsChecked = true;
         }
 
 
@@ -93,6 +91,7 @@ namespace RegExpressWPF
             tabData.RegexOptions = GetRegexOptions( );
             tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
             tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
+            tabData.ShowWhitespaces = cbShowWhitespaces.IsChecked == true;
             tabData.Eol = GetEolOption( );
         }
 
@@ -222,6 +221,9 @@ namespace RegExpressWPF
         {
             if( !IsFullyLoaded ) return;
 
+            ucPattern.ShowWhitespaces( cbShowWhitespaces.IsChecked == true );
+            ucText.ShowWhitespaces( cbShowWhitespaces.IsChecked == true );
+
             Changed?.Invoke( this, null );
         }
 
@@ -272,13 +274,16 @@ namespace RegExpressWPF
 
             cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
             cbShowCaptures.IsChecked = tabData.ShowCaptures;
-            cbShowWhitespaces.IsChecked = true; //
+            cbShowWhitespaces.IsChecked = tabData.ShowWhitespaces;
 
             foreach( var item in cbxEol.Items.Cast<ComboBoxItem>( ) )
             {
                 item.IsSelected = (string)item.Tag == tabData.Eol;
             }
             if( cbxEol.SelectedItem == null ) ( (ComboBoxItem)cbxEol.Items[0] ).IsSelected = true;
+
+            ucPattern.ShowWhitespaces( tabData.ShowWhitespaces );
+            ucText.ShowWhitespaces( tabData.ShowWhitespaces );
         }
 
 

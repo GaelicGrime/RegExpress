@@ -88,6 +88,12 @@ namespace RegExpressWPF
         }
 
 
+        public void ShowWhitespaces( bool yes )
+        {
+            WhitespaceAdorner.ShowWhitespaces( yes );
+        }
+
+
         public void SetFocus( )
         {
             rtb.Focus( );

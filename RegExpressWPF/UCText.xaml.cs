@@ -120,6 +120,12 @@ namespace RegExpressWPF
         }
 
 
+        public void ShowWhitespaces( bool yes )
+        {
+            WhitespaceAdorner.ShowWhitespaces( yes );
+        }
+
+
         public IReadOnlyList<Segment> GetUnderliningInfo( )
         {
             lock( this )
@@ -448,12 +454,12 @@ namespace RegExpressWPF
 
                         switch( r.Start.Parent )
                         {
-                        case FrameworkContentElement fce:
-                            fce.BringIntoView( );
-                            break;
-                        case FrameworkElement fe:
-                            fe.BringIntoView( );
-                            break;
+                            case FrameworkContentElement fce:
+                                fce.BringIntoView( );
+                                break;
+                            case FrameworkElement fe:
+                                fe.BringIntoView( );
+                                break;
                         }
                     } );
                 }
