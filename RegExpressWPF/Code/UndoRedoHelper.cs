@@ -77,7 +77,7 @@ namespace RegExpressWPF.Code
 
         public void Init( )
         {
-            var td = Rtb.GetTextData( null );
+            var td = Rtb.GetTextData( "\n" );
 
             PreviousText = td.Text;
             UndoList.Clear( );
@@ -96,7 +96,7 @@ namespace RegExpressWPF.Code
         {
             if( IsUndoOrRedo ) return;
 
-            var td = Rtb.GetTextData( null );
+            var td = Rtb.GetTextData( "\n" );
 
             var si = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 
@@ -135,7 +135,7 @@ namespace RegExpressWPF.Code
         {
             if( IsUndoOrRedo ) return;
 
-            var td = Rtb.GetTextData( null );
+            var td = Rtb.GetTextData( "\n" );
 
             PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
         }
@@ -155,17 +155,17 @@ namespace RegExpressWPF.Code
 
             try
             {
-                var td = Rtb.GetTextData( null );
+                var td = Rtb.GetTextData( "\n" );
 
                 using( Rtb.DeclareChangeBlock( ) )
                 {
                     var range = td.Range( last.Diff.Position, last.Diff.Add.Length );
                     range.Text = Regex.Replace( last.Diff.Remove, @"\r\n|\n", "\r" ); // (it does not like '\n')
                     range.ClearAllProperties( );
-
-                    td = Rtb.GetTextData( null );
-                    Rtb.Selection.Select( td.Pointers[last.SelectionInfoA.SelectionStart], td.Pointers[Math.Min( last.SelectionInfoA.SelectionEnd, td.Pointers.Count - 1 )] );
                 }
+
+                td = Rtb.GetTextData( "\n" );
+                SafeSelect( td, last.SelectionInfoA.SelectionStart, last.SelectionInfoA.SelectionEnd );
 
                 PreviousText = td.Text;
                 PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );// last.SelectionInfoA;
@@ -196,17 +196,17 @@ namespace RegExpressWPF.Code
 
             try
             {
-                var td = Rtb.GetTextData( null );
+                var td = Rtb.GetTextData( "\n" );
 
                 using( Rtb.DeclareChangeBlock( ) )
                 {
                     var range = td.Range( last.Diff.Position, last.Diff.Remove.Length );
                     range.Text = Regex.Replace( last.Diff.Add, @"\r\n|\n", "\r" ); // (it does not like '\n')
                     range.ClearAllProperties( );
-
-                    td = Rtb.GetTextData( null );
-                    Rtb.Selection.Select( td.Pointers[Math.Min( last.SelectionInfoB.SelectionStart, td.Pointers.Count - 1 )], td.Pointers[Math.Min( last.SelectionInfoB.SelectionEnd, td.Pointers.Count - 1 )] );
                 }
+
+                td = Rtb.GetTextData( "\n" );
+                SafeSelect( td, last.SelectionInfoB.SelectionStart, last.SelectionInfoB.SelectionEnd );
 
                 PreviousText = td.Text;
                 PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );// 
@@ -269,6 +269,21 @@ namespace RegExpressWPF.Code
                 ui1.SelectionInfoB.Length == 0 &&
                 ui2.SelectionInfoA.Length == 0 &&
                 ui1.SelectionInfoB.SelectionStart == ui2.SelectionInfoA.SelectionStart;
+        }
+
+
+        void SafeSelect( TextData td, int selectionStart, int selectionEnd )
+        {
+            Debug.Assert( td.Pointers.Any( ) );
+            Debug.Assert( selectionStart < td.Pointers.Count );
+            Debug.Assert( selectionEnd < td.Pointers.Count );
+
+            if( td.Pointers.Any( ) )
+            {
+                Rtb.Selection.Select(
+                    td.Pointers[Math.Min( selectionStart, td.Pointers.Count - 1 )],
+                    td.Pointers[Math.Min( selectionEnd, td.Pointers.Count - 1 )] );
+            }
         }
 
 
