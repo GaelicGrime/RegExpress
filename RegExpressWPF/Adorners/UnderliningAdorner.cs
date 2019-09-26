@@ -25,6 +25,8 @@ namespace RegExpressWPF.Adorners
 		{
 			Debug.Assert( adornedElement is RichTextBox );
 
+			Pen.Freeze( );
+
 			IsHitTestVisible = false;
 
 			Rtb.TextChanged += Rtb_TextChanged;
@@ -40,12 +42,12 @@ namespace RegExpressWPF.Adorners
 
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
-			Invalidate( );
+			DelayedInvalidateVisual( );
 		}
 
 		private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
 		{
-			Invalidate( );
+			InvalidateVisual( );
 		}
 
 
@@ -55,69 +57,67 @@ namespace RegExpressWPF.Adorners
 
 			var dc = drawingContext;
 			var rtb = Rtb;
+			var ranges = Ranges;
 
 			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 			dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-			lock( this )
+			if( ranges != null )
 			{
-				if( Ranges != null )
+				var start_doc = rtb.Document.ContentStart;
+
+				// TODO: clean 'Ranges' if document was changed (release old document)
+
+				foreach( var (start, end) in ranges )
 				{
-					var start_doc = rtb.Document.ContentStart;
-
-					// TODO: clean 'Ranges' if document was changed (release old document)
-
-					foreach( var (start, end) in Ranges )
+					if( start.HasValidLayout && end.HasValidLayout )
 					{
-						if( start.HasValidLayout && end.HasValidLayout )
+						if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
 						{
-							if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
+							var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
+							var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
+
+							if( !( end_rect.Bottom < clip_rect.Top || start_rect.Top > clip_rect.Bottom ) )
 							{
-								var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
-								var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
-
-								if( !( end_rect.Bottom < clip_rect.Top || start_rect.Top > clip_rect.Bottom ) )
+								if( start_rect.Bottom > end_rect.Top )
 								{
-									if( start_rect.Bottom > end_rect.Top )
+									// no wrap, draw quickly
+
+									DrawUnderline( dc, new Rect( start_rect.TopLeft, end_rect.BottomLeft ), isLeftStart: true, isRightEnd: true );
+								}
+								else
+								{
+									var adjusted_end = end.GetInsertionPosition( LogicalDirection.Backward );
+									Debug.Assert( adjusted_end != null );
+									Debug.Assert( adjusted_end.IsAtInsertionPosition );
+
+									TextPointer tp = start;
+									if( !tp.IsAtInsertionPosition ) tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+									Debug.Assert( tp.IsAtInsertionPosition );
+
+									RectInfo rect_info = new RectInfo { nextRect = start_rect };
+
+									bool is_left_start = true;
+
+									for(; ; )
 									{
-										// no wrap, draw quickly
-
-										DrawUnderline( dc, new Rect( start_rect.TopLeft, end_rect.BottomLeft ), isLeftStart: true, isRightEnd: true );
-									}
-									else
-									{
-										var adjusted_end = end.GetInsertionPosition( LogicalDirection.Backward );
-										Debug.Assert( adjusted_end != null );
-										Debug.Assert( adjusted_end.IsAtInsertionPosition );
-
-										TextPointer tp = start;
-										if( !tp.IsAtInsertionPosition ) tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-										Debug.Assert( tp.IsAtInsertionPosition );
-
-										RectInfo rect_info = new RectInfo { nextRect = start_rect };
-
-										bool is_left_start = true;
+										Rect r = Rect.Empty;
 
 										for(; ; )
 										{
-											Rect r = Rect.Empty;
+											rect_info = GetRectInfo( tp, rect_info.nextRect );
+											r.Union( rect_info.thisRect );
 
-											for(; ; )
-											{
-												rect_info = GetRectInfo( tp, rect_info.nextRect );
-												r.Union( rect_info.thisRect );
-
-												if( rect_info.nextPointer == null || !IsBefore( rect_info.nextPointer, adjusted_end ) ) { tp = null; break; }
-												tp = rect_info.nextPointer;
-												if( !rect_info.nextIsSameLine ) { break; }
-											}
-
-											DrawUnderline( dc, r, is_left_start, tp == null );
-
-											if( tp == null ) break;
-
-											is_left_start = false;
+											if( rect_info.nextPointer == null || !IsBefore( rect_info.nextPointer, adjusted_end ) ) { tp = null; break; }
+											tp = rect_info.nextPointer;
+											if( !rect_info.isNextOnSameLine ) { break; }
 										}
+
+										DrawUnderline( dc, r, is_left_start, tp == null );
+
+										if( tp == null ) break;
+
+										is_left_start = false;
 									}
 								}
 							}
@@ -200,7 +200,7 @@ namespace RegExpressWPF.Adorners
 			public Rect thisRect;
 			public TextPointer nextPointer;
 			public Rect nextRect;
-			public bool nextIsSameLine;
+			public bool isNextOnSameLine;
 		}
 
 
@@ -216,7 +216,7 @@ namespace RegExpressWPF.Adorners
 					thisRect = new Rect( thisLeadingRect.TopLeft, new Size( 0, thisLeadingRect.Height ) ),
 					nextPointer = null,
 					nextRect = Rect.Empty,
-					nextIsSameLine = false
+					isNextOnSameLine = false
 				};
 			}
 
@@ -229,7 +229,7 @@ namespace RegExpressWPF.Adorners
 					thisRect = new Rect( thisLeadingRect.TopLeft, next_rect.BottomLeft ),
 					nextPointer = nextPointer,
 					nextRect = next_rect,
-					nextIsSameLine = true
+					isNextOnSameLine = true
 				};
 			}
 			else
@@ -243,7 +243,7 @@ namespace RegExpressWPF.Adorners
 					thisRect = new Rect( thisLeadingRect.TopLeft, new Size( n == 0 ? 0 : 10, thisLeadingRect.Height ) ),
 					nextPointer = nextPointer,
 					nextRect = next_rect,
-					nextIsSameLine = false
+					isNextOnSameLine = false
 				};
 			}
 		}
@@ -255,7 +255,7 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void Invalidate( )
+		void DelayedInvalidateVisual( )
 		{
 			Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
 		}
@@ -263,12 +263,9 @@ namespace RegExpressWPF.Adorners
 
 		internal void SetRangesToUnderline( IReadOnlyList<(TextPointer start, TextPointer end)> ranges )
 		{
-			lock( this )
-			{
-				Ranges = ranges;
-			}
+			Ranges = ranges;
 
-			Invalidate( );
+			DelayedInvalidateVisual( );
 		}
 	}
 }
