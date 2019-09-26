@@ -229,7 +229,73 @@ namespace RegExpressWPF.Code
         }
 
 
-        public static void ForEachParagraphBackward( CancellationToken ct, BlockCollection blocks, ref Paragraph lastPara, Action<Paragraph, bool> action )
+		public static int FindNearestBefore( IReadOnlyList<TextPointer> pointers, TextPointer target )
+		{
+			if( pointers.Count == 0 ) return -1;
+
+			Debug.Assert( pointers[0].IsInSameDocument( target ) );
+
+			int left = 0;
+			int right = pointers.Count( ) - 1;
+			int last_good = -1;
+
+			do
+			{
+				int mid = ( left + right ) / 2;
+
+				int cmp = pointers[mid].CompareTo( target );
+
+				if( cmp == 0 ) return mid;
+
+				if( cmp < 0 )
+				{
+					last_good = mid;
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			} while( left <= right );
+
+			return last_good;
+		}
+
+
+		public static int FindNearestAfter( IReadOnlyList<TextPointer> pointers, TextPointer target )
+		{
+			if( pointers.Count == 0 ) return -1;
+
+			Debug.Assert( pointers[0].IsInSameDocument( target ) );
+
+			int left = 0;
+			int right = pointers.Count( ) - 1;
+			int last_good = -1;
+
+			do
+			{
+				int mid = ( left + right ) / 2;
+
+				int cmp = pointers[mid].CompareTo( target );
+
+				if( cmp == 0 ) return mid;
+
+				if( cmp < 0 )
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					last_good = mid;
+					right = mid - 1;
+				}
+			} while( left <= right );
+
+			return last_good;
+		}
+
+
+		public static void ForEachParagraphBackward( CancellationToken ct, BlockCollection blocks, ref Paragraph lastPara, Action<Paragraph, bool> action )
         {
             for( var block = blocks.LastBlock; block != null; block = block.PreviousBlock )
             {

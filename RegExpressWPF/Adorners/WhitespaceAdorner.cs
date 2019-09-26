@@ -16,240 +16,206 @@ using System.Windows.Threading;
 
 namespace RegExpressWPF.Adorners
 {
-    class WhitespaceAdorner : Adorner
-    {
-        readonly Brush WsBrush = Brushes.LightSeaGreen;
-        readonly Pen TabPen = new Pen( Brushes.LightSeaGreen, 1 );
-        readonly Pen EolPen = new Pen( Brushes.LightSeaGreen, 1 );
-        readonly Pen EofPen = new Pen( Brushes.LightSeaGreen, 1 );
-        readonly Brush EofBrush = Brushes.Transparent;
+	class WhitespaceAdorner : Adorner
+	{
+		readonly Brush WsBrush = Brushes.LightSeaGreen;
+		readonly Pen TabPen = new Pen( Brushes.LightSeaGreen, 1 );
+		readonly Pen EolPen = new Pen( Brushes.LightSeaGreen, 1 );
+		readonly Pen EofPen = new Pen( Brushes.LightSeaGreen, 1 );
+		readonly Brush EofBrush = Brushes.Transparent;
 
-        readonly Regex RegexSpaces = new Regex( @"(\p{Zs})\1*", RegexOptions.Compiled );
-        readonly Regex RegexTabs = new Regex( @"\t", RegexOptions.Compiled );
-        readonly Regex RegexEols = new Regex( @"\r\n|\n\r|\r|\n", RegexOptions.Compiled );
+		static readonly char[] Characters = { ' ', '\t', '\r', '\n' }; // Note. For performance reasons, we only consider regular spaces
 
-        bool mShowWhitespaces = false;
+		bool mShowWhitespaces = false;
 
 
-        public WhitespaceAdorner( UIElement adornedElement ) : base( adornedElement )
-        {
-            Debug.Assert( adornedElement is MyRichTextBox );
+		public WhitespaceAdorner( UIElement adornedElement ) : base( adornedElement )
+		{
+			Debug.Assert( adornedElement is MyRichTextBox );
 
-            IsHitTestVisible = false;
+			WsBrush.Freeze( );
+			TabPen.Freeze( );
+			EolPen.Freeze( );
+			EofPen.Freeze( );
+			EofBrush.Freeze( );
 
-            Rtb.TextChanged += Rtb_TextChanged;
-            Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
-        }
+			IsHitTestVisible = false;
 
-
-        public void ShowWhitespaces( bool yes )
-        {
-            mShowWhitespaces = yes;
-
-            Invalidate( );
-        }
+			Rtb.TextChanged += Rtb_TextChanged;
+			Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
+		}
 
 
-        MyRichTextBox Rtb
-        {
-            get { return (MyRichTextBox)AdornedElement; }
-        }
+		public void ShowWhitespaces( bool yes )
+		{
+			mShowWhitespaces = yes;
+
+			DelayedInvalidateVisual( );
+		}
 
 
-        private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
-        {
-            Invalidate( );
-        }
+		MyRichTextBox Rtb
+		{
+			get { return (MyRichTextBox)AdornedElement; }
+		}
 
 
-        private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
-        {
-            Invalidate( );
-        }
+		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
+		{
+			DelayedInvalidateVisual( );
+		}
 
 
-        protected override void OnRender( DrawingContext drawingContext )
-        {
-            base.OnRender( drawingContext );  // (probably nothing)
-
-            if( mShowWhitespaces )
-            {
-                var dc = drawingContext;
-                var rtb = Rtb;
-                var td = rtb.GetTextData( null );
-
-                ShowSpaces( dc, td );
-                ShowTabs( dc, td );
-                ShowEols( dc, td );
-                ShowEof( dc, td );
-            }
-        }
+		private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
+		{
+			InvalidateVisual( );
+		}
 
 
-        protected override void OnRenderSizeChanged( SizeChangedInfo sizeInfo )
-        {
-            base.OnRenderSizeChanged( sizeInfo );
+		protected override void OnRender( DrawingContext drawingContext )
+		{
+			base.OnRender( drawingContext );  // (probably nothing)
 
-            Invalidate( );
-        }
+			if( mShowWhitespaces )
+			{
+				var dc = drawingContext;
+				var rtb = Rtb;
+				var td = rtb.GetTextData( null );
 
-
-        void Invalidate( )
-        {
-            Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
-        }
-
-
-        void ShowSpaces( DrawingContext dc, TextData td )
-        {
-            var rtb = Rtb;
-            var start_doc = Rtb.Document.ContentStart;
-
-            var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-            dc.PushClip( new RectangleGeometry( clip_rect ) );
-
-            foreach( Match match in RegexSpaces.Matches( td.Text ) )
-            {
-                var left = td.Pointers[match.Index];
-                var right = td.Pointers[match.Index + match.Length];
-
-                if( left.HasValidLayout && right.HasValidLayout &&
-                    left.IsInSameDocument( start_doc ) && right.IsInSameDocument( start_doc ) )
-                {
-                    left = left.GetInsertionPosition( LogicalDirection.Forward );
-                    right = right.GetInsertionPosition( LogicalDirection.Backward );
-
-                    var rect_left = left.GetCharacterRect( LogicalDirection.Forward );
-                    var rect_right = right.GetCharacterRect( LogicalDirection.Backward );
-
-                    var rect = new Rect( rect_left.TopLeft, rect_right.BottomRight );
-
-                    if( !rect.IsEmpty && rect.IntersectsWith( clip_rect ) )
-                    {
-                        const int DOT_SIZE = 2;
-                        var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 + 0.5 );
-                        var w = rect.Width / match.Length;
-
-                        for( var i = 0; i < match.Length; ++i )
-                        {
-                            var x = rect.Left + rect.Width * i / match.Length + w / 2;
-                            var p = new Rect( x, y, DOT_SIZE, DOT_SIZE );
-
-                            dc.DrawRectangle( WsBrush, null, p );
-                        }
-                    }
-                }
-            }
-
-            dc.Pop( );
-        }
+				ShowSpacesTabsAndEols( dc, td );
+				ShowEof( dc, td );
+			}
+		}
 
 
-        void ShowTabs( DrawingContext dc, TextData td )
-        {
-            var rtb = Rtb;
-            var start_doc = Rtb.Document.ContentStart;
+		protected override void OnRenderSizeChanged( SizeChangedInfo sizeInfo )
+		{
+			base.OnRenderSizeChanged( sizeInfo );
 
-            var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-            dc.PushClip( new RectangleGeometry( clip_rect ) );
-
-            foreach( Match match in RegexTabs.Matches( td.Text ) )
-            {
-                var left = td.Pointers[match.Index];
-
-                if( left.HasValidLayout && left.IsInSameDocument( start_doc ) )
-                {
-                    left = left.GetInsertionPosition( LogicalDirection.Forward );
-
-                    var rect = left.GetCharacterRect( LogicalDirection.Forward );
-                    const int ARROW_WIDTH = 6;
-                    rect.Width = ARROW_WIDTH;
-                    rect.Offset( 2, 0 );
-
-                    if( rect.IntersectsWith( clip_rect ) )
-                    {
-                        var x = Math.Ceiling( rect.Left ) + TabPen.Thickness / 2;
-                        var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - TabPen.Thickness / 2;
-
-                        dc.DrawLine( TabPen, new Point( x, y ), new Point( x + ARROW_WIDTH, y ) );
-                        dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y - ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
-                        dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y + ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
-                    }
-                }
-            }
-
-            dc.Pop( );
-        }
+			DelayedInvalidateVisual( );
+		}
 
 
-        void ShowEols( DrawingContext dc, TextData td )
-        {
-            var rtb = Rtb;
-            var start_doc = Rtb.Document.ContentStart;
+		void DelayedInvalidateVisual( )
+		{
+			Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
+		}
 
-            var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-            dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-            foreach( Match match in RegexEols.Matches( td.Text ) )
-            {
-                var left = td.Pointers[match.Index];
+		void ShowSpacesTabsAndEols( DrawingContext dc, TextData td )
+		{
+			var rtb = Rtb;
+			var start_doc = Rtb.Document.ContentStart;
+			var end_doc = Rtb.Document.ContentStart;
 
-                if( left.HasValidLayout && left.IsInSameDocument( start_doc ) )
-                {
-                    left = left.GetInsertionPosition( LogicalDirection.Forward );
+			if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+			if( !td.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-                    var rect = left.GetCharacterRect( LogicalDirection.Forward );
-                    const int EOL_WIDTH = 6;
-                    rect.Width = EOL_WIDTH;
-                    rect.Offset( 2, 0 );
+			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-                    if( rect.IntersectsWith( clip_rect ) )
-                    {
-                        var x = Math.Ceiling( rect.Left ) + EolPen.Thickness / 2;
-                        var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - EolPen.Thickness / 2;
+			TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), true );
+			TextPointer end_pointer = rtb.GetPositionFromPoint( new Point( rtb.ViewportWidth, rtb.ViewportHeight ), true );
 
-                        dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH, y ) );
-                        dc.DrawLine( EolPen, new Point( x + EOL_WIDTH, y ), new Point( x + EOL_WIDTH, y - rect.Height * 0.45 ) );
-                        dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y - EOL_WIDTH / 2 ) );
-                        dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y + EOL_WIDTH / 2 ) );
-                    }
-                }
-            }
+			start_pointer = start_pointer.GetInsertionPosition( LogicalDirection.Forward );
+			end_pointer = end_pointer.GetInsertionPosition( LogicalDirection.Backward );
 
-            dc.Pop( );
-        }
+			int start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+			int end_i = RtbUtilities.FindNearestAfter( td.Pointers, end_pointer );
 
-        void ShowEof( DrawingContext dc, TextData td )
-        {
-            //if( Regex.IsMatch( td.Text, @"(\r|\n)$", RegexOptions.ExplicitCapture ) )
-            {
-                var rtb = Rtb;
+			if( start_i < 0 ) start_i = 0;
+			Debug.Assert( end_i >= 0 );
+			if( end_i < 0 ) end_i = td.Pointers.Count - 1;
 
-                if( rtb.Document.ContentEnd.HasValidLayout )
-                {
-                    var rect = rtb.Document.ContentEnd.GetCharacterRect( LogicalDirection.Forward ); // (no width)
+			for( var i = td.Text.IndexOfAny( Characters, start_i ); i >= 0 && i <= end_i; i = td.Text.IndexOfAny( Characters, i + 1 ) )
+			{
+				var left = td.Pointers[i];
+				var right = td.Pointers[i + 1];
 
-                    if( !rect.IsEmpty )
-                    {
-                        var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+				var rect_left = left.GetCharacterRect( LogicalDirection.Forward );
+				var rect_right = right.GetCharacterRect( LogicalDirection.Backward );
 
-                        dc.PushClip( new RectangleGeometry( clip_rect ) );
+				switch( td.Text[i] )
+				{
+					case '\t':
+					{
+						const int ARROW_WIDTH = 6;
 
-                        const double EOF_WIDTH = 5;
-                        double h = Math.Ceiling( rect.Height * 0.4 );
+						var rect = rect_left;
+						rect.Offset( 2, 0 );
 
-                        var x = Math.Ceiling( rect.Left + 3 ) + EofPen.Thickness / 2;
-                        var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) + EofPen.Thickness / 2;
+						var x = Math.Ceiling( rect.Left ) + TabPen.Thickness / 2;
+						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - TabPen.Thickness / 2;
 
-                        var eof_rect = new Rect( x, y, EOF_WIDTH, h );
+						dc.DrawLine( TabPen, new Point( x, y ), new Point( x + ARROW_WIDTH, y ) );
+						dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y - ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
+						dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y + ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
+					}
+					break;
 
-                        dc.DrawRectangle( EofBrush, EofPen, eof_rect );
+					case '\r':
+					case '\n':
+					{
+						const int EOL_WIDTH = 6;
 
-                        dc.Pop( );
-                    }
-                }
-            }
-        }
-    }
+						var rect = rect_left;
+						rect.Offset( 2, 0 );
+
+						var x = Math.Ceiling( rect.Left ) + EolPen.Thickness / 2;
+						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - EolPen.Thickness / 2;
+
+						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH, y ) );
+						dc.DrawLine( EolPen, new Point( x + EOL_WIDTH, y ), new Point( x + EOL_WIDTH, y - rect.Height * 0.45 ) );
+						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y - EOL_WIDTH / 2 ) );
+						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y + EOL_WIDTH / 2 ) );
+					}
+					break;
+
+					default: // (space)
+					{
+						const int DOT_SIZE = 2;
+
+						var rect = new Rect( rect_left.TopLeft, rect_right.BottomRight );
+						var x = rect.Left + rect.Width / 2;
+						var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 + 0.5 );
+						var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
+
+						dc.DrawRectangle( WsBrush, null, dot_rect );
+					}
+					break;
+				}
+
+			}
+
+			dc.Pop( );
+		}
+
+
+		void ShowEof( DrawingContext dc, TextData td )
+		{
+			var rtb = Rtb;
+
+			if( !rtb.Document.ContentEnd.HasValidLayout ) return;
+
+			var rect = rtb.Document.ContentEnd.GetCharacterRect( LogicalDirection.Forward ); // (no width)
+			if( rect.IsEmpty ) return;
+
+			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+			const double EOF_WIDTH = 5;
+			double h = Math.Ceiling( rect.Height * 0.4 );
+
+			var x = Math.Ceiling( rect.Left + 4 ) + EofPen.Thickness / 2;
+			var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) - EofPen.Thickness / 2;
+
+			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
+
+			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
+
+			dc.Pop( );
+		}
+	}
 }
 
