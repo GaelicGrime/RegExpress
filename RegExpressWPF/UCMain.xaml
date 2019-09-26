@@ -85,12 +85,15 @@
 
                 <StackPanel Style="{StaticResource StackPanelWithLabels}">
                     <TextBlock x:Name="lblMatches" Grid.Row="0" Text="Matches" Style="{StaticResource Labels}"/>
-                    <TextBlock x:Name="pnlShowAll" ToolTip="Find all of the matches" Margin="16 0 0 0" >
-                        <Hyperlink x:Name="lnkShowAll" Click="LnkShowAll_Click" KeyboardNavigation.IsTabStop='False'>Show All</Hyperlink>
-                    </TextBlock>
-                    <TextBlock x:Name="pnlShowFirst" ToolTip="Find the first match only" Margin="16 0 0 0">
-                        <Hyperlink x:Name="lnkShowFirst" Click="LnkShowFirst_Click" KeyboardNavigation.IsTabStop='False'>Show First Only</Hyperlink>
-                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Visibility="Collapsed">
+                        <!-- Feature disabled, since does not look usefull -->
+                        <TextBlock x:Name="pnlShowAll" ToolTip="Find all of the matches" Margin="16 0 0 0" >
+                            <Hyperlink x:Name="lnkShowAll" Click="LnkShowAll_Click" KeyboardNavigation.IsTabStop='False'>Show All</Hyperlink>
+                        </TextBlock>
+                        <TextBlock x:Name="pnlShowFirst" ToolTip="Find the first match only" Margin="16 0 0 0">
+                            <Hyperlink x:Name="lnkShowFirst" Click="LnkShowFirst_Click" KeyboardNavigation.IsTabStop='False'>Show First Only</Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
                 <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" LostFocus="UcMatches_LostFocus"/>
             </Grid>

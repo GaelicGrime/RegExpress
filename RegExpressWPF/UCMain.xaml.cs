@@ -300,6 +300,9 @@ namespace RegExpressWPF
                 }
             }
 
+            Debug.Assert( !excludeIncompatibility );
+#if false // Feature disabled, since does not look usefull.
+
             if( excludeIncompatibility )
             {
                 if( regex_options.HasFlag( RegexOptions.ECMAScript ) )
@@ -311,6 +314,7 @@ namespace RegExpressWPF
                         );
                 }
             }
+#endif
 
             return regex_options;
         }
@@ -318,6 +322,8 @@ namespace RegExpressWPF
 
         void UpdateRegexOptionsControls( )
         {
+#if false // Feature disabled, since does not look usefull.
+
             RegexOptions regex_options = GetRegexOptions( );
             bool is_ecma = regex_options.HasFlag( RegexOptions.ECMAScript );
             RegexOptions ecma_incompatible =
@@ -333,6 +339,7 @@ namespace RegExpressWPF
                     cb.IsEnabled = opt == RegexOptions.ECMAScript || !( is_ecma && ecma_incompatible.HasFlag( opt ) );
                 }
             }
+#endif
         }
 
 
@@ -354,7 +361,7 @@ namespace RegExpressWPF
             string pattern = ucPattern.GetText( eol );
             string text = ucText.GetText( eol );
             bool find_all = cbShowFirstOnly.IsChecked != true;
-            RegexOptions options = GetRegexOptions( excludeIncompatibility: true );
+            RegexOptions options = GetRegexOptions( excludeIncompatibility: false );
 
             FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct, pattern, text, find_all, options ) );
 
