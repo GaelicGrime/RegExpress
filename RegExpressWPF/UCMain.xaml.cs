@@ -27,6 +27,10 @@ namespace RegExpressWPF
 	public partial class UCMain : UserControl
 	{
 		readonly TaskHelper FindMatchesTask = new TaskHelper( );
+		readonly TaskHelper UpdateWhitespaceWarningTask = new TaskHelper( );
+
+		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|(\r\n$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+
 		bool IsFullyLoaded = false;
 		TabData InitialTabData = null;
 		bool ucTextHadFocus = false;
@@ -70,6 +74,7 @@ namespace RegExpressWPF
 			lblTextInfo.Visibility = Visibility.Collapsed;
 			pnlShowAll.Visibility = Visibility.Collapsed;
 			pnlShowFirst.Visibility = Visibility.Collapsed;
+			lblWhitespaceWarning.Visibility = Visibility.Hidden;
 		}
 
 
@@ -148,6 +153,8 @@ namespace RegExpressWPF
 
 			RestartFindMatches( );
 			Changed?.Invoke( this, null );
+
+			RestartUpdateWhitespaceWarning( );
 		}
 
 
@@ -159,6 +166,7 @@ namespace RegExpressWPF
 			Changed?.Invoke( this, null );
 
 			RestartShowTextInfo( );
+			RestartUpdateWhitespaceWarning( );
 		}
 
 
@@ -242,6 +250,8 @@ namespace RegExpressWPF
 			ucText.ShowWhitespaces( cbShowWhitespaces.IsChecked == true );
 
 			Changed?.Invoke( this, null );
+
+			RestartUpdateWhitespaceWarning( );
 		}
 
 
@@ -305,6 +315,7 @@ namespace RegExpressWPF
 			ucText.ShowWhitespaces( tabData.ShowWhitespaces );
 
 			RestartShowTextInfo( );
+			RestartUpdateWhitespaceWarning( );
 		}
 
 
@@ -467,6 +478,59 @@ namespace RegExpressWPF
 				s += ")";
 
 				lblTextInfo.Text = s;
+			}
+		}
+
+
+		void RestartUpdateWhitespaceWarning( )
+		{
+			UpdateWhitespaceWarningTask.Restart( UpdateWhitespaceWarning );
+		}
+
+
+		void UpdateWhitespaceWarning( CancellationToken ct )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 777 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				Dispatcher.BeginInvoke( new Action( ( ) =>
+				 {
+					 var visibility = Visibility.Hidden;
+
+					 if( !cbShowWhitespaces.IsChecked == true )
+					 {
+						 var eol = GetEolOption( );
+						 var td = ucPattern.GetTextData( eol );
+
+						 if( RegexHasWhitespace.IsMatch( td.Text ) )
+						 {
+							 visibility = Visibility.Visible;
+						 }
+						 else
+						 {
+							 td = ucText.GetTextData( eol );
+
+							 if( RegexHasWhitespace.IsMatch( td.Text ) )
+							 {
+								 visibility = Visibility.Visible;
+							 }
+						 }
+					 }
+
+					 lblWhitespaceWarning.Visibility = visibility;
+
+				 } ),
+				 DispatcherPriority.ApplicationIdle );
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				// TODO: report
 			}
 		}
 	}

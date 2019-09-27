@@ -122,7 +122,16 @@
                                 <StackPanel>
                                     <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                    <CheckBox x:Name="cbShowWhitespaces" Content="Show whitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged"/>
+                                    <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
+                                        <TextBlock>Show whitespaces
+                                            <InlineUIContainer BaselineAlignment="Baseline" 
+                                                               ToolTip="There are imperceptible whitespaces. Click to show.">
+                                                <TextBlock x:Name="lblWhitespaceWarning" Foreground="Red" Margin="3 0 0 0">
+                                                    <Bold>&#x26a0;</Bold>
+                                                </TextBlock>
+                                            </InlineUIContainer>
+                                        </TextBlock>
+                                    </CheckBox>
                                     <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
                                         <StackPanel.RenderTransform>
                                             <TransformGroup>

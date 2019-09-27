@@ -61,15 +61,21 @@ namespace RegExpressWPF
         }
 
 
-        public string GetText( string eol )
-        {
-            var td = rtb.GetTextData( eol );
+		public string GetText( string eol )
+		{
+			var td = rtb.GetTextData( eol );
 
-            return td.Text;
-        }
+			return td.Text;
+		}
 
 
-        public string Text
+		public TextData GetTextData( string eol )
+		{
+			return rtb.GetTextData( eol );
+		}
+
+
+		public string Text
         {
             set
             {
