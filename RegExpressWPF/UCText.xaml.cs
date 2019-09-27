@@ -22,510 +22,517 @@ using RegExpressWPF.Code;
 
 namespace RegExpressWPF
 {
-    /// <summary>
-    /// Interaction logic for UCText.xaml
-    /// </summary>
-    public partial class UCText : UserControl
-    {
-        readonly WhitespaceAdorner WhitespaceAdorner;
-        readonly UnderliningAdorner UnderliningAdorner;
+	/// <summary>
+	/// Interaction logic for UCText.xaml
+	/// </summary>
+	public partial class UCText : UserControl
+	{
+		readonly WhitespaceAdorner WhitespaceAdorner;
+		readonly UnderliningAdorner UnderliningAdorner;
 
-        readonly TaskHelper RecolouringTask = new TaskHelper( );
-        readonly TaskHelper UnderliningTask = new TaskHelper( );
+		readonly TaskHelper RecolouringTask = new TaskHelper( );
+		readonly TaskHelper UnderliningTask = new TaskHelper( );
 
-        readonly ChangeEventHelper ChangeEventHelper;
-        readonly UndoRedoHelper UndoRedoHelper;
+		readonly ChangeEventHelper ChangeEventHelper;
+		readonly UndoRedoHelper UndoRedoHelper;
 
-        bool AlreadyLoaded = false;
-        IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
-        bool LastShowCaptures;
-        string LastEol;
+		bool AlreadyLoaded = false;
+		IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
+		bool LastShowCaptures;
+		string LastEol;
 
-        readonly StyleInfo[] HighlightStyleInfos;
+		readonly StyleInfo[] HighlightStyleInfos;
 
-        readonly LengthConverter LengthConverter = new LengthConverter( );
+		readonly LengthConverter LengthConverter = new LengthConverter( );
 
 
-        public event EventHandler TextChanged;
-        public event EventHandler SelectionChanged;
-        public event EventHandler LocalUnderliningFinished;
-
+		public event EventHandler TextChanged;
+		public event EventHandler SelectionChanged;
+		public event EventHandler LocalUnderliningFinished;
 
-        public UCText( )
-        {
-            InitializeComponent( );
 
-            WhitespaceAdorner = new WhitespaceAdorner( rtb );
-            UnderliningAdorner = new UnderliningAdorner( rtb );
+		public UCText( )
+		{
+			InitializeComponent( );
 
-            ChangeEventHelper = new ChangeEventHelper( this.rtb );
-            UndoRedoHelper = new UndoRedoHelper( this.rtb );
-
-            HighlightStyleInfos = new[]
-            {
-                new StyleInfo( "MatchHighlight_0" ),
-                new StyleInfo( "MatchHighlight_1" ),
-                new StyleInfo( "MatchHighlight_2" )
-            };
-        }
-
+			WhitespaceAdorner = new WhitespaceAdorner( rtb );
+			UnderliningAdorner = new UnderliningAdorner( rtb );
 
-        public string GetText( string eol )
-        {
-            var td = rtb.GetTextData( eol );
+			ChangeEventHelper = new ChangeEventHelper( this.rtb );
+			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
-            return td.Text;
-        }
+			HighlightStyleInfos = new[]
+			{
+				new StyleInfo( "MatchHighlight_0" ),
+				new StyleInfo( "MatchHighlight_1" ),
+				new StyleInfo( "MatchHighlight_2" )
+			};
+		}
 
-        public string Text
-        {
-            set
-            {
-                RtbUtilities.SetText( rtb, value );
 
-                UndoRedoHelper.Init( );
-            }
-        }
+		public string GetText( string eol )
+		{
+			var td = rtb.GetTextData( eol );
 
+			return td.Text;
+		}
 
-        public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, string eol )
-        {
-            if( matches == null ) throw new ArgumentNullException( "matches" );
 
-            lock( this )
-            {
-                if( LastMatches != null )
-                {
-                    var old_groups = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
-                    var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+		public TextData GetTextData( string eol )
+		{
+			return rtb.GetTextData( eol );
+		}
 
-                    if( new_groups.SequenceEqual( old_groups ) &&
-                        showCaptures == LastShowCaptures &&
-                        eol == LastEol )
-                    {
-                        LastMatches = matches;
 
-                        return;
-                    }
-                }
-            }
+		public string Text
+		{
+			set
+			{
+				RtbUtilities.SetText( rtb, value );
 
-            RecolouringTask.Stop( );
-            UnderliningTask.Stop( );
+				UndoRedoHelper.Init( );
+			}
+		}
 
-            LastMatches = null;
-            LastEol = null;
 
-            RestartRecolouring( matches, showCaptures, eol );
-        }
+		public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		{
+			if( matches == null ) throw new ArgumentNullException( "matches" );
 
+			lock( this )
+			{
+				if( LastMatches != null )
+				{
+					var old_groups = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+					var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
 
-        public void ShowWhitespaces( bool yes )
-        {
-            WhitespaceAdorner.ShowWhitespaces( yes );
-        }
+					if( new_groups.SequenceEqual( old_groups ) &&
+						showCaptures == LastShowCaptures &&
+						eol == LastEol )
+					{
+						LastMatches = matches;
 
+						return;
+					}
+				}
+			}
 
-        public IReadOnlyList<Segment> GetUnderliningInfo( )
-        {
-            lock( this )
-            {
-                if( LastMatches == null ) // no data or processes not finished
-                {
-                    return Enumerable.Empty<Segment>( ).ToList( ).AsReadOnly( );
-                }
-            }
+			RecolouringTask.Stop( );
+			UnderliningTask.Stop( );
 
-            TextData td = null;
+			LastMatches = null;
+			LastEol = null;
 
-            if( !CheckAccess( ) )
-            {
-                ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-                {
-                    td = rtb.GetTextData( LastEol );
-                } );
-            }
-            else
-            {
-                td = rtb.GetTextData( LastEol );
-            }
-
-            return GetUnderliningInfo( CancellationToken.None, td, LastMatches, LastShowCaptures );
-        }
-
+			RestartRecolouring( matches, showCaptures, eol );
+		}
 
-        public void SetUnderlinedCaptures( IReadOnlyList<Segment> segments )
-        {
-            lock( this )
-            {
-                if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol );
-            }
-        }
 
+		public void ShowWhitespaces( bool yes )
+		{
+			WhitespaceAdorner.ShowWhitespaces( yes );
+		}
 
-        public void StopAll( )
-        {
-            RecolouringTask.Stop( );
-            UnderliningTask.Stop( );
-        }
 
+		public IReadOnlyList<Segment> GetUnderliningInfo( )
+		{
+			lock( this )
+			{
+				if( LastMatches == null ) // no data or processes not finished
+				{
+					return Enumerable.Empty<Segment>( ).ToList( ).AsReadOnly( );
+				}
+			}
 
-        private void UserControl_Loaded( object sender, RoutedEventArgs e )
-        {
-            if( AlreadyLoaded ) return;
+			TextData td = null;
 
-            rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
-
-            var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
-            adorner_layer.Add( WhitespaceAdorner );
-            adorner_layer.Add( UnderliningAdorner );
+			if( !CheckAccess( ) )
+			{
+				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+				{
+					td = rtb.GetTextData( LastEol );
+				} );
+			}
+			else
+			{
+				td = rtb.GetTextData( LastEol );
+			}
 
-            AlreadyLoaded = true;
-        }
+			return GetUnderliningInfo( CancellationToken.None, td, LastMatches, LastShowCaptures );
+		}
 
-
-        private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
-        {
-            if( !IsLoaded ) return;
-            if( ChangeEventHelper.IsInChange ) return;
-            if( !rtb.IsFocused ) return;
 
-            lock( this )
-            {
-                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
-            }
+		public void SetUnderlinedCaptures( IReadOnlyList<Segment> segments )
+		{
+			lock( this )
+			{
+				if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol );
+			}
+		}
 
-            UndoRedoHelper.HandleSelectionChanged( );
 
-            SelectionChanged?.Invoke( this, null );
-        }
+		public void StopAll( )
+		{
+			RecolouringTask.Stop( );
+			UnderliningTask.Stop( );
+		}
 
 
-        private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
-        {
-            if( !IsLoaded ) return;
-            if( ChangeEventHelper.IsInChange ) return;
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( AlreadyLoaded ) return;
 
-            RecolouringTask.Stop( );
-            UnderliningTask.Stop( );
+			rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
 
-            UndoRedoHelper.HandleTextChanged( );
+			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
+			adorner_layer.Add( WhitespaceAdorner );
+			adorner_layer.Add( UnderliningAdorner );
 
-            LastMatches = null;
-            LastEol = null;
+			AlreadyLoaded = true;
+		}
 
-            TextChanged?.Invoke( this, null );
-        }
 
+		private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+			if( !rtb.IsFocused ) return;
 
-        private void Rtb_GotFocus( object sender, RoutedEventArgs e )
-        {
-            lock( this )
-            {
-                if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
-            }
-        }
+			lock( this )
+			{
+				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
+			}
 
+			UndoRedoHelper.HandleSelectionChanged( );
 
-        private void Rtb_LostFocus( object sender, RoutedEventArgs e )
-        {
-            lock( this )
-            {
-                if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), LastShowCaptures, LastEol );
-            }
-        }
+			SelectionChanged?.Invoke( this, null );
+		}
 
 
-        private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
-        {
-            if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
-            {
-                e.FormatToApply = DataFormats.UnicodeText;
-            }
-            else if( e.DataObject.GetDataPresent( DataFormats.Text ) )
-            {
-                e.FormatToApply = DataFormats.Text;
-            }
-            else
-            {
-                e.CancelCommand( );
-            }
-        }
+		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
 
+			RecolouringTask.Stop( );
+			UnderliningTask.Stop( );
 
-        private void BtnDbgSave_Click( object sender, RoutedEventArgs e )
-        {
-            rtb.Focus( );
+			UndoRedoHelper.HandleTextChanged( );
 
-            var r = new TextRange( rtb.Document.ContentStart, rtb.Document.ContentEnd );
+			LastMatches = null;
+			LastEol = null;
 
-            using( var fs = File.OpenWrite( @"debug-uctext.xml" ) )
-            {
-                r.Save( fs, DataFormats.Xaml, true );
-            }
-        }
+			TextChanged?.Invoke( this, null );
+		}
 
 
-        void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
-        {
-            RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, eol ) );
+		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		{
+			lock( this )
+			{
+				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
+			}
+		}
 
-            if( rtb.IsFocused )
-            {
-                RestartLocalUnderlining( matches, showCaptures, eol ); // (started as a continuation of previous 'RecolouringTask')
-            }
-        }
 
+		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
+		{
+			lock( this )
+			{
+				if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), LastShowCaptures, LastEol );
+			}
+		}
 
-        void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
-        {
-            try
-            {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
-                ct.ThrowIfCancellationRequested( );
 
-                Debug.WriteLine( $"START RECOLOURING" );
-                DateTime start_time = DateTime.UtcNow;
+		private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
+		{
+			if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
+			{
+				e.FormatToApply = DataFormats.UnicodeText;
+			}
+			else if( e.DataObject.GetDataPresent( DataFormats.Text ) )
+			{
+				e.FormatToApply = DataFormats.Text;
+			}
+			else
+			{
+				e.CancelCommand( );
+			}
+		}
 
-                TextData td = null;
 
-                ChangeEventHelper.Invoke( ct, ( ) =>
-                {
-                    td = rtb.GetTextData( eol );
-                    pbProgress.Maximum = matches.Count;
-                    pbProgress.Value = 0;
-                } );
+		private void BtnDbgSave_Click( object sender, RoutedEventArgs e )
+		{
+			rtb.Focus( );
 
-                ct.ThrowIfCancellationRequested( );
+			var r = new TextRange( rtb.Document.ContentStart, rtb.Document.ContentEnd );
 
-                // (NOTE. Overlaps are possible in this example: (?=(..))
+			using( var fs = File.OpenWrite( @"debug-uctext.xml" ) )
+			{
+				r.Save( fs, DataFormats.Xaml, true );
+			}
+		}
 
-                var highlighted_ranges = new NaiveRanges( td.Text.Length );
-                var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
-                for( int i = 0; i < matches.Count; ++i )
-                {
-                    ct.ThrowIfCancellationRequested( );
+		void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		{
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, eol ) );
 
-                    var highlight_index = unchecked(i % HighlightStyleInfos.Length);
-                    Match match = matches[i];
-                    Debug.Assert( match.Success );
+			if( rtb.IsFocused )
+			{
+				RestartLocalUnderlining( matches, showCaptures, eol ); // (started as a continuation of previous 'RecolouringTask')
+			}
+		}
 
-                    highlighted_ranges.Set( match.Index, match.Length );
-                    segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
-                }
 
+		void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				ct.ThrowIfCancellationRequested( );
 
-                int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
+				Debug.WriteLine( $"START RECOLOURING" );
+				DateTime start_time = DateTime.UtcNow;
 
+				TextData td = null;
 
-                RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, segments_and_styles );
+				ChangeEventHelper.Invoke( ct, ( ) =>
+				{
+					td = rtb.GetTextData( eol );
+					pbProgress.Maximum = matches.Count;
+					pbProgress.Value = 0;
+				} );
 
-                Debug.WriteLine( $"MATCHES COLOURED" );
+				ct.ThrowIfCancellationRequested( );
 
-                ct.ThrowIfCancellationRequested( );
+				// (NOTE. Overlaps are possible in this example: (?=(..))
 
-                var unhighlighted_segments = highlighted_ranges.GetSegments( ct, false ).ToList( );
+				var highlighted_ranges = new NaiveRanges( td.Text.Length );
+				var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
-                RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
+				for( int i = 0; i < matches.Count; ++i )
+				{
+					ct.ThrowIfCancellationRequested( );
 
-                Debug.WriteLine( $"NO-MATCHES COLOURED" );
+					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
+					Match match = matches[i];
+					Debug.Assert( match.Success );
 
-                ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                {
-                    pbProgress.Visibility = Visibility.Hidden;
-                } );
+					highlighted_ranges.Set( match.Index, match.Length );
+					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+				}
 
 
-                Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+				int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
 
-                lock( this )
-                {
-                    LastMatches = matches;
-                    LastShowCaptures = showCaptures;
-                    LastEol = eol;
-                }
-            }
-            catch( OperationCanceledException ) // also 'TaskCanceledException'
-            {
-                // ignore
-            }
-            catch( Exception exc )
-            {
-                throw;
-            }
-        }
 
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, segments_and_styles );
 
-        void RestartLocalUnderlining( IReadOnlyList<Match> matches, bool showCaptures, string eol )
-        {
-            UnderliningTask.RestartAfter( RecolouringTask, ct => LocalUnderlineTaskProc( ct, matches, showCaptures, eol ) );
-        }
+				Debug.WriteLine( $"MATCHES COLOURED" );
 
+				ct.ThrowIfCancellationRequested( );
 
-        void RestartExternalUnderlining( IReadOnlyList<Segment> segments, string eol )
-        {
-            UnderliningTask.RestartAfter( RecolouringTask, ct => ExternalUnderlineTaskProc( ct, segments, eol ) );
-        }
+				var unhighlighted_segments = highlighted_ranges.GetSegments( ct, false ).ToList( );
 
+				RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
 
-        void LocalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
-        {
-            try
-            {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
-                ct.ThrowIfCancellationRequested( );
-
-                Debug.WriteLine( $"START LOCAL UNDERLINING" );
-                DateTime start_time = DateTime.UtcNow;
+				Debug.WriteLine( $"NO-MATCHES COLOURED" );
 
-                TextData td = null;
+				ChangeEventHelper.BeginInvoke( ct, ( ) =>
+				{
+					pbProgress.Visibility = Visibility.Hidden;
+				} );
 
-                ChangeEventHelper.Invoke( ct, ( ) =>
-                {
-                    td = rtb.GetTextData( eol );
-                } );
 
-                List<Segment> segments_to_underline = GetUnderliningInfo( ct, td, matches, showCaptures ).ToList( );
+				Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 
-                UnderliningAdorner.SetRangesToUnderline(
-                    segments_to_underline
-                        .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
-                        .ToList( )
-                        .AsReadOnly( ) );
+				lock( this )
+				{
+					LastMatches = matches;
+					LastShowCaptures = showCaptures;
+					LastEol = eol;
+				}
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				throw;
+			}
+		}
 
-                ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                {
-                    LocalUnderliningFinished?.Invoke( this, null );
-                } );
 
-                Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
-            }
-            catch( OperationCanceledException ) // also 'TaskCanceledException'
-            {
-                // ignore
-            }
-            catch( Exception exc )
-            {
-                throw;
-            }
-        }
+		void RestartLocalUnderlining( IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		{
+			UnderliningTask.RestartAfter( RecolouringTask, ct => LocalUnderlineTaskProc( ct, matches, showCaptures, eol ) );
+		}
 
 
-        void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments, string eol )
-        {
-            try
-            {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
-                ct.ThrowIfCancellationRequested( );
+		void RestartExternalUnderlining( IReadOnlyList<Segment> segments, string eol )
+		{
+			UnderliningTask.RestartAfter( RecolouringTask, ct => ExternalUnderlineTaskProc( ct, segments, eol ) );
+		}
 
-                Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
-                DateTime start_time = DateTime.UtcNow;
-
-                var segments_to_underline = new List<Segment>( );
-
-                foreach( var segment in segments )
-                {
-                    if( ct.IsCancellationRequested ) break;
-
-                    segments_to_underline.Add( segment );
-                }
-
-                TextData td = null;
-
-                ChangeEventHelper.Invoke( ct, ( ) =>
-                {
-                    td = rtb.GetTextData( eol );
-                } );
-
-                UnderliningAdorner.SetRangesToUnderline(
-                    segments_to_underline
-                        .Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
-                        .ToList( )
-                        .AsReadOnly( ) );
-
-                if( segments.Count > 0 )
-                {
-                    ChangeEventHelper.Invoke( ct, ( ) =>
-                    {
-                        var capture = segments.First( );
-
-                        var r = td.Range( capture.Index, capture.Length );
-
-                        switch( r.Start.Parent )
-                        {
-                            case FrameworkContentElement fce:
-                                fce.BringIntoView( );
-                                break;
-                            case FrameworkElement fe:
-                                fe.BringIntoView( );
-                                break;
-                        }
-                    } );
-                }
-
-                Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
-            }
-            catch( OperationCanceledException ) // also 'TaskCanceledException'
-            {
-                // ignore
-            }
-            catch( Exception exc )
-            {
-                throw;
-            }
-        }
-
-
-        IReadOnlyList<Segment> GetUnderliningInfo( CancellationToken ct, TextData td, IReadOnlyList<Match> matches, bool showCaptures )
-        {
-            var items = new List<Segment>( );
-
-            // include captures and groups; if no such objects, then include matches
-
-            foreach( var match in matches )
-            {
-                if( !match.Success ) continue;
-
-                bool found = false;
-
-                foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
-                {
-                    if( !group.Success ) continue;
-
-                    ct.ThrowIfCancellationRequested( );
-
-                    if( showCaptures )
-                    {
-                        foreach( Capture capture in group.Captures )
-                        {
-                            ct.ThrowIfCancellationRequested( );
-
-                            if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
-                            {
-                                items.Add( new Segment( capture.Index, capture.Length ) );
-                                found = true;
-                            }
-                        }
-                    }
-
-                    if( td.SelectionStart >= group.Index && td.SelectionStart <= group.Index + group.Length )
-                    {
-                        items.Add( new Segment( group.Index, group.Length ) );
-                        found = true;
-                    }
-                }
-
-                if( !found )
-                {
-                    if( td.SelectionStart >= match.Index && td.SelectionStart <= match.Index + match.Length )
-                    {
-                        items.Add( new Segment( match.Index, match.Length ) );
-                    }
-                }
-            }
-
-            return items;
-        }
-    }
+
+		void LocalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				Debug.WriteLine( $"START LOCAL UNDERLINING" );
+				DateTime start_time = DateTime.UtcNow;
+
+				TextData td = null;
+
+				ChangeEventHelper.Invoke( ct, ( ) =>
+				{
+					td = rtb.GetTextData( eol );
+				} );
+
+				List<Segment> segments_to_underline = GetUnderliningInfo( ct, td, matches, showCaptures ).ToList( );
+
+				UnderliningAdorner.SetRangesToUnderline(
+					segments_to_underline
+						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+						.ToList( )
+						.AsReadOnly( ) );
+
+				ChangeEventHelper.BeginInvoke( ct, ( ) =>
+				{
+					LocalUnderliningFinished?.Invoke( this, null );
+				} );
+
+				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				throw;
+			}
+		}
+
+
+		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments, string eol )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
+				DateTime start_time = DateTime.UtcNow;
+
+				var segments_to_underline = new List<Segment>( );
+
+				foreach( var segment in segments )
+				{
+					if( ct.IsCancellationRequested ) break;
+
+					segments_to_underline.Add( segment );
+				}
+
+				TextData td = null;
+
+				ChangeEventHelper.Invoke( ct, ( ) =>
+				{
+					td = rtb.GetTextData( eol );
+				} );
+
+				UnderliningAdorner.SetRangesToUnderline(
+					segments_to_underline
+						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+						.ToList( )
+						.AsReadOnly( ) );
+
+				if( segments.Count > 0 )
+				{
+					ChangeEventHelper.Invoke( ct, ( ) =>
+					{
+						var capture = segments.First( );
+
+						var r = td.Range( capture.Index, capture.Length );
+
+						switch( r.Start.Parent )
+						{
+							case FrameworkContentElement fce:
+								fce.BringIntoView( );
+								break;
+							case FrameworkElement fe:
+								fe.BringIntoView( );
+								break;
+						}
+					} );
+				}
+
+				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				throw;
+			}
+		}
+
+
+		IReadOnlyList<Segment> GetUnderliningInfo( CancellationToken ct, TextData td, IReadOnlyList<Match> matches, bool showCaptures )
+		{
+			var items = new List<Segment>( );
+
+			// include captures and groups; if no such objects, then include matches
+
+			foreach( var match in matches )
+			{
+				if( !match.Success ) continue;
+
+				bool found = false;
+
+				foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
+				{
+					if( !group.Success ) continue;
+
+					ct.ThrowIfCancellationRequested( );
+
+					if( showCaptures )
+					{
+						foreach( Capture capture in group.Captures )
+						{
+							ct.ThrowIfCancellationRequested( );
+
+							if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
+							{
+								items.Add( new Segment( capture.Index, capture.Length ) );
+								found = true;
+							}
+						}
+					}
+
+					if( td.SelectionStart >= group.Index && td.SelectionStart <= group.Index + group.Length )
+					{
+						items.Add( new Segment( group.Index, group.Length ) );
+						found = true;
+					}
+				}
+
+				if( !found )
+				{
+					if( td.SelectionStart >= match.Index && td.SelectionStart <= match.Index + match.Length )
+					{
+						items.Add( new Segment( match.Index, match.Length ) );
+					}
+				}
+			}
+
+			return items;
+		}
+	}
 }

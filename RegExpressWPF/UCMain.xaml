@@ -53,7 +53,7 @@
 
                 <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
                     <TextBlock Text="Text" Style="{StaticResource Labels}"/>
-                    <TextBlock x:Name="lblTextLength" Text="(Length)" Margin="16 0 0 0" RenderTransformOrigin="0.5,0.5" >
+                    <TextBlock x:Name="lblTextInfo" Text="(Length)" Margin="16 0 0 0" RenderTransformOrigin="0.5,0.5" >
                         <TextBlock.RenderTransform>
                             <TransformGroup>
                                 <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
@@ -64,7 +64,7 @@
                         </TextBlock.RenderTransform>
                     </TextBlock>
                 </StackPanel>
-                <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" />
+                <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" GotKeyboardFocus="ucText_GotKeyboardFocus" />
             </Grid>
         </Grid>
 
