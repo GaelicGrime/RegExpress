@@ -20,6 +20,7 @@
                      SelectionChanged="Rtb_SelectionChanged" 
                      TextChanged="Rtb_TextChanged" 
                      GotFocus="Rtb_GotFocus" 
+                     LostFocus="Rtb_LostFocus" 
                      DataObject.Pasting="Rtb_Pasting" 
                      IsUndoEnabled="False" >
                 

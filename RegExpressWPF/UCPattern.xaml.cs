@@ -21,44 +21,44 @@ using RegExpressWPF.Code;
 
 namespace RegExpressWPF
 {
-    /// <summary>
-    /// Interaction logic for UCPattern.xaml
-    /// </summary>
-    public partial class UCPattern : UserControl
-    {
-        readonly WhitespaceAdorner WhitespaceAdorner;
+	/// <summary>
+	/// Interaction logic for UCPattern.xaml
+	/// </summary>
+	public partial class UCPattern : UserControl
+	{
+		readonly WhitespaceAdorner WhitespaceAdorner;
 
-        readonly TaskHelper RecolouringTask = new TaskHelper( );
+		readonly TaskHelper RecolouringTask = new TaskHelper( );
 
-        readonly ChangeEventHelper ChangeEventHelper;
-        readonly UndoRedoHelper UndoRedoHelper;
+		readonly ChangeEventHelper ChangeEventHelper;
+		readonly UndoRedoHelper UndoRedoHelper;
 
-        bool AlreadyLoaded = false;
+		bool AlreadyLoaded = false;
 
-        readonly StyleInfo PatternParaHighlightStyleInfo;
-        readonly StyleInfo PatternEscapeStyleInfo;
-        readonly StyleInfo PatternGroupHighlightStyleInfo;
-        readonly StyleInfo CommentStyleInfo;
+		readonly StyleInfo PatternParaHighlightStyleInfo;
+		readonly StyleInfo PatternEscapeStyleInfo;
+		readonly StyleInfo PatternGroupHighlightStyleInfo;
+		readonly StyleInfo CommentStyleInfo;
 
-        RegexOptions mRegexOptions;
+		RegexOptions mRegexOptions;
 
-        public event EventHandler TextChanged;
+		public event EventHandler TextChanged;
 
 
-        public UCPattern( )
-        {
-            InitializeComponent( );
+		public UCPattern( )
+		{
+			InitializeComponent( );
 
-            WhitespaceAdorner = new WhitespaceAdorner( rtb );
+			WhitespaceAdorner = new WhitespaceAdorner( rtb );
 
-            ChangeEventHelper = new ChangeEventHelper( this.rtb );
-            UndoRedoHelper = new UndoRedoHelper( this.rtb );
+			ChangeEventHelper = new ChangeEventHelper( this.rtb );
+			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
-            PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
-            PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
-            PatternGroupHighlightStyleInfo = new StyleInfo( "PatternGroupHighlight" );
-            CommentStyleInfo = new StyleInfo( "PatternComment" );
-        }
+			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
+			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
+			PatternGroupHighlightStyleInfo = new StyleInfo( "PatternGroupHighlight" );
+			CommentStyleInfo = new StyleInfo( "PatternComment" );
+		}
 
 
 		public string GetText( string eol )
@@ -76,325 +76,361 @@ namespace RegExpressWPF
 
 
 		public string Text
-        {
-            set
-            {
-                RtbUtilities.SetText( rtb, value );
+		{
+			set
+			{
+				RtbUtilities.SetText( rtb, value );
 
-                UndoRedoHelper.Init( );
-            }
-        }
-
-
-        public void SetRegexOptions( RegexOptions regexOptions )
-        {
-            StopAll( );
-            mRegexOptions = regexOptions;
-            if( IsLoaded ) RestartRecolouring( );
-        }
+				UndoRedoHelper.Init( );
+			}
+		}
 
 
-        public void ShowWhitespaces( bool yes )
-        {
-            WhitespaceAdorner.ShowWhitespaces( yes );
-        }
+		public void SetRegexOptions( RegexOptions regexOptions )
+		{
+			StopAll( );
+			mRegexOptions = regexOptions;
+			if( IsLoaded ) RestartRecolouring( );
+		}
 
 
-        public void SetFocus( )
-        {
-            rtb.Focus( );
-            rtb.Selection.Select( rtb.Document.ContentStart, rtb.Document.ContentStart );
-        }
+		public void ShowWhitespaces( bool yes )
+		{
+			WhitespaceAdorner.ShowWhitespaces( yes );
+		}
 
 
-        public void StopAll( )
-        {
-            RecolouringTask.Stop( );
-        }
+		public void SetFocus( )
+		{
+			rtb.Focus( );
+			rtb.Selection.Select( rtb.Document.ContentStart, rtb.Document.ContentStart );
+		}
 
 
-        private void UserControl_Loaded( object sender, RoutedEventArgs e )
-        {
-            if( AlreadyLoaded ) return;
-
-            var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
-            adorner_layer.Add( WhitespaceAdorner );
-
-            AlreadyLoaded = true;
-        }
+		public void StopAll( )
+		{
+			RecolouringTask.Stop( );
+		}
 
 
-        private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
-        {
-            if( !IsLoaded ) return;
-            if( ChangeEventHelper.IsInChange ) return;
-            if( !rtb.IsFocused ) return;
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( AlreadyLoaded ) return;
 
-            UndoRedoHelper.HandleSelectionChanged( );
+			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
+			adorner_layer.Add( WhitespaceAdorner );
 
-            RestartRecolouring( );
-        }
-
-
-        private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
-        {
-            if( !IsLoaded ) return;
-            if( ChangeEventHelper.IsInChange ) return;
-
-            UndoRedoHelper.HandleTextChanged( );
-
-            TextChanged?.Invoke( this, null );
-
-            RestartRecolouring( );
-        }
+			AlreadyLoaded = true;
+		}
 
 
-        private void Rtb_GotFocus( object sender, RoutedEventArgs e )
-        {
-            if( !IsLoaded ) return;
-            if( ChangeEventHelper.IsInChange ) return;
+		private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+			if( !rtb.IsFocused ) return;
 
-            RestartRecolouring( );
-        }
+			UndoRedoHelper.HandleSelectionChanged( );
 
-
-        private void Rtb_Copying( object sender, DataObjectCopyingEventArgs e )
-        {
-        }
+			RestartRecolouring( );
+		}
 
 
-        private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
-        {
-            if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
-            {
-                e.FormatToApply = DataFormats.UnicodeText;
-            }
-            else if( e.DataObject.GetDataPresent( DataFormats.Text ) )
-            {
-                e.FormatToApply = DataFormats.Text;
-            }
-            else
-            {
-                e.CancelCommand( );
-            }
-        }
+		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			UndoRedoHelper.HandleTextChanged( );
+
+			TextChanged?.Invoke( this, null );
+
+			RestartRecolouring( );
+		}
 
 
-        void RestartRecolouring( )
-        {
-            bool is_focused = rtb.IsFocused;
+		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
 
-            RecolouringTask.Restart( ct => RecolourTaskProc( ct, is_focused, mRegexOptions ) );
-        }
+			RestartRecolouring( );
+		}
 
 
-        void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions )
-        {
-            try
-            {
-                if( ct.WaitHandle.WaitOne( 333 ) ) return;
-                ct.ThrowIfCancellationRequested( );
+		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
 
-                TextData td = null;
+			RestartRecolouring( );
+		}
 
-                ChangeEventHelper.Invoke( ct, ( ) =>
-                {
-                    td = rtb.GetTextData( null );
-                } );
 
-                ct.ThrowIfCancellationRequested( );
+		private void Rtb_Copying( object sender, DataObjectCopyingEventArgs e )
+		{
+		}
 
-                var coloured_ranges = new NaiveRanges( td.Text.Length );
 
-                bool ignore_pattern_whitespace = ( regexOptions & RegexOptions.IgnorePatternWhitespace ) != 0;
+		private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
+		{
+			if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
+			{
+				e.FormatToApply = DataFormats.UnicodeText;
+			}
+			else if( e.DataObject.GetDataPresent( DataFormats.Text ) )
+			{
+				e.FormatToApply = DataFormats.Text;
+			}
+			else
+			{
+				e.CancelCommand( );
+			}
+		}
 
-                string pattern = $@"
+
+		void RestartRecolouring( )
+		{
+			bool is_focused = rtb.IsFocused;
+
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, is_focused, mRegexOptions ) );
+		}
+
+
+		void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 333 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				TextData td = null;
+
+				ChangeEventHelper.Invoke( ct, ( ) =>
+				{
+					td = rtb.GetTextData( null );
+				} );
+
+				ct.ThrowIfCancellationRequested( );
+
+				var coloured_ranges = new NaiveRanges( td.Text.Length );
+
+				bool ignore_pattern_whitespace = ( regexOptions & RegexOptions.IgnorePatternWhitespace ) != 0;
+
+				string pattern = $@"
+					(?'inline_comment'\(\?\#.*?\)) |
                     (?'para'\(|\)) |
                     (?'group'\[(\\.|.)*?(?'eog'\])) |
-                    {( ignore_pattern_whitespace ? @"(?'comment'\#[^\r\n]*) |" : "" )}
+                    {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\r\n]*) |" : "" )}
                     (?'other'(\\.|[^\(\)\[\]{( ignore_pattern_whitespace ? "#" : "" )}])+)
                     ";
 
-                var matches = Regex.Matches( td.Text, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline )
-                    .Cast<Match>( )
-                    .ToArray( );
+				var matches = Regex.Matches( td.Text, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline )
+					.Cast<Match>( )
+					.ToArray( );
 
-                ct.ThrowIfCancellationRequested( );
+				ct.ThrowIfCancellationRequested( );
 
-                if( ignore_pattern_whitespace )
-                {
-                    List<Segment> comment_segments =
-                        matches
-                            .Select( m => m.Groups["comment"] )
-                            .Where( g => g.Success )
-                            .Select( g => new Segment( g.Index, g.Length ) )
-                            .ToList( );
+				{
+					// process comments
 
-                    RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, comment_segments, CommentStyleInfo );
+					List<Segment> comment_segments =
+						matches
+							.Select( m => m.Groups["inline_comment"] )
+							.Concat( matches.Select( m => m.Groups["eol_comment"] ) )
+							.Where( g => g.Success )
+							.Select( g => new Segment( g.Index, g.Length ) )
+							.ToList( );
 
-                    coloured_ranges.Set( comment_segments );
-                }
+					RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, comment_segments, CommentStyleInfo );
 
-                if( is_focused )
-                {
-                    var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
-                    var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
-                    var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
+					coloured_ranges.Set( comment_segments );
 
-                    ct.ThrowIfCancellationRequested( );
+#if false
+					// highlighting '( )' of active comment too
+					if( is_focused )
+					{
+						Group active_inline_comment =
+							matches
+								.Select( m => m.Groups["inline_comment"] )
+								.FirstOrDefault( g => g.Success && td.SelectionStart >= g.Index && td.SelectionEnd < g.Index + g.Length );
 
-                    if( parentheses_at_left.Any( ) )
-                    {
-                        int n = 0;
-                        int found_i = -1;
-                        for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
-                        {
-                            ct.ThrowIfCancellationRequested( );
+						if( active_inline_comment != null )
+						{
+							ChangeEventHelper.BeginInvoke( ct, ( ) =>
+							{
+								td.Range( active_inline_comment.Index, 1 ).Style( PatternParaHighlightStyleInfo );
+								td.Range( active_inline_comment.Index + active_inline_comment.Length - 1, 1 ).Style( PatternParaHighlightStyleInfo );
+							} );
 
-                            var m = parentheses_at_left[i];
-                            if( m.Value == ")" ) --n;
-                            else if( m.Value == "(" ) ++n;
-                            if( n == +1 )
-                            {
-                                found_i = i;
-                                break;
-                            }
-                        }
-                        if( found_i >= 0 )
-                        {
-                            var m = parentheses_at_left[found_i];
+							coloured_ranges.Set( active_inline_comment.Index );
+							coloured_ranges.Set( active_inline_comment.Index + active_inline_comment.Length - 1 );
+						}
+					}
+#endif
 
-                            ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                            {
-                                td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
-                            } );
+				}
 
-                            coloured_ranges.Set( m.Index );
-                        }
-                    }
+				if( is_focused )
+				{
+					var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
+					var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
+					var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
 
-                    if( parentheses_at_right.Any( ) )
-                    {
-                        int n = 0;
-                        int found_i = -1;
-                        for( int i = 0; i < parentheses_at_right.Length; ++i )
-                        {
-                            ct.ThrowIfCancellationRequested( );
+					ct.ThrowIfCancellationRequested( );
 
-                            var m = parentheses_at_right[i];
-                            if( m.Value == "(" ) --n;
-                            else if( m.Value == ")" ) ++n;
-                            if( n == +1 )
-                            {
-                                found_i = i;
-                                break;
-                            }
-                        }
-                        if( found_i >= 0 )
-                        {
-                            var m = parentheses_at_right[found_i];
+					if( parentheses_at_left.Any( ) )
+					{
+						int n = 0;
+						int found_i = -1;
+						for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
+						{
+							ct.ThrowIfCancellationRequested( );
 
-                            ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                            {
-                                td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
-                            } );
+							var m = parentheses_at_left[i];
+							if( m.Value == ")" ) --n;
+							else if( m.Value == "(" ) ++n;
+							if( n == +1 )
+							{
+								found_i = i;
+								break;
+							}
+						}
+						if( found_i >= 0 )
+						{
+							var m = parentheses_at_left[found_i];
 
-                            coloured_ranges.Set( m.Index );
-                        }
-                    }
+							ChangeEventHelper.BeginInvoke( ct, ( ) =>
+							{
+								td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
+							} );
 
-                    var current_group = matches.Where( m => m.Groups["group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length >= td.SelectionStart ).FirstOrDefault( );
-                    if( current_group != null )
-                    {
-                        ct.ThrowIfCancellationRequested( );
+							coloured_ranges.Set( m.Index );
+						}
+					}
 
-                        ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                        {
-                            td.Range( current_group.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
-                        } );
+					if( parentheses_at_right.Any( ) )
+					{
+						int n = 0;
+						int found_i = -1;
+						for( int i = 0; i < parentheses_at_right.Length; ++i )
+						{
+							ct.ThrowIfCancellationRequested( );
 
-                        coloured_ranges.Set( current_group.Index );
+							var m = parentheses_at_right[i];
+							if( m.Value == "(" ) --n;
+							else if( m.Value == ")" ) ++n;
+							if( n == +1 )
+							{
+								found_i = i;
+								break;
+							}
+						}
+						if( found_i >= 0 )
+						{
+							var m = parentheses_at_right[found_i];
 
-                        var eog = current_group.Groups["eog"];
-                        if( eog.Success )
-                        {
-                            ChangeEventHelper.BeginInvoke( ct, ( ) =>
-                            {
-                                td.Range( eog.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
-                            } );
+							ChangeEventHelper.BeginInvoke( ct, ( ) =>
+							{
+								td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
+							} );
 
-                            coloured_ranges.Set( eog.Index );
-                        }
-                    }
-                }
+							coloured_ranges.Set( m.Index );
+						}
+					}
 
-                var escapes = new List<Segment>( );
+					var current_group = matches.Where( m => m.Groups["group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length >= td.SelectionStart ).FirstOrDefault( );
+					if( current_group != null )
+					{
+						ct.ThrowIfCancellationRequested( );
 
-                foreach( Match group in matches.Where( m => { var g = m.Groups["group"]; return g.Success && g.Length > 2; } ) )
-                {
-                    ct.ThrowIfCancellationRequested( );
-                    GetRecolorEscapes( escapes, td, group.Index + 1, group.Length - 2, ct );
-                }
+						ChangeEventHelper.BeginInvoke( ct, ( ) =>
+						{
+							td.Range( current_group.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
+						} );
 
-                foreach( Match other in matches.Where( m => m.Groups["other"].Success ) )
-                {
-                    ct.ThrowIfCancellationRequested( );
-                    GetRecolorEscapes( escapes, td, other.Index, other.Length, ct );
-                }
+						coloured_ranges.Set( current_group.Index );
 
-                coloured_ranges.Set( escapes );
+						var eog = current_group.Groups["eog"];
+						if( eog.Success )
+						{
+							ChangeEventHelper.BeginInvoke( ct, ( ) =>
+							{
+								td.Range( eog.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
+							} );
 
-                {
-                    int i = 0;
-                    while( i < escapes.Count )
-                    {
-                        ct.ThrowIfCancellationRequested( );
+							coloured_ranges.Set( eog.Index );
+						}
+					}
+				}
 
-                        ChangeEventHelper.Invoke( ct, ( ) =>
-                        {
-                            var start = Environment.TickCount;
-                            var end = unchecked(start + 77); // (in rare case we will have overflow, which we are going to ignore)
+				var escapes = new List<Segment>( );
 
-                            do
-                            {
-                                var e = escapes[i];
-                                td.Range( e ).Style( PatternEscapeStyleInfo );
-                            } while( ++i < escapes.Count && Environment.TickCount <= end );
-                        } );
-                    }
-                }
+				foreach( Match group in matches.Where( m => { var g = m.Groups["group"]; return g.Success && g.Length > 2; } ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+					GetRecolorEscapes( escapes, td, group.Index + 1, group.Length - 2, ct );
+				}
 
-                var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
+				foreach( Match other in matches.Where( m => m.Groups["other"].Success ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+					GetRecolorEscapes( escapes, td, other.Index, other.Length, ct );
+				}
 
-                RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-                //RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
-            }
-            catch( OperationCanceledException ) // also 'TaskCanceledException'
-            {
-                // ignore
-            }
-            catch( Exception exc )
-            {
-                throw;
-            }
-        }
+				coloured_ranges.Set( escapes );
+
+				{
+					int i = 0;
+					while( i < escapes.Count )
+					{
+						ct.ThrowIfCancellationRequested( );
+
+						ChangeEventHelper.Invoke( ct, ( ) =>
+						{
+							var start = Environment.TickCount;
+							var end = unchecked(start + 77); // (in rare case we will have overflow, which we are going to ignore)
+
+							do
+							{
+								var e = escapes[i];
+								td.Range( e ).Style( PatternEscapeStyleInfo );
+							} while( ++i < escapes.Count && Environment.TickCount <= end );
+						} );
+					}
+				}
+
+				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
+
+				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				throw;
+			}
+		}
 
 
-        void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
-        {
-            if( len == 0 ) return;
+		void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
+		{
+			if( len == 0 ) return;
 
-            string s = td.Text.Substring( start, len );
+			string s = td.Text.Substring( start, len );
 
-            const string pattern = @"\\[0-7]{2,3}|\\x[0-9A-F]{2}|\\c[A-Z]|\\u[0-9A-F]{4}|\\p\{[A-Z]+\}|\\k<[A-Z]+>|\\.";
+			const string pattern = @"\\[0-7]{2,3}|\\x[0-9A-F]{2}|\\c[A-Z]|\\u[0-9A-F]{4}|\\p\{[A-Z]+\}|\\k<[A-Z]+>|\\.";
 
-            var ms = Regex.Matches( s, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase );
+			var ms = Regex.Matches( s, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase );
 
-            foreach( Match m in ms )
-            {
-                ct.ThrowIfCancellationRequested( );
-                list.Add( new Segment( start + m.Index, m.Length ) );
-            }
-        }
-    }
+			foreach( Match m in ms )
+			{
+				ct.ThrowIfCancellationRequested( );
+				list.Add( new Segment( start + m.Index, m.Length ) );
+			}
+		}
+	}
 }

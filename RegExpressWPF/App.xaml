@@ -127,7 +127,8 @@
         </Style>
 
         <Style x:Key="PatternComment" TargetType="TextBlock" PresentationOptions:Freeze="True">
-            <Setter Property="Foreground" Value="Green"/>
+            <Setter Property="Foreground" Value="#FF009000"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
 
