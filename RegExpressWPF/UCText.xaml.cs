@@ -288,7 +288,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				Debug.WriteLine( $"START RECOLOURING" );
@@ -380,7 +380,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				if( ct.WaitHandle.WaitOne( 222 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				Debug.WriteLine( $"START LOCAL UNDERLINING" );
@@ -423,7 +423,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				Debug.WriteLine( $"START EXTERNAL UNDERLINING" );

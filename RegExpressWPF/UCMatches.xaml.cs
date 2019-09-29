@@ -304,7 +304,7 @@ namespace RegExpressWPF
         {
             try
             {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
+                if( ct.WaitHandle.WaitOne( 333 ) ) return;
                 ct.ThrowIfCancellationRequested( );
 
                 if( matches.Count == 0 )
@@ -741,7 +741,7 @@ namespace RegExpressWPF
         {
             try
             {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
+                if( ct.WaitHandle.WaitOne( 333 ) ) return;
                 ct.ThrowIfCancellationRequested( );
 
                 var inlines_to_underline = new List<(Inline inline, Info info)>( );
@@ -817,7 +817,7 @@ namespace RegExpressWPF
         {
             try
             {
-                if( ct.WaitHandle.WaitOne( 111 ) ) return;
+                if( ct.WaitHandle.WaitOne( 222 ) ) return;
                 ct.ThrowIfCancellationRequested( );
 
                 List<Info> infos = null;

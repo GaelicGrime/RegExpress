@@ -201,7 +201,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 333 ) ) return;
+				if( ct.WaitHandle.WaitOne( 222 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;

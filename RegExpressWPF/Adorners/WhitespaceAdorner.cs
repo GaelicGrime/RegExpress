@@ -204,10 +204,10 @@ namespace RegExpressWPF.Adorners
 
 			dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-			const double EOF_WIDTH = 5;
-			double h = Math.Ceiling( rect.Height * 0.4 );
+			const double EOF_WIDTH = 4;
+			double h = Math.Ceiling( rect.Height * 0.3 );
 
-			var x = Math.Ceiling( rect.Left + 4 ) + EofPen.Thickness / 2;
+			var x = Math.Ceiling( rect.Left + 3 ) + EofPen.Thickness / 2;
 			var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) - EofPen.Thickness / 2;
 
 			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
