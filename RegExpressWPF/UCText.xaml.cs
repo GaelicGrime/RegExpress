@@ -25,7 +25,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCText.xaml
 	/// </summary>
-	public partial class UCText : UserControl
+	public partial class UCText : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
 		readonly UnderliningAdorner UnderliningAdorner;
@@ -97,7 +97,7 @@ namespace RegExpressWPF
 
 		public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
-			if( matches == null ) throw new ArgumentNullException( "matches" );
+			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
 			lock( this )
 			{
@@ -127,9 +127,9 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowWhitespaces( bool yes )
+		public void ShowWhiteSpaces( bool yes )
 		{
-			WhitespaceAdorner.ShowWhitespaces( yes );
+			WhitespaceAdorner.ShowWhiteSpaces( yes );
 		}
 
 
@@ -323,9 +323,6 @@ namespace RegExpressWPF
 				}
 
 
-				int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
-
-
 				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, segments_and_styles );
 
 				Debug.WriteLine( $"MATCHES COLOURED" );
@@ -484,7 +481,7 @@ namespace RegExpressWPF
 		}
 
 
-		IReadOnlyList<Segment> GetUnderliningInfo( CancellationToken ct, TextData td, IReadOnlyList<Match> matches, bool showCaptures )
+		static IReadOnlyList<Segment> GetUnderliningInfo( CancellationToken ct, TextData td, IReadOnlyList<Match> matches, bool showCaptures )
 		{
 			var items = new List<Segment>( );
 
@@ -534,5 +531,47 @@ namespace RegExpressWPF
 
 			return items;
 		}
+
+
+		#region IDisposable Support
+
+		private bool disposedValue = false; // To detect redundant calls
+
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !disposedValue )
+			{
+				if( disposing )
+				{
+					// TODO: dispose managed state (managed objects).
+
+					using( RecolouringTask ) { }
+					using( UnderliningTask ) { }
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+				// TODO: set large fields to null.
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+		// ~UCText()
+		// {
+		//   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+		//   Dispose(false);
+		// }
+
+		// This code added to correctly implement the disposable pattern.
+		public void Dispose( )
+		{
+			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+			Dispose( true );
+			// TODO: uncomment the following line if the finalizer is overridden above.
+			// GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }

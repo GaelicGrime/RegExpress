@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace RegExpressWPF.Code
 {
-    public class NaiveRanges
+    public sealed class NaiveRanges
     {
         readonly bool[] data; // TODO: consider a 'BitArray'
         // NOTE. 'bool[]' is array of bytes

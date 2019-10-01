@@ -20,6 +20,7 @@ namespace RegExpressWPF.Code
         public readonly string Eol;  //  which is also kept in 'Eol')
         public readonly IReadOnlyList<TextPointer> Pointers; // (maps string index of 'Text' to 'TextPointer')
 
+
         public BaseTextData( string text, string eol, IReadOnlyList<TextPointer> pointers )
         {
             Text = text;
@@ -29,10 +30,11 @@ namespace RegExpressWPF.Code
     }
 
 
-    public class TextData : BaseTextData
+    public sealed class TextData : BaseTextData
     {
         public readonly int SelectionStart;
         public readonly int SelectionEnd;
+
 
         public TextData( string text, string eol, IReadOnlyList<TextPointer> pointers, int selectionStart, int selectionEnd )
             : base( text, eol, pointers )
@@ -395,7 +397,7 @@ namespace RegExpressWPF.Code
         }
 
 
-        public static TextRange Range( this TextData td, int start, int len )
+        public static TextRange Range( this BaseTextData td, int start, int len )
         {
             var range = new TextRange( td.Pointers[start], td.Pointers[start + len] );
 
@@ -459,7 +461,7 @@ namespace RegExpressWPF.Code
         const int SEGMENT_LENGTH = 100;
 
 
-        public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
+        public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
         {
             // split into smaller segments
 

@@ -24,7 +24,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCPattern.xaml
 	/// </summary>
-	public partial class UCPattern : UserControl
+	public partial class UCPattern : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
 
@@ -94,9 +94,9 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowWhitespaces( bool yes )
+		public void ShowWhiteSpaces( bool yes )
 		{
-			WhitespaceAdorner.ShowWhitespaces( yes );
+			WhitespaceAdorner.ShowWhiteSpaces( yes );
 		}
 
 
@@ -416,7 +416,7 @@ namespace RegExpressWPF
 		}
 
 
-		void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
+		static void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
 		{
 			if( len == 0 ) return;
 
@@ -432,5 +432,46 @@ namespace RegExpressWPF
 				list.Add( new Segment( start + m.Index, m.Length ) );
 			}
 		}
+
+
+		#region IDisposable Support
+
+		private bool disposedValue = false; // To detect redundant calls
+
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !disposedValue )
+			{
+				if( disposing )
+				{
+					// TODO: dispose managed state (managed objects).
+
+					using( RecolouringTask ) { }
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+				// TODO: set large fields to null.
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+		// ~UCPattern()
+		// {
+		//   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+		//   Dispose(false);
+		// }
+
+		// This code added to correctly implement the disposable pattern.
+		public void Dispose( )
+		{
+			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+			Dispose( true );
+			// TODO: uncomment the following line if the finalizer is overridden above.
+			// GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }

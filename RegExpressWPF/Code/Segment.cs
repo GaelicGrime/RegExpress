@@ -24,5 +24,33 @@ namespace RegExpressWPF.Code
 		{
 			return Length == 0 ? $"(empty at {Index})" : $"({Index}..{Index + Length - 1})";
 		}
+
+
+		public override bool Equals( object obj )
+		{
+			if( !( obj is Segment ) ) return false;
+
+			Segment a = (Segment)obj;
+
+			return Index == a.Index && Length == a.Length;
+		}
+
+
+		public override int GetHashCode( )
+		{
+			return unchecked(Index ^ Length);
+		}
+
+
+		public static bool operator ==( Segment left, Segment right )
+		{
+			return left.Equals( right );
+		}
+
+
+		public static bool operator !=( Segment left, Segment right )
+		{
+			return !( left == right );
+		}
 	}
 }

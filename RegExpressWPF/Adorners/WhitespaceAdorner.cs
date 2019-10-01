@@ -46,7 +46,7 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		public void ShowWhitespaces( bool yes )
+		public void ShowWhiteSpaces( bool yes )
 		{
 			mShowWhitespaces = yes;
 

@@ -9,7 +9,7 @@ using System.Windows.Documents;
 
 namespace RegExpressWPF.Code
 {
-    public class StyleInfo
+    public sealed class StyleInfo
     {
         readonly List<(DependencyProperty prop, object val)> mValues = new List<(DependencyProperty, object)>( );
 

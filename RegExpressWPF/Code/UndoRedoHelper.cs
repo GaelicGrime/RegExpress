@@ -14,7 +14,7 @@ using System.Windows.Input;
 
 namespace RegExpressWPF.Code
 {
-    internal class UndoRedoHelper
+    internal sealed class UndoRedoHelper
     {
         class Diff
         {
@@ -28,7 +28,7 @@ namespace RegExpressWPF.Code
             }
         }
 
-        class SelectionInfo
+        sealed class SelectionInfo
         {
             internal readonly int SelectionStart;
             internal readonly int SelectionEnd;
@@ -39,7 +39,7 @@ namespace RegExpressWPF.Code
                 SelectionEnd = selectionEnd;
             }
 
-            internal int Length => Math.Abs( SelectionStart - SelectionEnd );
+            public int Length => Math.Abs( SelectionStart - SelectionEnd );
 
             public override string ToString( )
             {

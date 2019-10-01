@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RegExpressWPF.Code
 {
-    public class TabData
+    public sealed class TabData
     {
         public string Name;
         public string Pattern;
@@ -16,7 +16,7 @@ namespace RegExpressWPF.Code
         public RegexOptions RegexOptions;
         public bool ShowFirstMatchOnly;
         public bool ShowCaptures;
-        public bool ShowWhitespaces;
+        public bool ShowWhiteSpaces;
         public string Eol;
     }
 }

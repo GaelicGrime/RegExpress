@@ -12,7 +12,7 @@ using System.Windows.Threading;
 
 namespace RegExpressWPF.Code
 {
-    public class ChangeEventHelper
+    public sealed class ChangeEventHelper
     {
         int mChangeIndex = 0;
         readonly RichTextBox mRtb;
@@ -60,6 +60,8 @@ namespace RegExpressWPF.Code
 
         public void Do( Action action )
         {
+			Debug.Assert( action != null );
+
             Interlocked.Increment( ref mChangeIndex );
             mRtb.BeginChange( );
             try
@@ -90,7 +92,7 @@ namespace RegExpressWPF.Code
         //}
 
 
-        DispatcherPriority GetPriority( )
+        static DispatcherPriority GetPriority( )
         {
             return DispatcherPriority.ApplicationIdle;
             //return DispatcherPriority.Background;

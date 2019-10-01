@@ -197,7 +197,7 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		RectInfo GetRectInfo( TextPointer thisPointer, Rect thisLeadingRect )
+		static RectInfo GetRectInfo( TextPointer thisPointer, Rect thisLeadingRect )
 		{
 			Debug.Assert( thisPointer.IsAtInsertionPosition );
 			var nextPointer = thisPointer.GetNextInsertionPosition( LogicalDirection.Forward );

@@ -24,7 +24,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCMain.xaml
 	/// </summary>
-	public partial class UCMain : UserControl
+	public partial class UCMain : UserControl, IDisposable
 	{
 		readonly TaskHelper FindMatchesTask = new TaskHelper( );
 		readonly TaskHelper UpdateWhitespaceWarningTask = new TaskHelper( );
@@ -62,8 +62,8 @@ namespace RegExpressWPF
 		};
 
 
-		public EventHandler Changed;
-		public EventHandler NewTabClicked;
+		public event EventHandler Changed;
+		public event EventHandler NewTabClicked;
 
 
 		public UCMain( )
@@ -98,12 +98,12 @@ namespace RegExpressWPF
 			tabData.RegexOptions = GetRegexOptions( );
 			tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 			tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
-			tabData.ShowWhitespaces = cbShowWhitespaces.IsChecked == true;
+			tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 			tabData.Eol = GetEolOption( );
 		}
 
 
-		public void ShowNewTabButon( bool yes )
+		public void ShowNewTabButton( bool yes )
 		{
 			btnNewTab.Visibility = yes ? Visibility.Visible : Visibility.Collapsed;
 		}
@@ -246,8 +246,8 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			ucPattern.ShowWhitespaces( cbShowWhitespaces.IsChecked == true );
-			ucText.ShowWhitespaces( cbShowWhitespaces.IsChecked == true );
+			ucPattern.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
+			ucText.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 
 			Changed?.Invoke( this, null );
 
@@ -303,7 +303,7 @@ namespace RegExpressWPF
 
 			cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
 			cbShowCaptures.IsChecked = tabData.ShowCaptures;
-			cbShowWhitespaces.IsChecked = tabData.ShowWhitespaces;
+			cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
 
 			foreach( var item in cbxEol.Items.Cast<ComboBoxItem>( ) )
 			{
@@ -311,8 +311,8 @@ namespace RegExpressWPF
 			}
 			if( cbxEol.SelectedItem == null ) ( (ComboBoxItem)cbxEol.Items[0] ).IsSelected = true;
 
-			ucPattern.ShowWhitespaces( tabData.ShowWhitespaces );
-			ucText.ShowWhitespaces( tabData.ShowWhitespaces );
+			ucPattern.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
+			ucText.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
 
 			RestartShowTextInfo( );
 			RestartUpdateWhitespaceWarning( );
@@ -446,7 +446,7 @@ namespace RegExpressWPF
 				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
 					ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
-					ucMatches.ShowError( ct, exc );
+					ucMatches.ShowError( exc );
 					lblMatches.Text = "Error";
 					pnlShowAll.Visibility = Visibility.Collapsed;
 					pnlShowFirst.Visibility = Visibility.Collapsed;
@@ -533,5 +533,47 @@ namespace RegExpressWPF
 				// TODO: report
 			}
 		}
+
+
+		#region IDisposable Support
+
+		private bool disposedValue = false; // To detect redundant calls
+
+		protected virtual void Dispose( bool disposing )
+		{
+			if( !disposedValue )
+			{
+				if( disposing )
+				{
+					// TODO: dispose managed state (managed objects).
+
+					using( FindMatchesTask ) { }
+					using( UpdateWhitespaceWarningTask ) { }
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+				// TODO: set large fields to null.
+
+				disposedValue = true;
+			}
+		}
+
+		// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+		// ~UCMain()
+		// {
+		//   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+		//   Dispose(false);
+		// }
+
+		// This code added to correctly implement the disposable pattern.
+		public void Dispose( )
+		{
+			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+			Dispose( true );
+			// TODO: uncomment the following line if the finalizer is overridden above.
+			// GC.SuppressFinalize(this);
+		}
+
+		#endregion
 	}
 }
