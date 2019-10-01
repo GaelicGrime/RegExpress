@@ -45,6 +45,7 @@ namespace RegExpressWPF.Adorners
 			DelayedInvalidateVisual( );
 		}
 
+
 		private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
 		{
 			InvalidateVisual( );
@@ -132,16 +133,6 @@ namespace RegExpressWPF.Adorners
 
 		void DrawUnderline( DrawingContext dc, Rect rect, bool isLeftStart, bool isRightEnd )
 		{
-			var guidelines = new GuidelineSet( );
-
-			guidelines.GuidelinesX.Add( Math.Floor( rect.Left ) );
-			guidelines.GuidelinesX.Add( Math.Ceiling( rect.Right ) );
-			guidelines.GuidelinesY.Add( Math.Ceiling( rect.Bottom ) );
-
-			guidelines.Freeze( );
-
-			dc.PushGuidelineSet( guidelines );
-
 			/*
               
             Too academic and does not look great: 
@@ -176,22 +167,24 @@ namespace RegExpressWPF.Adorners
 
 			// "Worse is better":
 
-			var bottom_left = rect.BottomLeft;
-			var bottom_right = rect.BottomRight;
+			var half_pen = Pen.Thickness / 2;
 
-			dc.DrawLine( Pen, bottom_left, bottom_right );
+			var x_left = Math.Ceiling( rect.Left ) - half_pen;
+			var x_right = Math.Ceiling( rect.Right ) - half_pen;
+			var y_bottom = Math.Ceiling( rect.Bottom ) - half_pen;
+			var y_top = y_bottom - 3;
+
+			dc.DrawLine( Pen, new Point( x_left, y_bottom ), new Point( x_right, y_bottom ) );
 
 			if( isLeftStart )
 			{
-				dc.DrawLine( Pen, bottom_left, bottom_left + new Vector( 0, -3 ) );
+				dc.DrawLine( Pen, new Point( x_left, y_bottom ), new Point( x_left, y_top ) );
 			}
 
 			if( isRightEnd )
 			{
-				dc.DrawLine( Pen, bottom_right, bottom_right + new Vector( 0, -3 ) );
+				dc.DrawLine( Pen, new Point( x_right, y_bottom ), new Point( x_right, y_top ) );
 			}
-
-			dc.Pop( );
 		}
 
 

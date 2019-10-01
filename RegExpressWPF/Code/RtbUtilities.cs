@@ -172,7 +172,7 @@ namespace RegExpressWPF.Code
         }
 
 
-        private static (int start_selection, int selection_end) GetSelection( RichTextBox rtb, IReadOnlyList<TextPointer> pointers )
+        private static (int selection_start, int selection_end) GetSelection( RichTextBox rtb, IReadOnlyList<TextPointer> pointers )
         {
             TextSelection selection = rtb.Selection;
             TextPointer selection_start_ptr = selection.Start;

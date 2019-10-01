@@ -83,7 +83,7 @@ namespace RegExpressWPF.Adorners
 				var td = rtb.GetTextData( null );
 
 				ShowSpacesTabsAndEols( dc, td );
-				ShowEof( dc, td );
+				ShowEof( dc );
 			}
 		}
 
@@ -109,7 +109,7 @@ namespace RegExpressWPF.Adorners
 			var end_doc = Rtb.Document.ContentStart;
 
 			if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-			if( !td.Pointers[0].IsInSameDocument( start_doc ) ) return;
+			if( !td.Pointers.Any( ) || !td.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 			dc.PushClip( new RectangleGeometry( clip_rect ) );
@@ -144,8 +144,10 @@ namespace RegExpressWPF.Adorners
 						var rect = rect_left;
 						rect.Offset( 2, 0 );
 
-						var x = Math.Ceiling( rect.Left ) + TabPen.Thickness / 2;
-						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - TabPen.Thickness / 2;
+						var half_pen = TabPen.Thickness / 2;
+
+						var x = Math.Ceiling( rect.Left ) + half_pen;
+						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - half_pen;
 
 						dc.DrawLine( TabPen, new Point( x, y ), new Point( x + ARROW_WIDTH, y ) );
 						dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y - ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
@@ -161,11 +163,13 @@ namespace RegExpressWPF.Adorners
 						var rect = rect_left;
 						rect.Offset( 2, 0 );
 
-						var x = Math.Ceiling( rect.Left ) + EolPen.Thickness / 2;
-						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - EolPen.Thickness / 2;
+						var half_pen = EolPen.Thickness / 2;
+
+						var x = Math.Ceiling( rect.Left ) + half_pen;
+						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - half_pen;
 
 						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH, y ) );
-						dc.DrawLine( EolPen, new Point( x + EOL_WIDTH, y ), new Point( x + EOL_WIDTH, y - rect.Height * 0.45 ) );
+						dc.DrawLine( EolPen, new Point( x + EOL_WIDTH, y ), new Point( x + EOL_WIDTH, y - rect.Height * 0.35 ) );
 						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y - EOL_WIDTH / 2 ) );
 						dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y + EOL_WIDTH / 2 ) );
 					}
@@ -177,7 +181,7 @@ namespace RegExpressWPF.Adorners
 
 						var rect = new Rect( rect_left.TopLeft, rect_right.BottomRight );
 						var x = rect.Left + rect.Width / 2;
-						var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 + 0.5 );
+						var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
 						var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
 
 						dc.DrawRectangle( WsBrush, null, dot_rect );
@@ -191,7 +195,7 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void ShowEof( DrawingContext dc, TextData td )
+		void ShowEof( DrawingContext dc )
 		{
 			var rtb = Rtb;
 
@@ -206,9 +210,10 @@ namespace RegExpressWPF.Adorners
 
 			const double EOF_WIDTH = 4;
 			double h = Math.Ceiling( rect.Height * 0.3 );
+			double half_pen = EofPen.Thickness / 2;
 
-			var x = Math.Ceiling( rect.Left + 3 ) + EofPen.Thickness / 2;
-			var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) - EofPen.Thickness / 2;
+			var x = Math.Ceiling( rect.Left + 3 ) + half_pen;
+			var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) - half_pen;
 
 			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
 
