@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,9 +10,12 @@ namespace RegExpressWPF.Code
 {
 	public struct Segment
 	{
+#pragma warning disable CA1051 // Do not declare visible instance fields
+
 		public readonly int Index;
 		public readonly int Length;
 
+#pragma warning restore CA1051 // Do not declare visible instance fields
 
 		public Segment( int index, int length )
 		{

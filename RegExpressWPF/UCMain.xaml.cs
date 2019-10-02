@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -309,8 +310,8 @@ namespace RegExpressWPF
 
 		private void LoadTabData( TabData tabData )
 		{
-			ucPattern.Text = tabData.Pattern;
-			ucText.Text = tabData.Text;
+			ucPattern.SetText( tabData.Pattern );
+			ucText.SetText( tabData.Text );
 
 			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 			{
@@ -510,6 +511,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void UpdateWhitespaceWarning( CancellationToken ct )
 		{
 			try
@@ -552,6 +554,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				// TODO: report
 			}
 		}

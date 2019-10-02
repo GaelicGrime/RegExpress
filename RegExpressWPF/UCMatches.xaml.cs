@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -300,6 +301,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ShowMatchesTaskProc( CancellationToken ct, string text, IReadOnlyList<Match> matches, bool isAll, bool showCaptures )
 		{
 			try
@@ -408,7 +410,7 @@ namespace RegExpressWPF
 						run = new Run( $"  （{match.Index}, {match.Length}）", span.ContentEnd );
 						run.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
-						new LineBreak( span.ElementEnd ); // (after span)
+						_ = new LineBreak( span.ElementEnd ); // (after span)
 
 						match_info = new MatchInfo
 						{
@@ -471,7 +473,7 @@ namespace RegExpressWPF
 							run.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
 							para.Inlines.Add( span );
-							new LineBreak( span.ElementEnd ); // (after span)
+							_ = new LineBreak( span.ElementEnd ); // (after span)
 
 							var group_info = new GroupInfo
 							{
@@ -540,6 +542,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}
@@ -590,7 +593,7 @@ namespace RegExpressWPF
 
 
 				para.Inlines.Add( span );
-				new LineBreak( span.ElementEnd ); // (after span)
+				_ = new LineBreak( span.ElementEnd ); // (after span)
 
 
 				var capture_info = new CaptureInfo
@@ -665,7 +668,7 @@ namespace RegExpressWPF
 				if( span == null ) span = new Span( (Inline)null, at );
 
 				var fragment = AdjustString( text.Substring( previous_index, m.Index - previous_index ) );
-				if( fragment.Any( ) ) new Run( fragment, span.ContentEnd );
+				if( fragment.Any( ) ) _ = new Run( fragment, span.ContentEnd );
 				new Run( AdjustString( m.Value ), span.ContentEnd ).Style( MatchValueSpecialStyleInfo );
 
 				previous_index = m.Index + m.Value.Length;
@@ -680,7 +683,7 @@ namespace RegExpressWPF
 					return new Run( tail, at );
 				}
 
-				if( tail.Any( ) ) new Run( tail, span.ContentEnd );
+				if( tail.Any( ) ) _ = new Run( tail, span.ContentEnd );
 			}
 
 			return span ?? new Span( (Inline)null, at );
@@ -735,6 +738,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments0 )
 		{
 			try
@@ -800,6 +804,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}
@@ -811,6 +816,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void LocalUnderlineTaskProc( CancellationToken ct, bool yes )
 		{
 			try
@@ -865,6 +871,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}

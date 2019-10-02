@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -70,6 +71,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		private void Window_Closing( object sender, System.ComponentModel.CancelEventArgs e )
 		{
 			AutoSaveTask.Stop( );
@@ -201,8 +203,8 @@ namespace RegExpressWPF
 
 			string json;
 
-			using( var ms = new MemoryStream( ) )
 			{
+				var ms = new MemoryStream( );
 				var ser = new DataContractJsonSerializer( all_tab_data.GetType( ) );
 				ser.WriteObject( ms, all_tab_data );
 				ms.Position = 0;

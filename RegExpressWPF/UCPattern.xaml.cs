@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -75,14 +76,11 @@ namespace RegExpressWPF
 		}
 
 
-		public string Text
+		public void SetText( string value )
 		{
-			set
-			{
-				RtbUtilities.SetText( rtb, value );
+			RtbUtilities.SetText( rtb, value );
 
-				UndoRedoHelper.Init( );
-			}
+			UndoRedoHelper.Init( );
 		}
 
 
@@ -197,6 +195,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions )
 		{
 			try
@@ -411,6 +410,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -84,14 +85,11 @@ namespace RegExpressWPF
 		}
 
 
-		public string Text
+		public void SetText( string value )
 		{
-			set
-			{
-				RtbUtilities.SetText( rtb, value );
+			RtbUtilities.SetText( rtb, value );
 
-				UndoRedoHelper.Init( );
-			}
+			UndoRedoHelper.Init( );
 		}
 
 
@@ -284,6 +282,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
 			try
@@ -356,6 +355,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}
@@ -373,6 +373,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void LocalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
 			try
@@ -411,11 +412,13 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments, string eol )
 		{
 			try
@@ -476,6 +479,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
+				_ = exc;
 				throw;
 			}
 		}

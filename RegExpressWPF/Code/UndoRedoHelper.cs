@@ -39,7 +39,7 @@ namespace RegExpressWPF.Code
                 SelectionEnd = selectionEnd;
             }
 
-            public int Length => Math.Abs( SelectionStart - SelectionEnd );
+            internal int Length => Math.Abs( SelectionStart - SelectionEnd );
 
             public override string ToString( )
             {

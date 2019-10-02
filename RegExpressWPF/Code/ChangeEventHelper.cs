@@ -68,12 +68,13 @@ namespace RegExpressWPF.Code
             {
                 action( );
             }
-            catch( Exception exc )
+			catch( Exception exc )
             {
+				_ = exc;
                 throw;
             }
-            finally
-            {
+			finally
+			{
                 mRtb.EndChange( );
                 Interlocked.Decrement( ref mChangeIndex );
             }
