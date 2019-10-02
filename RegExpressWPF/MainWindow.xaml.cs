@@ -218,7 +218,7 @@ namespace RegExpressWPF
 		}
 
 
-		TabItem CreateTab( TabData tab_data )
+		TabItem CreateTab( TabData tabData )
 		{
 			int max =
 				tabControlMain.Items
@@ -255,7 +255,7 @@ namespace RegExpressWPF
 
 			tabControlMain.Items.Insert( tabControlMain.Items.IndexOf( tabNew ), newTabItem );
 
-			if( tab_data != null ) uc_main.ApplyTabData( tab_data );
+			if( tabData != null ) uc_main.ApplyTabData( tabData );
 
 			uc_main.Changed += UCMain_Changed;
 

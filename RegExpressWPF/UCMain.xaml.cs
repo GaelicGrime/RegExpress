@@ -80,12 +80,14 @@ namespace RegExpressWPF
 
 		public void ApplyTabData( TabData tabData )
 		{
-			if( !IsFullyLoaded )
+			if( !IsFullyLoaded || !IsVisible )
 			{
 				InitialTabData = tabData;
 			}
 			else
 			{
+				InitialTabData = null;
+
 				LoadTabData( tabData );
 			}
 		}
@@ -125,10 +127,15 @@ namespace RegExpressWPF
 				pnlRegexOptions.Children.Add( cb );
 			}
 
-			if( InitialTabData != null )
+			if( IsVisible )
 			{
-				LoadTabData( InitialTabData );
-				InitialTabData = null;
+				if( InitialTabData != null )
+				{
+					var tab_data = InitialTabData;
+					InitialTabData = null;
+
+					LoadTabData( tab_data );
+				}
 			}
 
 			ucPattern.SetRegexOptions( GetRegexOptions( ) );
@@ -138,6 +145,21 @@ namespace RegExpressWPF
 			IsFullyLoaded = true;
 
 			RestartFindMatches( );
+		}
+
+
+		private void UserControl_IsVisibleChanged( object sender, DependencyPropertyChangedEventArgs e )
+		{
+			if( true.Equals( e.NewValue ) && IsFullyLoaded )
+			{
+				if( InitialTabData != null )
+				{
+					var tab_data = InitialTabData;
+					InitialTabData = null;
+
+					LoadTabData( tab_data );
+				}
+			}
 		}
 
 

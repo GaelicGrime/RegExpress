@@ -8,6 +8,7 @@
         Width="800" 
         Height="550" 
         Loaded="UserControl_Loaded" 
+             IsVisibleChanged="UserControl_IsVisibleChanged"
         >
 
     <Grid Margin="9 7 9 9">
