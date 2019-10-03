@@ -216,7 +216,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			ucMatches.SetUnderlining( null );
+			ucMatches.SetUnderlining( null, false );
 		}
 
 
@@ -225,12 +225,11 @@ namespace RegExpressWPF
 			if( ucText.IsKeyboardFocusWithin )
 			{
 				var underlining_info = ucText.GetUnderliningInfo( );
-				var segments = underlining_info.Select( c => new Segment( c.Index, c.Length ) ).ToList( );
-				ucMatches.SetUnderlining( segments );
+				ucMatches.SetUnderlining( underlining_info, true );
 			}
 			else
 			{
-				ucMatches.SetUnderlining( null );
+				ucMatches.SetUnderlining( null, false );
 			}
 		}
 
@@ -241,7 +240,7 @@ namespace RegExpressWPF
 
 			var segments = ucMatches.GetUnderlinedSegments( );
 
-			ucText.SetUnderlinedCaptures( segments );
+			ucText.SetUnderlinedCaptures( segments, ucMatches.IsKeyboardFocusWithin );
 		}
 
 
@@ -249,7 +248,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			ucText.SetUnderlinedCaptures( Enumerable.Empty<Segment>( ).ToList( ) );
+			ucText.SetUnderlinedCaptures( Enumerable.Empty<Segment>( ).ToList( ), false );
 		}
 
 
@@ -433,7 +432,7 @@ namespace RegExpressWPF
 				{
 					Dispatcher.BeginInvoke( new Action( ( ) =>
 					{
-						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
 						ucMatches.ShowNoPattern( );
 						lblMatches.Text = "Matches";
 						pnlShowAll.Visibility = Visibility.Collapsed;

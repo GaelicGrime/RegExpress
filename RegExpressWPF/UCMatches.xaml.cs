@@ -190,11 +190,11 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetUnderlining( IReadOnlyList<Segment> segments )
+		public void SetUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
 			if( segments == null ) segments = Enumerable.Empty<Segment>( ).ToList( );
 
-			RestartExternalUnderline( segments );
+			RestartExternalUnderline( segments, setSelection );
 		}
 
 
@@ -732,14 +732,14 @@ namespace RegExpressWPF
 		}
 
 
-		void RestartExternalUnderline( IReadOnlyList<Segment> segments )
+		void RestartExternalUnderline( IReadOnlyList<Segment> segments, bool setSelection )
 		{
-			UnderliningTask.RestartAfter( ShowMatchesTask, ct => ExternalUnderlineTaskProc( ct, segments ) );
+			UnderliningTask.RestartAfter( ShowMatchesTask, ct => ExternalUnderlineTaskProc( ct, segments, setSelection ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments0 )
+		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments0, bool setSelection )
 		{
 			try
 			{
@@ -787,15 +787,26 @@ namespace RegExpressWPF
 					UnderliningAdorner.SetRangesToUnderline(
 						inlines_to_underline
 							.Select( r => (r.inline.ContentStart, r.inline.ContentEnd) )
-							.ToList( )
-							.AsReadOnly( ) );
+							.ToList( ) );
 
 					inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
 				} );
 
 				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
-					inlines_to_underline.FirstOrDefault( ).inline?.BringIntoView( );
+					var first = inlines_to_underline.FirstOrDefault( ).inline;
+
+					first?.BringIntoView( );
+
+					if( setSelection && !rtbMatches.IsKeyboardFocused )
+					{
+						if( first != null )
+						{
+							var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
+							rtbMatches.Selection.Select( p, p );
+						}
+					}
+
 				} );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
@@ -861,8 +872,7 @@ namespace RegExpressWPF
 					UnderliningAdorner.SetRangesToUnderline(
 						inlines_to_underline
 							.Select( i => (i.ContentStart, i.ContentEnd) )
-							.ToList( )
-							.AsReadOnly( ) );
+							.ToList( ) );
 				} );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'

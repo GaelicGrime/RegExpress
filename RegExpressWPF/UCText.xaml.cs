@@ -137,7 +137,7 @@ namespace RegExpressWPF
 			{
 				if( LastMatches == null ) // no data or processes not finished
 				{
-					return Enumerable.Empty<Segment>( ).ToList( ).AsReadOnly( );
+					return Enumerable.Empty<Segment>( ).ToList( );
 				}
 			}
 
@@ -159,11 +159,11 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetUnderlinedCaptures( IReadOnlyList<Segment> segments )
+		public void SetUnderlinedCaptures( IReadOnlyList<Segment> segments, bool setSelection )
 		{
 			lock( this )
 			{
-				if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol );
+				if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol, setSelection );
 			}
 		}
 
@@ -236,7 +236,7 @@ namespace RegExpressWPF
 		{
 			lock( this )
 			{
-				if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ).AsReadOnly( ), LastShowCaptures, LastEol );
+				if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ), LastShowCaptures, LastEol );
 			}
 		}
 
@@ -367,9 +367,9 @@ namespace RegExpressWPF
 		}
 
 
-		void RestartExternalUnderlining( IReadOnlyList<Segment> segments, string eol )
+		void RestartExternalUnderlining( IReadOnlyList<Segment> segments, string eol, bool setSelection )
 		{
-			UnderliningTask.RestartAfter( RecolouringTask, ct => ExternalUnderlineTaskProc( ct, segments, eol ) );
+			UnderliningTask.RestartAfter( RecolouringTask, ct => ExternalUnderlineTaskProc( ct, segments, eol, setSelection ) );
 		}
 
 
@@ -396,8 +396,7 @@ namespace RegExpressWPF
 				UnderliningAdorner.SetRangesToUnderline(
 					segments_to_underline
 						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
-						.ToList( )
-						.AsReadOnly( ) );
+						.ToList( ) );
 
 				ChangeEventHelper.BeginInvoke( ct, ( ) =>
 				{
@@ -419,7 +418,7 @@ namespace RegExpressWPF
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments, string eol )
+		void ExternalUnderlineTaskProc( CancellationToken ct, IReadOnlyList<Segment> segments, string eol, bool setSelection )
 		{
 			try
 			{
@@ -429,15 +428,6 @@ namespace RegExpressWPF
 				Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
 				DateTime start_time = DateTime.UtcNow;
 
-				var segments_to_underline = new List<Segment>( );
-
-				foreach( var segment in segments )
-				{
-					if( ct.IsCancellationRequested ) break;
-
-					segments_to_underline.Add( segment );
-				}
-
 				TextData td = null;
 
 				ChangeEventHelper.Invoke( ct, ( ) =>
@@ -446,18 +436,17 @@ namespace RegExpressWPF
 				} );
 
 				UnderliningAdorner.SetRangesToUnderline(
-					segments_to_underline
+					segments
 						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
-						.ToList( )
-						.AsReadOnly( ) );
+						.ToList( ) );
 
 				if( segments.Count > 0 )
 				{
 					ChangeEventHelper.Invoke( ct, ( ) =>
 					{
-						var capture = segments.First( );
+						var first = segments.First( );
 
-						var r = td.Range( capture.Index, capture.Length );
+						var r = td.Range( first.Index, first.Length );
 
 						switch( r.Start.Parent )
 						{
@@ -467,6 +456,12 @@ namespace RegExpressWPF
 							case FrameworkElement fe:
 								fe.BringIntoView( );
 								break;
+						}
+
+						if( setSelection && !rtb.IsKeyboardFocused )
+						{
+							TextPointer p = r.Start.GetInsertionPosition( LogicalDirection.Forward );
+							rtb.Selection.Select( p, p );
 						}
 					} );
 				}
