@@ -229,6 +229,17 @@ namespace RegExpressWPF
 			{
 				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
 			}
+
+			{
+				//var rect = rtb.Selection.Start.GetCharacterRect( LogicalDirection.Forward );
+				//rect.Width = 10;
+				//rtb.BringIntoView( rect);
+				var p = rtb.Selection?.Start?.Parent as FrameworkContentElement;
+				if( p != null )
+				{
+					p.BringIntoView( );
+				}
+			}
 		}
 
 
@@ -395,7 +406,7 @@ namespace RegExpressWPF
 
 				UnderliningAdorner.SetRangesToUnderline(
 					segments_to_underline
-						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+						.Select( s => (td.SafeGetPointer( s.Index ), td.SafeGetPointer( s.Index + s.Length )) )
 						.ToList( ) );
 
 				ChangeEventHelper.BeginInvoke( ct, ( ) =>
@@ -437,7 +448,7 @@ namespace RegExpressWPF
 
 				UnderliningAdorner.SetRangesToUnderline(
 					segments
-						.Select( s => (td.Pointers[s.Index], td.Pointers[s.Index + s.Length]) )
+						.Select( s => (td.SafeGetPointer( s.Index ), td.SafeGetPointer( s.Index + s.Length )) )
 						.ToList( ) );
 
 				if( segments.Count > 0 )
@@ -458,11 +469,13 @@ namespace RegExpressWPF
 								break;
 						}
 
+#if false
 						if( setSelection && !rtb.IsKeyboardFocused )
 						{
 							TextPointer p = r.Start.GetInsertionPosition( LogicalDirection.Forward );
 							rtb.Selection.Select( p, p );
 						}
+#endif
 					} );
 				}
 

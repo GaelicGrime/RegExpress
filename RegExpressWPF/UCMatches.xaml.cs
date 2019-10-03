@@ -798,6 +798,7 @@ namespace RegExpressWPF
 
 					first?.BringIntoView( );
 
+#if false
 					if( setSelection && !rtbMatches.IsKeyboardFocused )
 					{
 						if( first != null )
@@ -806,6 +807,7 @@ namespace RegExpressWPF
 							rtbMatches.Selection.Select( p, p );
 						}
 					}
+#endif
 
 				} );
 			}
@@ -917,7 +919,7 @@ namespace RegExpressWPF
 		}
 
 
-		#region IDisposable Support
+#region IDisposable Support
 
 		private bool disposedValue = false; // To detect redundant calls
 
@@ -956,7 +958,7 @@ namespace RegExpressWPF
 			// GC.SuppressFinalize(this);
 		}
 
-		#endregion
+#endregion
 
 	}
 }

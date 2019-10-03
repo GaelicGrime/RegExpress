@@ -32,6 +32,14 @@ namespace RegExpressWPF.Code
 			Eol = eol;
 			Pointers = pointers;
 		}
+
+
+		public TextPointer SafeGetPointer( int i )
+		{
+			Debug.Assert( Pointers.Any( ) );
+
+			return Pointers[Math.Min( i, Pointers.Count - 1 )];
+		}
 	}
 
 
@@ -302,6 +310,19 @@ namespace RegExpressWPF.Code
 			} while( left <= right );
 
 			return last_good;
+		}
+
+
+		public static void SafeSelect( RichTextBox rtb, TextData td, int selectionStart, int selectionEnd )
+		{
+			Debug.Assert( td.Pointers.Any( ) );
+			Debug.Assert( selectionStart < td.Pointers.Count );
+			Debug.Assert( selectionEnd < td.Pointers.Count );
+
+			if( td.Pointers.Any( ) )
+			{
+				rtb.Selection.Select( td.SafeGetPointer( selectionStart ), td.SafeGetPointer( selectionEnd ) );
+			}
 		}
 
 

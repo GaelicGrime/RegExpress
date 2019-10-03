@@ -261,7 +261,7 @@ namespace RegExpressWPF
 
 			uc_main.Changed += UCMain_Changed;
 
-			tabControlMain.SelectedItem = newTabItem; //...
+			tabControlMain.SelectedItem = newTabItem; //?
 
 			return newTabItem;
 		}
