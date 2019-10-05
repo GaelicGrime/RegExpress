@@ -342,6 +342,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void AutoSaveTaskProc( CancellationToken ct )
 		{
 			try

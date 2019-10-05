@@ -96,14 +96,30 @@ namespace RegExpressWPF
 
 		public void ExportTabData( TabData tabData )
 		{
-			tabData.Pattern = ucPattern.GetText( "\n" );
-			tabData.Text = ucText.GetText( "\n" );
-			tabData.RegexOptions = GetRegexOptions( );
-			tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
-			tabData.ShowFailedGroups = cbShowFailedGroups.IsChecked == true;
-			tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
-			tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
-			tabData.Eol = GetEolOption( );
+			if( InitialTabData != null )
+			{
+				// did not have chance to finish initialisation 
+
+				tabData.Pattern = InitialTabData.Pattern;
+				tabData.Text = InitialTabData.Text;
+				tabData.RegexOptions = InitialTabData.RegexOptions;
+				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
+				tabData.ShowFailedGroups = InitialTabData.ShowFailedGroups;
+				tabData.ShowCaptures = InitialTabData.ShowCaptures;
+				tabData.ShowWhiteSpaces = InitialTabData.ShowWhiteSpaces;
+				tabData.Eol = InitialTabData.Eol;
+			}
+			else
+			{
+				tabData.Pattern = ucPattern.GetText( "\n" );
+				tabData.Text = ucText.GetText( "\n" );
+				tabData.RegexOptions = GetRegexOptions( );
+				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
+				tabData.ShowFailedGroups = cbShowFailedGroups.IsChecked == true;
+				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
+				tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
+				tabData.Eol = GetEolOption( );
+			}
 		}
 
 
