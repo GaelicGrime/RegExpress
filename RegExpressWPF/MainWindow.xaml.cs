@@ -136,9 +136,12 @@ namespace RegExpressWPF
 		}
 
 
+
 		// --------------------
 
 
+
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		static List<TabData> TryLoadAllTabData( )
 		{
 			try

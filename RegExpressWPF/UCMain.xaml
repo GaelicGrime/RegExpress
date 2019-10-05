@@ -17,7 +17,7 @@
             <RowDefinition Height="5" />
             <RowDefinition Height="*" />
             <RowDefinition Height="5" />
-            <RowDefinition Height="236" />
+            <RowDefinition Height="254" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0 0 0 1">
@@ -122,6 +122,7 @@
                                 <Separator/>
                                 <StackPanel>
                                     <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                    <CheckBox x:Name="cbShowFailedGroups" Content="Show failed groups" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
                                         <TextBlock>Show whitespaces

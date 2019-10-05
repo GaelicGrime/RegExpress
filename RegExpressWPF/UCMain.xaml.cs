@@ -100,6 +100,7 @@ namespace RegExpressWPF
 			tabData.Text = ucText.GetText( "\n" );
 			tabData.RegexOptions = GetRegexOptions( );
 			tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
+			tabData.ShowFailedGroups = cbShowFailedGroups.IsChecked == true;
 			tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
 			tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 			tabData.Eol = GetEolOption( );
@@ -240,7 +241,7 @@ namespace RegExpressWPF
 
 			var segments = ucMatches.GetUnderlinedSegments( );
 
-			ucText.SetExternalUnderlining( segments, setSelection: Properties.Settings.Default.MoveCaretToUnderlinedText);
+			ucText.SetExternalUnderlining( segments, setSelection: Properties.Settings.Default.MoveCaretToUnderlinedText );
 		}
 
 
@@ -324,6 +325,7 @@ namespace RegExpressWPF
 			UpdateRegexOptionsControls( );
 
 			cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
+			cbShowFailedGroups.IsChecked = tabData.ShowFailedGroups;
 			cbShowCaptures.IsChecked = tabData.ShowCaptures;
 			cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
 
@@ -421,6 +423,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		private void FindMatchesTaskProc( CancellationToken ct, string pattern, string text, bool findAll, RegexOptions options )
 		{
 			try
@@ -453,7 +456,7 @@ namespace RegExpressWPF
 				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
 					ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-					ucMatches.SetMatches( text, matches_to_show, findAll, cbShowCaptures.IsChecked == true );
+					ucMatches.SetMatches( text, matches_to_show, findAll, cbShowFailedGroups.IsChecked == true, cbShowCaptures.IsChecked == true );
 
 					lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
 					pnlShowAll.Visibility = !findAll && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;

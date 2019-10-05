@@ -43,7 +43,8 @@ namespace RegExpressWPF
 		readonly StyleInfo LocationStyleInfo;
 		readonly StyleInfo GroupNameStyleInfo;
 		readonly StyleInfo GroupSiblingValueStyleInfo;
-		readonly StyleInfo GroupValueStyleSinfo;
+		readonly StyleInfo GroupValueStyleInfo;
+		readonly StyleInfo GroupFailedStyleInfo;
 
 		readonly LengthConverter LengthConverter = new LengthConverter( );
 
@@ -51,6 +52,7 @@ namespace RegExpressWPF
 
 		IReadOnlyList<Match> LastMatches; // null if no data or processes unfinished
 		bool LastIsAll;
+		bool LastShowFailedGroups;
 		bool LastShowCaptures;
 
 		abstract class Info
@@ -71,6 +73,7 @@ namespace RegExpressWPF
 		sealed class GroupInfo : Info
 		{
 			internal MatchInfo Parent;
+			internal bool IsSuccess;
 			internal Segment GroupSegment;
 			internal Span Span;
 			internal Inline ValueInline;
@@ -123,7 +126,8 @@ namespace RegExpressWPF
 			LocationStyleInfo = new StyleInfo( "MatchLocation" );
 			GroupNameStyleInfo = new StyleInfo( "MatchGroupName" );
 			GroupSiblingValueStyleInfo = new StyleInfo( "MatchGroupSiblingValue" );
-			GroupValueStyleSinfo = new StyleInfo( "MatchGroupValue" );
+			GroupValueStyleInfo = new StyleInfo( "MatchGroupValue" );
+			GroupFailedStyleInfo = new StyleInfo( "MatchGroupFailed" );
 		}
 
 
@@ -154,7 +158,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showCaptures )
+		public void SetMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
@@ -169,6 +173,7 @@ namespace RegExpressWPF
 					var new_captures = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => ( c.Value ) );
 
 					if( isAll == LastIsAll &&
+						showFailedGroups == LastShowFailedGroups &&
 						showCaptures == LastShowCaptures &&
 						new_groups.SequenceEqual( old_groups ) &&
 						new_captures.SequenceEqual( old_captures ) )
@@ -186,7 +191,7 @@ namespace RegExpressWPF
 
 			LastMatches = null;
 
-			RestartShowMatches( text, matches, isAll, showCaptures );
+			RestartShowMatches( text, matches, isAll, showFailedGroups, showCaptures );
 		}
 
 
@@ -233,7 +238,7 @@ namespace RegExpressWPF
 						segments.Add( mi.MatchSegment );
 						return segments;
 					case GroupInfo gi:
-						segments.Add( gi.GroupSegment );
+						if( gi.IsSuccess ) segments.Add( gi.GroupSegment );
 						return segments;
 					case CaptureInfo ci:
 						segments.Add( ci.CaptureSegment );
@@ -298,7 +303,7 @@ namespace RegExpressWPF
 		}
 
 
-		void RestartShowMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showCaptures )
+		void RestartShowMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
 		{
 			ShowMatchesTask.Stop( );
 			UnderliningTask.Stop( );
@@ -306,12 +311,12 @@ namespace RegExpressWPF
 
 			MatchInfos.Clear( );
 
-			ShowMatchesTask.Restart( ct => ShowMatchesTaskProc( ct, text, matches, isAll, showCaptures ) );
+			ShowMatchesTask.Restart( ct => ShowMatchesTaskProc( ct, text, matches, isAll, showFailedGroups, showCaptures ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ShowMatchesTaskProc( CancellationToken ct, string text, IReadOnlyList<Match> matches, bool isAll, bool showCaptures )
+		void ShowMatchesTaskProc( CancellationToken ct, string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
 		{
 			try
 			{
@@ -329,6 +334,7 @@ namespace RegExpressWPF
 					{
 						LastMatches = matches;
 						LastIsAll = isAll;
+						LastShowFailedGroups = showFailedGroups;
 						LastShowCaptures = showCaptures;
 					}
 
@@ -357,6 +363,8 @@ namespace RegExpressWPF
 
 				foreach( var match in matches )
 				{
+					Debug.Assert( match.Success );
+
 					++match_index;
 
 					ct.ThrowIfCancellationRequested( );
@@ -364,11 +372,11 @@ namespace RegExpressWPF
 					var ordered_groups =
 										match.Groups.Cast<Group>( )
 											.Skip( 1 ) // skip match
-											.Where( g => g.Success )
-											.OrderBy( g => g.Index )
+											.Where( g => g.Success || showFailedGroups )
+											//OrderBy( g => g.Success ? g.Index : match.Index )
 											.ToList( );
 
-					int min_index = ordered_groups.Select( g => g.Index ).Concat( new[] { match.Index } ).Min( );
+					int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
 					if( showCaptures )
 					{
 						min_index = ordered_groups.SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
@@ -387,7 +395,7 @@ namespace RegExpressWPF
 
 					// show match
 
-					string match_name_text = isAll ? $"Mᴀᴛᴄʜ {match_index + 1}:" : "Mᴀᴛᴄʜ:"; //ᴍꜰ Fɪʀꜱᴛ 
+					string match_name_text = isAll ? $"Mᴀᴛᴄʜ {match_index + 1}" : "Mᴀᴛᴄʜ:"; //ᴍꜰ Fɪʀꜱᴛ 
 
 					ChangeEventHelper.Invoke( ct, ( ) =>
 					{
@@ -443,7 +451,7 @@ namespace RegExpressWPF
 						ct.ThrowIfCancellationRequested( );
 
 						string group_name_text = $" ɢʀᴏᴜᴘ ‹{group.Name}›";
-						int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - group.Index );
+						int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
 
 						ChangeEventHelper.Invoke( ct, ( ) =>
 						{
@@ -457,10 +465,15 @@ namespace RegExpressWPF
 							Inline value_inline;
 							Inline inl;
 
-							if( group.Length == 0 )
+							if( !group.Success )
+							{
+								value_inline = new Run( "(fail)", span.ContentEnd );
+								value_inline.Style( GroupFailedStyleInfo );
+							}
+							else if( group.Length == 0 )
 							{
 								value_inline = new Run( "(empty)", span.ContentEnd );
-								value_inline.Style( MatchNormalStyleInfo, LocationStyleInfo );
+								value_inline.Style( LocationStyleInfo );
 							}
 							else
 							{
@@ -472,7 +485,7 @@ namespace RegExpressWPF
 								inl.Style( GroupSiblingValueStyleInfo );
 
 								value_inline = FormatResult( middle, span.ContentEnd );
-								value_inline.Style( GroupValueStyleSinfo, highlight_light_style );
+								value_inline.Style( GroupValueStyleInfo, highlight_light_style );
 
 								inl = FormatResult( right, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
@@ -487,6 +500,7 @@ namespace RegExpressWPF
 							var group_info = new GroupInfo
 							{
 								Parent = match_info,
+								IsSuccess = group.Success,
 								GroupSegment = new Segment( group.Index, group.Length ),
 								Span = span,
 								ValueInline = value_inline,
@@ -542,6 +556,7 @@ namespace RegExpressWPF
 				{
 					LastMatches = matches;
 					LastIsAll = isAll;
+					LastShowFailedGroups = showFailedGroups;
 					LastShowCaptures = showCaptures;
 				}
 			}
@@ -592,7 +607,7 @@ namespace RegExpressWPF
 					inline.Style( GroupSiblingValueStyleInfo );
 
 					value_inline = FormatResult( middle, span.ContentEnd );
-					value_inline.Style( GroupValueStyleSinfo, highlightStyle );
+					value_inline.Style( GroupValueStyleInfo, highlightStyle );
 
 					inline = FormatResult( right, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
@@ -864,7 +879,7 @@ namespace RegExpressWPF
 								inlines_to_underline.Add( mi.ValueInline );
 								break;
 							case GroupInfo gi:
-								inlines_to_underline.Add( gi.ValueInline );
+								if( gi.IsSuccess ) inlines_to_underline.Add( gi.ValueInline );
 								break;
 							case CaptureInfo ci:
 								inlines_to_underline.Add( ci.ValueInline );

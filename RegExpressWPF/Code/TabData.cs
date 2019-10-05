@@ -18,6 +18,7 @@ namespace RegExpressWPF.Code
 		public string Text;
 		public RegexOptions RegexOptions;
 		public bool ShowFirstMatchOnly;
+		public bool ShowFailedGroups;
 		public bool ShowCaptures;
 		public bool ShowWhiteSpaces;
 		public string Eol;
