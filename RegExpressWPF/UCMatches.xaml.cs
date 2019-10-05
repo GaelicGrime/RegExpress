@@ -190,7 +190,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
+		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
 			if( segments == null ) segments = Enumerable.Empty<Segment>( ).ToList( );
 
@@ -280,6 +280,15 @@ namespace RegExpressWPF
 		{
 			RestartLocalUnderlining( true );
 			SelectionChanged?.Invoke( this, null );
+
+			if( Properties.Settings.Default.BringCaretIntoView )
+			{
+				var p = rtbMatches.CaretPosition.Parent as FrameworkContentElement;
+				if( p != null )
+				{
+					p.BringIntoView( );
+				}
+			}
 		}
 
 
@@ -798,7 +807,6 @@ namespace RegExpressWPF
 
 					first?.BringIntoView( );
 
-#if false
 					if( setSelection && !rtbMatches.IsKeyboardFocused )
 					{
 						if( first != null )
@@ -807,8 +815,6 @@ namespace RegExpressWPF
 							rtbMatches.Selection.Select( p, p );
 						}
 					}
-#endif
-
 				} );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
@@ -919,7 +925,7 @@ namespace RegExpressWPF
 		}
 
 
-#region IDisposable Support
+		#region IDisposable Support
 
 		private bool disposedValue = false; // To detect redundant calls
 
@@ -958,7 +964,7 @@ namespace RegExpressWPF
 			// GC.SuppressFinalize(this);
 		}
 
-#endregion
+		#endregion
 
 	}
 }

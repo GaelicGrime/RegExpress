@@ -216,7 +216,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			ucMatches.SetUnderlining( null, false );
+			ucMatches.SetExternalUnderlining( null, setSelection: false );
 		}
 
 
@@ -225,11 +225,11 @@ namespace RegExpressWPF
 			if( ucText.IsKeyboardFocusWithin )
 			{
 				var underlining_info = ucText.GetUnderliningInfo( );
-				ucMatches.SetUnderlining( underlining_info, true );
+				ucMatches.SetExternalUnderlining( underlining_info, setSelection: Properties.Settings.Default.MoveCaretToUnderlinedText );
 			}
 			else
 			{
-				ucMatches.SetUnderlining( null, false );
+				ucMatches.SetExternalUnderlining( null, setSelection: false );
 			}
 		}
 
@@ -240,7 +240,7 @@ namespace RegExpressWPF
 
 			var segments = ucMatches.GetUnderlinedSegments( );
 
-			ucText.SetUnderlinedCaptures( segments, ucMatches.IsKeyboardFocusWithin );
+			ucText.SetExternalUnderlining( segments, setSelection: Properties.Settings.Default.MoveCaretToUnderlinedText);
 		}
 
 
@@ -248,7 +248,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			ucText.SetUnderlinedCaptures( Enumerable.Empty<Segment>( ).ToList( ), false );
+			ucText.SetExternalUnderlining( Enumerable.Empty<Segment>( ).ToList( ), setSelection: false );
 		}
 
 

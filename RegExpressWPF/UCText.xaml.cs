@@ -159,7 +159,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetUnderlinedCaptures( IReadOnlyList<Segment> segments, bool setSelection )
+		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
 			lock( this )
 			{
@@ -230,11 +230,9 @@ namespace RegExpressWPF
 				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
 			}
 
+			if( Properties.Settings.Default.BringCaretIntoView )
 			{
-				//var rect = rtb.Selection.Start.GetCharacterRect( LogicalDirection.Forward );
-				//rect.Width = 10;
-				//rtb.BringIntoView( rect);
-				var p = rtb.Selection?.Start?.Parent as FrameworkContentElement;
+				var p = rtb.CaretPosition.Parent as FrameworkContentElement;
 				if( p != null )
 				{
 					p.BringIntoView( );
@@ -469,13 +467,11 @@ namespace RegExpressWPF
 								break;
 						}
 
-#if false
 						if( setSelection && !rtb.IsKeyboardFocused )
 						{
 							TextPointer p = r.Start.GetInsertionPosition( LogicalDirection.Forward );
 							rtb.Selection.Select( p, p );
 						}
-#endif
 					} );
 				}
 

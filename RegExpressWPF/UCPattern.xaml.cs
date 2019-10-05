@@ -153,6 +153,15 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 
 			RestartRecolouring( );
+
+			if( Properties.Settings.Default.BringCaretIntoView )
+			{
+				var p = rtb.CaretPosition?.Parent as FrameworkContentElement;
+				if( p != null )
+				{
+					p.BringIntoView( );
+				}
+			}
 		}
 
 
