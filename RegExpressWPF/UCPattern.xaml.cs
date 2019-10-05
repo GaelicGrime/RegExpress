@@ -226,7 +226,7 @@ namespace RegExpressWPF
 				bool ignore_pattern_whitespace = ( regexOptions & RegexOptions.IgnorePatternWhitespace ) != 0;
 
 				string pattern = $@"
-					(?'inline_comment'\(\?\#.*?\)) |
+					(?'inline_comment'\(\?\#.*?(\)|$)) |
                     (?'para'\(|\)) |
                     (?'group'\[(\\.|.)*?(?'eog'\])) |
                     {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\r\n]*) |" : "" )}
@@ -411,7 +411,7 @@ namespace RegExpressWPF
 				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
 
 				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
+					   //RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
