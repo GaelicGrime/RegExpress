@@ -44,27 +44,21 @@ namespace RegExpressWPF.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool MoveCaretToUnderlinedText {
             get {
                 return ((bool)(this["MoveCaretToUnderlinedText"]));
             }
-            set {
-                this["MoveCaretToUnderlinedText"] = value;
-            }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool BringCaretIntoView {
             get {
                 return ((bool)(this["BringCaretIntoView"]));
-            }
-            set {
-                this["BringCaretIntoView"] = value;
             }
         }
     }
