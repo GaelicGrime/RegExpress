@@ -33,6 +33,7 @@ namespace RegExpressWPF
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|(\r\n$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 		bool IsFullyLoaded = false;
+		bool IsInChange = false;
 		TabData InitialTabData = null;
 		bool ucTextHadFocus = false;
 
@@ -81,6 +82,8 @@ namespace RegExpressWPF
 
 		public void ApplyTabData( TabData tabData )
 		{
+			Debug.Assert( !IsInChange );
+
 			if( !IsFullyLoaded || !IsVisible )
 			{
 				InitialTabData = tabData;
@@ -89,7 +92,9 @@ namespace RegExpressWPF
 			{
 				InitialTabData = null;
 
+				StopAll( );
 				LoadTabData( tabData );
+				RestartAll( );
 			}
 		}
 
@@ -145,6 +150,13 @@ namespace RegExpressWPF
 				pnlRegexOptions.Children.Add( cb );
 			}
 
+			ucPattern.SetRegexOptions( GetRegexOptions( ) );
+			ucPattern.SetFocus( );
+
+			IsFullyLoaded = true;
+
+			Debug.Assert( !IsInChange );
+
 			if( IsVisible )
 			{
 				if( InitialTabData != null )
@@ -152,24 +164,22 @@ namespace RegExpressWPF
 					var tab_data = InitialTabData;
 					InitialTabData = null;
 
+					StopAll( );
 					LoadTabData( tab_data );
+					RestartAll( );
 				}
 			}
-
-			ucPattern.SetRegexOptions( GetRegexOptions( ) );
-
-			ucPattern.SetFocus( );
-
-			IsFullyLoaded = true;
-
-			RestartFindMatches( );
 		}
 
 
 		private void UserControl_IsVisibleChanged( object sender, DependencyPropertyChangedEventArgs e )
 		{
+			Debug.Assert( !IsInChange );
+
 			if( true.Equals( e.NewValue ) && IsFullyLoaded )
 			{
+				StopAll( );
+
 				if( InitialTabData != null )
 				{
 					var tab_data = InitialTabData;
@@ -177,6 +187,8 @@ namespace RegExpressWPF
 
 					LoadTabData( tab_data );
 				}
+
+				RestartAll( );
 			}
 		}
 
@@ -190,29 +202,32 @@ namespace RegExpressWPF
 		private void UcPattern_TextChanged( object sender, EventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			RestartFindMatches( );
-			Changed?.Invoke( this, null );
-
 			RestartUpdateWhitespaceWarning( );
+
+			Changed?.Invoke( this, null );
 		}
 
 
 		private void UcText_TextChanged( object sender, EventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			RestartFindMatches( );
-			Changed?.Invoke( this, null );
-
 			RestartShowTextInfo( );
 			RestartUpdateWhitespaceWarning( );
+
+			Changed?.Invoke( this, null );
 		}
 
 
 		private void UcText_SelectionChanged( object sender, EventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			RestartShowTextInfo( );
 		}
@@ -220,6 +235,9 @@ namespace RegExpressWPF
 
 		private void ucText_GotKeyboardFocus( object sender, KeyboardFocusChangedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
 			if( !ucTextHadFocus )
 			{
 				ucTextHadFocus = true;
@@ -232,6 +250,7 @@ namespace RegExpressWPF
 		private void UcText_LostFocus( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			ucMatches.SetExternalUnderlining( null, setSelection: false );
 		}
@@ -254,6 +273,7 @@ namespace RegExpressWPF
 		private void UcMatches_SelectionChanged( object sender, EventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			var segments = ucMatches.GetUnderlinedSegments( );
 
@@ -264,6 +284,7 @@ namespace RegExpressWPF
 		private void UcMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			ucText.SetExternalUnderlining( Enumerable.Empty<Segment>( ).ToList( ), setSelection: false );
 		}
@@ -272,11 +293,13 @@ namespace RegExpressWPF
 		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			UpdateRegexOptionsControls( );
 
 			ucPattern.SetRegexOptions( GetRegexOptions( ) );
 			RestartFindMatches( );
+
 			Changed?.Invoke( this, null );
 		}
 
@@ -284,19 +307,21 @@ namespace RegExpressWPF
 		private void CbShowWhitespaces_CheckedChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			ucPattern.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 			ucText.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 
-			Changed?.Invoke( this, null );
-
 			RestartUpdateWhitespaceWarning( );
+
+			Changed?.Invoke( this, null );
 		}
 
 
 		private void LnkShowAll_Click( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			cbShowFirstOnly.IsChecked = false;
 		}
@@ -305,6 +330,7 @@ namespace RegExpressWPF
 		private void LnkShowFirst_Click( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			cbShowFirstOnly.IsChecked = true;
 		}
@@ -313,11 +339,12 @@ namespace RegExpressWPF
 		private void CbxEol_SelectionChanged( object sender, SelectionChangedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
 
 			RestartFindMatches( );
-			Changed?.Invoke( this, null );
-
 			RestartShowTextInfo( );
+
+			Changed?.Invoke( this, null );
 		}
 
 
@@ -326,36 +353,45 @@ namespace RegExpressWPF
 
 		private void LoadTabData( TabData tabData )
 		{
-			ucPattern.SetText( tabData.Pattern );
-			ucText.SetText( tabData.Text );
+			Debug.Assert( !IsInChange );
+			IsInChange = true;
 
-			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
+			try
 			{
-				var opt = cb.Tag as RegexOptions?;
-				if( opt != null )
+				ucPattern.SetText( tabData.Pattern );
+				ucText.SetText( tabData.Text );
+
+				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
-					cb.IsChecked = ( tabData.RegexOptions & opt.Value ) != 0;
+					var opt = cb.Tag as RegexOptions?;
+					if( opt != null )
+					{
+						cb.IsChecked = ( tabData.RegexOptions & opt.Value ) != 0;
+					}
 				}
+
+				UpdateRegexOptionsControls( );
+
+				cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
+				cbShowFailedGroups.IsChecked = tabData.ShowFailedGroups;
+				cbShowCaptures.IsChecked = tabData.ShowCaptures;
+				cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
+
+				foreach( var item in cbxEol.Items.Cast<ComboBoxItem>( ) )
+				{
+					item.IsSelected = (string)item.Tag == tabData.Eol;
+				}
+				if( cbxEol.SelectedItem == null ) ( (ComboBoxItem)cbxEol.Items[0] ).IsSelected = true;
+
+				ucPattern.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
+				ucText.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
+
+				ucPattern.SetFocus( );
 			}
-
-			UpdateRegexOptionsControls( );
-
-			cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
-			cbShowFailedGroups.IsChecked = tabData.ShowFailedGroups;
-			cbShowCaptures.IsChecked = tabData.ShowCaptures;
-			cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
-
-			foreach( var item in cbxEol.Items.Cast<ComboBoxItem>( ) )
+			finally
 			{
-				item.IsSelected = (string)item.Tag == tabData.Eol;
+				IsInChange = false;
 			}
-			if( cbxEol.SelectedItem == null ) ( (ComboBoxItem)cbxEol.Items[0] ).IsSelected = true;
-
-			ucPattern.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
-			ucText.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
-
-			RestartShowTextInfo( );
-			RestartUpdateWhitespaceWarning( );
 		}
 
 
@@ -421,6 +457,21 @@ namespace RegExpressWPF
 			string eol = (string)eol_item.Tag;
 
 			return eol;
+		}
+
+
+		private void RestartAll( )
+		{
+			RestartFindMatches( );
+			RestartShowTextInfo( );
+			RestartUpdateWhitespaceWarning( );
+		}
+
+
+		private void StopAll( )
+		{
+			FindMatchesTask.Stop( );
+			UpdateWhitespaceWarningTask.Stop( );
 		}
 
 

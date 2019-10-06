@@ -140,10 +140,8 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 
 			UndoRedoHelper.HandleTextChanged( );
-
-			TextChanged?.Invoke( this, null );
-
 			RestartRecolouring( );
+			TextChanged?.Invoke( this, null );
 		}
 
 
@@ -209,7 +207,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 222 ) ) return;
+				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;

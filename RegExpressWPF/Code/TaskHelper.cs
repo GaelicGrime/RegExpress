@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -8,66 +9,71 @@ using System.Threading.Tasks;
 
 namespace RegExpressWPF.Code
 {
-    public sealed class TaskHelper : IDisposable
-    {
-        CancellationTokenSource mCancelationTokenSource = new CancellationTokenSource( );
-        Task mTask = Task.CompletedTask;
+	public sealed class TaskHelper : IDisposable
+	{
+		CancellationTokenSource mCancelationTokenSource = new CancellationTokenSource( );
+		Task mTask = Task.CompletedTask;
 
 
-        public void Restart( Action<CancellationToken> action )
-        {
-            Stop( );
+		public void Restart( Action<CancellationToken> action )
+		{
+			Stop( );
 
-            mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
-        }
+			mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
+		}
 
 
-        public void RestartAfter( TaskHelper taskBefore, Action<CancellationToken> action )
-        {
-            Stop( );
+		public void RestartAfter( TaskHelper taskBefore, Action<CancellationToken> action )
+		{
+			Debug.Assert( this != taskBefore );
 
-            var ct =
-                CancellationTokenSource.CreateLinkedTokenSource(
-                    taskBefore.mCancelationTokenSource.Token,
-                    mCancelationTokenSource.Token ).Token;
+			Stop( );
 
-            taskBefore.mTask.ContinueWith( t => action( ct ), ct );
+			var ts =
+				CancellationTokenSource.CreateLinkedTokenSource(
+					taskBefore.mCancelationTokenSource.Token,
+					mCancelationTokenSource.Token );
 
-			// TODO: dispose 'ct'
+			var ct = ts.Token;
+
+			taskBefore.mTask
+				.ContinueWith( _ => action( ct ), ct )
+				.ContinueWith( _ => { ts.Dispose( ); return Task.CompletedTask; } );
 		}
 
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		public void Stop( )
-        {
-            using( mCancelationTokenSource )
-            {
-                mCancelationTokenSource.Cancel( );
+		{
+			using( mCancelationTokenSource )
+			{
+				mCancelationTokenSource.Cancel( );
 
-                try
-                {
-                    mTask.Wait( );
-                }
-                catch( OperationCanceledException )
-                {
-                    // ignore
-                }
-                catch( AggregateException exc )
-                {
-                    if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) ) throw;
+				try
+				{
+					mTask.Wait( );
+				}
+				catch( OperationCanceledException )
+				{
+					// ignore
+				}
+				catch( AggregateException exc )
+				{
+					if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) ) throw;
 
-                    // ignore
-                }
-            }
+					// ignore
+				}
+			}
 
-            mCancelationTokenSource = new CancellationTokenSource( );
-        }
+			mCancelationTokenSource = new CancellationTokenSource( );
+		}
 
 		#region IDisposable Support
 
 		private bool disposedValue = false; // To detect redundant calls
 
-		/*protected virtual*/ void Dispose( bool disposing )
+		/*protected virtual*/
+		void Dispose( bool disposing )
 		{
 			if( !disposedValue )
 			{
