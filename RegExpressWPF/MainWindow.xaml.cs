@@ -32,7 +32,6 @@ namespace RegExpressWPF
 
 		bool IsFullyLoaded = false;
 
-
 		public static readonly RoutedUICommand NewTabCommand = new RoutedUICommand( );
 		public static readonly RoutedUICommand CloseTabCommand = new RoutedUICommand( );
 
@@ -68,6 +67,8 @@ namespace RegExpressWPF
 			}
 
 			TrySwitchToSingleMode( );
+
+			IsFullyLoaded = true;
 		}
 
 
@@ -347,7 +348,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				var MIN_INTERVAL = TimeSpan.FromSeconds( 1 );
+				var MIN_INTERVAL = TimeSpan.FromSeconds( 5 );
 				var interval = Properties.Settings.Default.AutoSaveInterval;
 				if( interval < MIN_INTERVAL ) interval = MIN_INTERVAL;
 
