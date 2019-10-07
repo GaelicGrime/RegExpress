@@ -52,6 +52,78 @@ namespace RegExpressWPF.Adorners
 		}
 
 
+#if false //.............
+		protected override void OnRender( DrawingContext drawingContext )
+		{
+			base.OnRender( drawingContext );  // (probably nothing)
+
+			var ranges = Ranges;
+
+			if( ranges == null ) return;
+
+			var dc = drawingContext;
+			var rtb = Rtb;
+
+			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+
+			var start_doc = rtb.Document.ContentStart;
+			var half_pen = Pen.Thickness / 2;
+
+			// TODO: clean 'Ranges' if document was changed (release old document)
+
+			foreach( var (start, end) in ranges )
+			{
+				if( start.HasValidLayout && end.HasValidLayout )
+				{
+					if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
+					{
+						char[] c1 = new char[1]; // TODO: use 'stackalloc'
+
+						for( var tp = start;//....GetInsertionPosition( LogicalDirection.Forward );
+							tp != null && tp.CompareTo( end ) < 0;
+							//tp = tp.GetNextContextPosition( LogicalDirection.Forward )
+							tp = tp.GetPositionAtOffset( +1 )
+							)
+						{
+							var rect = tp.GetCharacterRect( LogicalDirection.Forward );
+							int n = tp.GetTextInRun( LogicalDirection.Forward, c1, 0, 1 );
+
+							if( n == 0 )
+							{
+								//?
+							}
+							else
+							{
+								var y = Math.Ceiling( rect.Bottom ) - half_pen;
+
+								if( true ) //............
+								{
+									// LTR
+
+									dc.DrawLine( Pen, new Point( rect.Left, y ), new Point( rect.Left + 10, y ) );
+								}
+								else
+								{
+									// RTL
+
+
+								}
+
+							}
+						}
+					}
+				}
+			}
+
+
+			dc.Pop( );
+		}
+
+
+#else
+
 		protected override void OnRender( DrawingContext drawingContext )
 		{
 			base.OnRender( drawingContext );  // (probably nothing)
@@ -247,6 +319,7 @@ namespace RegExpressWPF.Adorners
 			return tp1.CompareTo( tp2 ) < 0;
 		}
 
+#endif
 
 		void DelayedInvalidateVisual( )
 		{
