@@ -424,7 +424,7 @@ namespace RegExpressWPF
 							value_inline.Style( MatchValueStyleInfo, highlight_style );
 						}
 
-						run = new Run( $"  （{match.Index}, {match.Length}）", span.ContentEnd );
+						run = new Run( $"\x200E  （{match.Index}, {match.Length}）", span.ContentEnd );
 						run.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
 						_ = new LineBreak( span.ElementEnd ); // (after span)
@@ -491,7 +491,7 @@ namespace RegExpressWPF
 								inl.Style( GroupSiblingValueStyleInfo );
 							}
 
-							run = new Run( $"  （{group.Index}, {group.Length}）", span.ContentEnd );
+							run = new Run( $"\x200E  （{group.Index}, {group.Length}）", span.ContentEnd );
 							run.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
 							para.Inlines.Add( span );
@@ -612,7 +612,7 @@ namespace RegExpressWPF
 					inline = FormatResult( right, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 				}
-				inline = new Run( $"  （{capture.Index}, {capture.Length}）", span.ContentEnd );
+				inline = new Run( $"\x200E  （{capture.Index}, {capture.Length}）", span.ContentEnd );
 				inline.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
 
