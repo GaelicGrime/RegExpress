@@ -34,7 +34,10 @@
             </local_controls:MyRichTextBox>
         </AdornerDecorator>
 
-        <Button x:Name="btnDbgSave" Content="(SAVE)" Panel.ZIndex="10" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="14" Click="BtnDbgSave_Click" Visibility="Hidden"/>
+        <StackPanel x:Name="pnlDebug" Panel.ZIndex="10" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8">
+            <Label x:Name="lblDbgInfo">(Debug information here)</Label>
+            <Button x:Name="btnDbgSave" Content="(SAVE)" Click="BtnDbgSave_Click" />
+        </StackPanel>
 
     </Grid>
 </UserControl>

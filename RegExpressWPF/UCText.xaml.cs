@@ -68,6 +68,10 @@ namespace RegExpressWPF
 				new StyleInfo( "MatchHighlight_1" ),
 				new StyleInfo( "MatchHighlight_2" )
 			};
+
+#if !DEBUG
+			pnlDebug.Visibility = Visibility.Collapsed;
+#endif
 		}
 
 
@@ -203,6 +207,8 @@ namespace RegExpressWPF
 			UndoRedoHelper.HandleSelectionChanged( );
 
 			SelectionChanged?.Invoke( this, null );
+
+			ShowDebugInformation( ); // #if DEBUG
 		}
 
 
@@ -539,6 +545,32 @@ namespace RegExpressWPF
 
 			return items;
 		}
+
+
+		[Conditional( "DEBUG" )]
+		private void ShowDebugInformation( )
+		{
+			string s = "";
+
+			TextPointer start = rtb.Selection.Start;
+
+			Rect rectB = start.GetCharacterRect( LogicalDirection.Backward );
+			Rect rectF = start.GetCharacterRect( LogicalDirection.Forward );
+
+			s += $"BPos: {(int)rectB.Left}, FPos: {(int)rectF.Left}";
+
+			char[] bc = new char[1];
+			char[] fc = new char[1];
+
+			int bn = start.GetTextInRun( LogicalDirection.Backward, bc, 0, 1 );
+			int fn = start.GetTextInRun( LogicalDirection.Forward, fc, 0, 1 );
+
+			s += $", Bc: '{( bn == 0 ? '∅' : bc[0] )}', Fc: '{( fn == 0 ? '∅' : fc[0] )}";
+
+			lblDbgInfo.Content = s;
+		}
+
+
 
 
 		#region IDisposable Support

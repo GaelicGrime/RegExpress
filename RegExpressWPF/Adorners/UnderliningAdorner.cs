@@ -117,6 +117,8 @@ namespace RegExpressWPF.Adorners
 									rtl = false;
 								}
 
+								// max --> min
+
 								//if( UnicodeUtilities.IsRTL( one_char[0] ) ) //............
 								if( rtl ) //............
 								{
