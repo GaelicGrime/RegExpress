@@ -52,7 +52,7 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-#if false //.............
+#if true //.............
 		protected override void OnRender( DrawingContext drawingContext )
 		{
 			base.OnRender( drawingContext );  // (probably nothing)
@@ -79,18 +79,25 @@ namespace RegExpressWPF.Adorners
 				{
 					if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
 					{
-						char[] c1 = new char[1]; // TODO: use 'stackalloc'
+						char[] one_char = new char[1]; // TODO: use 'stackalloc'
+						bool rtl = false;
 
-						for( var tp = start;//....GetInsertionPosition( LogicalDirection.Forward );
+						//for( var tp = start;//....GetInsertionPosition( LogicalDirection.Forward );
+						//	tp != null && tp.CompareTo( end ) < 0;
+						//	//tp = tp.GetNextContextPosition( LogicalDirection.Forward )
+						//	tp = tp.GetPositionAtOffset( +1 )
+						//	//tp = tp.GetNextInsertionPosition( LogicalDirection.Forward )
+						//	)
+						var tp = start;
+						for( int i = 0;//....GetInsertionPosition( LogicalDirection.Forward );
 							tp != null && tp.CompareTo( end ) < 0;
-							//tp = tp.GetNextContextPosition( LogicalDirection.Forward )
-							tp = tp.GetPositionAtOffset( +1 )
+							tp = tp.GetPositionAtOffset( ++i )
 							)
 						{
 							var rect = tp.GetCharacterRect( LogicalDirection.Forward );
-							int n = tp.GetTextInRun( LogicalDirection.Forward, c1, 0, 1 );
+							int n = tp.GetTextInRun( LogicalDirection.Forward, one_char, 0, 1 );
 
-							if( n == 0 )
+							if( n == 0 /*|| one_char[0] != ' '*/ ) //.....
 							{
 								//?
 							}
@@ -98,17 +105,30 @@ namespace RegExpressWPF.Adorners
 							{
 								var y = Math.Ceiling( rect.Bottom ) - half_pen;
 
-								if( true ) //............
+								bool is_ltr = UnicodeUtilities.IsLTR( one_char[0] );
+								bool is_rtl = UnicodeUtilities.IsRTL( one_char[0] );
+
+								if( is_rtl )
+								{
+									rtl = true;
+								}
+								else if( is_ltr )
+								{
+									rtl = false;
+								}
+
+								//if( UnicodeUtilities.IsRTL( one_char[0] ) ) //............
+								if( rtl ) //............
+								{
+									// RTL
+
+									dc.DrawLine( Pen, new Point( rect.Left, y ), new Point( rect.Left - 10, y ) );
+								}
+								else
 								{
 									// LTR
 
 									dc.DrawLine( Pen, new Point( rect.Left, y ), new Point( rect.Left + 10, y ) );
-								}
-								else
-								{
-									// RTL
-
-
 								}
 
 							}

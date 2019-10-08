@@ -77,6 +77,7 @@
     <Compile Include="Code\UndoRedoHelper.cs" />
     <Compile Include="Code\ChangeEventHelper.cs" />
     <Compile Include="Code\RtbUtilities.cs" />
+    <Compile Include="Code\UnicodeUtilities.cs" />
     <Compile Include="Controls\MyRichTextBox.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
