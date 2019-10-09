@@ -557,7 +557,7 @@ namespace RegExpressWPF
 			Rect rectB = start.GetCharacterRect( LogicalDirection.Backward );
 			Rect rectF = start.GetCharacterRect( LogicalDirection.Forward );
 
-			s += $"BPos: {(int)rectB.Left}, FPos: {(int)rectF.Left}";
+			s += $"BPos: {(int)rectB.Left}×{(int)rectB.Bottom}, FPos: {(int)rectF.Left}×{(int)rectF.Bottom}";
 
 			char[] bc = new char[1];
 			char[] fc = new char[1];
