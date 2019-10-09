@@ -20,6 +20,9 @@ namespace RegExpressWPF.Adorners
 
 		IReadOnlyList<(TextPointer start, TextPointer end)> Ranges = null;
 
+		//...
+		public bool DbgDisabled;
+
 
 		public UnderliningAdorner( UIElement adornedElement ) : base( adornedElement )
 		{
@@ -146,7 +149,8 @@ namespace RegExpressWPF.Adorners
 
 
 
-		protected override void OnRender( DrawingContext drawingContext )
+		/*protected override*/
+		void OnRender3( DrawingContext drawingContext )
 		{
 			base.OnRender( drawingContext );  // (probably nothing)
 
@@ -257,70 +261,135 @@ namespace RegExpressWPF.Adorners
 								prev_point_f = tp_point_f;
 							}
 						}
-
-#if false
-
-						char[] one_char = new char[1]; // TODO: use 'stackalloc'
-						bool rtl = false;
-
-						//for( var tp = start;//....GetInsertionPosition( LogicalDirection.Forward );
-						//	tp != null && tp.CompareTo( end ) < 0;
-						//	//tp = tp.GetNextContextPosition( LogicalDirection.Forward )
-						//	tp = tp.GetPositionAtOffset( +1 )
-						//	//tp = tp.GetNextInsertionPosition( LogicalDirection.Forward )
-						//	)
-						var tp = start;
-						for( int i = 0;//....GetInsertionPosition( LogicalDirection.Forward );
-							tp != null && tp.CompareTo( end ) < 0;
-							tp = tp.GetPositionAtOffset( ++i )
-							)
-						{
-							var rect = tp.GetCharacterRect( LogicalDirection.Forward );
-							int n = tp.GetTextInRun( LogicalDirection.Forward, one_char, 0, 1 );
-
-							if( n == 0 /*|| one_char[0] != ' '*/ ) //.....
-							{
-								//?
-							}
-							else
-							{
-								var y = Math.Ceiling( rect.Bottom ) - half_pen;
-
-								bool is_ltr = UnicodeUtilities.IsLTR( one_char[0] );
-								bool is_rtl = UnicodeUtilities.IsRTL( one_char[0] );
-
-								if( is_rtl )
-								{
-									rtl = true;
-								}
-								else if( is_ltr )
-								{
-									rtl = false;
-								}
-
-								// max --> min
-
-								//if( UnicodeUtilities.IsRTL( one_char[0] ) ) //............
-								if( rtl ) //............
-								{
-									// RTL
-
-									dc.DrawLine( Pen, new Point( rect.Left, y ), new Point( rect.Left - 10, y ) );
-								}
-								else
-								{
-									// LTR
-
-									dc.DrawLine( Pen, new Point( rect.Left, y ), new Point( rect.Left + 10, y ) );
-								}
-
-							}
-						}
-#endif
 					}
 				}
 			}
 
+			dc.Pop( );
+		}
+
+
+		protected override void OnRender( DrawingContext drawingContext )
+		{
+			base.OnRender( drawingContext );  // (probably nothing)
+
+			if( DbgDisabled ) return;
+
+			var ranges = Ranges;
+
+			if( ranges == null ) return;
+
+			var dc = drawingContext;
+			var rtb = Rtb;
+
+			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+
+			var start_doc = rtb.Document.ContentStart;
+			var half_pen = Pen.Thickness / 2;
+
+			// TODO: clean 'Ranges' if document was changed (release old document)
+
+			foreach( var (start0, end) in ranges )
+			{
+				if( start0.HasValidLayout && end.HasValidLayout )
+				{
+					if( start0.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
+					{
+						var start = start0;//.GetInsertionPosition( LogicalDirection.Backward );
+
+						var tr = new TextRange( start0, end );
+						var t = tr.Text;
+
+						Point start_point_b = start.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
+						Point start_point_f = start.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
+
+						TextPointer end_b = end.GetInsertionPosition( LogicalDirection.Backward );
+						TextPointer end_f = end.GetInsertionPosition( LogicalDirection.Forward );
+
+						Point end_point_b = end.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
+						Point end_point_f = end.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
+
+						if( start_point_b.Y <= clip_rect.Bottom && start_point_f.Y <= clip_rect.Bottom &&
+							end_point_b.Y >= clip_rect.Top && end_point_f.Y >= clip_rect.Top )
+						{
+
+							Point prev_point_b = start_point_b;
+							Point prev_point_f = start_point_f;
+
+							TextPointer end_max = end_point_b.X > end_point_f.X ? end_b : end_f;
+							TextPointer end_min = end_point_b.X > end_point_f.X ? end_b : end_f;
+
+							int start_offset = start_doc.GetOffsetToPosition( start );
+							int end_offset = start_doc.GetOffsetToPosition( end );
+
+							for( var tp = start.GetNextInsertionPosition( LogicalDirection.Forward );
+								tp != null && tp.CompareTo( end ) <= 0;
+								tp = tp.GetNextInsertionPosition( LogicalDirection.Forward ) )
+							{
+								int offset = start_doc.GetOffsetToPosition( tp );
+
+								Debug.Assert( tr.Contains( tp ) );
+								if( !tr.Contains( tp ) ) continue;
+
+								Point tp_point_b = tp.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
+								Point tp_point_f = tp.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
+
+								Point prev_min, prev_max;
+								Point tp_min, tp_max;
+
+								if( prev_point_b.X <= prev_point_f.X )
+								{
+									prev_min = prev_point_b;
+									prev_max = prev_point_f;
+								}
+								else
+								{
+									prev_min = prev_point_f;
+									prev_max = prev_point_b;
+								}
+
+								if( tp_point_b.X <= tp_point_f.X )
+								{
+									tp_min = tp_point_b;
+									tp_max = tp_point_f;
+								}
+								else
+								{
+									tp_min = tp_point_f;
+									tp_max = tp_point_b;
+								}
+
+								Point a, b;
+
+								if( prev_max.Y == tp_min.Y )
+								{
+									a = prev_max;
+									b = tp_min;
+								}
+								else if( prev_max.Y == tp_max.Y )
+								{
+									a = prev_max;
+									b = tp_max;
+								}
+								else
+								{
+									a = prev_min;
+									b = tp_min;
+								}
+
+								Debug.Assert( a.Y == b.Y );
+
+								dc.DrawLine( Pen, a, b );
+
+								prev_point_b = tp_point_b;
+								prev_point_f = tp_point_f;
+							}
+						}
+					}
+				}
+			}
 
 			dc.Pop( );
 		}

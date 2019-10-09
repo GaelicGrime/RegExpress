@@ -391,6 +391,7 @@ namespace RegExpressWPF.Code
 						{
 							var c = run.Text[i];
 							var p = start.GetPositionAtOffset( i );
+							//var p = i == 0 ? run.ContentStart : start.GetPositionAtOffset( i ); //...........
 							int next_i;
 
 							switch( c )

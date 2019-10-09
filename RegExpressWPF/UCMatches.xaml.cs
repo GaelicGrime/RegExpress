@@ -132,6 +132,8 @@ namespace RegExpressWPF
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
+
+			UnderliningAdorner.DbgDisabled = false; //...
 		}
 
 
