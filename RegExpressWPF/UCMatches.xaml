@@ -41,5 +41,9 @@
             </FlowDocument>
         </RichTextBox>
 
+        <StackPanel x:Name="pnlDebug" Panel.ZIndex="10" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="0">
+            <Label x:Name="lblDbgInfo">(Debug information here)</Label>
+        </StackPanel>
+
     </Grid>
 </UserControl>
