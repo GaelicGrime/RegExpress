@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -99,16 +100,14 @@ namespace RegExpressWPF.Adorners
 							Point prev_point_b = start_point_b;
 							Point prev_point_f = start_point_f;
 
-							TextPointer end_max = end_point_b.X > end_point_f.X ? end_b : end_f;
-							TextPointer end_min = end_point_b.X > end_point_f.X ? end_b : end_f;
+							double last_y = double.NaN;
+							double last_x_a = double.NaN;
+							double last_x_b = double.NaN;
 
-							int start_offset = start_doc.GetOffsetToPosition( start );
-							int end_offset = start_doc.GetOffsetToPosition( end );
-
-							for( 
+							for(
 								var tp = start.GetNextInsertionPosition( LogicalDirection.Forward );
 								tp != null && tp.CompareTo( end ) <= 0;
-								tp = tp.GetNextInsertionPosition( LogicalDirection.Forward ) 
+								tp = tp.GetNextInsertionPosition( LogicalDirection.Forward )
 								)
 							{
 								int offset = start_doc.GetOffsetToPosition( tp );
@@ -141,6 +140,11 @@ namespace RegExpressWPF.Adorners
 									tp_max = tp_point_b;
 								}
 
+								prev_min.Y = Math.Ceiling( prev_min.Y );
+								prev_max.Y = Math.Ceiling( prev_max.Y );
+								tp_min.Y = Math.Ceiling( tp_min.Y );
+								tp_max.Y = Math.Ceiling( tp_max.Y );
+
 								Point a, b;
 
 								if( prev_max.Y == tp_min.Y )
@@ -166,11 +170,51 @@ namespace RegExpressWPF.Adorners
 								}
 								else
 								{
-									dc.DrawLine( Pen, a, b );
+									var y = a.Y - half_pen;
+
+									if( y < clip_rect.Top - half_pen ) continue; // not visible yet
+									if( y > clip_rect.Bottom + half_pen ) break; // already invisible
+
+									bool combined = false;
+
+									if( y == last_y )
+									{
+										// try to combine with previous one
+
+										if( last_x_a < last_x_b && a.X < b.X && last_x_b == a.X ) // ('==' seems to work)
+										{
+											last_x_b = b.X;
+											combined = true;
+										}
+										else if( last_x_a > last_x_b && a.X > b.X && last_x_b == b.X )
+										{
+											last_x_a = a.X;
+											combined = true;
+										}
+									}
+
+									if( !combined )
+									{
+										if( !double.IsNaN( last_y ) )
+										{
+											// draw accumulated segment
+											dc.DrawLine( Pen, new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) );
+										}
+
+										last_y = y;
+										last_x_a = a.X;
+										last_x_b = b.X;
+									}
 								}
 
 								prev_point_b = tp_point_b;
 								prev_point_f = tp_point_f;
+							}
+
+							// draw accumulated segment
+							if( !double.IsNaN( last_y ) )
+							{
+								dc.DrawLine( Pen, new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) );
 							}
 						}
 					}
