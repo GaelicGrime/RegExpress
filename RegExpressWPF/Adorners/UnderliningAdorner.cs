@@ -21,6 +21,16 @@ namespace RegExpressWPF.Adorners
 
 		IReadOnlyList<(TextPointer start, TextPointer end)> Ranges = null;
 
+		struct HorizontalSegment
+		{
+			public double x1, x2;
+			public double y;
+		}
+
+		readonly List<HorizontalSegment> Segments = new List<HorizontalSegment>( );
+		bool MustRecalculateSegments = true;
+
+
 		public bool IsDbgDisabled; // (disable drawing this adorner for debugging purposes)
 
 
@@ -37,6 +47,42 @@ namespace RegExpressWPF.Adorners
 		}
 
 
+		public void SetRangesToUnderline( IReadOnlyList<(TextPointer start, TextPointer end)> ranges )
+		{
+			if( IsDbgDisabled ) return;
+
+			lock( this )
+			{
+				if( ranges != null && Ranges != null && ranges.Count == Ranges.Count )
+				{
+					bool are_different = false;
+
+					for( int i = 0; i < ranges.Count; ++i )
+					{
+						(TextPointer start, TextPointer end) r = ranges[i];
+						(TextPointer start, TextPointer end) R = Ranges[i];
+
+						if( !( r.start.CompareTo( R.start ) == 0 && ( r.end.CompareTo( R.end ) == 0 ) ) )
+						{
+							are_different = true;
+							break;
+						}
+					}
+
+					if( !are_different )
+					{
+						return;
+					}
+				}
+
+				Ranges = ranges;
+
+				MustRecalculateSegments = true;
+				DelayedInvalidateVisual( );
+			}
+		}
+
+
 		RichTextBox Rtb
 		{
 			get { return (RichTextBox)AdornedElement; }
@@ -45,17 +91,18 @@ namespace RegExpressWPF.Adorners
 
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
+			// (recalculation not needed)
+
 			DelayedInvalidateVisual( );
 		}
 
 
 		private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
 		{
+			MustRecalculateSegments = true;
 			InvalidateVisual( );
 		}
 
-
-#if true //.............
 
 		protected override void OnRender( DrawingContext drawingContext )
 		{
@@ -63,23 +110,49 @@ namespace RegExpressWPF.Adorners
 
 			if( IsDbgDisabled ) return;
 
-			var ranges = Ranges; // (no locking needed)
+			lock( this )
+			{
+				if( MustRecalculateSegments )
+				{
+					RecalculateSegments( );
+				}
 
-			if( ranges == null ) return;
+				// TODO: use combined geometry?
 
-			var dc = drawingContext;
+				var rtb = Rtb;
+				var dc = drawingContext;
+				var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+				dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+				foreach( var s in Segments )
+				{
+					dc.DrawLine( Pen, new Point( s.x1, s.y ), new Point( s.x2, s.y ) );
+				}
+
+				dc.Pop( );
+
+				MustRecalculateSegments = false;
+			}
+		}
+
+
+		void RecalculateSegments( )
+		{
+			Segments.Clear( );
+
+			if( Ranges == null ) return;
+
 			var rtb = Rtb;
 
 			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-			dc.PushClip( new RectangleGeometry( clip_rect ) );
-
 
 			var start_doc = rtb.Document.ContentStart;
 			var half_pen = Pen.Thickness / 2;
 
 			// TODO: clean 'Ranges' if document was changed (release old document), in thread-safe manner
 
-			foreach( var (start, end) in ranges )
+			foreach( var (start, end) in Ranges )
 			{
 				if( start.HasValidLayout && end.HasValidLayout )
 				{
@@ -110,8 +183,6 @@ namespace RegExpressWPF.Adorners
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Forward )
 								)
 							{
-								int offset = start_doc.GetOffsetToPosition( tp );
-
 								Point tp_point_b = tp.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
 								Point tp_point_f = tp.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
 
@@ -197,8 +268,8 @@ namespace RegExpressWPF.Adorners
 									{
 										if( !double.IsNaN( last_y ) )
 										{
-											// draw accumulated segment
-											dc.DrawLine( Pen, new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) );
+											// add accumulated segment
+											Segments.Add( new HorizontalSegment { x1 = last_x_a, x2 = last_x_b, y = last_y } );
 										}
 
 										last_y = y;
@@ -214,228 +285,20 @@ namespace RegExpressWPF.Adorners
 							// draw accumulated segment
 							if( !double.IsNaN( last_y ) )
 							{
-								dc.DrawLine( Pen, new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) );
+								// add accumulated segment
+								Segments.Add( new HorizontalSegment { x1 = last_x_a, x2 = last_x_b, y = last_y } );
 							}
 						}
 					}
 				}
 			}
-
-
-			dc.Pop( );
 		}
 
-
-#else
-
-		protected override void OnRender( DrawingContext drawingContext )
-		{
-			base.OnRender( drawingContext );  // (probably nothing)
-
-			var dc = drawingContext;
-			var rtb = Rtb;
-			var ranges = Ranges;
-
-			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-			dc.PushClip( new RectangleGeometry( clip_rect ) );
-
-			if( ranges != null )
-			{
-				var start_doc = rtb.Document.ContentStart;
-
-				// TODO: clean 'Ranges' if document was changed (release old document)
-
-				foreach( var (start, end) in ranges )
-				{
-					if( start.HasValidLayout && end.HasValidLayout )
-					{
-						if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
-						{
-							var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
-							var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
-
-							if( !( end_rect.Bottom < clip_rect.Top || start_rect.Top > clip_rect.Bottom ) )
-							{
-								if( start_rect.Bottom > end_rect.Top )
-								{
-									// no wrap, draw quickly
-
-									DrawUnderline( dc, new Rect( start_rect.TopLeft, end_rect.BottomLeft ), isLeftStart: true, isRightEnd: true );
-								}
-								else
-								{
-									var adjusted_end = end.GetInsertionPosition( LogicalDirection.Backward );
-									Debug.Assert( adjusted_end != null );
-									Debug.Assert( adjusted_end.IsAtInsertionPosition );
-
-									TextPointer tp = start;
-									if( !tp.IsAtInsertionPosition ) tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-									Debug.Assert( tp.IsAtInsertionPosition );
-
-									RectInfo rect_info = new RectInfo { nextRect = start_rect };
-
-									bool is_left_start = true;
-
-									for(; ; )
-									{
-										Rect r = Rect.Empty;
-
-										for(; ; )
-										{
-											rect_info = GetRectInfo( tp, rect_info.nextRect );
-											r.Union( rect_info.thisRect );
-
-											if( rect_info.nextPointer == null || !IsBefore( rect_info.nextPointer, adjusted_end ) ) { tp = null; break; }
-											tp = rect_info.nextPointer;
-											if( !rect_info.isNextOnSameLine ) { break; }
-										}
-
-										DrawUnderline( dc, r, is_left_start, tp == null );
-
-										if( tp == null ) break;
-
-										is_left_start = false;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			dc.Pop( );
-		}
-
-
-		void DrawUnderline( DrawingContext dc, Rect rect, bool isLeftStart, bool isRightEnd )
-		{
-			/*
-              
-            Too academic and does not look great: 
-
-            var geo = new StreamGeometry( );
-
-            using( var ctx = geo.Open( ) )
-            {
-                if( isLeftStart )
-                {
-                    ctx.BeginFigure( rect.BottomLeft + new Vector( 0, -3 ), isFilled: false, isClosed: false );
-                    ctx.LineTo( rect.BottomLeft, isStroked: true, isSmoothJoin: true );
-                }
-                else
-                {
-                    ctx.BeginFigure( rect.BottomLeft, true, false );
-                }
-
-                ctx.LineTo( rect.BottomRight, isStroked: true, isSmoothJoin: true );
-
-                if( isRightEnd )
-                {
-                    ctx.LineTo( rect.BottomRight + new Vector( 0, -3 ), isStroked: true, isSmoothJoin: true );
-                }
-            }
-
-            geo.Freeze( );
-
-            dc.DrawGeometry( null, Pen, geo );
-
-            */
-
-			// "Worse is better":
-
-			var half_pen = Pen.Thickness / 2;
-
-			var x_left = Math.Ceiling( rect.Left ) - half_pen;
-			var x_right = Math.Ceiling( rect.Right ) - half_pen;
-			var y_bottom = Math.Ceiling( rect.Bottom ) - half_pen;
-			var y_top = y_bottom - 3;
-
-			dc.DrawLine( Pen, new Point( x_left, y_bottom ), new Point( x_right, y_bottom ) );
-
-			if( isLeftStart )
-			{
-				dc.DrawLine( Pen, new Point( x_left, y_bottom ), new Point( x_left, y_top ) );
-			}
-
-			if( isRightEnd )
-			{
-				dc.DrawLine( Pen, new Point( x_right, y_bottom ), new Point( x_right, y_top ) );
-			}
-		}
-
-
-		struct RectInfo
-		{
-			public Rect thisRect;
-			public TextPointer nextPointer;
-			public Rect nextRect;
-			public bool isNextOnSameLine;
-		}
-
-
-		static RectInfo GetRectInfo( TextPointer thisPointer, Rect thisLeadingRect )
-		{
-			Debug.Assert( thisPointer.IsAtInsertionPosition );
-			var nextPointer = thisPointer.GetNextInsertionPosition( LogicalDirection.Forward );
-
-			if( nextPointer == null )
-			{
-				return new RectInfo
-				{
-					thisRect = new Rect( thisLeadingRect.TopLeft, new Size( 0, thisLeadingRect.Height ) ),
-					nextPointer = null,
-					nextRect = Rect.Empty,
-					isNextOnSameLine = false
-				};
-			}
-
-			var next_rect = nextPointer.GetCharacterRect( LogicalDirection.Forward );
-
-			if( next_rect.Top < thisLeadingRect.Bottom )
-			{
-				return new RectInfo
-				{
-					thisRect = new Rect( thisLeadingRect.TopLeft, next_rect.BottomLeft ),
-					nextPointer = nextPointer,
-					nextRect = next_rect,
-					isNextOnSameLine = true
-				};
-			}
-			else
-			{
-				char[] c = new char[1];
-				int n = thisPointer.GetTextInRun( LogicalDirection.Forward, c, 0, 1 );
-
-				return new RectInfo
-				{
-					// TODO: avoid hardcoded width
-					thisRect = new Rect( thisLeadingRect.TopLeft, new Size( n == 0 ? 0 : 10, thisLeadingRect.Height ) ),
-					nextPointer = nextPointer,
-					nextRect = next_rect,
-					isNextOnSameLine = false
-				};
-			}
-		}
-
-
-		static bool IsBefore( TextPointer tp1, TextPointer tp2 )
-		{
-			return tp1.CompareTo( tp2 ) < 0;
-		}
-
-#endif
 
 		void DelayedInvalidateVisual( )
 		{
 			Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( InvalidateVisual ) );
 		}
 
-
-		internal void SetRangesToUnderline( IReadOnlyList<(TextPointer start, TextPointer end)> ranges )
-		{
-			Ranges = ranges;
-
-			DelayedInvalidateVisual( );
-		}
 	}
 }
