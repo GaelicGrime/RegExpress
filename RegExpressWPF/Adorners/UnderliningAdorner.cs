@@ -21,15 +21,8 @@ namespace RegExpressWPF.Adorners
 
 		IReadOnlyList<(TextPointer start, TextPointer end)> Ranges = null;
 
-		struct HorizontalSegment
-		{
-			public double x1, x2;
-			public double y;
-		}
-
-		readonly List<HorizontalSegment> Segments = new List<HorizontalSegment>( );
+		readonly GeometryGroup GeometryGroup = new GeometryGroup( );
 		bool MustRecalculateSegments = true;
-
 
 		public bool IsDbgDisabled; // (disable drawing this adorner for debugging purposes)
 
@@ -125,10 +118,7 @@ namespace RegExpressWPF.Adorners
 
 				dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-				foreach( var s in Segments )
-				{
-					dc.DrawLine( Pen, new Point( s.x1, s.y ), new Point( s.x2, s.y ) );
-				}
+				dc.DrawGeometry( null, Pen, GeometryGroup );
 
 				dc.Pop( );
 
@@ -139,7 +129,7 @@ namespace RegExpressWPF.Adorners
 
 		void RecalculateSegments( )
 		{
-			Segments.Clear( );
+			GeometryGroup.Children.Clear( );
 
 			if( Ranges == null ) return;
 
@@ -269,7 +259,7 @@ namespace RegExpressWPF.Adorners
 										if( !double.IsNaN( last_y ) )
 										{
 											// add accumulated segment
-											Segments.Add( new HorizontalSegment { x1 = last_x_a, x2 = last_x_b, y = last_y } );
+											GeometryGroup.Children.Add( new LineGeometry( new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) ) );
 										}
 
 										last_y = y;
@@ -286,7 +276,7 @@ namespace RegExpressWPF.Adorners
 							if( !double.IsNaN( last_y ) )
 							{
 								// add accumulated segment
-								Segments.Add( new HorizontalSegment { x1 = last_x_a, x2 = last_x_b, y = last_y } );
+								GeometryGroup.Children.Add( new LineGeometry( new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) ) );
 							}
 						}
 					}
