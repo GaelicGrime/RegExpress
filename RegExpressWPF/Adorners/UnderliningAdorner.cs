@@ -24,7 +24,7 @@ namespace RegExpressWPF.Adorners
 		readonly GeometryGroup GeometryGroup = new GeometryGroup( );
 		bool MustRecalculateSegments = true;
 
-		public bool IsDbgDisabled; // (disable drawing this adorner for debugging purposes)
+		public bool IsDbgDisabled; // (disable this adorner for debugging purposes)
 
 
 		public UnderliningAdorner( UIElement adornedElement ) : base( adornedElement )
