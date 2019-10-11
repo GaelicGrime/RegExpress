@@ -69,10 +69,10 @@ namespace RegExpressWPF.Adorners
 				}
 
 				Ranges = ranges;
-
 				MustRecalculateSegments = true;
-				DelayedInvalidateVisual( );
 			}
+
+			DelayedInvalidateVisual( );
 		}
 
 
@@ -84,7 +84,7 @@ namespace RegExpressWPF.Adorners
 
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
-			// (recalculation not needed)
+			// (recalculation not needed; eventually will receive new ranges in few moments)
 
 			DelayedInvalidateVisual( );
 		}
@@ -109,8 +109,6 @@ namespace RegExpressWPF.Adorners
 				{
 					RecalculateSegments( );
 				}
-
-				// TODO: use combined geometry?
 
 				var rtb = Rtb;
 				var dc = drawingContext;
@@ -242,7 +240,7 @@ namespace RegExpressWPF.Adorners
 									{
 										// try to combine with previous one
 
-										if( last_x_a < last_x_b && a.X < b.X && last_x_b == a.X ) // ('==' seems to work)
+										if( last_x_a < last_x_b && a.X < b.X && last_x_b == a.X ) // ('==' seems to work for these doubles)
 										{
 											last_x_b = b.X;
 											combined = true;
@@ -272,12 +270,28 @@ namespace RegExpressWPF.Adorners
 								prev_point_f = tp_point_f;
 							}
 
-							// draw accumulated segment
 							if( !double.IsNaN( last_y ) )
 							{
 								// add accumulated segment
 								GeometryGroup.Children.Add( new LineGeometry( new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) ) );
 							}
+
+						}
+
+						{
+							// add line caps
+
+							const int CAPS_HEIGHT = 3;
+
+							var x = start_point_f.X;
+							var y = start_point_f.Y - half_pen;
+
+							GeometryGroup.Children.Add( new LineGeometry( new Point( x, y ), new Point( x, y - CAPS_HEIGHT ) ) );
+
+							x = end_point_f.X;
+							y = end_point_f.Y - half_pen;
+
+							GeometryGroup.Children.Add( new LineGeometry( new Point( x, y ), new Point( x, y - CAPS_HEIGHT ) ) );
 						}
 					}
 				}
