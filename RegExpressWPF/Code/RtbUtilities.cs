@@ -434,6 +434,14 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static TextRange Range0F( this BaseTextData td, int start, int len )
+		{
+			var range = new TextRange( td.Pointers[start], td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Forward ) );
+
+			return range;
+		}
+
+
 		public static TextRange Range( this TextData td, Segment segment )
 		{
 			return Range( td, segment.Index, segment.Length );
@@ -554,7 +562,7 @@ namespace RegExpressWPF.Code
 						if( ct.IsCancellationRequested ) return;
 
 						var segment = segments[i];
-						td.Range( segment.index, segment.length ).Style( segment.styleInfo );
+						td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
 
 					} while( ++i < last_i && Environment.TickCount < end );
 				} );

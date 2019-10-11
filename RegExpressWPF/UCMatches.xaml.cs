@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -132,6 +133,7 @@ namespace RegExpressWPF
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
+			//UnderliningAdorner.IsDbgDisabled = true;
 		}
 
 
@@ -226,27 +228,27 @@ namespace RegExpressWPF
 
 				switch( parent )
 				{
-					case FrameworkElement fe:
-						tag = fe.Tag;
-						parent = fe.Parent;
-						break;
-					case FrameworkContentElement fce:
-						tag = fce.Tag;
-						parent = fce.Parent;
-						break;
+				case FrameworkElement fe:
+					tag = fe.Tag;
+					parent = fe.Parent;
+					break;
+				case FrameworkContentElement fce:
+					tag = fce.Tag;
+					parent = fce.Parent;
+					break;
 				}
 
 				switch( tag )
 				{
-					case MatchInfo mi:
-						segments.Add( mi.MatchSegment );
-						return segments;
-					case GroupInfo gi:
-						if( gi.IsSuccess ) segments.Add( gi.GroupSegment );
-						return segments;
-					case CaptureInfo ci:
-						segments.Add( ci.CaptureSegment );
-						return segments;
+				case MatchInfo mi:
+					segments.Add( mi.MatchSegment );
+					return segments;
+				case GroupInfo gi:
+					if( gi.IsSuccess ) segments.Add( gi.GroupSegment );
+					return segments;
+				case CaptureInfo ci:
+					segments.Add( ci.CaptureSegment );
+					return segments;
 				}
 			}
 
@@ -395,6 +397,7 @@ namespace RegExpressWPF
 					Paragraph para = null;
 					Run run = null;
 					MatchInfo match_info = null;
+					RunBuilder maker = new RunBuilder( MatchValueSpecialStyleInfo );
 
 					var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
 					var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
@@ -424,9 +427,7 @@ namespace RegExpressWPF
 						}
 						else
 						{
-							value_inline = FormatResult( match.Value, span.ContentEnd );
-
-							//value_run = new Run( FormatResult( match.Value ), span.ContentEnd );
+							value_inline = maker.Make( match.Value, span.ContentEnd );
 							value_inline.Style( MatchValueStyleInfo, highlight_style );
 						}
 
@@ -487,13 +488,13 @@ namespace RegExpressWPF
 								string middle = group.Value;
 								string right = SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-								inl = FormatResult( left, span.ContentEnd );
+								inl = maker.Make( left, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 
-								value_inline = FormatResult( middle, span.ContentEnd );
+								value_inline = maker.Make( middle, span.ContentEnd );
 								value_inline.Style( GroupValueStyleInfo, highlight_light_style );
 
-								inl = FormatResult( right, span.ContentEnd );
+								inl = maker.Make( right, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 							}
 
@@ -520,7 +521,7 @@ namespace RegExpressWPF
 							// captures for group
 							if( showCaptures )
 							{
-								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style );
+								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style, maker );
 							}
 						} );
 					}
@@ -578,7 +579,8 @@ namespace RegExpressWPF
 		}
 
 
-		void AppendCaptures( CancellationToken ct, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch, string text, Match match, Group group, StyleInfo highlightStyle )
+		void AppendCaptures( CancellationToken ct, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch,
+			string text, Match match, Group group, StyleInfo highlightStyle, RunBuilder maker )
 		{
 			int capture_index = -1;
 			foreach( Capture capture in group.Captures )
@@ -609,13 +611,13 @@ namespace RegExpressWPF
 					string middle = capture.Value;
 					string right = SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-					inline = FormatResult( left, span.ContentEnd );
+					inline = maker.Make( left, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 
-					value_inline = FormatResult( middle, span.ContentEnd );
+					value_inline = maker.Make( middle, span.ContentEnd );
 					value_inline.Style( GroupValueStyleInfo, highlightStyle );
 
-					inline = FormatResult( right, span.ContentEnd );
+					inline = maker.Make( right, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 				}
 				inline = new Run( $"\x200E  （{capture.Index}, {capture.Length}）", span.ContentEnd );
@@ -688,35 +690,172 @@ namespace RegExpressWPF
 		}
 
 
-		Inline FormatResult( string text, TextPointer at )
+		class RunBuilder
 		{
-			var matches = Regex.Matches( text, @"(\t|\r|\n)+" );
-			Span span = null;
-			int previous_index = 0;
-			foreach( Match m in matches )
+			struct MyRun
 			{
-				if( span == null ) span = new Span( (Inline)null, at );
-
-				var fragment = AdjustString( text.Substring( previous_index, m.Index - previous_index ) );
-				if( fragment.Any( ) ) _ = new Run( fragment, span.ContentEnd );
-				new Run( AdjustString( m.Value ), span.ContentEnd ).Style( MatchValueSpecialStyleInfo );
-
-				previous_index = m.Index + m.Value.Length;
+				public string text;
+				public bool isSpecial;
 			}
 
-			if( previous_index < text.Length )
-			{
-				string tail = AdjustString( text.Substring( previous_index ) );
+			readonly StringBuilder sb = new StringBuilder( );
+			readonly List<MyRun> runs = new List<MyRun>( );
+			readonly StyleInfo specialStyleInfo;
+			bool isPreviousSpecial = false;
 
-				if( span == null )
+
+			public RunBuilder( StyleInfo specialStyleInfo )
+			{
+				this.specialStyleInfo = specialStyleInfo;
+			}
+
+
+			public Inline Make( string text, TextPointer at )
+			{
+				sb.Clear( );
+				runs.Clear( );
+				isPreviousSpecial = false;
+
+				foreach( var c in text )
 				{
-					return new Run( tail, at );
+					switch( c )
+					{
+					case '\r':
+						AppendSpecial( @"\r" );
+						continue;
+					case '\n':
+						AppendSpecial( @"\n" );
+						continue;
+					case '\t':
+						AppendSpecial( @"\t" );
+						continue;
+					}
+
+					switch( char.GetUnicodeCategory( c ) )
+					{
+					case UnicodeCategory.UppercaseLetter:
+					case UnicodeCategory.LowercaseLetter:
+					case UnicodeCategory.TitlecaseLetter:
+					//case UnicodeCategory.ModifierLetter:
+					case UnicodeCategory.OtherLetter:
+					//case UnicodeCategory.NonSpacingMark:
+					//case UnicodeCategory.SpacingCombiningMark:
+					//case UnicodeCategory.EnclosingMark:
+					case UnicodeCategory.DecimalDigitNumber:
+					case UnicodeCategory.LetterNumber:
+					case UnicodeCategory.OtherNumber:
+					case UnicodeCategory.SpaceSeparator:
+					//case UnicodeCategory.LineSeparator:
+					//case UnicodeCategory.ParagraphSeparator:
+					//case UnicodeCategory.Control:
+					//case UnicodeCategory.Format:
+					//case UnicodeCategory.Surrogate:
+					//case UnicodeCategory.PrivateUse:
+					case UnicodeCategory.ConnectorPunctuation:
+					case UnicodeCategory.DashPunctuation:
+					case UnicodeCategory.OpenPunctuation:
+					case UnicodeCategory.ClosePunctuation:
+					case UnicodeCategory.InitialQuotePunctuation:
+					case UnicodeCategory.FinalQuotePunctuation:
+					case UnicodeCategory.OtherPunctuation:
+					case UnicodeCategory.MathSymbol:
+					case UnicodeCategory.CurrencySymbol:
+					//case UnicodeCategory.ModifierSymbol:
+					case UnicodeCategory.OtherSymbol:
+						//case UnicodeCategory.OtherNotAssigned:
+
+						AppendNormal( c );
+
+						break;
+
+					default:
+
+						AppendCode( c );
+
+						break;
+					}
 				}
 
-				if( tail.Any( ) ) _ = new Run( tail, span.ContentEnd );
+				// last
+				if( sb.Length > 0 )
+				{
+					runs.Add( new MyRun { text = sb.ToString( ), isSpecial = isPreviousSpecial } );
+				}
+
+				// TODO: maybe insert element at position after creation.
+
+				switch( runs.Count )
+				{
+				case 0:
+					return new Span( (Inline)null, at );
+				case 1:
+				{
+					var r = runs[0];
+					var run = new Run( r.text, at );
+					if( r.isSpecial ) run.Style( specialStyleInfo );
+					return run;
+				}
+				default:
+				{
+					var r = runs[0];
+					var run = new Run( r.text );
+					if( r.isSpecial ) run.Style( specialStyleInfo );
+
+					var span = new Span( run, at );
+
+					for( int i = 1; i < runs.Count; ++i )
+					{
+						r = runs[i];
+						run = new Run( r.text, span.ContentEnd );
+						if( r.isSpecial ) run.Style( specialStyleInfo );
+					}
+
+					return span;
+				}
+				}
 			}
 
-			return span ?? new Span( (Inline)null, at );
+
+			private void AppendSpecial( string s )
+			{
+				if( isPreviousSpecial )
+				{
+					sb.Append( s );
+				}
+				else
+				{
+					if( sb.Length > 0 )
+					{
+						runs.Add( new MyRun { text = sb.ToString( ), isSpecial = false } );
+					}
+					sb.Clear( ).Append( s );
+					isPreviousSpecial = true;
+				}
+			}
+
+
+			private void AppendCode( char c )
+			{
+				AppendSpecial( $@"\u{(int)c:D4}" );
+			}
+
+
+			private void AppendNormal( char c )
+			{
+				if( !isPreviousSpecial )
+				{
+					sb.Append( c );
+				}
+				else
+				{
+					if( sb.Length > 0 )
+					{
+						runs.Add( new MyRun { text = sb.ToString( ), isSpecial = true } );
+					}
+					sb.Clear( ).Append( c );
+					isPreviousSpecial = false;
+				}
+			}
 		}
 
 
@@ -734,27 +873,27 @@ namespace RegExpressWPF
 
 				switch( parent )
 				{
-					case FrameworkElement fe:
-						tag = fe.Tag;
-						parent = fe.Parent;
-						break;
-					case FrameworkContentElement fce:
-						tag = fce.Tag;
-						parent = fce.Parent;
-						break;
+				case FrameworkElement fe:
+					tag = fe.Tag;
+					parent = fe.Parent;
+					break;
+				case FrameworkContentElement fce:
+					tag = fce.Tag;
+					parent = fce.Parent;
+					break;
 				}
 
 				switch( tag )
 				{
-					case MatchInfo mi:
-						infos.Add( mi );
-						return infos;
-					case GroupInfo gi:
-						infos.Add( gi );
-						return infos;
-					case CaptureInfo ci:
-						infos.Add( ci );
-						return infos;
+				case MatchInfo mi:
+					infos.Add( mi );
+					return infos;
+				case GroupInfo gi:
+					infos.Add( gi );
+					return infos;
+				case CaptureInfo ci:
+					infos.Add( ci );
+					return infos;
 				}
 			}
 
@@ -881,15 +1020,15 @@ namespace RegExpressWPF
 
 						switch( info )
 						{
-							case MatchInfo mi:
-								inlines_to_underline.Add( mi.ValueInline );
-								break;
-							case GroupInfo gi:
-								if( gi.IsSuccess ) inlines_to_underline.Add( gi.ValueInline );
-								break;
-							case CaptureInfo ci:
-								inlines_to_underline.Add( ci.ValueInline );
-								break;
+						case MatchInfo mi:
+							inlines_to_underline.Add( mi.ValueInline );
+							break;
+						case GroupInfo gi:
+							if( gi.IsSuccess ) inlines_to_underline.Add( gi.ValueInline );
+							break;
+						case CaptureInfo ci:
+							inlines_to_underline.Add( ci.ValueInline );
+							break;
 						}
 					}
 				}
