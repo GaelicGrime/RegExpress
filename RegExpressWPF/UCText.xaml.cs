@@ -283,8 +283,39 @@ namespace RegExpressWPF
 			{
 				r.Save( fs, DataFormats.Xaml, true );
 			}
+
+#if DEBUG
+			SaveToPng( Window.GetWindow( this ), "debug-uctext.png" );
+#endif
 		}
 
+
+#if DEBUG
+		// https://blogs.msdn.microsoft.com/kirillosenkov/2009/10/12/saving-images-bmp-png-etc-in-wpfsilverlight/
+		void SaveToPng( FrameworkElement visual, string fileName )
+		{
+			var encoder = new PngBitmapEncoder( );
+			SaveUsingEncoder( visual, fileName, encoder );
+		}
+
+		void SaveUsingEncoder( FrameworkElement visual, string fileName, BitmapEncoder encoder )
+		{
+			RenderTargetBitmap bitmap = new RenderTargetBitmap(
+				(int)visual.ActualWidth,
+				(int)visual.ActualHeight,
+				96,
+				96,
+				PixelFormats.Pbgra32 );
+			bitmap.Render( visual );
+			BitmapFrame frame = BitmapFrame.Create( bitmap );
+			encoder.Frames.Add( frame );
+
+			using( var stream = File.Create( fileName ) )
+			{
+				encoder.Save( stream );
+			}
+		}
+#endif
 
 		void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{

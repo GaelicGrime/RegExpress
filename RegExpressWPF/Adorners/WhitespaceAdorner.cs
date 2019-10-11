@@ -243,7 +243,7 @@ namespace RegExpressWPF.Adorners
 			double h = Math.Ceiling( end_rect.Height * 0.3 );
 			double half_pen = EofPen.Thickness / 2;
 
-			var x = Math.Ceiling( max_x + 3 ) + half_pen;
+			var x = Math.Ceiling( max_x + 2 ) + half_pen;
 			var y = Math.Floor( end_rect.Top + ( end_rect.Height - h ) / 2 ) - half_pen;
 
 			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
