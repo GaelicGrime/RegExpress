@@ -140,12 +140,16 @@ namespace RegExpressWPF.Adorners
 
 			// TODO: clean 'Ranges' if document was changed (release old document), in thread-safe manner
 
-			foreach( var (start, end) in Ranges )
+			foreach( var (start0, end0) in Ranges )
 			{
-				if( start.HasValidLayout && end.HasValidLayout )
+				if( start0.HasValidLayout && end0.HasValidLayout )
 				{
-					if( start.IsInSameDocument( start_doc ) && end.IsInSameDocument( start_doc ) )
+					if( start0.IsInSameDocument( start_doc ) && end0.IsInSameDocument( start_doc ) )
 					{
+						var start = start0;//.GetInsertionPosition( LogicalDirection.Forward );
+						// next is needed to make it work for various cases of combining marks and bidirectional texts
+						var end = end0.GetInsertionPosition( LogicalDirection.Forward ).GetInsertionPosition(LogicalDirection.Backward);
+
 						Point start_point_b = start.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
 						Point start_point_f = start.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
 
