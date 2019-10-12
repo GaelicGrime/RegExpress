@@ -130,10 +130,11 @@ namespace RegExpressWPF
 			GroupValueStyleInfo = new StyleInfo( "MatchGroupValue" );
 			GroupFailedStyleInfo = new StyleInfo( "MatchGroupFailed" );
 
+			pnlDebug.Visibility = Visibility.Collapsed;
+			//UnderliningAdorner.IsDbgDisabled = true;
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
-			//UnderliningAdorner.IsDbgDisabled = true;
 		}
 
 

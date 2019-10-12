@@ -70,6 +70,7 @@ namespace RegExpressWPF
 				new StyleInfo( "MatchHighlight_2" )
 			};
 
+			pnlDebug.Visibility = Visibility.Collapsed;
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
