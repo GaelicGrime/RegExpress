@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -275,6 +276,7 @@ namespace RegExpressWPF
 
 		private void BtnDbgSave_Click( object sender, RoutedEventArgs e )
 		{
+#if DEBUG
 			rtb.Focus( );
 
 			var r = new TextRange( rtb.Document.ContentStart, rtb.Document.ContentEnd );
@@ -284,8 +286,73 @@ namespace RegExpressWPF
 				r.Save( fs, DataFormats.Xaml, true );
 			}
 
-#if DEBUG
 			SaveToPng( Window.GetWindow( this ), "debug-uctext.png" );
+#endif
+		}
+
+
+		private void BtnDbgInsertB_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			var p = rtb.Selection.Start.GetInsertionPosition( LogicalDirection.Backward );
+			if( p == null )
+			{
+				SystemSounds.Beep.Play( );
+			}
+			else
+			{
+				rtb.Selection.Select( p, p );
+				rtb.Focus( );
+			}
+#endif
+		}
+
+		private void BtnDbgInsertF_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			var p = rtb.Selection.Start.GetInsertionPosition( LogicalDirection.Forward );
+			if( p == null )
+			{
+				SystemSounds.Beep.Play( );
+			}
+			else
+			{
+				rtb.Selection.Select( p, p );
+				rtb.Focus( );
+			}
+#endif
+		}
+
+
+		private void BtnDbgNextInsert_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			var p = rtb.Selection.Start.GetNextInsertionPosition( LogicalDirection.Forward );
+			if( p == null )
+			{
+				SystemSounds.Beep.Play( );
+			}
+			else
+			{
+				rtb.Selection.Select( p, p );
+				rtb.Focus( );
+			}
+#endif
+		}
+
+		private void BtnDbgNextContext_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			var p = rtb.Selection.Start.GetNextContextPosition( LogicalDirection.Forward );
+			if( p == null )
+			{
+				SystemSounds.Beep.Play( );
+			}
+			else
+			{
+				rtb.Selection.Select( p, p );
+				rtb.Focus( );
+			}
 #endif
 		}
 
@@ -588,7 +655,7 @@ namespace RegExpressWPF
 			Rect rectB = start.GetCharacterRect( LogicalDirection.Backward );
 			Rect rectF = start.GetCharacterRect( LogicalDirection.Forward );
 
-			s += $"BPos: {(int)rectB.Left}×{(int)rectB.Bottom}, FPos: {(int)rectF.Left}×{(int)rectF.Bottom}";
+			s += $"BPos: {(int)rectB.Left}×{rectB.Bottom}, FPos: {(int)rectF.Left}×{rectF.Bottom}";
 
 			char[] bc = new char[1];
 			char[] fc = new char[1];
@@ -600,8 +667,6 @@ namespace RegExpressWPF
 
 			lblDbgInfo.Content = s;
 		}
-
-
 
 
 		#region IDisposable Support
@@ -644,5 +709,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }

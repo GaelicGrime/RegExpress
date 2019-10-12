@@ -36,7 +36,11 @@
 
         <StackPanel x:Name="pnlDebug" Panel.ZIndex="10" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="0 40 0 0">
             <Label x:Name="lblDbgInfo">(Debug information here)</Label>
-            <Button x:Name="btnDbgSave" Content="(SAVE)" Click="BtnDbgSave_Click" />
+            <Button x:Name="btnDbgInsertB" Content="ib" Click="BtnDbgInsertB_Click" />
+            <Button x:Name="btnDbgInsertF" Content="if" Click="BtnDbgInsertF_Click" />
+            <Button x:Name="btnDbgNextInsert" Content="ni" Click="BtnDbgNextInsert_Click" />
+            <Button x:Name="btnDbgNextContext" Content="nc" Click="BtnDbgNextContext_Click" />
+            <Button x:Name="btnDbgSave" Content="save" Click="BtnDbgSave_Click" />
         </StackPanel>
 
     </Grid>

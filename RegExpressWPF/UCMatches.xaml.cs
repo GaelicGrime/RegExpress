@@ -397,7 +397,7 @@ namespace RegExpressWPF
 					Paragraph para = null;
 					Run run = null;
 					MatchInfo match_info = null;
-					RunBuilder maker = new RunBuilder( MatchValueSpecialStyleInfo );
+					RunBuilder run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
 
 					var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
 					var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
@@ -427,7 +427,7 @@ namespace RegExpressWPF
 						}
 						else
 						{
-							value_inline = maker.Make( match.Value, span.ContentEnd );
+							value_inline = run_builder.Build( match.Value, span.ContentEnd );
 							value_inline.Style( MatchValueStyleInfo, highlight_style );
 						}
 
@@ -488,13 +488,13 @@ namespace RegExpressWPF
 								string middle = group.Value;
 								string right = SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-								inl = maker.Make( left, span.ContentEnd );
+								inl = run_builder.Build( left, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 
-								value_inline = maker.Make( middle, span.ContentEnd );
+								value_inline = run_builder.Build( middle, span.ContentEnd );
 								value_inline.Style( GroupValueStyleInfo, highlight_light_style );
 
-								inl = maker.Make( right, span.ContentEnd );
+								inl = run_builder.Build( right, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 							}
 
@@ -521,7 +521,7 @@ namespace RegExpressWPF
 							// captures for group
 							if( showCaptures )
 							{
-								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style, maker );
+								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style, run_builder );
 							}
 						} );
 					}
@@ -611,13 +611,13 @@ namespace RegExpressWPF
 					string middle = capture.Value;
 					string right = SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-					inline = maker.Make( left, span.ContentEnd );
+					inline = maker.Build( left, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 
-					value_inline = maker.Make( middle, span.ContentEnd );
+					value_inline = maker.Build( middle, span.ContentEnd );
 					value_inline.Style( GroupValueStyleInfo, highlightStyle );
 
-					inline = maker.Make( right, span.ContentEnd );
+					inline = maker.Build( right, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 				}
 				inline = new Run( $"\x200E  （{capture.Index}, {capture.Length}）", span.ContentEnd );
@@ -710,7 +710,7 @@ namespace RegExpressWPF
 			}
 
 
-			public Inline Make( string text, TextPointer at )
+			public Inline Build( string text, TextPointer at )
 			{
 				sb.Clear( );
 				runs.Clear( );
