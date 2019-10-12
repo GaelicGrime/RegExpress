@@ -358,9 +358,6 @@ namespace RegExpressWPF
 
 			try
 			{
-				ucPattern.SetText( tabData.Pattern );
-				ucText.SetText( tabData.Text );
-
 				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
 					var opt = cb.Tag as RegexOptions?;
@@ -387,6 +384,11 @@ namespace RegExpressWPF
 				ucText.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
 
 				ucPattern.SetFocus( );
+
+				ucPattern.SetRegexOptions( tabData.RegexOptions );
+
+				ucPattern.SetText( tabData.Pattern );
+				ucText.SetText( tabData.Text );
 			}
 			finally
 			{
