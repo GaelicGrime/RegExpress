@@ -80,7 +80,7 @@ namespace RegExpressWPF.Code
 
 		public static BaseTextData GetBaseTextData( RichTextBox rtb, string eol )
 		{
-			Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
+			DbgValidateEol( eol );
 
 			FlowDocument doc = rtb.Document;
 
@@ -102,8 +102,8 @@ namespace RegExpressWPF.Code
 
 		public static TextData GetTextData( RichTextBox rtb, BaseTextData btd, string eol )
 		{
-			Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
-			Debug.Assert( btd.Eol == "\r\n" || btd.Eol == "\n\r" || btd.Eol == "\r" || btd.Eol == "\n" );
+			DbgValidateEol( eol );
+			DbgValidateEol( btd.Eol );
 			Debug.Assert( !btd.Pointers.Any( ) || btd.Pointers.All( p => p.IsInSameDocument( rtb.Document.ContentStart ) ) );
 
 			if( eol.Length == btd.Eol.Length )
@@ -764,6 +764,13 @@ namespace RegExpressWPF.Code
 					} while( ++i < last_i && Environment.TickCount < end );
 				} );
 			}
+		}
+
+
+		[Conditional( "DEBUG" )]
+		public static void DbgValidateEol( string eol )
+		{
+			Debug.Assert( eol == "\r\n" || eol == "\n\r" || eol == "\r" || eol == "\n" );
 		}
 	}
 }

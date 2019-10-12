@@ -84,8 +84,7 @@ namespace RegExpressWPF.Adorners
 
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
-			// (recalculation not needed; eventually will receive new ranges in few moments)
-
+			MustRecalculateSegments = true;
 			DelayedInvalidateVisual( );
 		}
 
@@ -146,28 +145,30 @@ namespace RegExpressWPF.Adorners
 				{
 					if( start0.IsInSameDocument( start_doc ) && end0.IsInSameDocument( start_doc ) )
 					{
-						var start = start0;//.GetInsertionPosition( LogicalDirection.Forward );
+						var start = start0.GetInsertionPosition( LogicalDirection.Forward );
 						// next is needed to make it work for various cases of combining marks and bidirectional texts
-						var end = end0.GetInsertionPosition( LogicalDirection.Forward ).GetInsertionPosition(LogicalDirection.Backward);
-
-						Point start_point_b = start.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
-						Point start_point_f = start.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
+						var end = end0.GetInsertionPosition( LogicalDirection.Forward ).GetInsertionPosition( LogicalDirection.Backward );
 
 						TextPointer end_b = end.GetInsertionPosition( LogicalDirection.Backward );
 						TextPointer end_f = end.GetInsertionPosition( LogicalDirection.Forward );
 
+						Point start_point_b = start.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
+						Point start_point_f = start.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
+
 						Point end_point_b = end.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
 						Point end_point_f = end.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
 
-						if( start_point_b.Y <= clip_rect.Bottom && start_point_f.Y <= clip_rect.Bottom &&
-							end_point_b.Y >= clip_rect.Top && end_point_f.Y >= clip_rect.Top )
+						const int CAPS_HEIGHT = 3;
+
+						if( start_point_b.Y <= clip_rect.Bottom + CAPS_HEIGHT &&
+							start_point_f.Y <= clip_rect.Bottom + CAPS_HEIGHT &&
+							end_point_b.Y >= clip_rect.Top &&
+							end_point_f.Y >= clip_rect.Top )
 						{
 							Point prev_point_b = start_point_b;
 							Point prev_point_f = start_point_f;
 
-							double last_y = double.NaN;
-							double last_x_a = double.NaN;
-							double last_x_b = double.NaN;
+							LineGeometry current_line = null;
 
 							for(
 								var tp = start.GetNextInsertionPosition( LogicalDirection.Forward );
@@ -178,124 +179,92 @@ namespace RegExpressWPF.Adorners
 								Point tp_point_b = tp.GetCharacterRect( LogicalDirection.Backward ).BottomLeft;
 								Point tp_point_f = tp.GetCharacterRect( LogicalDirection.Forward ).BottomLeft;
 
-								Point prev_min, prev_max;
-								Point tp_min, tp_max;
+								Point p1 = prev_point_f;
+								Point p2 = tp_point_b;
 
-								if( prev_point_b.X <= prev_point_f.X )
+								p1.Y = Math.Ceiling( p1.Y ) - half_pen;
+								p2.Y = Math.Ceiling( p2.Y ) - half_pen;
+
+								if( p2.Y != p1.Y ) //
 								{
-									prev_min = prev_point_b;
-									prev_max = prev_point_f;
+									// transient case, text was just edited;
+									// will receive new segments in few moments
 								}
 								else
 								{
-									prev_min = prev_point_f;
-									prev_max = prev_point_b;
-								}
+									if( p1.Y > clip_rect.Bottom + half_pen ) break; // already invisible
 
-								if( tp_point_b.X <= tp_point_f.X )
-								{
-									tp_min = tp_point_b;
-									tp_max = tp_point_f;
-								}
-								else
-								{
-									tp_min = tp_point_f;
-									tp_max = tp_point_b;
-								}
-
-								prev_min.Y = Math.Ceiling( prev_min.Y );
-								prev_max.Y = Math.Ceiling( prev_max.Y );
-								tp_min.Y = Math.Ceiling( tp_min.Y );
-								tp_max.Y = Math.Ceiling( tp_max.Y );
-
-								Point a, b;
-
-								if( prev_max.Y == tp_min.Y )
-								{
-									a = prev_max;
-									b = tp_min;
-								}
-								else if( prev_max.Y == tp_max.Y )
-								{
-									a = prev_max;
-									b = tp_max;
-								}
-								else
-								{
-									a = prev_min;
-									b = tp_min;
-								}
-
-								if( a.Y != b.Y )
-								{
-									// this happens when the text is just edited (e.g. pressing <Enter>);
-									// do nothing; another update will reflect new state
-								}
-								else
-								{
-									var y = a.Y - half_pen;
-
-									if( y < clip_rect.Top - half_pen ) continue; // not visible yet
-									if( y > clip_rect.Bottom + half_pen ) break; // already invisible
-
-									bool combined = false;
-
-									if( y == last_y )
+									if( p1.Y < clip_rect.Top - half_pen )
 									{
-										// try to combine with previous one
-
-										if( last_x_a < last_x_b && a.X < b.X && last_x_b == a.X ) // ('==' seems to work for these doubles)
-										{
-											last_x_b = b.X;
-											combined = true;
-										}
-										else if( last_x_a > last_x_b && a.X > b.X && last_x_b == b.X )
-										{
-											last_x_a = a.X;
-											combined = true;
-										}
+										// not visible yet
 									}
-
-									if( !combined )
+									else
 									{
-										if( !double.IsNaN( last_y ) )
+										// try combining with current line, only most probable cases;
+										// '==' operator seems to work
+
+										bool combined = false;
+
+										if( current_line != null )
 										{
-											// add accumulated segment
-											GeometryGroup.Children.Add( new LineGeometry( new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) ) );
+											if( current_line.StartPoint.Y == p1.Y )
+											{
+												if( current_line.StartPoint.X < current_line.EndPoint.X &&
+													p1.X < p2.X &&
+													current_line.EndPoint.X == p1.X )
+												{
+													current_line.EndPoint = p2;
+													combined = true;
+												}
+												else if( current_line.EndPoint.X < current_line.StartPoint.X &&
+													p2.X < p1.X &&
+													current_line.EndPoint.X == p1.X )
+												{
+													current_line.EndPoint = p2;
+													combined = true;
+												}
+											}
 										}
 
-										last_y = y;
-										last_x_a = a.X;
-										last_x_b = b.X;
+										if( !combined )
+										{
+											if( current_line != null )
+											{
+												current_line.Freeze( );
+												GeometryGroup.Children.Add( current_line );
+											}
+
+											current_line = new LineGeometry( p1, p2 );
+										}
 									}
 								}
 
-								prev_point_b = tp_point_b;
 								prev_point_f = tp_point_f;
+								prev_point_b = tp_point_b;
 							}
 
-							if( !double.IsNaN( last_y ) )
+							if( current_line != null )
 							{
-								// add accumulated segment
-								GeometryGroup.Children.Add( new LineGeometry( new Point( last_x_a, last_y ), new Point( last_x_b, last_y ) ) );
+								current_line.Freeze( );
+								GeometryGroup.Children.Add( current_line );
 							}
-
 						}
 
 						{
-							// add line caps
-
-							const int CAPS_HEIGHT = 3;
+							// line caps
 
 							var x = start_point_f.X;
 							var y = start_point_f.Y - half_pen;
 
 							GeometryGroup.Children.Add( new LineGeometry( new Point( x, y ), new Point( x, y - CAPS_HEIGHT ) ) );
 
-							x = end_point_f.X;
-							y = end_point_f.Y - half_pen;
+							if( GeometryGroup.Children.Count > 1 ) // (i.e. has horisontal lines too)
+							{
+								x = end_point_b.X;
+								y = end_point_b.Y - half_pen;
 
-							GeometryGroup.Children.Add( new LineGeometry( new Point( x, y ), new Point( x, y - CAPS_HEIGHT ) ) );
+								GeometryGroup.Children.Add( new LineGeometry( new Point( x, y ), new Point( x, y - CAPS_HEIGHT ) ) );
+							}
 						}
 					}
 				}
