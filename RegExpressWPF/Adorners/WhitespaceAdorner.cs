@@ -135,42 +135,17 @@ namespace RegExpressWPF.Adorners
 
 				switch( td.Text[i] )
 				{
-					case '\t':
-					{
-						const int ARROW_WIDTH = 6;
-
-						var rect = rect_left;
-						rect.Offset( 2, 0 );
-
-						var half_pen = TabPen.Thickness / 2;
-
-						var x = Math.Ceiling( rect.Left ) + half_pen;
-						var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - half_pen;
-
-						dc.DrawLine( TabPen, new Point( x, y ), new Point( x + ARROW_WIDTH, y ) );
-						dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y - ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
-						dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y + ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
-					}
+				case '\t':
+					DrawTab( dc, rect_left );
 					break;
 
-					case '\r':
-					case '\n':
-					{
-						DrawEol( dc, left, rect_left );
-					}
+				case '\r':
+				case '\n':
+					DrawEol( dc, left, rect_left );
 					break;
 
-					default: // (space)
-					{
-						const int DOT_SIZE = 2;
-
-						var rect = new Rect( rect_left.TopLeft, rect_right.BottomRight );
-						var x = rect.Left + rect.Width / 2;
-						var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
-						var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
-
-						dc.DrawRectangle( WsBrush, null, dot_rect );
-					}
+				default: // (space)
+					DrawSpace( dc, rect_left, rect_right );
 					break;
 				}
 
@@ -180,20 +155,49 @@ namespace RegExpressWPF.Adorners
 		}
 
 
+		void DrawTab( DrawingContext dc, Rect rect )
+		{
+			const int ARROW_WIDTH = 6;
+
+			rect.Offset( 2, 0 );
+
+			var half_pen = TabPen.Thickness / 2;
+
+			var x = Math.Ceiling( rect.Left ) + half_pen;
+			var y = Math.Ceiling( rect.Top + rect.Height / 2 ) - half_pen;
+
+			dc.DrawLine( TabPen, new Point( x, y ), new Point( x + ARROW_WIDTH, y ) );
+			dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y - ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
+			dc.DrawLine( TabPen, new Point( x + ARROW_WIDTH / 2, y + ARROW_WIDTH / 2 ), new Point( x + ARROW_WIDTH, y ) );
+		}
+
+
 		void DrawEol( DrawingContext dc, TextPointer eol_pointer, Rect eol_rect )
 		{
 			double max_x = eol_rect.Left;
 
-			for( var tp = eol_pointer; ; )
+			for( var tp = eol_pointer.GetInsertionPosition( LogicalDirection.Backward ); ; )
 			{
 				tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 				if( tp == null ) break;
 
-				var rect = tp.GetCharacterRect( LogicalDirection.Forward );
-				if( rect.Bottom < eol_rect.Bottom ) break;
-				if( rect.Left < max_x ) break;
+				// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+				tp = tp.GetInsertionPosition( LogicalDirection.Forward );
 
-				max_x = rect.Left;
+				var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
+				var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
+
+				if( rect_b.Bottom < eol_rect.Top && rect_f.Bottom < eol_rect.Top ) break;
+
+				if( rect_b.Bottom > eol_rect.Top )
+				{
+					if( max_x < rect_b.Left ) max_x = rect_b.Left;
+				}
+
+				if( rect_f.Bottom > eol_rect.Top )
+				{
+					if( max_x < rect_f.Left ) max_x = rect_f.Left;
+				}
 			}
 
 			const int EOL_WIDTH = 6;
@@ -207,6 +211,19 @@ namespace RegExpressWPF.Adorners
 			dc.DrawLine( EolPen, new Point( x + EOL_WIDTH, y ), new Point( x + EOL_WIDTH, y - eol_rect.Height * 0.35 ) );
 			dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y - EOL_WIDTH / 2 ) );
 			dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH / 2, y + EOL_WIDTH / 2 ) );
+		}
+
+
+		void DrawSpace( DrawingContext dc, Rect rectLeft, Rect rectRight )
+		{
+			const int DOT_SIZE = 2;
+
+			var rect = new Rect( rectLeft.TopLeft, rectRight.BottomRight );
+			var x = rect.Left + rect.Width / 2;
+			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
+			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
+
+			dc.DrawRectangle( WsBrush, null, dot_rect );
 		}
 
 
@@ -230,14 +247,14 @@ namespace RegExpressWPF.Adorners
 				tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 				if( tp == null ) break;
 
+				// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+				tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+
 				var rect = tp.GetCharacterRect( LogicalDirection.Forward );
 				if( rect.Bottom < end_rect.Bottom ) break;
-				if( rect.Left < max_x ) break;
 
-				max_x = rect.Left;
+				if( max_x < rect.Left ) max_x = rect.Left;
 			}
-
-			dc.PushClip( new RectangleGeometry( clip_rect ) );
 
 			const double EOF_WIDTH = 4;
 			double h = Math.Ceiling( end_rect.Height * 0.3 );
@@ -248,8 +265,8 @@ namespace RegExpressWPF.Adorners
 
 			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
 
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
 			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
-
 			dc.Pop( );
 		}
 	}

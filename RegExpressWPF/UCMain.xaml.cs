@@ -30,7 +30,7 @@ namespace RegExpressWPF
 		readonly TaskHelper FindMatchesTask = new TaskHelper( );
 		readonly TaskHelper UpdateWhitespaceWarningTask = new TaskHelper( );
 
-		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|(\r\n$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 		bool IsFullyLoaded = false;
 		bool IsInChange = false;
