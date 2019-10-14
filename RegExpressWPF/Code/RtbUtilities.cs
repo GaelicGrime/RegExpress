@@ -635,7 +635,7 @@ namespace RegExpressWPF.Code
 
 						var segment = segments[i];
 
-						td.Range( segment.index, segment.length ).Style( styleInfo );
+						td.Range0F( segment.index, segment.length ).Style( styleInfo );
 
 					} while( ++i < last_i && Environment.TickCount < end );
 				} );

@@ -118,7 +118,7 @@ namespace RegExpressWPF.Adorners
 			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 			dc.PushClip( new RectangleGeometry( clip_rect ) );
 
-			TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), true ).GetLineStartPosition( -1, out int unused );
+			TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
 			int start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
 
 			if( start_i < 0 ) start_i = 0;
