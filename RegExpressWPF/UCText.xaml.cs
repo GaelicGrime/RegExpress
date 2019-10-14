@@ -39,9 +39,9 @@ namespace RegExpressWPF
 		readonly UndoRedoHelper UndoRedoHelper;
 
 		bool AlreadyLoaded = false;
-		IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
-		bool LastShowCaptures;
-		string LastEol;
+		IReadOnlyList<Match> Matches;
+		bool ShowCaptures;
+		string Eol;
 
 		readonly StyleInfo[] HighlightStyleInfos;
 
@@ -103,31 +103,37 @@ namespace RegExpressWPF
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
-			lock( this )
-			{
-				if( LastMatches != null )
-				{
-					var old_groups = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
-					var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+			//.........
+			//lock( this )
+			//{
+			//	if( Matches != null )
+			//	{
+			//		var old_groups = Matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+			//		var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
 
-					if( new_groups.SequenceEqual( old_groups ) &&
-						showCaptures == LastShowCaptures &&
-						eol == LastEol )
-					{
-						LastMatches = matches;
+			//		if( new_groups.SequenceEqual( old_groups ) &&
+			//			showCaptures == ShowCaptures &&
+			//			eol == Eol )
+			//		{
+			//			// nothing changed, but keep new object
 
-						return;
-					}
-				}
-			}
+			//			Matches = matches;
+			//			return;
+			//		}
+			//	}
+			//}
 
 			RecolouringTask.Stop( );
 			UnderliningTask.Stop( );
 
-			LastMatches = null;
-			LastEol = null;
+			lock( this )
+			{
+				Matches = matches;
+				ShowCaptures = showCaptures;
+				Eol = eol;
+			}
 
-			RestartRecolouring( matches, showCaptures, eol );
+			RestartRecolouring( );
 		}
 
 
@@ -139,12 +145,9 @@ namespace RegExpressWPF
 
 		public IReadOnlyList<Segment> GetUnderliningInfo( )
 		{
-			lock( this )
+			if( Matches == null )
 			{
-				if( LastMatches == null ) // no data or processes not finished
-				{
-					return Enumerable.Empty<Segment>( ).ToList( );
-				}
+				return Enumerable.Empty<Segment>( ).ToList( );
 			}
 
 			TextData td = null;
@@ -153,24 +156,23 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					td = rtb.GetTextData( LastEol );
+					td = rtb.GetTextData( Eol );
 				} );
 			}
 			else
 			{
-				td = rtb.GetTextData( LastEol );
+				td = rtb.GetTextData( Eol );
 			}
 
-			return GetUnderliningInfo( CancellationToken.None, td, LastMatches, LastShowCaptures );
+			// Note. 'Matches' could be null
+
+			return GetUnderliningInfo( CancellationToken.None, td, Matches, ShowCaptures );
 		}
 
 
 		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
-			lock( this )
-			{
-				if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol, setSelection );
-			}
+			RestartExternalUnderlining( segments, Eol, setSelection );
 		}
 
 
@@ -201,10 +203,7 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 			if( !rtb.IsFocused ) return;
 
-			lock( this )
-			{
-				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
-			}
+			RestartLocalUnderlining( Matches, ShowCaptures, Eol );
 
 			UndoRedoHelper.HandleSelectionChanged( );
 
@@ -224,19 +223,31 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleTextChanged( );
 
-			LastMatches = null;
-			LastEol = null;
-
 			TextChanged?.Invoke( this, null );
+		}
+
+
+		private void Rtb_ScrollChanged( object sender, ScrollChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, Matches, ShowCaptures, Eol ) );
+		}
+
+		private void Rtb_SizeChanged( object sender, SizeChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			//...RestartRecolouring( );
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, Matches, ShowCaptures, Eol ) );
 		}
 
 
 		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
 		{
-			lock( this )
-			{
-				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
-			}
+			RestartLocalUnderlining( Matches, ShowCaptures, Eol );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -251,10 +262,7 @@ namespace RegExpressWPF
 
 		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
 		{
-			lock( this )
-			{
-				if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ), LastShowCaptures, LastEol );
-			}
+			RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ), ShowCaptures, Eol );
 		}
 
 
@@ -385,13 +393,13 @@ namespace RegExpressWPF
 		}
 #endif
 
-		void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		void RestartRecolouring( )
 		{
-			RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, eol ) );
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, Matches, ShowCaptures, Eol ) );
 
 			if( rtb.IsFocused )
 			{
-				RestartLocalUnderlining( matches, showCaptures, eol ); // (started as a continuation of previous 'RecolouringTask')
+				RestartLocalUnderlining( Matches, ShowCaptures, Eol );
 			}
 		}
 
@@ -404,22 +412,92 @@ namespace RegExpressWPF
 				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Debug.WriteLine( $"START RECOLOURING" );
-				DateTime start_time = DateTime.UtcNow;
-
 				TextData td = null;
+				TextPointer start_pointer = null;
+				TextPointer end_pointer = null;
 
 				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
 					td = rtb.GetTextData( eol );
-					pbProgress.Maximum = matches.Count;
+					start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( 0, out int skipped );
+					var end_pointer_right = rtb.GetPositionFromPoint( new Point( rtb.ViewportWidth, rtb.ViewportHeight ), snapToText: true );
+					var end_pointer_left = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true );
+					if( end_pointer_left.CompareTo( end_pointer_right ) > 0 )
+					{
+						end_pointer = end_pointer_left;
+					}
+					else
+					{
+						end_pointer = end_pointer_right;
+					}
+					var next = end_pointer.GetLineStartPosition( +1 );
+					if( next != null ) end_pointer = next;
+
+					//............pbProgress.Maximum = matches.Count;
 					pbProgress.Value = 0;
 				} );
 
 				ct.ThrowIfCancellationRequested( );
 
-				// (NOTE. Overlaps are possible in this example: (?=(..))
+				int start_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+				int end_index = RtbUtilities.FindNearestAfter( td.Pointers, end_pointer );
+				if( start_index < 0 ) start_index = 0;
+				if( end_index < 0 ) end_index = td.Pointers.Count - 1;
+				int length = end_index - start_index;
 
+				if( length != 0 ) // (zero in case of empty text)
+				{
+					// (NOTE. Overlaps are possible in this example: (?=(..))
+
+					//............progress bar
+
+					NaiveRanges all_ranges_to_colour = new NaiveRanges( length );
+
+					if( matches != null )
+					{
+						int colour_count = HighlightStyleInfos.Length;
+
+						NaiveRanges[] ranges_to_colour = new NaiveRanges[colour_count];
+						for( int i = 0; i < ranges_to_colour.Length; ++i ) ranges_to_colour[i] = new NaiveRanges( length );
+
+						for( int i = 0; i < matches.Count; ++i )
+						{
+							ct.ThrowIfCancellationRequested( );
+
+							Match match = matches[i];
+
+							if( match.Index + match.Length < start_index ) continue; // not visible yet
+							if( match.Index > end_index ) break; // already invisible; assuming that the matches are ordered
+
+							int colour_index = i % colour_count;
+							var current_ranges = ranges_to_colour[colour_index];
+
+							current_ranges.SafeSet( match.Index - start_index, match.Length );
+							all_ranges_to_colour.SafeSet( match.Index - start_index, match.Length );
+						}
+
+						for( int i = 0; i < colour_count; ++i )
+						{
+							ct.ThrowIfCancellationRequested( );
+
+							var style = HighlightStyleInfos[i];
+							var ranges = ranges_to_colour[i];
+							var segments = ranges.GetSegments( ct, valuesToInclude: true )
+								.Select( s => new Segment( s.Index + start_index, s.Length ) )
+								.ToList( );
+
+							RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, segments, style );
+						}
+					}
+
+					//RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, all_ranges_to_colour.GetSegments( ct, true ).ToList( ), ? );
+					var segments_to_discolour = all_ranges_to_colour.GetSegments( ct, valuesToInclude: false )
+						.Select( s => new Segment( s.Index + start_index, s.Length ) )
+						.ToList( );
+					RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, segments_to_discolour );
+				}
+
+				/*
 				var highlighted_ranges = new NaiveRanges( td.Text.Length );
 				var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
@@ -447,21 +525,12 @@ namespace RegExpressWPF
 				RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
 
 				Debug.WriteLine( $"NO-MATCHES COLOURED" );
+				*/
 
 				ChangeEventHelper.BeginInvoke( ct, ( ) =>
 				{
 					pbProgress.Visibility = Visibility.Hidden;
 				} );
-
-
-				Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
-
-				lock( this )
-				{
-					LastMatches = matches;
-					LastShowCaptures = showCaptures;
-					LastEol = eol;
-				}
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
@@ -477,7 +546,7 @@ namespace RegExpressWPF
 
 		void RestartLocalUnderlining( IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
-			UnderliningTask.RestartAfter( RecolouringTask, ct => LocalUnderlineTaskProc( ct, matches, showCaptures, eol ) );
+			UnderliningTask.Restart( ct => LocalUnderlineTaskProc( ct, matches, showCaptures, eol ) );
 		}
 
 
@@ -494,9 +563,6 @@ namespace RegExpressWPF
 			{
 				if( ct.WaitHandle.WaitOne( 222 ) ) return;
 				ct.ThrowIfCancellationRequested( );
-
-				Debug.WriteLine( $"START LOCAL UNDERLINING" );
-				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
 
@@ -516,8 +582,6 @@ namespace RegExpressWPF
 				{
 					LocalUnderliningFinished?.Invoke( this, null );
 				} );
-
-				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
@@ -538,9 +602,6 @@ namespace RegExpressWPF
 			{
 				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
-
-				Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
-				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
 
@@ -564,12 +625,12 @@ namespace RegExpressWPF
 
 						switch( r.Start.Parent )
 						{
-							case FrameworkContentElement fce:
-								fce.BringIntoView( );
-								break;
-							case FrameworkElement fe:
-								fe.BringIntoView( );
-								break;
+						case FrameworkContentElement fce:
+							fce.BringIntoView( );
+							break;
+						case FrameworkElement fe:
+							fe.BringIntoView( );
+							break;
 						}
 
 						if( setSelection && !rtb.IsKeyboardFocused )
@@ -579,8 +640,6 @@ namespace RegExpressWPF
 						}
 					} );
 				}
-
-				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
@@ -598,46 +657,50 @@ namespace RegExpressWPF
 		{
 			var items = new List<Segment>( );
 
-			// include captures and groups; if no such objects, then include matches
-
-			foreach( var match in matches )
+			if( matches != null )
 			{
-				if( !match.Success ) continue;
 
-				bool found = false;
+				// include captures and groups; if no such objects, then include matches
 
-				foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
+				foreach( var match in matches )
 				{
-					if( !group.Success ) continue;
+					if( !match.Success ) continue;
 
-					ct.ThrowIfCancellationRequested( );
+					bool found = false;
 
-					if( showCaptures )
+					foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
 					{
-						foreach( Capture capture in group.Captures )
-						{
-							ct.ThrowIfCancellationRequested( );
+						if( !group.Success ) continue;
 
-							if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
+						ct.ThrowIfCancellationRequested( );
+
+						if( showCaptures )
+						{
+							foreach( Capture capture in group.Captures )
 							{
-								items.Add( new Segment( capture.Index, capture.Length ) );
-								found = true;
+								ct.ThrowIfCancellationRequested( );
+
+								if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
+								{
+									items.Add( new Segment( capture.Index, capture.Length ) );
+									found = true;
+								}
 							}
+						}
+
+						if( td.SelectionStart >= group.Index && td.SelectionStart <= group.Index + group.Length )
+						{
+							items.Add( new Segment( group.Index, group.Length ) );
+							found = true;
 						}
 					}
 
-					if( td.SelectionStart >= group.Index && td.SelectionStart <= group.Index + group.Length )
+					if( !found )
 					{
-						items.Add( new Segment( group.Index, group.Length ) );
-						found = true;
-					}
-				}
-
-				if( !found )
-				{
-					if( td.SelectionStart >= match.Index && td.SelectionStart <= match.Index + match.Length )
-					{
-						items.Add( new Segment( match.Index, match.Length ) );
+						if( td.SelectionStart >= match.Index && td.SelectionStart <= match.Index + match.Length )
+						{
+							items.Add( new Segment( match.Index, match.Length ) );
+						}
 					}
 				}
 			}
@@ -710,6 +773,5 @@ namespace RegExpressWPF
 		}
 
 		#endregion
-
 	}
 }

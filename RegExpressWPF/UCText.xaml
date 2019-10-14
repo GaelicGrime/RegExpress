@@ -23,6 +23,8 @@
                      SelectionChanged="Rtb_SelectionChanged" 
                      GotFocus="Rtb_GotFocus" 
                      LostFocus="Rtb_LostFocus" 
+                     ScrollViewer.ScrollChanged="Rtb_ScrollChanged"
+                     SizeChanged="Rtb_SizeChanged"
                      DataObject.Pasting="Rtb_Pasting" 
                      IsUndoEnabled="False" >
 
