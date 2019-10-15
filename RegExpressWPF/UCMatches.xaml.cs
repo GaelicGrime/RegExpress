@@ -458,7 +458,7 @@ namespace RegExpressWPF
 					{
 						ct.ThrowIfCancellationRequested( );
 
-						string group_name_text = $" ɢʀᴏᴜᴘ ‹{group.Name}›";
+						string group_name_text = $" • Gʀᴏᴜᴘ ‹{group.Name}›";
 						int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
 
 						ChangeEventHelper.Invoke( ct, ( ) =>
@@ -592,7 +592,7 @@ namespace RegExpressWPF
 
 				var span = new Span( );
 
-				string capture_name_text = $"  ᴄᴀᴘᴛᴜʀᴇ {capture_index}";
+				string capture_name_text = $"  ◦ Cᴀᴘᴛᴜʀᴇ {capture_index}";
 				int left_width_for_capture = leftWidthForMatch - Math.Max( 0, Math.Max( match.Index - group.Index, match.Index - capture.Index ) );
 
 				var start_run = new Run( capture_name_text.PadRight( left_width_for_capture, ' ' ), span.ContentEnd );
