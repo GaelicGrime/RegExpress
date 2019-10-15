@@ -150,7 +150,6 @@ namespace RegExpressWPF
 				pnlRegexOptions.Children.Add( cb );
 			}
 
-			ucPattern.SetRegexOptions( GetRegexOptions( ) );
 			ucPattern.SetFocus( );
 
 			IsFullyLoaded = true;
@@ -167,6 +166,10 @@ namespace RegExpressWPF
 					StopAll( );
 					LoadTabData( tab_data );
 					RestartAll( );
+				}
+				else
+				{
+					ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
 				}
 			}
 		}
@@ -297,7 +300,7 @@ namespace RegExpressWPF
 
 			UpdateRegexOptionsControls( );
 
-			ucPattern.SetRegexOptions( GetRegexOptions( ) );
+			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
 			RestartFindMatches( );
 
 			Changed?.Invoke( this, null );
@@ -341,6 +344,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
+			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
 			RestartFindMatches( );
 			RestartShowTextInfo( );
 
@@ -385,7 +389,7 @@ namespace RegExpressWPF
 
 				ucPattern.SetFocus( );
 
-				ucPattern.SetRegexOptions( tabData.RegexOptions );
+				ucPattern.SetRegexOptions( tabData.RegexOptions, tabData.Eol );
 
 				ucPattern.SetText( tabData.Pattern );
 				ucText.SetText( tabData.Text );

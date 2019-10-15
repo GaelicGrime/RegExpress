@@ -42,6 +42,7 @@ namespace RegExpressWPF
 		readonly StyleInfo CommentStyleInfo;
 
 		RegexOptions mRegexOptions;
+		string mEol;
 
 		public event EventHandler TextChanged;
 
@@ -84,10 +85,11 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetRegexOptions( RegexOptions regexOptions )
+		public void SetRegexOptions( RegexOptions regexOptions, string eol )
 		{
 			StopAll( );
 			mRegexOptions = regexOptions;
+			mEol = eol;
 			if( IsLoaded ) RestartRecolouring( );
 		}
 
@@ -198,12 +200,12 @@ namespace RegExpressWPF
 		{
 			bool is_focused = rtb.IsFocused;
 
-			RecolouringTask.Restart( ct => RecolourTaskProc( ct, is_focused, mRegexOptions ) );
+			RecolouringTask.Restart( ct => RecolourTaskProc( ct, is_focused, mRegexOptions, mEol ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions )
+		void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions, string eol )
 		{
 			try
 			{
@@ -214,7 +216,7 @@ namespace RegExpressWPF
 
 				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
-					td = rtb.GetTextData( null );
+					td = rtb.GetTextData( eol );
 				} );
 
 				ct.ThrowIfCancellationRequested( );
@@ -227,7 +229,7 @@ namespace RegExpressWPF
 					(?'inline_comment'\(\?\#.*?(\)|$)) |
                     (?'para'\(|\)) |
                     (?'group'\[(\\.|.)*?(?'eog'\])) |
-                    {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\r\n]*) |" : "" )}
+                    {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\n]*) |" : "" )}
                     (?'other'(\\.|[^\(\)\[\]{( ignore_pattern_whitespace ? "#" : "" )}])+)
                     ";
 
