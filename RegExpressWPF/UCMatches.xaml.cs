@@ -398,7 +398,7 @@ namespace RegExpressWPF
 					Paragraph para = null;
 					Run run = null;
 					MatchInfo match_info = null;
-					RunBuilder run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
+					RunBuilder match_run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
 
 					var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
 					var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
@@ -428,7 +428,7 @@ namespace RegExpressWPF
 						}
 						else
 						{
-							value_inline = run_builder.Build( match.Value, span.ContentEnd );
+							value_inline = match_run_builder.Build( match.Value, span.ContentEnd );
 							value_inline.Style( MatchValueStyleInfo, highlight_style );
 						}
 
@@ -453,6 +453,8 @@ namespace RegExpressWPF
 					} );
 
 					// show groups
+
+					RunBuilder sibling_run_builder = new RunBuilder( null );
 
 					foreach( var group in ordered_groups )
 					{
@@ -489,13 +491,13 @@ namespace RegExpressWPF
 								string middle = group.Value;
 								string right = SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-								inl = run_builder.Build( left, span.ContentEnd );
+								inl = sibling_run_builder.Build( left, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 
-								value_inline = run_builder.Build( middle, span.ContentEnd );
+								value_inline = match_run_builder.Build( middle, span.ContentEnd );
 								value_inline.Style( GroupValueStyleInfo, highlight_light_style );
 
-								inl = run_builder.Build( right, span.ContentEnd );
+								inl = sibling_run_builder.Build( right, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
 							}
 
@@ -522,7 +524,7 @@ namespace RegExpressWPF
 							// captures for group
 							if( showCaptures )
 							{
-								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style, run_builder );
+								AppendCaptures( ct, group_info, para, left_width_for_match, text, match, group, highlight_light_style, match_run_builder, sibling_run_builder );
 							}
 						} );
 					}
@@ -581,7 +583,8 @@ namespace RegExpressWPF
 
 
 		void AppendCaptures( CancellationToken ct, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch,
-			string text, Match match, Group group, StyleInfo highlightStyle, RunBuilder maker )
+			string text, Match match, Group group, StyleInfo highlightStyle,
+			RunBuilder runBuilder, RunBuilder siblingRunBuilder )
 		{
 			int capture_index = -1;
 			foreach( Capture capture in group.Captures )
@@ -612,22 +615,20 @@ namespace RegExpressWPF
 					string middle = capture.Value;
 					string right = SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
-					inline = maker.Build( left, span.ContentEnd );
+					inline = siblingRunBuilder.Build( left, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 
-					value_inline = maker.Build( middle, span.ContentEnd );
+					value_inline = runBuilder.Build( middle, span.ContentEnd );
 					value_inline.Style( GroupValueStyleInfo, highlightStyle );
 
-					inline = maker.Build( right, span.ContentEnd );
+					inline = siblingRunBuilder.Build( right, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
 				}
 				inline = new Run( $"\x200E  （{capture.Index}, {capture.Length}）", span.ContentEnd );
 				inline.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
-
 				para.Inlines.Add( span );
 				_ = new LineBreak( span.ElementEnd ); // (after span)
-
 
 				var capture_info = new CaptureInfo
 				{
@@ -793,14 +794,24 @@ namespace RegExpressWPF
 				{
 					var r = runs[0];
 					var run = new Run( r.text, at );
-					if( r.isSpecial ) run.Style( specialStyleInfo );
+					if( r.isSpecial )
+					{
+						Debug.Assert( specialStyleInfo != null );
+
+						run.Style( specialStyleInfo );
+					}
 					return run;
 				}
 				default:
 				{
 					var r = runs[0];
 					var run = new Run( r.text );
-					if( r.isSpecial ) run.Style( specialStyleInfo );
+					if( r.isSpecial )
+					{
+						Debug.Assert( specialStyleInfo != null );
+
+						run.Style( specialStyleInfo );
+					}
 
 					var span = new Span( run, at );
 
@@ -808,7 +819,12 @@ namespace RegExpressWPF
 					{
 						r = runs[i];
 						run = new Run( r.text, span.ContentEnd );
-						if( r.isSpecial ) run.Style( specialStyleInfo );
+						if( r.isSpecial )
+						{
+							Debug.Assert( specialStyleInfo != null );
+
+							run.Style( specialStyleInfo );
+						}
 					}
 
 					return span;
@@ -819,12 +835,14 @@ namespace RegExpressWPF
 
 			private void AppendSpecial( string s )
 			{
-				if( isPreviousSpecial )
+				if( isPreviousSpecial || specialStyleInfo == null )
 				{
 					sb.Append( s );
 				}
 				else
 				{
+					Debug.Assert( specialStyleInfo != null );
+
 					if( sb.Length > 0 )
 					{
 						runs.Add( new MyRun { text = sb.ToString( ), isSpecial = false } );
@@ -849,6 +867,8 @@ namespace RegExpressWPF
 				}
 				else
 				{
+					Debug.Assert( specialStyleInfo != null );
+
 					if( sb.Length > 0 )
 					{
 						runs.Add( new MyRun { text = sb.ToString( ), isSpecial = true } );
