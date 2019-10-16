@@ -52,8 +52,8 @@ namespace RegExpressWPF
 		bool AlreadyLoaded = false;
 
 		IReadOnlyList<Match> LastMatches; // null if no data or processes unfinished
-		bool LastIsAll;
-		bool LastShowFailedGroups;
+		bool LastShowFirstOnly;
+		bool LastShowSucceededGroupsOnly;
 		bool LastShowCaptures;
 
 		abstract class Info
@@ -165,7 +165,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
+		public void SetMatches( string text, IReadOnlyList<Match> matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
@@ -179,8 +179,8 @@ namespace RegExpressWPF
 					var old_captures = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => ( c.Value ) );
 					var new_captures = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => ( c.Value ) );
 
-					if( isAll == LastIsAll &&
-						showFailedGroups == LastShowFailedGroups &&
+					if( showFirstOnly == LastShowFirstOnly &&
+						showSucceededGroupsOnly == LastShowSucceededGroupsOnly &&
 						showCaptures == LastShowCaptures &&
 						new_groups.SequenceEqual( old_groups ) &&
 						new_captures.SequenceEqual( old_captures ) )
@@ -198,7 +198,7 @@ namespace RegExpressWPF
 
 			LastMatches = null;
 
-			RestartShowMatches( text, matches, isAll, showFailedGroups, showCaptures );
+			RestartShowMatches( text, matches, showFirstOnly, showSucceededGroupsOnly, showCaptures );
 		}
 
 
@@ -312,7 +312,7 @@ namespace RegExpressWPF
 		}
 
 
-		void RestartShowMatches( string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
+		void RestartShowMatches( string text, IReadOnlyList<Match> matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			ShowMatchesTask.Stop( );
 			UnderliningTask.Stop( );
@@ -320,12 +320,12 @@ namespace RegExpressWPF
 
 			MatchInfos.Clear( );
 
-			ShowMatchesTask.Restart( ct => ShowMatchesTaskProc( ct, text, matches, isAll, showFailedGroups, showCaptures ) );
+			ShowMatchesTask.Restart( ct => ShowMatchesTaskProc( ct, text, matches, showFirstOnly, showSucceededGroupsOnly, showCaptures ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ShowMatchesTaskProc( CancellationToken ct, string text, IReadOnlyList<Match> matches, bool isAll, bool showFailedGroups, bool showCaptures )
+		void ShowMatchesTaskProc( CancellationToken ct, string text, IReadOnlyList<Match> matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			try
 			{
@@ -342,8 +342,8 @@ namespace RegExpressWPF
 					lock( this )
 					{
 						LastMatches = matches;
-						LastIsAll = isAll;
-						LastShowFailedGroups = showFailedGroups;
+						LastShowFirstOnly = showFirstOnly;
+						LastShowSucceededGroupsOnly = showSucceededGroupsOnly;
 						LastShowCaptures = showCaptures;
 					}
 
@@ -381,7 +381,7 @@ namespace RegExpressWPF
 					var ordered_groups =
 										match.Groups.Cast<Group>( )
 											.Skip( 1 ) // skip match
-											.Where( g => g.Success || showFailedGroups )
+											.Where( g => g.Success || !showSucceededGroupsOnly )
 											//OrderBy( g => g.Success ? g.Index : match.Index )
 											.ToList( );
 
@@ -405,7 +405,7 @@ namespace RegExpressWPF
 
 					// show match
 
-					string match_name_text = isAll ? $"Mᴀᴛᴄʜ {match_index + 1}" : "Mᴀᴛᴄʜ:"; //ᴍꜰ Fɪʀꜱᴛ 
+					string match_name_text = showFirstOnly ? "Fɪʀꜱᴛ Mᴀᴛᴄʜ" : $"Mᴀᴛᴄʜ {match_index + 1}";
 
 					ChangeEventHelper.Invoke( ct, ( ) =>
 					{
@@ -565,8 +565,8 @@ namespace RegExpressWPF
 				lock( this )
 				{
 					LastMatches = matches;
-					LastIsAll = isAll;
-					LastShowFailedGroups = showFailedGroups;
+					LastShowFirstOnly = showFirstOnly;
+					LastShowSucceededGroupsOnly = showSucceededGroupsOnly;
 					LastShowCaptures = showCaptures;
 				}
 			}

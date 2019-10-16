@@ -109,7 +109,7 @@ namespace RegExpressWPF
 				tabData.Text = InitialTabData.Text;
 				tabData.RegexOptions = InitialTabData.RegexOptions;
 				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
-				tabData.ShowFailedGroups = InitialTabData.ShowFailedGroups;
+				tabData.ShowSucceededGroupsOnly = InitialTabData.ShowSucceededGroupsOnly;
 				tabData.ShowCaptures = InitialTabData.ShowCaptures;
 				tabData.ShowWhiteSpaces = InitialTabData.ShowWhiteSpaces;
 				tabData.Eol = InitialTabData.Eol;
@@ -120,7 +120,7 @@ namespace RegExpressWPF
 				tabData.Text = ucText.GetText( "\n" );
 				tabData.RegexOptions = GetRegexOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
-				tabData.ShowFailedGroups = cbShowFailedGroups.IsChecked == true;
+				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
 				tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 				tabData.Eol = GetEolOption( );
@@ -374,7 +374,7 @@ namespace RegExpressWPF
 				UpdateRegexOptionsControls( );
 
 				cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
-				cbShowFailedGroups.IsChecked = tabData.ShowFailedGroups;
+				cbShowSucceededGroupsOnly.IsChecked = tabData.ShowSucceededGroupsOnly;
 				cbShowCaptures.IsChecked = tabData.ShowCaptures;
 				cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
 
@@ -489,15 +489,15 @@ namespace RegExpressWPF
 
 			string pattern = ucPattern.GetText( eol );
 			string text = ucText.GetText( eol );
-			bool find_all = cbShowFirstOnly.IsChecked != true;
+			bool first_only = cbShowFirstOnly.IsChecked == true;
 			RegexOptions options = GetRegexOptions( excludeIncompatibility: false );
 
-			FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct, pattern, text, find_all, options ) );
+			FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct, pattern, text, first_only, options ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		private void FindMatchesTaskProc( CancellationToken ct, string pattern, string text, bool findAll, RegexOptions options )
+		private void FindMatchesTaskProc( CancellationToken ct, string pattern, string text, bool firstOnly, RegexOptions options )
 		{
 			try
 			{
@@ -524,16 +524,16 @@ namespace RegExpressWPF
 
 				ct.ThrowIfCancellationRequested( );
 
-				var matches_to_show = findAll ? matches0.Cast<Match>( ).ToList( ) : matches0.Cast<Match>( ).Take( 1 ).ToList( );
+				var matches_to_show = firstOnly ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
 
 				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
 					ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-					ucMatches.SetMatches( text, matches_to_show, findAll, cbShowFailedGroups.IsChecked == true, cbShowCaptures.IsChecked == true );
+					ucMatches.SetMatches( text, matches_to_show, firstOnly, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
 
 					lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-					pnlShowAll.Visibility = !findAll && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-					pnlShowFirst.Visibility = findAll && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+					pnlShowAll.Visibility = firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+					pnlShowFirst.Visibility = !firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 				} ) );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
