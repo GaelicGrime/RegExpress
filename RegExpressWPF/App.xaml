@@ -5,6 +5,7 @@
              xmlns:local_controls="clr-namespace:RegExpressWPF.Controls"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:PresentationOptions="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options" 
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              StartupUri="MainWindow.xaml" 
              >
     <Application.Resources>
@@ -60,6 +61,13 @@
 
         <Style TargetType="local_controls:MyRichTextBox" BasedOn="{StaticResource {x:Type RichTextBox}}" PresentationOptions:Freeze="True"/>
 
+        <!-- size of scrollbars 
+        (See: https://stackoverflow.com/questions/1321247/how-to-increase-scrollbar-width-in-wpf-scrollviewer) 
+        -->
+        
+        <sys:Double x:Key="{x:Static SystemParameters.VerticalScrollBarWidthKey}" PresentationOptions:Freeze="True">14</sys:Double>
+        <sys:Double x:Key="{x:Static SystemParameters.HorizontalScrollBarHeightKey}" PresentationOptions:Freeze="True">14</sys:Double>
+        
 
         <Style x:Key="ProgressBar1" TargetType="ProgressBar" PresentationOptions:Freeze="True">
             <Setter Property="Height" Value="2"/>
