@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -37,9 +38,13 @@ namespace RegExpressWPF
 		bool AlreadyLoaded = false;
 
 		readonly StyleInfo PatternParaHighlightStyleInfo;
+		readonly StyleInfo PatternGroupNameStyleInfo;
 		readonly StyleInfo PatternEscapeStyleInfo;
-		readonly StyleInfo PatternGroupHighlightStyleInfo;
+		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
 		readonly StyleInfo CommentStyleInfo;
+
+		// (balancing groups covered too)
+		readonly Regex RegexNamedGroups = new Regex( @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))", RegexOptions.ExplicitCapture | RegexOptions.Compiled ); //...
 
 		RegexOptions mRegexOptions;
 		string mEol;
@@ -57,8 +62,9 @@ namespace RegExpressWPF
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
+			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
 			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
-			PatternGroupHighlightStyleInfo = new StyleInfo( "PatternGroupHighlight" );
+			PatternCharGroupHighlightStyleInfo = new StyleInfo( "PatternCharGroupHighlight" );
 			CommentStyleInfo = new StyleInfo( "PatternComment" );
 		}
 
@@ -227,8 +233,8 @@ namespace RegExpressWPF
 
 				string pattern = $@"
 					(?'inline_comment'\(\?\#.*?(\)|$)) |
-                    (?'para'\(|\)) |
-                    (?'group'\[(\\.|.)*?(?'eog'\])) |
+                    (?'para'(?'left_para'\()|(?'right_para'\))) |
+                    (?'character_group'\[(\\.|.)*?(?'eog'\])) |
                     {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\n]*) |" : "" )}
                     (?'other'(\\.|[^\(\)\[\]{( ignore_pattern_whitespace ? "#" : "" )}])+)
                     ";
@@ -277,6 +283,31 @@ namespace RegExpressWPF
 					}
 #endif
 
+				}
+
+				{
+					// named groups
+
+					var left_parentheses = matches.Select( m => m.Groups["left_para"] ).Where( g => g.Success ).ToList( );
+
+					foreach( var lp in left_parentheses )
+					{
+						// (balancing groups covered too)
+
+						var m = RegexNamedGroups.Match( td.Text, lp.Index );
+						if( m.Success )
+						{
+							var gn = m.Groups["name"];
+							Debug.Assert( gn.Success );
+
+							ChangeEventHelper.BeginInvoke( ct, ( ) =>
+							{
+								td.Range( gn.Index, gn.Length ).Style( PatternGroupNameStyleInfo );
+							} );
+
+							coloured_ranges.Set( gn.Index, gn.Length );
+						}
+					}
 				}
 
 				if( is_focused )
@@ -347,14 +378,14 @@ namespace RegExpressWPF
 						}
 					}
 
-					var current_group = matches.Where( m => m.Groups["group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length >= td.SelectionStart ).FirstOrDefault( );
+					var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length >= td.SelectionStart ).FirstOrDefault( );
 					if( current_group != null )
 					{
 						ct.ThrowIfCancellationRequested( );
 
 						ChangeEventHelper.BeginInvoke( ct, ( ) =>
 						{
-							td.Range( current_group.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
+							td.Range( current_group.Index, 1 ).Style( PatternCharGroupHighlightStyleInfo );
 						} );
 
 						coloured_ranges.Set( current_group.Index );
@@ -364,7 +395,7 @@ namespace RegExpressWPF
 						{
 							ChangeEventHelper.BeginInvoke( ct, ( ) =>
 							{
-								td.Range( eog.Index, 1 ).Style( PatternGroupHighlightStyleInfo );
+								td.Range( eog.Index, 1 ).Style( PatternCharGroupHighlightStyleInfo );
 							} );
 
 							coloured_ranges.Set( eog.Index );
@@ -374,7 +405,7 @@ namespace RegExpressWPF
 
 				var escapes = new List<Segment>( );
 
-				foreach( Match group in matches.Where( m => { var g = m.Groups["group"]; return g.Success && g.Length > 2; } ) )
+				foreach( Match group in matches.Where( m => { var g = m.Groups["character_group"]; return g.Success && g.Length > 2; } ) )
 				{
 					ct.ThrowIfCancellationRequested( );
 					GetRecolorEscapes( escapes, td, group.Index + 1, group.Length - 2, ct );
@@ -411,7 +442,7 @@ namespace RegExpressWPF
 				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
 
 				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-					   //RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
+				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{

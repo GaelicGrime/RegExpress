@@ -180,16 +180,16 @@ namespace RegExpressWPF
 				{
 					switch( tab_item.Content )
 					{
-						case UCMain uc_main:
-						{
-							var tab_data = new TabData( );
+					case UCMain uc_main:
+					{
+						var tab_data = new TabData( );
 
-							tab_data.Name = tab_item.Header as string; //
-							uc_main.ExportTabData( tab_data );
+						tab_data.Name = tab_item.Header as string; //
+						uc_main.ExportTabData( tab_data );
 
-							all_tab_data.Add( tab_data );
-						}
-						break;
+						all_tab_data.Add( tab_data );
+					}
+					break;
 					}
 				}
 			}
