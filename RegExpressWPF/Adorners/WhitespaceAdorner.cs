@@ -97,6 +97,35 @@ namespace RegExpressWPF.Adorners
 
 			if( mShowWhitespaces )
 			{
+				CollectWhitespacesTask.Stop( );
+
+				var rtb = Rtb;
+
+				foreach( var change in e.Changes )
+				{
+					TextPointer start = rtb.Document.ContentStart.GetPositionAtOffset( change.Offset );
+					TextPointer end = start.GetPositionAtOffset( Math.Max( change.RemovedLength, change.AddedLength ) );
+
+					var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
+					var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
+					var change_rect = Rect.Union( start_rect, end_rect );
+					change_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+
+					lock( this )
+					{
+						for( int i = PositionsSpaces.Count - 1; i >= 0; --i )
+						{
+							Rect r = PositionsSpaces[i];
+							if( r.IntersectsWith( change_rect ) )
+							{
+								PositionsSpaces.RemoveAt( i );
+							}
+						}
+					}
+
+					InvalidateVisual( );
+				}
+
 				CollectWhitespacesTask.Restart( CollectWhitespacesTaskProc );
 			}
 		}
@@ -119,36 +148,36 @@ namespace RegExpressWPF.Adorners
 
 			if( IsDbgDisabled ) return;
 
-			if( mShowWhitespaces )
+			if( !mShowWhitespaces ) return;
+
+			var dc = drawingContext;
+			var rtb = Rtb;
+			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+			dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+			var t = new TranslateTransform( -rtb.HorizontalOffset, -rtb.VerticalOffset );
+			dc.PushTransform( t );
+
+			// make copies
+			List<Rect> positions_spaces;
+			List<Rect> positions_tabs;
+			List<Rect> positions_eols;
+			lock( this )
 			{
-				var dc = drawingContext;
-				var rtb = Rtb;
-				var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-				dc.PushClip( new RectangleGeometry( clip_rect ) );
-
-				var t = new TranslateTransform( -rtb.HorizontalOffset, -rtb.VerticalOffset );
-				dc.PushTransform( t );
-
-				// make copies
-				List<Rect> positions_spaces;
-				List<Rect> positions_tabs;
-				List<Rect> positions_eols;
-				lock( this )
-				{
-					positions_spaces = PositionsSpaces.ToList( );
-					positions_tabs = PositionsTabs.ToList( );
-					positions_eols = PositionsEols.ToList( );
-				}
-
-				foreach( var rect in positions_spaces )
-				{
-					DrawSpace( dc, rect );
-				}
-
-				dc.Pop( );
-				dc.Pop( );
+				positions_spaces = PositionsSpaces.ToList( );
+				positions_tabs = PositionsTabs.ToList( );
+				positions_eols = PositionsEols.ToList( );
 			}
+
+			foreach( var rect in positions_spaces )
+			{
+				DrawSpace( dc, rect );
+			}
+
+			dc.Pop( );
+			dc.Pop( );
+
 
 			//....
 
