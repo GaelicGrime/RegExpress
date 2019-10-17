@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,11 +19,18 @@ namespace RegExpressWPF.Adorners
 {
 	class WhitespaceAdorner : Adorner
 	{
+		readonly ChangeEventHelper ChangeEventHelper;
 		readonly Brush WsBrush = Brushes.LightSeaGreen;
 		readonly Pen TabPen = new Pen( Brushes.LightSeaGreen, 1 );
 		readonly Pen EolPen = new Pen( Brushes.LightSeaGreen, 1 );
 		readonly Pen EofPen = new Pen( Brushes.LightSeaGreen, 1 );
 		readonly Brush EofBrush = Brushes.Transparent;
+
+		readonly TaskHelper CollectWhitespacesTask = new TaskHelper( );
+		List<Rect> PositionsSpaces = new List<Rect>( );
+		List<Rect> PositionsTabs = new List<Rect>( );
+		List<Rect> PositionsEols = new List<Rect>( );
+		Point? PositionEof = null;
 
 		static readonly char[] Characters = { ' ', '\t', '\r', '\n' }; // Note. For performance reasons, we only consider regular spaces
 
@@ -31,9 +39,10 @@ namespace RegExpressWPF.Adorners
 		public bool IsDbgDisabled; // (disable this adorner for debugging purposes)
 
 
-		public WhitespaceAdorner( UIElement adornedElement ) : base( adornedElement )
+		public WhitespaceAdorner( MyRichTextBox rtb, ChangeEventHelper ceh ) : base( rtb )
 		{
-			Debug.Assert( adornedElement is MyRichTextBox );
+			ChangeEventHelper = ceh;
+			Debug.Assert( ChangeEventHelper != null );
 
 			WsBrush.Freeze( );
 			TabPen.Freeze( );
@@ -52,6 +61,24 @@ namespace RegExpressWPF.Adorners
 		{
 			mShowWhitespaces = yes;
 
+			CollectWhitespacesTask.Stop( );
+
+			if( mShowWhitespaces )
+			{
+				CollectWhitespacesTask.Restart( CollectWhitespacesTaskProc );
+			}
+			else
+			{
+				CollectWhitespacesTask.Stop( );
+				lock( this )
+				{
+					PositionsSpaces.Clear( );
+					PositionsTabs.Clear( );
+					PositionsEols.Clear( );
+					PositionEof = null;
+				}
+			}
+
 			DelayedInvalidateVisual( );
 		}
 
@@ -64,13 +91,25 @@ namespace RegExpressWPF.Adorners
 
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
-			DelayedInvalidateVisual( );
+			if( ChangeEventHelper == null || ChangeEventHelper.IsInChange ) return;
+
+			//DelayedInvalidateVisual( );
+
+			if( mShowWhitespaces )
+			{
+				CollectWhitespacesTask.Restart( CollectWhitespacesTaskProc );
+			}
 		}
 
 
 		private void Rtb_ScrollChanged( object sender, RoutedEventArgs e )
 		{
 			InvalidateVisual( );
+
+			if( mShowWhitespaces )
+			{
+				CollectWhitespacesTask.Restart( CollectWhitespacesTaskProc );
+			}
 		}
 
 
@@ -84,11 +123,44 @@ namespace RegExpressWPF.Adorners
 			{
 				var dc = drawingContext;
 				var rtb = Rtb;
-				var td = rtb.GetTextData( null );
+				var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
-				ShowSpacesTabsAndEols( dc, td );
-				ShowEof( dc );
+				dc.PushClip( new RectangleGeometry( clip_rect ) );
+
+				var t = new TranslateTransform( -rtb.HorizontalOffset, -rtb.VerticalOffset );
+				dc.PushTransform( t );
+
+				// make copies
+				List<Rect> positions_spaces;
+				List<Rect> positions_tabs;
+				List<Rect> positions_eols;
+				lock( this )
+				{
+					positions_spaces = PositionsSpaces.ToList( );
+					positions_tabs = PositionsTabs.ToList( );
+					positions_eols = PositionsEols.ToList( );
+				}
+
+				foreach( var rect in positions_spaces )
+				{
+					DrawSpace( dc, rect );
+				}
+
+				dc.Pop( );
+				dc.Pop( );
 			}
+
+			//....
+
+			//if( mShowWhitespaces )
+			//{
+			//	var dc = drawingContext;
+			//	var rtb = Rtb;
+			//	var td = rtb.GetTextData( null );
+
+			//	ShowSpacesTabsAndEols( dc, td );
+			//	ShowEof( dc );
+			//}
 		}
 
 
@@ -214,11 +286,24 @@ namespace RegExpressWPF.Adorners
 		}
 
 
+		//...
 		void DrawSpace( DrawingContext dc, Rect rectLeft, Rect rectRight )
 		{
 			const int DOT_SIZE = 2;
 
 			var rect = new Rect( rectLeft.TopLeft, rectRight.BottomRight );
+			var x = rect.Left + rect.Width / 2;
+			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
+			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
+
+			dc.DrawRectangle( WsBrush, null, dot_rect );
+		}
+
+
+		void DrawSpace( DrawingContext dc, Rect rect )
+		{
+			const int DOT_SIZE = 2;
+
 			var x = rect.Left + rect.Width / 2;
 			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
 			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
@@ -268,6 +353,111 @@ namespace RegExpressWPF.Adorners
 			dc.PushClip( new RectangleGeometry( clip_rect ) );
 			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
 			dc.Pop( );
+		}
+
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void CollectWhitespacesTaskProc( CancellationToken ct )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 11 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				List<Rect> positions_spaces = new List<Rect>( );
+				List<Rect> positions_tabs = new List<Rect>( );
+				List<Rect> positions_eols = new List<Rect>( );
+
+				var rtb = Rtb;
+				TextData td = null;
+				Rect clip_rect = Rect.Empty;
+				int start_i = 0;
+
+				Dispatcher.Invoke(
+					( ) =>
+					{
+						td = null;
+
+						var start_doc = Rtb.Document.ContentStart;
+						var end_doc = Rtb.Document.ContentStart;
+
+						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+						var td0 = rtb.GetTextData( null );
+						if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+						td = td0;
+						clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+						TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
+						start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+						if( start_i < 0 ) start_i = 0;
+					},
+					DispatcherPriority.Background, ct );
+				ct.ThrowIfCancellationRequested( );
+
+				if( td == null ) return;
+
+				for( var i = td.Text.IndexOfAny( Characters, start_i ); i >= 0; i = td.Text.IndexOfAny( Characters, i + 1 ) )
+				{
+					var left = td.Pointers[i];
+					var right = td.Pointers[i + 1];
+
+					Rect rect_left = Rect.Empty;
+					Rect rect_right = Rect.Empty;
+
+					Dispatcher.Invoke(
+						( ) =>
+						{
+							rect_left = left.GetCharacterRect( LogicalDirection.Forward );
+							rect_right = right.GetCharacterRect( LogicalDirection.Backward );
+						},
+						DispatcherPriority.Background, ct );
+
+					ct.ThrowIfCancellationRequested( );
+
+					//...
+					// continue?
+					if( rect_left.Top > clip_rect.Bottom ) break;
+
+					switch( td.Text[i] )
+					{
+					case '\t':
+						positions_tabs.Add( rect_left );
+						break;
+
+					case '\r':
+					case '\n':
+						//...
+						break;
+
+					default: // (space)
+						var r = new Rect( rect_left.TopLeft, rect_right.BottomRight );
+						r.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+						positions_spaces.Add( r );
+						break;
+					}
+				}
+
+				lock( this )
+				{
+					PositionsSpaces = positions_spaces;
+					PositionsTabs = positions_tabs;
+					PositionsEols = positions_eols;
+					PositionEof = null; // ...
+				}
+
+				DelayedInvalidateVisual( );
+			}
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				throw;
+			}
 		}
 	}
 }

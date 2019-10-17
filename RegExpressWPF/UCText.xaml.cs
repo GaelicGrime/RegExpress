@@ -57,11 +57,11 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
-			WhitespaceAdorner = new WhitespaceAdorner( rtb );
-			UnderliningAdorner = new UnderliningAdorner( rtb );
-
 			ChangeEventHelper = new ChangeEventHelper( this.rtb );
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
+
+			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
+			UnderliningAdorner = new UnderliningAdorner( rtb );
 
 			HighlightStyleInfos = new[]
 			{

@@ -56,10 +56,10 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
-			WhitespaceAdorner = new WhitespaceAdorner( rtb );
-
 			ChangeEventHelper = new ChangeEventHelper( this.rtb );
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
+
+			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
 
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
 			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
