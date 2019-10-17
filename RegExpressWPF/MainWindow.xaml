@@ -130,7 +130,7 @@
                                     BorderThickness="0"
                                     BorderBrush="Transparent"
                                     Command="{x:Static local:MainWindow.NewTabCommand}"
-                                    IsTabStop="False"
+                                    IsTabStop="False" HorizontalContentAlignment="Left"
                                     >
                             </Button>
                         </Border>
