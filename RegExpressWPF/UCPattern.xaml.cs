@@ -44,7 +44,7 @@ namespace RegExpressWPF
 		readonly StyleInfo CommentStyleInfo;
 
 		// (balancing groups covered too)
-		readonly Regex RegexNamedGroups = new Regex( @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))", RegexOptions.ExplicitCapture | RegexOptions.Compiled ); //...
+		readonly Regex RegexNamedGroups = new Regex( @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
 
 		RegexOptions mRegexOptions;
 		string mEol;
