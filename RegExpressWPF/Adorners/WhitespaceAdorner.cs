@@ -30,9 +30,10 @@ namespace RegExpressWPF.Adorners
 		List<Rect> PositionsSpaces = new List<Rect>( );
 		List<Rect> PositionsTabs = new List<Rect>( );
 		List<Rect> PositionsEols = new List<Rect>( );
-		Point? PositionEof = null;
+		Rect PositionEof = Rect.Empty;
 
-		static readonly char[] Characters = { ' ', '\t', '\r', '\n' }; // Note. For performance reasons, we only consider regular spaces
+		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
+		readonly Regex EolsRegex = new Regex( @"\r\n|\n\r|\r|\n", RegexOptions.Compiled );
 
 		bool mShowWhitespaces = false;
 
@@ -75,7 +76,7 @@ namespace RegExpressWPF.Adorners
 					PositionsSpaces.Clear( );
 					PositionsTabs.Clear( );
 					PositionsEols.Clear( );
-					PositionEof = null;
+					PositionEof = Rect.Empty;
 				}
 			}
 
@@ -99,16 +100,25 @@ namespace RegExpressWPF.Adorners
 			{
 				CollectWhitespacesTask.Stop( );
 
+				// invalidate some areas
+
 				var rtb = Rtb;
 
 				foreach( var change in e.Changes )
 				{
 					TextPointer start = rtb.Document.ContentStart.GetPositionAtOffset( change.Offset );
+					if( start == null ) continue;
+
 					TextPointer end = start.GetPositionAtOffset( Math.Max( change.RemovedLength, change.AddedLength ) );
+					if( end == null ) continue;
 
 					var start_rect = start.GetCharacterRect( LogicalDirection.Forward );
 					var end_rect = end.GetCharacterRect( LogicalDirection.Backward );
 					var change_rect = Rect.Union( start_rect, end_rect );
+					if( change_rect.IsEmpty ) continue;
+
+					//
+					change_rect = new Rect( change_rect.Left, change_rect.Top, rtb.ViewportWidth, change_rect.Height );
 					change_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
 
 					lock( this )
@@ -120,6 +130,11 @@ namespace RegExpressWPF.Adorners
 							{
 								PositionsSpaces.RemoveAt( i );
 							}
+						}
+
+						if( PositionEof.IntersectsWith( change_rect ) )
+						{
+							PositionEof = Rect.Empty;
 						}
 					}
 
@@ -175,21 +190,23 @@ namespace RegExpressWPF.Adorners
 				DrawSpace( dc, rect );
 			}
 
+			foreach( var rect in positions_tabs )
+			{
+				DrawTab( dc, rect );
+			}
+
+			foreach( var rect in positions_eols )
+			{
+				DrawEol( dc, rect );
+			}
+
+			if( !PositionEof.IsEmpty )
+			{
+				DrawEof( dc, PositionEof );
+			}
+
 			dc.Pop( );
 			dc.Pop( );
-
-
-			//....
-
-			//if( mShowWhitespaces )
-			//{
-			//	var dc = drawingContext;
-			//	var rtb = Rtb;
-			//	var td = rtb.GetTextData( null );
-
-			//	ShowSpacesTabsAndEols( dc, td );
-			//	ShowEof( dc );
-			//}
 		}
 
 
@@ -207,52 +224,15 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void ShowSpacesTabsAndEols( DrawingContext dc, TextData td )
+		void DrawSpace( DrawingContext dc, Rect rect )
 		{
-			var rtb = Rtb;
-			var start_doc = Rtb.Document.ContentStart;
-			var end_doc = Rtb.Document.ContentStart;
+			const int DOT_SIZE = 2;
 
-			if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-			if( !td.Pointers.Any( ) || !td.Pointers[0].IsInSameDocument( start_doc ) ) return;
+			var x = rect.Left + rect.Width / 2;
+			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
+			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
 
-			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-			dc.PushClip( new RectangleGeometry( clip_rect ) );
-
-			TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-			int start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
-
-			if( start_i < 0 ) start_i = 0;
-
-			for( var i = td.Text.IndexOfAny( Characters, start_i ); i >= 0; i = td.Text.IndexOfAny( Characters, i + 1 ) )
-			{
-				var left = td.Pointers[i];
-				var right = td.Pointers[i + 1];
-
-				var rect_left = left.GetCharacterRect( LogicalDirection.Forward );
-				var rect_right = right.GetCharacterRect( LogicalDirection.Backward );
-
-				if( rect_left.Top > clip_rect.Bottom ) break;
-
-				switch( td.Text[i] )
-				{
-				case '\t':
-					DrawTab( dc, rect_left );
-					break;
-
-				case '\r':
-				case '\n':
-					DrawEol( dc, left, rect_left );
-					break;
-
-				default: // (space)
-					DrawSpace( dc, rect_left, rect_right );
-					break;
-				}
-
-			}
-
-			dc.Pop( );
+			dc.DrawRectangle( WsBrush, null, dot_rect );
 		}
 
 
@@ -273,39 +253,13 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void DrawEol( DrawingContext dc, TextPointer eol_pointer, Rect eol_rect )
+		void DrawEol( DrawingContext dc, Rect eol_rect )
 		{
-			double max_x = eol_rect.Left;
-
-			for( var tp = eol_pointer.GetInsertionPosition( LogicalDirection.Backward ); ; )
-			{
-				tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
-				if( tp == null ) break;
-
-				// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
-				tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-
-				var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
-				var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
-
-				if( rect_b.Bottom < eol_rect.Top && rect_f.Bottom < eol_rect.Top ) break;
-
-				if( rect_b.Bottom > eol_rect.Top )
-				{
-					if( max_x < rect_b.Left ) max_x = rect_b.Left;
-				}
-
-				if( rect_f.Bottom > eol_rect.Top )
-				{
-					if( max_x < rect_f.Left ) max_x = rect_f.Left;
-				}
-			}
-
 			const int EOL_WIDTH = 6;
 
 			var half_pen = EolPen.Thickness / 2;
 
-			var x = Math.Ceiling( max_x + 2 ) + half_pen;
+			var x = Math.Ceiling( eol_rect.Left + 2 ) + half_pen;
 			var y = Math.Ceiling( eol_rect.Top + eol_rect.Height / 2 ) - half_pen;
 
 			dc.DrawLine( EolPen, new Point( x, y ), new Point( x + EOL_WIDTH, y ) );
@@ -315,73 +269,18 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		//...
-		void DrawSpace( DrawingContext dc, Rect rectLeft, Rect rectRight )
+		void DrawEof( DrawingContext dc, Rect rect )
 		{
-			const int DOT_SIZE = 2;
-
-			var rect = new Rect( rectLeft.TopLeft, rectRight.BottomRight );
-			var x = rect.Left + rect.Width / 2;
-			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
-			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
-
-			dc.DrawRectangle( WsBrush, null, dot_rect );
-		}
-
-
-		void DrawSpace( DrawingContext dc, Rect rect )
-		{
-			const int DOT_SIZE = 2;
-
-			var x = rect.Left + rect.Width / 2;
-			var y = Math.Floor( rect.Top + rect.Height / 2 - DOT_SIZE / 2 );
-			var dot_rect = new Rect( x, y, DOT_SIZE, DOT_SIZE );
-
-			dc.DrawRectangle( WsBrush, null, dot_rect );
-		}
-
-
-		void ShowEof( DrawingContext dc )
-		{
-			var rtb = Rtb;
-
-			if( !rtb.Document.ContentEnd.HasValidLayout ) return;
-
-			var clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-			var end = rtb.Document.ContentEnd;
-			var end_rect = end.GetCharacterRect( LogicalDirection.Forward ); // (no width)
-
-			if( end_rect.Bottom < clip_rect.Top || end_rect.Top > clip_rect.Bottom ) return;
-
-			double max_x = end_rect.Left;
-
-			for( var tp = end; ; )
-			{
-				tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
-				if( tp == null ) break;
-
-				// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
-				tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-
-				var rect = tp.GetCharacterRect( LogicalDirection.Forward );
-				if( rect.Bottom < end_rect.Bottom ) break;
-
-				if( max_x < rect.Left ) max_x = rect.Left;
-			}
-
 			const double EOF_WIDTH = 4;
-			double h = Math.Ceiling( end_rect.Height * 0.3 );
+			double h = Math.Ceiling( rect.Height * 0.3 );
 			double half_pen = EofPen.Thickness / 2;
 
-			var x = Math.Ceiling( max_x + 2 ) + half_pen;
-			var y = Math.Floor( end_rect.Top + ( end_rect.Height - h ) / 2 ) - half_pen;
+			var x = Math.Ceiling( rect.Left + 2 ) + half_pen;
+			var y = Math.Floor( rect.Top + ( rect.Height - h ) / 2 ) - half_pen;
 
 			var eof_rect = new Rect( x, y, EOF_WIDTH, h );
 
-			dc.PushClip( new RectangleGeometry( clip_rect ) );
 			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
-			dc.Pop( );
 		}
 
 
@@ -392,10 +291,6 @@ namespace RegExpressWPF.Adorners
 			{
 				if( ct.WaitHandle.WaitOne( 11 ) ) return;
 				ct.ThrowIfCancellationRequested( );
-
-				List<Rect> positions_spaces = new List<Rect>( );
-				List<Rect> positions_tabs = new List<Rect>( );
-				List<Rect> positions_eols = new List<Rect>( );
 
 				var rtb = Rtb;
 				TextData td = null;
@@ -427,56 +322,186 @@ namespace RegExpressWPF.Adorners
 
 				if( td == null ) return;
 
-				for( var i = td.Text.IndexOfAny( Characters, start_i ); i >= 0; i = td.Text.IndexOfAny( Characters, i + 1 ) )
+				// end-of-lines
 				{
-					var left = td.Pointers[i];
-					var right = td.Pointers[i + 1];
+					List<Rect> positions_eols = new List<Rect>( );
 
-					Rect rect_left = Rect.Empty;
-					Rect rect_right = Rect.Empty;
+					foreach( Match m in EolsRegex.Matches( td.Text, start_i ) )
+					{
+						ct.ThrowIfCancellationRequested( );
+
+						int i = m.Index;
+
+						TextPointer left = td.Pointers[i];
+						Rect rect_left = Rect.Empty;
+						double max_x = double.NaN;
+
+						bool should_continue = false;
+						bool should_break = false;
+
+						Dispatcher.Invoke(
+							( ) =>
+							{
+								rect_left = left.GetCharacterRect( LogicalDirection.Forward );
+
+								if( rect_left.Bottom < clip_rect.Top ) { should_continue = true; return; }
+								if( rect_left.Top > clip_rect.Bottom ) { should_break = true; return; }
+
+								max_x = rect_left.Left;
+
+								for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
+								{
+									tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
+									if( tp == null ) break;
+
+									// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+									tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+
+									var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
+									var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
+
+									if( rect_b.Bottom < rect_left.Top && rect_f.Bottom < rect_left.Top ) break;
+
+									bool increased = false;
+
+									if( rect_b.Bottom > rect_left.Top )
+									{
+										if( max_x < rect_b.Left )
+										{
+											max_x = rect_b.Left;
+											increased = true;
+										}
+									}
+
+									if( rect_f.Bottom > rect_left.Top )
+									{
+										if( max_x < rect_f.Left )
+										{
+											max_x = rect_f.Left;
+											increased = true;
+										}
+									}
+
+									if( !increased ) break;
+								}
+							},
+							DispatcherPriority.Background, ct );
+
+						if( should_continue ) continue;
+						if( should_break ) break;
+
+						Rect eol_rect = new Rect( new Point( max_x, rect_left.Top ), rect_left.Size );
+						eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+
+						positions_eols.Add( eol_rect );
+					}
+
+					lock( this )
+					{
+						PositionsEols = positions_eols;
+					}
+
+					DelayedInvalidateVisual( );
+				}
+
+				// end-of-file
+				{
+					double max_x = double.NaN;
+					Rect end_rect = Rect.Empty;
 
 					Dispatcher.Invoke(
 						( ) =>
 						{
-							rect_left = left.GetCharacterRect( LogicalDirection.Forward );
-							rect_right = right.GetCharacterRect( LogicalDirection.Backward );
+							var end = rtb.Document.ContentEnd;
+							end_rect = end.GetCharacterRect( LogicalDirection.Forward ); // (no width)
+
+							if( end_rect.Bottom < clip_rect.Top || end_rect.Top > clip_rect.Bottom ) return;
+
+							max_x = end_rect.Left;
+
+							for( var tp = end; ; )
+							{
+								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
+								if( tp == null ) break;
+
+								// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+								tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+
+								var rect = tp.GetCharacterRect( LogicalDirection.Forward );
+								if( rect.Bottom < end_rect.Bottom ) break;
+
+								if( max_x < rect.Left ) max_x = rect.Left;
+							}
 						},
 						DispatcherPriority.Background, ct );
-
 					ct.ThrowIfCancellationRequested( );
 
-					//...
-					// continue?
-					if( rect_left.Top > clip_rect.Bottom ) break;
-
-					switch( td.Text[i] )
+					lock( this )
 					{
-					case '\t':
-						positions_tabs.Add( rect_left );
-						break;
-
-					case '\r':
-					case '\n':
-						//...
-						break;
-
-					default: // (space)
-						var r = new Rect( rect_left.TopLeft, rect_right.BottomRight );
-						r.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
-						positions_spaces.Add( r );
-						break;
+						if( double.IsNaN( max_x ) )
+						{
+							PositionEof = Rect.Empty;
+						}
+						else
+						{
+							PositionEof = new Rect( new Point( max_x, end_rect.Top ), end_rect.Size );
+							PositionEof.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+						}
 					}
+
+					DelayedInvalidateVisual( );
 				}
 
-				lock( this )
+				// spaces and tabs
 				{
-					PositionsSpaces = positions_spaces;
-					PositionsTabs = positions_tabs;
-					PositionsEols = positions_eols;
-					PositionEof = null; // ...
-				}
+					List<Rect> positions_spaces = new List<Rect>( );
+					List<Rect> positions_tabs = new List<Rect>( );
 
-				DelayedInvalidateVisual( );
+					for( var i = td.Text.IndexOfAny( SpacesAndTabs, start_i ); i >= 0; i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
+					{
+						ct.ThrowIfCancellationRequested( );
+
+						var left = td.Pointers[i];
+						var right = td.Pointers[i + 1];
+
+						Rect rect_left = Rect.Empty;
+						Rect rect_right = Rect.Empty;
+
+						Dispatcher.Invoke(
+							( ) =>
+							{
+								rect_left = left.GetCharacterRect( LogicalDirection.Forward );
+								rect_right = right.GetCharacterRect( LogicalDirection.Backward );
+							},
+							DispatcherPriority.Background, ct );
+
+						ct.ThrowIfCancellationRequested( );
+
+						if( rect_right.Bottom < clip_rect.Top ) continue;
+						if( rect_left.Top > clip_rect.Bottom ) break;
+
+						switch( td.Text[i] )
+						{
+						case '\t':
+							positions_tabs.Add( Rect.Offset( rect_left, rtb.HorizontalOffset, rtb.VerticalOffset ) );
+							break;
+
+						default: // (space)
+							var r = new Rect( rect_left.TopLeft, rect_right.BottomRight );
+							r.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+							positions_spaces.Add( r );
+							break;
+						}
+					}
+
+					lock( this )
+					{
+						PositionsSpaces = positions_spaces;
+						PositionsTabs = positions_tabs;
+					}
+
+					DelayedInvalidateVisual( );
+				}
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
@@ -490,4 +515,3 @@ namespace RegExpressWPF.Adorners
 		}
 	}
 }
-
