@@ -268,8 +268,6 @@ namespace RegExpressWPF.Adorners
 		{
 			const int ARROW_WIDTH = 6;
 
-			rect.Offset( 2, 0 );
-
 			var half_pen = TabPen.Thickness / 2;
 
 			var x = Math.Ceiling( rect.Left ) + half_pen;
@@ -612,8 +610,10 @@ namespace RegExpressWPF.Adorners
 					DelayedInvalidateVisual( );
 				}
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )

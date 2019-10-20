@@ -37,12 +37,12 @@ namespace RegExpressWPF.Code
 			var ct = ts.Token;
 
 			taskBefore.mTask
-				.ContinueWith( _ => action( ct ), ct )
+				.ContinueWith( _ => action( ct ), ct, TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted, TaskScheduler.Default )
 				.ContinueWith( _ => { ts.Dispose( ); return Task.CompletedTask; } );
 		}
 
 
-		public void Cancel()
+		public void Cancel( )
 		{
 			mCancelationTokenSource.Cancel( );
 		}
@@ -59,8 +59,10 @@ namespace RegExpressWPF.Code
 				{
 					mTask.Wait( );
 				}
-				catch( OperationCanceledException )
+				catch( OperationCanceledException exc )
 				{
+					Utilities.DbgSimpleLog( exc );
+
 					// ignore
 				}
 				catch( AggregateException exc )

@@ -30,28 +30,51 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public bool IsInChange => mChangeIndex != 0;
-
-
-		public DispatcherOperation BeginInvoke( CancellationToken ct, Action action )
+		public bool IsInChange
 		{
-			// TODO: Consider 'InvokeAsync'.
-			return mRtb.Dispatcher.BeginInvoke( new Action( ( ) =>
+			get
 			{
-				if( !ct.IsCancellationRequested ) Do( action );
-			} ), GetPriority( ) );
+				return mChangeIndex != 0;
+			}
+		}
+
+
+		public Task BeginInvoke( CancellationToken ct, Action action )
+		{
+			Debug.Assert( !mRtb.Dispatcher.CheckAccess( ) ); // (should not happen, but the code handles it)
+
+			if( !mRtb.Dispatcher.CheckAccess( ) )
+			{
+				return UITaskHelper.BeginInvoke( ct,
+					( ) =>
+					{
+						ct.ThrowIfCancellationRequested( );
+						Do( action );
+					} );
+			}
+			else
+			{
+				ct.ThrowIfCancellationRequested( );
+				Do( action );
+
+				return Task.CompletedTask;
+			}
 		}
 
 
 		public void Invoke( CancellationToken ct, Action action )
 		{
-			mRtb.Dispatcher.Invoke( ( ) => Do( action ), GetPriority( ), ct );
+			Debug.Assert( !mRtb.Dispatcher.CheckAccess( ) ); // (should not happen, but the code handles it)
 
-			//DispatcherObject.Dispatcher.BeginInvoke( DispatcherPriority.Render, new Action( ( ) =>
-			//{
-			//    Do( a );
-			//} ) ).Task.Wait( ct );
-
+			if( !mRtb.Dispatcher.CheckAccess( ) )
+			{
+				UITaskHelper.Invoke( ct, ( ) => Do( action ) );
+			}
+			else
+			{
+				ct.ThrowIfCancellationRequested( );
+				Do( action );
+			}
 		}
 
 
@@ -68,6 +91,7 @@ namespace RegExpressWPF.Code
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 			finally
@@ -88,16 +112,6 @@ namespace RegExpressWPF.Code
 		//{
 		//    mIsFocused = false;
 		//}
-
-
-		static DispatcherPriority GetPriority( )
-		{
-			return DispatcherPriority.ApplicationIdle;
-			//return DispatcherPriority.Background;
-			//return mIsFocused ? DispatcherPriority.ContextIdle : DispatcherPriority.Background;
-			//return DispatcherPriority.ContextIdle;
-			//return mIsFocused ? DispatcherPriority.Background : DispatcherPriority.ContextIdle;
-		}
 
 	}
 }

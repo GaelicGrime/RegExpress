@@ -387,7 +387,7 @@ namespace RegExpressWPF
 
 		void RestartRecolouring( IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
-			RecolouringTask.Restart( ct => RecolourTaskProc( ct, matches, showCaptures, eol ) );
+			RecolouringTask.Restart( ct => RecolouringTaskProc( ct, matches, showCaptures, eol ) );
 
 			if( rtb.IsFocused )
 			{
@@ -397,7 +397,7 @@ namespace RegExpressWPF
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void RecolourTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		void RecolouringTaskProc( CancellationToken ct, IReadOnlyList<Match> matches, bool showCaptures, string eol )
 		{
 			try
 			{
@@ -409,7 +409,7 @@ namespace RegExpressWPF
 
 				TextData td = null;
 
-				ChangeEventHelper.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( ct, ( ) =>
 				{
 					td = rtb.GetTextData( eol );
 					pbProgress.Maximum = matches.Count;
@@ -463,8 +463,10 @@ namespace RegExpressWPF
 					LastEol = eol;
 				}
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )
@@ -520,8 +522,10 @@ namespace RegExpressWPF
 
 				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )
@@ -566,12 +570,12 @@ namespace RegExpressWPF
 
 						switch( r.Start.Parent )
 						{
-							case FrameworkContentElement fce:
-								fce.BringIntoView( );
-								break;
-							case FrameworkElement fe:
-								fe.BringIntoView( );
-								break;
+						case FrameworkContentElement fce:
+							fce.BringIntoView( );
+							break;
+						case FrameworkElement fe:
+							fe.BringIntoView( );
+							break;
 						}
 
 						if( setSelection && !rtb.IsKeyboardFocused )
@@ -584,8 +588,10 @@ namespace RegExpressWPF
 
 				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )

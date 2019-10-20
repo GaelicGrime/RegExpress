@@ -35,7 +35,7 @@ namespace RegExpressWPF.Code
 
 
 		/// <summary>
-		/// Invoke action on UI thread
+		/// Invoke action on UI thread. Should not be called from UI thread.
 		/// </summary>
 		/// <param name="ct"></param>
 		/// <param name="action"></param>
@@ -63,7 +63,6 @@ namespace RegExpressWPF.Code
 			{
 				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
-
 				throw;
 			}
 		}
@@ -98,7 +97,6 @@ namespace RegExpressWPF.Code
 			{
 				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
-
 				throw;
 			}
 		}

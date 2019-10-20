@@ -444,8 +444,10 @@ namespace RegExpressWPF
 				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )
