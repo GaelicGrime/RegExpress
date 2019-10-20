@@ -137,7 +137,8 @@
 
         <Style x:Key="PatternEscape" TargetType="TextBlock" PresentationOptions:Freeze="True">
             <Setter Property="Foreground" Value="DarkCyan"/>
-            <Setter Property="Background" Value="AntiqueWhite"/>
+            <!-- AntiqueWhite: #FFFAEBD7 -->
+            <Setter Property="Background" Value="#99FAEBD7"/> 
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
 

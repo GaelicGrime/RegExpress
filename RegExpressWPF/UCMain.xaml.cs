@@ -506,14 +506,15 @@ namespace RegExpressWPF
 
 				if( string.IsNullOrEmpty( pattern ) )
 				{
-					Dispatcher.BeginInvoke( new Action( ( ) =>
-					{
-						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
-						ucMatches.ShowNoPattern( );
-						lblMatches.Text = "Matches";
-						pnlShowAll.Visibility = Visibility.Collapsed;
-						pnlShowFirst.Visibility = Visibility.Collapsed;
-					} ) );
+					UITaskHelper.BeginInvoke( ct,
+						( ) =>
+						{
+							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+							ucMatches.ShowNoPattern( );
+							lblMatches.Text = "Matches";
+							pnlShowAll.Visibility = Visibility.Collapsed;
+							pnlShowFirst.Visibility = Visibility.Collapsed;
+						} );
 
 					return;
 				}
@@ -526,29 +527,31 @@ namespace RegExpressWPF
 
 				var matches_to_show = firstOnly ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
 
-				Dispatcher.BeginInvoke( new Action( ( ) =>
-				{
-					ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-					ucMatches.SetMatches( text, matches_to_show, firstOnly, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
+				UITaskHelper.BeginInvoke( ct,
+					( ) =>
+					{
+						ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
+						ucMatches.SetMatches( text, matches_to_show, firstOnly, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
 
-					lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-					pnlShowAll.Visibility = firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-					pnlShowFirst.Visibility = !firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-				} ) );
+						lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
+						pnlShowAll.Visibility = firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+						pnlShowFirst.Visibility = !firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+					} );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
 			}
 			catch( Exception exc )
 			{
-				Dispatcher.BeginInvoke( new Action( ( ) =>
-				{
-					ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
-					ucMatches.ShowError( exc );
-					lblMatches.Text = "Error";
-					pnlShowAll.Visibility = Visibility.Collapsed;
-					pnlShowFirst.Visibility = Visibility.Collapsed;
-				} ) );
+				UITaskHelper.BeginInvoke( CancellationToken.None,
+					( ) =>
+					{
+						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+						ucMatches.ShowError( exc );
+						lblMatches.Text = "Error";
+						pnlShowAll.Visibility = Visibility.Collapsed;
+						pnlShowFirst.Visibility = Visibility.Collapsed;
+					} );
 			}
 		}
 
@@ -594,34 +597,39 @@ namespace RegExpressWPF
 				if( ct.WaitHandle.WaitOne( 777 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Dispatcher.BeginInvoke( new Action( ( ) =>
-				 {
-					 var visibility = Visibility.Hidden;
+				Visibility visibility = Visibility.Hidden;
+				string eol = null;
 
-					 if( !cbShowWhitespaces.IsChecked == true )
-					 {
-						 var eol = GetEolOption( );
-						 var td = ucPattern.GetTextData( eol );
+				var task1 = UITaskHelper.BeginInvoke( ct,
+					( ) =>
+					{
+						if( !cbShowWhitespaces.IsChecked == true )
+						{
+							eol = GetEolOption( );
+							var td = ucPattern.GetTextData( eol );
 
-						 if( RegexHasWhitespace.IsMatch( td.Text ) )
-						 {
-							 visibility = Visibility.Visible;
-						 }
-						 else
-						 {
-							 td = ucText.GetTextData( eol );
+							if( RegexHasWhitespace.IsMatch( td.Text ) )
+							{
+								visibility = Visibility.Visible;
+							}
+						}
+					} );
 
-							 if( RegexHasWhitespace.IsMatch( td.Text ) )
-							 {
-								 visibility = Visibility.Visible;
-							 }
-						 }
-					 }
+				var task2 = UITaskHelper.ContinueWith( task1, ct,
+					( ) =>
+					{
+						if( visibility == Visibility.Hidden && !cbShowWhitespaces.IsChecked == true )
+						{
+							var td = ucText.GetTextData( eol );
 
-					 lblWhitespaceWarning.Visibility = visibility;
+							if( RegexHasWhitespace.IsMatch( td.Text ) )
+							{
+								visibility = Visibility.Visible;
+							}
+						}
 
-				 } ),
-				 DispatcherPriority.ApplicationIdle );
+						lblWhitespaceWarning.Visibility = visibility;
+					} );
 			}
 			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
@@ -630,6 +638,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				// TODO: report
 			}
 		}

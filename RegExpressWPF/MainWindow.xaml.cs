@@ -47,6 +47,8 @@ namespace RegExpressWPF
 		{
 			if( IsFullyLoaded ) return;
 
+			UITaskHelper.Init( );
+
 			List<TabData> all_tab_data = TryLoadAllTabData( );
 
 			if( all_tab_data == null || !all_tab_data.Any( ) )
@@ -369,7 +371,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
-				Debug.Fail( exc.Message, exc.ToString( ) );
+				if( Debugger.IsAttached ) Debugger.Break( );
 
 				// ignore
 			}

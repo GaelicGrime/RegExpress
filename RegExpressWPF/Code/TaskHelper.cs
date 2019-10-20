@@ -65,7 +65,11 @@ namespace RegExpressWPF.Code
 				}
 				catch( AggregateException exc )
 				{
-					if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) ) throw;
+					if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) )
+					{
+						if( Debugger.IsAttached ) Debugger.Break( );
+						throw;
+					}
 
 					// ignore
 				}

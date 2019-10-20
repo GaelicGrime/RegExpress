@@ -252,12 +252,6 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void Invoke( CancellationToken ct, Action action )
-		{
-			Dispatcher.Invoke( action, DispatcherPriority.Background, ct );
-		}
-
-
 		void DrawSpace( DrawingContext dc, Rect rect )
 		{
 			const int DOT_SIZE = 2;
@@ -318,13 +312,12 @@ namespace RegExpressWPF.Adorners
 			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
 		}
 
-
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void CollectWhitespacesTaskProc( CancellationToken ct )
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 11 ) ) return;
+				if( ct.WaitHandle.WaitOne( 33 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				var rtb = Rtb;
@@ -332,7 +325,7 @@ namespace RegExpressWPF.Adorners
 				Rect clip_rect = Rect.Empty;
 				int start_i = 0;
 
-				Invoke( ct,
+				UITaskHelper.Invoke( ct,
 					( ) =>
 					{
 						td = null;
@@ -400,11 +393,11 @@ namespace RegExpressWPF.Adorners
 						} while( Environment.TickCount < end_time );
 					}
 
-					var d = Dispatcher.InvokeAsync( do_things, DispatcherPriority.Background, ct );
+					var d = UITaskHelper.BeginInvoke( ct, do_things );
 
 					for(; ; )
 					{
-						d.Task.Wait( ct );
+						d.Wait( ct );
 
 						ct.ThrowIfCancellationRequested( );
 
@@ -413,7 +406,7 @@ namespace RegExpressWPF.Adorners
 
 						if( !intermediate_results2.Any( ) ) break;
 
-						d = Dispatcher.InvokeAsync( do_things, DispatcherPriority.Background, ct );
+						d = UITaskHelper.BeginInvoke( ct, do_things );
 
 						bool should_break = false;
 
@@ -473,13 +466,11 @@ namespace RegExpressWPF.Adorners
 						TextPointer left = td.Pointers[m.Index];
 						Rect eol_rect = Rect.Empty;
 
-						var d = Dispatcher.InvokeAsync(
+						UITaskHelper.Invoke( ct,
 							( ) =>
 							{
 								eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
-							}, DispatcherPriority.Background, ct );
-
-						d.Task.Wait( ct ); //
+							} );
 
 						if( eol_rect.Bottom < clip_rect.Top ) continue;
 						if( eol_rect.Top > clip_rect.Bottom ) break;
@@ -505,7 +496,7 @@ namespace RegExpressWPF.Adorners
 						bool should_continue = false;
 						bool should_break = false;
 
-						var d = Dispatcher.InvokeAsync(
+						UITaskHelper.Invoke( ct,
 							( ) =>
 							{
 								left_rect = left.GetCharacterRect( LogicalDirection.Forward );
@@ -538,9 +529,7 @@ namespace RegExpressWPF.Adorners
 										if( max_x < rect_f.Left ) max_x = rect_f.Left;
 									}
 								}
-							}, DispatcherPriority.Background, ct );
-
-						d.Task.Wait( ct ); //
+							} );
 
 						if( should_continue ) continue;
 						if( should_break ) break;
@@ -566,7 +555,7 @@ namespace RegExpressWPF.Adorners
 					double max_x = double.NaN;
 					Rect end_rect = Rect.Empty;
 
-					var d = Dispatcher.InvokeAsync(
+					UITaskHelper.Invoke( ct,
 						( ) =>
 						{
 							var end = rtb.Document.ContentEnd;
@@ -605,9 +594,7 @@ namespace RegExpressWPF.Adorners
 
 								if( max_x < rect.Left ) max_x = rect.Left;
 							}
-						}, DispatcherPriority.Background, ct );
-
-					d.Task.Wait( ct ); //
+						} );
 
 					lock( this )
 					{
@@ -632,6 +619,7 @@ namespace RegExpressWPF.Adorners
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}

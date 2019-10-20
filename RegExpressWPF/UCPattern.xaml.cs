@@ -206,12 +206,12 @@ namespace RegExpressWPF
 		{
 			bool is_focused = rtb.IsFocused;
 
-			RecolouringTask.Restart( ct => RecolourTaskProc( ct, is_focused, mRegexOptions, mEol ) );
+			RecolouringTask.Restart( ct => RecolouringTaskProc( ct, is_focused, mRegexOptions, mEol ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void RecolourTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions, string eol )
+		void RecolouringTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions, string eol )
 		{
 			try
 			{
@@ -451,6 +451,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}

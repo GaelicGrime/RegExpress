@@ -470,6 +470,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}
@@ -526,6 +527,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}
@@ -589,6 +591,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}
