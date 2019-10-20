@@ -33,7 +33,26 @@ namespace RegExpressWPF.Adorners
 		Rect PositionEof = Rect.Empty;
 
 		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
-		readonly Regex EolsRegex = new Regex( @"\r\n|\n\r|\r|\n", RegexOptions.Compiled );
+
+		const string LinesWithNotBasicRtl = @"
+			(?<=
+			   ((?'b'^) | (?'e'(?>\r\n|\n\r|\r|\n)))
+			   [^\r\n\p{IsHebrew}\p{IsArabic}]*?
+			)
+			(?(b)(\r\n|\n\r|\r|\n)|\k<e>)
+			";
+
+		const string LinesWithBasicRtl = @"
+			(?<=
+			   ((?'b'^)|(?'e'(?>\r\n|\n\r|\r|\n)))
+			   ([^\r\n]*?[\p{IsHebrew}\p{IsArabic}][^\r\n]*?)
+			)
+			(?(b)(\r\n|\n\r|\r|\n)|\k<e>)
+			";
+
+		readonly Regex LinesWithNotBasicRtlRegex = new Regex( LinesWithNotBasicRtl, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
+		readonly Regex LinesWithBasicRtlRegex = new Regex( LinesWithBasicRtl, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
+		readonly Regex AnyBasicRtlRegex = new Regex( @"[\p{IsHebrew}\p{IsArabic}]", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
 
 		bool mShowWhitespaces = false;
 
@@ -333,15 +352,15 @@ namespace RegExpressWPF.Adorners
 						start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
 						if( start_i < 0 ) start_i = 0;
 					} );
-				ct.ThrowIfCancellationRequested( );
 
 				if( td == null ) return;
+
+				ct.ThrowIfCancellationRequested( );
 
 				// spaces and tabs
 				{
 					List<Rect> positions_spaces = new List<Rect>( );
 					List<Rect> positions_tabs = new List<Rect>( );
-
 
 					List<int> indices = new List<int>( );
 
@@ -437,17 +456,49 @@ namespace RegExpressWPF.Adorners
 					DelayedInvalidateVisual( );
 				}
 
+				ct.ThrowIfCancellationRequested( );
+
 				// end-of-lines
 				{
 					List<Rect> positions_eols = new List<Rect>( );
 
-					foreach( Match m in EolsRegex.Matches( td.Text, start_i ) )
+					// TODO: reduce 'td.Text' to limit the search area
+
+					// lines with no right-to-left segments
+
+					foreach( Match m in LinesWithNotBasicRtlRegex.Matches( td.Text, start_i ) )
 					{
 						ct.ThrowIfCancellationRequested( );
 
-						int i = m.Index;
+						TextPointer left = td.Pointers[m.Index];
+						Rect eol_rect = Rect.Empty;
 
-						TextPointer left = td.Pointers[i];
+						var d = Dispatcher.InvokeAsync(
+							( ) =>
+							{
+								eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
+							}, DispatcherPriority.Background, ct );
+
+						d.Task.Wait( ct ); //
+
+						if( eol_rect.Bottom < clip_rect.Top ) continue;
+						if( eol_rect.Top > clip_rect.Bottom ) break;
+
+						eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+
+						positions_eols.Add( eol_rect );
+					}
+
+					ct.ThrowIfCancellationRequested( );
+
+					// lines with right-to-left segments; 
+					// need additional navigation to find the right-most X
+
+					foreach( Match m in LinesWithBasicRtlRegex.Matches( td.Text, start_i ) )
+					{
+						ct.ThrowIfCancellationRequested( );
+
+						TextPointer left = td.Pointers[m.Index];
 						Rect left_rect = Rect.Empty;
 						double max_x = double.NaN;
 
@@ -477,27 +528,15 @@ namespace RegExpressWPF.Adorners
 
 									if( rect_b.Bottom < left_rect.Top && rect_f.Bottom < left_rect.Top ) break;
 
-									bool increased = false;
-
 									if( rect_b.Bottom > left_rect.Top )
 									{
-										if( max_x < rect_b.Left )
-										{
-											max_x = rect_b.Left;
-											increased = true;
-										}
+										if( max_x < rect_b.Left ) max_x = rect_b.Left;
 									}
 
 									if( rect_f.Bottom > left_rect.Top )
 									{
-										if( max_x < rect_f.Left )
-										{
-											max_x = rect_f.Left;
-											increased = true;
-										}
+										if( max_x < rect_f.Left ) max_x = rect_f.Left;
 									}
-
-									if( !increased ) break;
 								}
 							}, DispatcherPriority.Background, ct );
 
@@ -520,6 +559,8 @@ namespace RegExpressWPF.Adorners
 					DelayedInvalidateVisual( );
 				}
 
+				ct.ThrowIfCancellationRequested( );
+
 				// end-of-file
 				{
 					double max_x = double.NaN;
@@ -534,6 +575,22 @@ namespace RegExpressWPF.Adorners
 							if( end_rect.Bottom < clip_rect.Top || end_rect.Top > clip_rect.Bottom ) return;
 
 							max_x = end_rect.Left;
+
+							// if no RTL, then return a quick answer
+
+							var begin_line = end.GetLineStartPosition( 0 );
+							if( begin_line != null )
+							{
+								var r = new TextRange( begin_line, end );
+								var t = r.Text;
+
+								if( !AnyBasicRtlRegex.IsMatch( t ) )
+								{
+									return;
+								}
+							}
+
+							// we have RTL segments that need additional navigation to find the right-most X
 
 							for( var tp = end; ; )
 							{
@@ -550,7 +607,7 @@ namespace RegExpressWPF.Adorners
 							}
 						}, DispatcherPriority.Background, ct );
 
-					ct.ThrowIfCancellationRequested( );
+					d.Task.Wait( ct ); //
 
 					lock( this )
 					{
