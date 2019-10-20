@@ -74,6 +74,7 @@
     <Compile Include="Code\Segment.cs" />
     <Compile Include="Code\StyleInfo.cs" />
     <Compile Include="Code\TabData.cs" />
+    <Compile Include="Code\UITaskHelper.cs" />
     <Compile Include="Code\UndoRedoHelper.cs" />
     <Compile Include="Code\ChangeEventHelper.cs" />
     <Compile Include="Code\RtbUtilities.cs" />

@@ -42,6 +42,12 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public void Cancel()
+		{
+			mCancelationTokenSource.Cancel( );
+		}
+
+
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		public void Stop( )
 		{
@@ -59,7 +65,11 @@ namespace RegExpressWPF.Code
 				}
 				catch( AggregateException exc )
 				{
-					if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) ) throw;
+					if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) )
+					{
+						if( Debugger.IsAttached ) Debugger.Break( );
+						throw;
+					}
 
 					// ignore
 				}

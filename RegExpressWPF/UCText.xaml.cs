@@ -57,11 +57,11 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
-			WhitespaceAdorner = new WhitespaceAdorner( rtb );
-			UnderliningAdorner = new UnderliningAdorner( rtb );
-
 			ChangeEventHelper = new ChangeEventHelper( this.rtb );
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
+
+			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
+			UnderliningAdorner = new UnderliningAdorner( rtb );
 
 			HighlightStyleInfos = new[]
 			{
@@ -470,6 +470,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}
@@ -526,6 +527,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}
@@ -589,6 +591,7 @@ namespace RegExpressWPF
 			catch( Exception exc )
 			{
 				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
 		}

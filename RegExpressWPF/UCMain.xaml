@@ -13,11 +13,11 @@
 
     <Grid Margin="9 7 9 9">
         <Grid.RowDefinitions>
-            <RowDefinition Height="73" />
+            <RowDefinition Height="73" MinHeight="33" />
             <RowDefinition Height="5" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="33" />
             <RowDefinition Height="5" />
-            <RowDefinition Height="254" />
+            <RowDefinition Height="254" MinHeight="33" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0 0 0 1">
