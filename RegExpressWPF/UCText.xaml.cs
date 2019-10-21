@@ -74,6 +74,7 @@ namespace RegExpressWPF
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
+			//WhitespaceAdorner.IsDbgDisabled = true;
 		}
 
 

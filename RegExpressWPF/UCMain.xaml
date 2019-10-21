@@ -128,7 +128,7 @@
                                         <TextBlock>Show whitespaces
                                             <InlineUIContainer BaselineAlignment="Baseline" 
                                                                ToolTip="There are imperceptible whitespaces. Click to show.">
-                                                <TextBlock x:Name="lblWhitespaceWarning" Foreground="Red" Margin="3 0 0 0">
+                                                <TextBlock x:Name="lblWhitespaceWarning" Foreground="OrangeRed" Margin="3 0 0 0">
                                                     <Bold>&#x26a0;</Bold>
                                                 </TextBlock>
                                             </InlineUIContainer>
