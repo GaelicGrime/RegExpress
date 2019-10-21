@@ -643,6 +643,8 @@ namespace RegExpressWPF.Code
 		}
 
 
+		// This seems to be too slow compared with ApplyStyle...
+		[Obsolete("Too slow. Try 'ApplyStyle'.", true)]
 		public static void ClearProperties( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0 )
 		{
 			// split into smaller segments

@@ -37,6 +37,7 @@ namespace RegExpressWPF
 
 		bool AlreadyLoaded = false;
 
+		readonly StyleInfo PatternNormalStyleInfo;
 		readonly StyleInfo PatternParaHighlightStyleInfo;
 		readonly StyleInfo PatternGroupNameStyleInfo;
 		readonly StyleInfo PatternEscapeStyleInfo;
@@ -61,6 +62,7 @@ namespace RegExpressWPF
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
 
+			PatternNormalStyleInfo = new StyleInfo( "PatternNormal" );
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
 			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
 			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
@@ -441,8 +443,16 @@ namespace RegExpressWPF
 
 				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
 
-				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
+				//...
+				var t1 = DateTime.Now;
+
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
+
+				var t2 = DateTime.Now;
+
+				Debug.WriteLine( "###: " + ( t2 - t1 ).TotalMilliseconds );
+
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -465,9 +475,9 @@ namespace RegExpressWPF
 
 			string s = td.Text.Substring( start, len );
 
-			const string pattern = @"\\[0-7]{2,3}|\\x[0-9A-F]{2}|\\c[A-Z]|\\u[0-9A-F]{4}|\\p\{[A-Z]+\}|\\k<[A-Z]+>|\\.";
+			const string pattern = @"(?>\\[0-7]{2,3} | \\x[0-9A-F]{2} | \\c[A-Z] | \\u[0-9A-F]{4} | \\p\{[A-Z]+\} | \\k<[A-Z]+> | \\.)";
 
-			var ms = Regex.Matches( s, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase );
+			var ms = Regex.Matches( s, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace );
 
 			foreach( Match m in ms )
 			{

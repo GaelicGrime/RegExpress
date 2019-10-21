@@ -186,6 +186,12 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
 
+        
+        <Style x:Key="TextNormal" TargetType="TextBlock" PresentationOptions:Freeze="True">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
         <Style x:Key="MatchHighlight_0" TargetType="TextBlock" PresentationOptions:Freeze="True" >
             <Setter Property="Background" Value="{StaticResource Highlight_0}"/>
         </Style>

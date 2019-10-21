@@ -43,6 +43,7 @@ namespace RegExpressWPF
 		bool LastShowCaptures;
 		string LastEol;
 
+		readonly StyleInfo NormalStyleInfo;
 		readonly StyleInfo[] HighlightStyleInfos;
 
 		readonly LengthConverter LengthConverter = new LengthConverter( );
@@ -62,6 +63,8 @@ namespace RegExpressWPF
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
 			UnderliningAdorner = new UnderliningAdorner( rtb );
+
+			NormalStyleInfo = new StyleInfo( "TextNormal" );
 
 			HighlightStyleInfos = new[]
 			{
@@ -445,7 +448,8 @@ namespace RegExpressWPF
 
 				var unhighlighted_segments = highlighted_ranges.GetSegments( ct, false ).ToList( );
 
-				RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments, NormalStyleInfo );
 
 				Debug.WriteLine( $"NO-MATCHES COLOURED" );
 
