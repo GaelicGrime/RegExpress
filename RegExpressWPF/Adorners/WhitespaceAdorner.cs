@@ -33,26 +33,7 @@ namespace RegExpressWPF.Adorners
 		Rect PositionEof = Rect.Empty;
 
 		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
-
-		const string LinesWithNotBasicRtl = @"
-			(?<=
-			   ((?'b'^) | (?'e'(?>\r\n|\n\r|\r|\n)))
-			   [^\r\n\p{IsHebrew}\p{IsArabic}]*?
-			)
-			(?(b)(\r\n|\n\r|\r|\n)|\k<e>)
-			";
-
-		const string LinesWithBasicRtl = @"
-			(?<=
-			   ((?'b'^)|(?'e'(?>\r\n|\n\r|\r|\n)))
-			   ([^\r\n]*?[\p{IsHebrew}\p{IsArabic}][^\r\n]*?)
-			)
-			(?(b)(\r\n|\n\r|\r|\n)|\k<e>)
-			";
-
-		readonly Regex LinesWithNotBasicRtlRegex = new Regex( LinesWithNotBasicRtl, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
-		readonly Regex LinesWithBasicRtlRegex = new Regex( LinesWithBasicRtl, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
-		readonly Regex AnyBasicRtlRegex = new Regex( @"[\p{IsHebrew}\p{IsArabic}]", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
+		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
 
 		bool mShowWhitespaces = false;
 
@@ -268,8 +249,6 @@ namespace RegExpressWPF.Adorners
 		{
 			const int ARROW_WIDTH = 6;
 
-			rect.Offset( 2, 0 );
-
 			var half_pen = TabPen.Thickness / 2;
 
 			var x = Math.Ceiling( rect.Left ) + half_pen;
@@ -312,9 +291,12 @@ namespace RegExpressWPF.Adorners
 			dc.DrawRectangle( EofBrush, EofPen, eof_rect );
 		}
 
+
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void CollectWhitespacesTaskProc( CancellationToken ct )
 		{
+			Debug.Assert( !Rtb.Dispatcher.CheckAccess( ) ); // supposed to be done on non-UI thread
+
 			try
 			{
 				if( ct.WaitHandle.WaitOne( 33 ) ) return;
@@ -323,7 +305,7 @@ namespace RegExpressWPF.Adorners
 				var rtb = Rtb;
 				TextData td = null;
 				Rect clip_rect = Rect.Empty;
-				int start_i = 0;
+				int top_index = 0;
 
 				UITaskHelper.Invoke( ct,
 					( ) =>
@@ -342,278 +324,20 @@ namespace RegExpressWPF.Adorners
 						clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 						TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-						start_i = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
-						if( start_i < 0 ) start_i = 0;
+						top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+						if( top_index < 0 ) top_index = 0;
 					} );
 
 				if( td == null ) return;
 
-				ct.ThrowIfCancellationRequested( );
-
-				// spaces and tabs
-				{
-					List<Rect> positions_spaces = new List<Rect>( );
-					List<Rect> positions_tabs = new List<Rect>( );
-
-					List<int> indices = new List<int>( );
-
-					for( var i = td.Text.IndexOfAny( SpacesAndTabs, start_i );
-						i >= 0;
-						i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
-					{
-						ct.ThrowIfCancellationRequested( );
-
-						indices.Add( i );
-					}
-
-					var intermediate_results1 = new List<(int index, Rect left, Rect right)>( );
-					var intermediate_results2 = new List<(int index, Rect left, Rect right)>( );
-					var intermediate_results = intermediate_results1;
-					int current_i = 0;
-
-					void do_things( )
-					{
-						var end_time = Environment.TickCount + 22;
-						do
-						{
-							if( current_i >= indices.Count ) break;
-							//if( ct.IsCancellationRequested ) break; -- not possible
-
-							var index = indices[current_i];
-							var left = td.Pointers[index];
-							var right = td.Pointers[index + 1];
-
-							var rect_left = left.GetCharacterRect( LogicalDirection.Forward );
-							var rect_right = right.GetCharacterRect( LogicalDirection.Backward );
-
-							intermediate_results.Add( (index, rect_left, rect_right) );
-
-							++current_i;
-
-						} while( Environment.TickCount < end_time );
-					}
-
-					var d = UITaskHelper.BeginInvoke( ct, do_things );
-
-					for(; ; )
-					{
-						d.Wait( ct );
-
-						ct.ThrowIfCancellationRequested( );
-
-						(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
-						intermediate_results = intermediate_results1;
-
-						if( !intermediate_results2.Any( ) ) break;
-
-						d = UITaskHelper.BeginInvoke( ct, do_things );
-
-						bool should_break = false;
-
-						foreach( var (index, left_rect, right_rect) in intermediate_results2 )
-						{
-							ct.ThrowIfCancellationRequested( );
-
-							if( right_rect.Bottom < clip_rect.Top ) continue;
-							if( left_rect.Top > clip_rect.Bottom )
-							{
-								should_break = true;
-								break;
-							}
-
-							switch( td.Text[index] )
-							{
-							case '\t':
-								positions_tabs.Add( Rect.Offset( left_rect, rtb.HorizontalOffset, rtb.VerticalOffset ) );
-								break;
-
-							default: // (space)
-								var r = new Rect( left_rect.TopLeft, right_rect.BottomRight );
-								r.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
-								positions_spaces.Add( r );
-								break;
-							}
-						}
-
-						if( should_break ) break;
-
-						intermediate_results2.Clear( );
-					}
-
-					lock( this )
-					{
-						PositionsSpaces = positions_spaces;
-						PositionsTabs = positions_tabs;
-					}
-
-					DelayedInvalidateVisual( );
-				}
-
-				ct.ThrowIfCancellationRequested( );
-
-				// end-of-lines
-				{
-					List<Rect> positions_eols = new List<Rect>( );
-
-					// TODO: reduce 'td.Text' to limit the search area
-
-					// lines with no right-to-left segments
-
-					foreach( Match m in LinesWithNotBasicRtlRegex.Matches( td.Text, start_i ) )
-					{
-						ct.ThrowIfCancellationRequested( );
-
-						TextPointer left = td.Pointers[m.Index];
-						Rect eol_rect = Rect.Empty;
-
-						UITaskHelper.Invoke( ct,
-							( ) =>
-							{
-								eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
-							} );
-
-						if( eol_rect.Bottom < clip_rect.Top ) continue;
-						if( eol_rect.Top > clip_rect.Bottom ) break;
-
-						eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
-
-						positions_eols.Add( eol_rect );
-					}
-
-					ct.ThrowIfCancellationRequested( );
-
-					// lines with right-to-left segments; 
-					// need additional navigation to find the right-most X
-
-					foreach( Match m in LinesWithBasicRtlRegex.Matches( td.Text, start_i ) )
-					{
-						ct.ThrowIfCancellationRequested( );
-
-						TextPointer left = td.Pointers[m.Index];
-						Rect left_rect = Rect.Empty;
-						double max_x = double.NaN;
-
-						bool should_continue = false;
-						bool should_break = false;
-
-						UITaskHelper.Invoke( ct,
-							( ) =>
-							{
-								left_rect = left.GetCharacterRect( LogicalDirection.Forward );
-
-								if( left_rect.Bottom < clip_rect.Top ) { should_continue = true; return; }
-								if( left_rect.Top > clip_rect.Bottom ) { should_break = true; return; }
-
-								max_x = left_rect.Left;
-
-								for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
-								{
-									tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
-									if( tp == null ) break;
-
-									// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
-									tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-
-									var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
-									var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
-
-									if( rect_b.Bottom < left_rect.Top && rect_f.Bottom < left_rect.Top ) break;
-
-									if( rect_b.Bottom > left_rect.Top )
-									{
-										if( max_x < rect_b.Left ) max_x = rect_b.Left;
-									}
-
-									if( rect_f.Bottom > left_rect.Top )
-									{
-										if( max_x < rect_f.Left ) max_x = rect_f.Left;
-									}
-								}
-							} );
-
-						if( should_continue ) continue;
-						if( should_break ) break;
-
-						Rect eol_rect = new Rect( new Point( max_x, left_rect.Top ), left_rect.Size );
-						eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
-
-						positions_eols.Add( eol_rect );
-					}
-
-					lock( this )
-					{
-						PositionsEols = positions_eols;
-					}
-
-					DelayedInvalidateVisual( );
-				}
-
-				ct.ThrowIfCancellationRequested( );
-
-				// end-of-file
-				{
-					double max_x = double.NaN;
-					Rect end_rect = Rect.Empty;
-
-					UITaskHelper.Invoke( ct,
-						( ) =>
-						{
-							var end = rtb.Document.ContentEnd;
-							end_rect = end.GetCharacterRect( LogicalDirection.Forward ); // (no width)
-
-							if( end_rect.Bottom < clip_rect.Top || end_rect.Top > clip_rect.Bottom ) return;
-
-							max_x = end_rect.Left;
-
-							// if no RTL, then return a quick answer
-
-							var begin_line = end.GetLineStartPosition( 0 );
-							if( begin_line != null )
-							{
-								var r = new TextRange( begin_line, end );
-								var t = r.Text;
-
-								if( !AnyBasicRtlRegex.IsMatch( t ) )
-								{
-									return;
-								}
-							}
-
-							// we have RTL segments that need additional navigation to find the right-most X
-
-							for( var tp = end; ; )
-							{
-								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
-								if( tp == null ) break;
-
-								// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
-								tp = tp.GetInsertionPosition( LogicalDirection.Forward );
-
-								var rect = tp.GetCharacterRect( LogicalDirection.Forward );
-								if( rect.Bottom < end_rect.Bottom ) break;
-
-								if( max_x < rect.Left ) max_x = rect.Left;
-							}
-						} );
-
-					lock( this )
-					{
-						if( double.IsNaN( max_x ) )
-						{
-							PositionEof = Rect.Empty;
-						}
-						else
-						{
-							PositionEof = new Rect( new Point( max_x, end_rect.Top ), end_rect.Size );
-							PositionEof.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
-						}
-					}
-
-					DelayedInvalidateVisual( );
-				}
+				CollectEols( ct, td, clip_rect, top_index );
+				CollectEof( ct, td, clip_rect, top_index );
+				CollectSpaces( ct, td, clip_rect, top_index );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )
@@ -622,6 +346,314 @@ namespace RegExpressWPF.Adorners
 				if( Debugger.IsAttached ) Debugger.Break( );
 				throw;
 			}
+		}
+
+
+		void CollectSpaces( CancellationToken ct, TextData td, Rect clipRect, int topIndex )
+		{
+			ct.ThrowIfCancellationRequested( );
+
+			var rtb = Rtb;
+
+			List<Rect> positions_spaces = new List<Rect>( );
+			List<Rect> positions_tabs = new List<Rect>( );
+
+			List<int> indices = new List<int>( );
+
+			for( var i = td.Text.IndexOfAny( SpacesAndTabs, topIndex );
+				i >= 0;
+				i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				indices.Add( i );
+			}
+
+			var intermediate_results1 = new List<(int index, Rect left, Rect right)>( );
+			var intermediate_results2 = new List<(int index, Rect left, Rect right)>( );
+			int current_i = 0;
+
+			void do_things( )
+			{
+				Debug.Assert( !intermediate_results1.Any( ) );
+
+				var end_time = Environment.TickCount + 22;
+				do
+				{
+					if( current_i >= indices.Count ) break;
+					//if( ct.IsCancellationRequested ) break; -- not possible
+
+					var index = indices[current_i];
+					var left = td.Pointers[index];
+					var right = td.Pointers[index + 1];
+
+					var left_rect = left.GetCharacterRect( LogicalDirection.Forward );
+					var right_rect = right.GetCharacterRect( LogicalDirection.Backward );
+
+					intermediate_results1.Add( (index, left_rect, right_rect) );
+
+					if( left_rect.Top > clipRect.Bottom ) break;
+
+					++current_i;
+
+				} while( Environment.TickCount < end_time );
+			}
+
+			var d = UITaskHelper.BeginInvoke( ct, do_things );
+
+			for(; ; )
+			{
+				d.Wait( ct );
+
+				ct.ThrowIfCancellationRequested( );
+
+				(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
+
+				if( !intermediate_results2.Any( ) ) break;
+
+				d = UITaskHelper.BeginInvoke( ct, do_things );
+
+				bool should_break = false;
+
+				Debug.Assert( !Rtb.Dispatcher.CheckAccess( ) );
+
+				foreach( var (index, left_rect, right_rect) in intermediate_results2 )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					if( right_rect.Bottom < clipRect.Top ) continue;
+					if( left_rect.Top > clipRect.Bottom )
+					{
+						should_break = true;
+						break;
+					}
+
+					switch( td.Text[index] )
+					{
+					case '\t':
+						positions_tabs.Add( Rect.Offset( left_rect, rtb.HorizontalOffset, rtb.VerticalOffset ) );
+						break;
+
+					default: // (space)
+						var r = new Rect( left_rect.TopLeft, right_rect.BottomRight );
+						r.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+						positions_spaces.Add( r );
+						break;
+					}
+				}
+
+				if( should_break ) break;
+
+				intermediate_results2.Clear( );
+			}
+
+			lock( this )
+			{
+				PositionsSpaces = positions_spaces;
+				PositionsTabs = positions_tabs;
+			}
+
+			DelayedInvalidateVisual( );
+		}
+
+
+		void CollectEols( CancellationToken ct, TextData td, Rect clip_rect, int top_index )
+		{
+			ct.ThrowIfCancellationRequested( );
+
+			var rtb = Rtb;
+
+			List<Rect> positions_eols = new List<Rect>( );
+
+			// lines with no right-to-left segments
+
+			var matches = EolRegex.Matches( td.Text );
+
+			for( int i = 0; i < matches.Count; ++i )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				int index = matches[i].Index;
+
+				if( index < top_index ) continue;
+
+				int previous_index = i == 0 ? 0 : matches[i - 1].Index;
+
+				bool has_RTL = false;
+
+				for( int k = previous_index; k < index; ++k )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					if( UnicodeUtilities.IsRTL( td.Text[k] ) )
+					{
+						has_RTL = true;
+						break;
+					}
+				}
+
+				if( has_RTL )
+				{
+					// RTL needs more navigation to find the rightmost X
+
+					TextPointer left = td.Pointers[index];
+					Rect left_rect = Rect.Empty;
+					double max_x = double.NaN;
+
+					bool should_continue = false;
+					bool should_break = false;
+
+					UITaskHelper.Invoke( ct,
+						( ) =>
+						{
+							left_rect = left.GetCharacterRect( LogicalDirection.Forward );
+
+							if( left_rect.Bottom < clip_rect.Top ) { should_continue = true; return; }
+							if( left_rect.Top > clip_rect.Bottom ) { should_break = true; return; }
+
+							max_x = left_rect.Left;
+
+							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
+							{
+								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
+								if( tp == null ) break;
+
+								// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+								tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+
+								var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
+								var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
+
+								if( rect_b.Bottom < left_rect.Top && rect_f.Bottom < left_rect.Top ) break;
+
+								if( rect_b.Bottom > left_rect.Top )
+								{
+									if( max_x < rect_b.Left ) max_x = rect_b.Left;
+								}
+
+								if( rect_f.Bottom > left_rect.Top )
+								{
+									if( max_x < rect_f.Left ) max_x = rect_f.Left;
+								}
+							}
+						} );
+
+					if( should_continue ) continue;
+					if( should_break ) break;
+
+					Rect eol_rect = new Rect( new Point( max_x, left_rect.Top ), left_rect.Size );
+					eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+
+					positions_eols.Add( eol_rect );
+				}
+				else
+				{
+					// no RTL; quick answer
+
+					TextPointer left = td.Pointers[index];
+					Rect eol_rect = Rect.Empty;
+
+					UITaskHelper.Invoke( ct,
+						( ) =>
+						{
+							eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
+						} );
+
+					if( eol_rect.Bottom < clip_rect.Top ) continue;
+					if( eol_rect.Top > clip_rect.Bottom ) break;
+
+					eol_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+
+					positions_eols.Add( eol_rect );
+				}
+			}
+
+			lock( this )
+			{
+				PositionsEols = positions_eols;
+			}
+
+			DelayedInvalidateVisual( );
+		}
+
+
+		void CollectEof( CancellationToken ct, TextData td, Rect clip_rect, int top_index )
+		{
+			ct.ThrowIfCancellationRequested( );
+
+			var rtb = Rtb;
+
+			double max_x = double.NaN;
+			Rect end_rect = Rect.Empty;
+
+			UITaskHelper.Invoke( ct,
+				( ) =>
+				{
+					var end = rtb.Document.ContentEnd;
+					end_rect = end.GetCharacterRect( LogicalDirection.Forward ); // (no width)
+
+					if( end_rect.Bottom < clip_rect.Top || end_rect.Top > clip_rect.Bottom ) return;
+
+					max_x = end_rect.Left;
+
+					// if no RTL, then return a quick answer
+
+					var begin_line = end.GetLineStartPosition( 0 );
+					if( begin_line != null )
+					{
+						var r = new TextRange( begin_line, end );
+						var text = r.Text;
+						bool has_RTL = false;
+
+						for( int k = 0; k < text.Length; ++k )
+						{
+							ct.ThrowIfCancellationRequested( );
+
+							if( UnicodeUtilities.IsRTL( text[k] ) )
+							{
+								has_RTL = true;
+								break;
+							}
+						}
+
+						if( !has_RTL )
+						{
+							return;
+						}
+					}
+
+					// we have RTL segments that need additional navigation to find the rightmost X
+
+					for( var tp = end; ; )
+					{
+						tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
+						if( tp == null ) break;
+
+						// WORKAROUND for lines like "0ראל", when "0" is matched and highlighted
+						tp = tp.GetInsertionPosition( LogicalDirection.Forward );
+
+						var rect = tp.GetCharacterRect( LogicalDirection.Forward );
+						if( rect.Bottom < end_rect.Bottom ) break;
+
+						if( max_x < rect.Left ) max_x = rect.Left;
+					}
+				} );
+
+			lock( this )
+			{
+				if( double.IsNaN( max_x ) )
+				{
+					PositionEof = Rect.Empty;
+				}
+				else
+				{
+					PositionEof = new Rect( new Point( max_x, end_rect.Top ), end_rect.Size );
+					PositionEof.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+				}
+			}
+
+			DelayedInvalidateVisual( );
+
 		}
 	}
 }

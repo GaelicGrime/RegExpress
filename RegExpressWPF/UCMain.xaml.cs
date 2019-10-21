@@ -538,8 +538,11 @@ namespace RegExpressWPF
 						pnlShowFirst.Visibility = !firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 					} );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore
 			}
 			catch( Exception exc )
 			{
@@ -631,8 +634,10 @@ namespace RegExpressWPF
 						lblWhitespaceWarning.Visibility = visibility;
 					} );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )

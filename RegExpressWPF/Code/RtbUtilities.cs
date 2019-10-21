@@ -495,7 +495,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		const int SEGMENT_LENGTH = 100;
+		const int SEGMENT_LENGTH = 7000;
 
 
 		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
@@ -529,7 +529,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				ceh.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -601,7 +601,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				ceh.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -658,7 +658,7 @@ namespace RegExpressWPF.Code
 				{
 					ct.ThrowIfCancellationRequested( );
 
-					int len = Math.Min( SEGMENT_LENGTH, rem );
+					int len = Math.Min( SEGMENT_LENGTH, rem ); 
 
 					segments.Add( (j, len) );
 
@@ -674,7 +674,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				ceh.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;

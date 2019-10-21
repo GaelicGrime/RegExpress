@@ -73,14 +73,7 @@ namespace RegExpressWPF.Code
 
 		public static bool IsRTL( char c )
 		{
-			return RorALarray[(int)c];
+			return RorALarray[c];
 		}
-
-
-		public static bool IsLTR( char c )
-		{
-			return c >= 'a' && c <= 'z' || c >= '0' && c <= '9';// || 
-		}
-
 	}
 }

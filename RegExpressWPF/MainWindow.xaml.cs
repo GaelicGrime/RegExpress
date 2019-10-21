@@ -86,7 +86,8 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
-				Debug.Fail( exc.Message, exc.ToString( ) );
+				if( Debugger.IsAttached ) Debugger.Break( );
+				else Debug.Fail( exc.Message, exc.ToString( ) );
 
 				// ignore
 			}
@@ -365,13 +366,16 @@ namespace RegExpressWPF
 				System.Windows.Threading.DispatcherPriority.ApplicationIdle,
 				ct );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				Utilities.DbgSimpleLog( exc );
+
 				// ignore
 			}
 			catch( Exception exc )
 			{
 				if( Debugger.IsAttached ) Debugger.Break( );
+				else Debug.Fail( exc.Message, exc.ToString( ) );
 
 				// ignore
 			}
