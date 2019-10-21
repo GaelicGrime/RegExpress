@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -69,20 +70,21 @@ namespace RegExpressWPF.Code
 
 		public void SafeSet( int index, int length )
 		{
+			Debug.Assert( length >= 0 );
+
 			if( index >= data.Length ) return;
 
 			if( index < 0 )
 			{
-				length -= index;
+				length += index; // i.e. 'length -= -index'
 				index = 0;
 			}
 
-			if( length > 0 )
-			{
-				if( index + length >= data.Length ) length = data.Length - index;
+			if( length <= 0 ) return;
 
-				Set( index, length );
-			}
+			if( index + length >= data.Length ) length = data.Length - index;
+
+			Set( index, length );
 		}
 
 
@@ -144,7 +146,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public IEnumerable<Segment> GetSegments( CancellationToken ct, bool valuesToInclude )
+		public IEnumerable<Segment> GetSegments( CancellationToken ct, bool valuesToInclude, int offset = 0 )
 		{
 			for( int i = 0; ; )
 			{
@@ -161,7 +163,7 @@ namespace RegExpressWPF.Code
 				int length = i - start;
 
 				ct.ThrowIfCancellationRequested( );
-				yield return new Segment( start, length );
+				yield return new Segment( start + offset, length );
 			}
 		}
 	}

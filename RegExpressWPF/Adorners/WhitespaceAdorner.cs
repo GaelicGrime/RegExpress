@@ -312,8 +312,8 @@ namespace RegExpressWPF.Adorners
 					{
 						td = null;
 
-						var start_doc = Rtb.Document.ContentStart;
-						var end_doc = Rtb.Document.ContentStart;
+						var start_doc = rtb.Document.ContentStart;
+						var end_doc = rtb.Document.ContentStart;
 
 						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
