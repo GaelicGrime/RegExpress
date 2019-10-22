@@ -68,6 +68,15 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public void SafeSet( int index )
+		{
+			if( index >= 0 && index < data.Length )
+			{
+				Set( index );
+			}
+		}
+
+
 		public void SafeSet( int index, int length )
 		{
 			Debug.Assert( length >= 0 );

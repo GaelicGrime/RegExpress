@@ -313,6 +313,37 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static int Find( IReadOnlyList<TextPointer> pointers, TextPointer target )
+		{
+			if( pointers.Count == 0 ) return -1;
+
+			Debug.Assert( pointers[0].IsInSameDocument( target ) );
+
+			int left = 0;
+			int right = pointers.Count( ) - 1;
+
+			do
+			{
+				int mid = ( left + right ) / 2;
+
+				int cmp = pointers[mid].CompareTo( target );
+
+				if( cmp == 0 ) return mid;
+
+				if( cmp < 0 )
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			} while( left <= right );
+
+			return -1;
+		}
+
+
 		public static void SafeSelect( RichTextBox rtb, TextData td, int selectionStart, int selectionEnd )
 		{
 			Debug.Assert( td.Pointers.Any( ) );
@@ -455,19 +486,6 @@ namespace RegExpressWPF.Code
 		{
 			foreach( var style_info in styleInfo.Values )
 			{
-				range.ApplyPropertyValue( style_info.prop, style_info.val );
-			}
-
-			return range;
-		}
-
-
-		public static TextRange Style( this TextRange range, CancellationToken ct, StyleInfo styleInfo )
-		{
-			foreach( var style_info in styleInfo.Values )
-			{
-				//...ct.ThrowIfCancellationRequested( );
-
 				range.ApplyPropertyValue( style_info.prop, style_info.val );
 			}
 
@@ -637,7 +655,7 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					var end = Environment.TickCount + 22;//...
+					var end = Environment.TickCount + 22;
 					do
 					{
 						//ct.ThrowIfCancellationRequested( );
@@ -684,7 +702,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				UITaskHelper.Invoke( ct, ( ) =>
+				ceh.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;

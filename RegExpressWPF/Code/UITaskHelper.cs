@@ -13,51 +13,29 @@ namespace RegExpressWPF.Code
 
 	class UITaskHelper
 	{
-		static TaskScheduler taskScheduler = null;
-
-
-		/// <summary>
-		/// Must be called (once) on UI thread.
-		/// </summary>
-		public static void Init( )
-		{
-			if( taskScheduler == null ) taskScheduler = TaskScheduler.FromCurrentSynchronizationContext( );
-		}
-
-
-		public static bool DbgIsInitialised
-		{
-			get
-			{
-				return taskScheduler != null;
-			}
-		}
-
 
 		/// <summary>
 		/// Invoke action on UI thread. Should not be called from UI thread.
 		/// </summary>
+		/// <param name="obj"></param>
 		/// <param name="ct"></param>
 		/// <param name="action"></param>
-		[Obsolete( "", true )]
-		public static void Invoke( CancellationToken ct, Action action )
+		public static void Invoke( DispatcherObject obj, CancellationToken ct, Action action )
 		{
-			Debug.Assert( taskScheduler != null );
+			Debug.Assert( !obj.Dispatcher.CheckAccess( ) );
 
 			ct.ThrowIfCancellationRequested( );
 
 			try
 			{
-				var task = Task.Factory.StartNew( ( ) => Execute( action ), ct, TaskCreationOptions.None, taskScheduler );
-
-				if( task.IsFaulted ) throw new AggregateException( task.Exception );
-
-				task.Wait( ct );
-
-				if( task.IsFaulted ) throw new AggregateException( task.Exception );
+				obj.Dispatcher.Invoke(
+				( ) => Execute( action ),
+				DispatcherPriority.Background,
+				ct );
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
+				_ = exc;
 				throw;
 			}
 			catch( Exception exc )
@@ -69,75 +47,24 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static void Invoke( DispatcherObject obj, CancellationToken ct, Action action )
-		{
-			obj.Dispatcher.Invoke(
-				( ) => Execute( action ),
-				DispatcherPriority.Background,
-				ct );
-		}
-
-
 
 		/// <summary>
-		/// Begin an action on UI thread.
+		/// Begin an action on UI thread. Should not be called from UI thread.
 		/// Use 'task.Wait()' to wait for termination.
 		/// </summary>
 		/// <param name="ct"></param>
 		/// <param name="action"></param>
 		/// <returns></returns>
-		[Obsolete( "", true )]
-		public static Task BeginInvoke( CancellationToken ct, Action action )
+		public static Task BeginInvoke( DispatcherObject obj, CancellationToken ct, Action action )
 		{
-			Debug.Assert( taskScheduler != null );
+			Debug.Assert( !obj.Dispatcher.CheckAccess( ) );
 
 			ct.ThrowIfCancellationRequested( );
 
-			try
-			{
-				var task = Task.Factory.StartNew( ( ) => Execute( action ), ct, TaskCreationOptions.None, taskScheduler );
-
-				if( task.IsFaulted ) throw new AggregateException( task.Exception );
-
-				return task;
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
-			{
-				throw;
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
-		}
-
-
-		public static Task BeginInvoke( DispatcherObject obj, CancellationToken ct, Action action )
-		{
 			return obj.Dispatcher.InvokeAsync(
 				( ) => Execute( action ),
 				DispatcherPriority.Background,
 				ct ).Task;
-		}
-
-
-		[Obsolete( "", true )]
-		public static Task ContinueWith( Task previousTask, CancellationToken ct, Action action )
-		{
-			Debug.Assert( taskScheduler != null );
-
-			ct.ThrowIfCancellationRequested( );
-
-			var task = previousTask.ContinueWith(
-				( t ) => Execute( action ),
-				TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.NotOnCanceled
-				);
-
-			if( task.IsFaulted ) throw new AggregateException( task.Exception );
-
-			return task;
 		}
 
 
@@ -151,8 +78,7 @@ namespace RegExpressWPF.Code
 			{
 				Utilities.DbgSimpleLog( exc );
 
-				// ignore?
-				throw;//.............
+				throw;//
 			}
 			catch( Exception exc )
 			{

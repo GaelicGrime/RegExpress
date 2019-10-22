@@ -561,7 +561,7 @@ namespace RegExpressWPF
 
 		void RestartShowTextInfo( )
 		{
-			Dispatcher.BeginInvoke( new Action( ShowTextInfo ), DispatcherPriority.SystemIdle );
+			Dispatcher.InvokeAsync( ShowTextInfo, DispatcherPriority.ApplicationIdle );
 		}
 
 

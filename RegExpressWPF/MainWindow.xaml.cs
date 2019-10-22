@@ -20,6 +20,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 
 namespace RegExpressWPF
@@ -46,8 +47,6 @@ namespace RegExpressWPF
 		private void Window_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;
-
-			UITaskHelper.Init( );
 
 			List<TabData> all_tab_data = TryLoadAllTabData( );
 
@@ -359,12 +358,7 @@ namespace RegExpressWPF
 				if( ct.WaitHandle.WaitOne( interval ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Dispatcher.InvokeAsync( new Action( ( ) =>
-				{
-					SaveAllTabData( );
-				} ),
-				System.Windows.Threading.DispatcherPriority.ApplicationIdle,
-				ct );
+				Dispatcher.InvokeAsync( SaveAllTabData, DispatcherPriority.ApplicationIdle, ct );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
