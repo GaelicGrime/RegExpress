@@ -42,12 +42,17 @@ namespace RegExpressWPF
 		readonly StyleInfo PatternGroupNameStyleInfo;
 		readonly StyleInfo PatternEscapeStyleInfo;
 		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
-		readonly StyleInfo CommentStyleInfo;
+		readonly StyleInfo PatternCommentStyleInfo;
 
-		// (balancing groups covered too)
-		readonly Regex NamedGroupsRegex = new Regex( @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
 		readonly Regex NoIgnorePatternWhitespaceRegex;
 		readonly Regex IgnorePatternWhitespaceRegex;
+		readonly Regex NamedGroupsRegex = new Regex( // (balancing groups covered too)
+			@"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))",
+			RegexOptions.ExplicitCapture | RegexOptions.Compiled );
+		readonly Regex EscapeRegex = new Regex(
+			@"(?>\\[0-7]{2,3} | \\x[0-9A-F]{2} | \\c[A-Z] | \\u[0-9A-F]{4} | \\p\{[A-Z]+\} | \\k<[A-Z]+> | \\.)",
+			RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace );
+
 
 		RegexOptions mRegexOptions;
 		string mEol;
@@ -76,7 +81,7 @@ namespace RegExpressWPF
 			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
 			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
 			PatternCharGroupHighlightStyleInfo = new StyleInfo( "PatternCharGroupHighlight" );
-			CommentStyleInfo = new StyleInfo( "PatternComment" );
+			PatternCommentStyleInfo = new StyleInfo( "PatternComment" );
 		}
 
 
@@ -187,7 +192,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RestartRecolouring( );
+			//...RestartRecolouring( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -205,7 +210,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RestartRecolouring( );
+			//...RestartRecolouring( );
 		}
 
 
@@ -301,14 +306,24 @@ namespace RegExpressWPF
 				//...
 				var t1 = DateTime.Now;
 
-				ColourComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				var t2 = DateTime.Now;
 
 				Debug.WriteLine( "### Colouring comments: " + ( t2 - t1 ).TotalMilliseconds );
 
+				t1 = DateTime.Now;
+
+				//...
+				t1 = DateTime.Now;
+
+				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+
 				t2 = DateTime.Now;
 
+				Debug.WriteLine( "### Colouring escapes: " + ( t2 - t1 ).TotalMilliseconds );
+
+				t1 = DateTime.Now;
 
 
 
@@ -518,9 +533,9 @@ namespace RegExpressWPF
 				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 
-				var t3 = DateTime.Now;
+				t2 = DateTime.Now;
 
-				Debug.WriteLine( "### Uncolour: " + ( t3 - t2 ).TotalMilliseconds );
+				Debug.WriteLine( "### Uncolour: " + ( t2 - t1 ).TotalMilliseconds );
 
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
@@ -569,44 +584,96 @@ namespace RegExpressWPF
 		}
 
 
-		private void ColourComments( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		private void ColouriseComments( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
 		{
-			var comment_ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
 
-			var comment_groups1 =
+			var groups1 =
 				matches
 					.Select( m => m.Groups["inline_comment"] )
 					.Where( g => g.Success );
 
-			var comment_groups2 =
+			var groups2 =
 				matches
 					.Select( m => m.Groups["eol_comment"] )
 					.Where( g => g.Success );
 
-			foreach( Group g in comment_groups1 )
+			foreach( Group g in groups1 )
 			{
 				ct.ThrowIfCancellationRequested( );
 
 				if( g.Index > bottomIndex ) break;
 
-				comment_ranges.SafeSet( g.Index - topIndex, g.Length );
+				ranges.SafeSet( g.Index - topIndex, g.Length );
 			}
 
-			foreach( Group g in comment_groups2 )
+			foreach( Group g in groups2 )
 			{
 				ct.ThrowIfCancellationRequested( );
 
 				if( g.Index > bottomIndex ) break;
 
-				comment_ranges.SafeSet( g.Index - topIndex, g.Length );
+				ranges.SafeSet( g.Index - topIndex, g.Length );
 			}
 
-			List<Segment> comment_segments = comment_ranges.GetSegments( ct, true, topIndex ).ToList( );
+			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
 
-			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, comment_segments, CommentStyleInfo );
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo );
 
-			colouredRanges.Set( comment_ranges );
+			colouredRanges.Set( ranges );
 		}
+
+
+		private void ColouriseEscapes( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		{
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
+
+			var groups1 = matches
+				.Select( m => m.Groups["character_group"] )
+				.Where( g => g.Success );
+
+			var groups2 = matches
+				.Select( m => m.Groups["other"] )
+				.Where( g => g.Success );
+
+			foreach( Group g in groups1 )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				foreach( Match m in EscapeRegex.Matches( g.Value ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
+				}
+			}
+
+			foreach( Group g in groups2 )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				foreach( Match m in EscapeRegex.Matches( g.Value ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
+				}
+			}
+
+			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
+
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo );
+
+			colouredRanges.Set( ranges );
+		}
+
+
+
+
 
 
 		static void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
