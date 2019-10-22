@@ -309,7 +309,6 @@ namespace RegExpressWPF
 				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				var t2 = DateTime.Now;
-
 				Debug.WriteLine( "### Colouring comments: " + ( t2 - t1 ).TotalMilliseconds );
 
 				t1 = DateTime.Now;
@@ -320,8 +319,15 @@ namespace RegExpressWPF
 				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				t2 = DateTime.Now;
-
 				Debug.WriteLine( "### Colouring escapes: " + ( t2 - t1 ).TotalMilliseconds );
+
+				t1 = DateTime.Now;
+
+				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+
+				t2 = DateTime.Now;
+				Debug.WriteLine( "### Colouring named groups: " + ( t2 - t1 ).TotalMilliseconds );
+
 
 				t1 = DateTime.Now;
 
@@ -672,7 +678,38 @@ namespace RegExpressWPF
 		}
 
 
+		private void ColouriseNamedGroups( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		{
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
 
+			var left_parentheses = matches
+				.Select( m => m.Groups["left_para"] )
+				.Where( g => g.Success );
+
+			foreach( var g in left_parentheses )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				// (balancing groups covered too)
+
+				var m = NamedGroupsRegex.Match( td.Text, g.Index );
+				if( m.Success )
+				{
+					var gn = m.Groups["name"];
+					Debug.Assert( gn.Success );
+
+					ranges.SafeSet( gn.Index - topIndex, gn.Length );
+				}
+			}
+
+			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
+
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo );
+
+			colouredRanges.Set( ranges );
+		}
 
 
 
