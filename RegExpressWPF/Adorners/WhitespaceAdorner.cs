@@ -307,7 +307,7 @@ namespace RegExpressWPF.Adorners
 				Rect clip_rect = Rect.Empty;
 				int top_index = 0;
 
-				UITaskHelper.Invoke( ct,
+				UITaskHelper.Invoke( rtb, ct,
 					( ) =>
 					{
 						td = null;
@@ -400,7 +400,7 @@ namespace RegExpressWPF.Adorners
 				} while( Environment.TickCount < end_time );
 			}
 
-			var d = UITaskHelper.BeginInvoke( ct, do_things );
+			var d = UITaskHelper.BeginInvoke( rtb, ct, do_things );
 
 			for(; ; )
 			{
@@ -412,7 +412,7 @@ namespace RegExpressWPF.Adorners
 
 				if( !intermediate_results2.Any( ) ) break;
 
-				d = UITaskHelper.BeginInvoke( ct, do_things );
+				d = UITaskHelper.BeginInvoke( rtb, ct, do_things );
 
 				bool should_break = false;
 
@@ -504,7 +504,7 @@ namespace RegExpressWPF.Adorners
 					bool should_continue = false;
 					bool should_break = false;
 
-					UITaskHelper.Invoke( ct,
+					UITaskHelper.Invoke( rtb, ct,
 						( ) =>
 						{
 							left_rect = left.GetCharacterRect( LogicalDirection.Forward );
@@ -556,7 +556,7 @@ namespace RegExpressWPF.Adorners
 					TextPointer left = td.Pointers[index];
 					Rect eol_rect = Rect.Empty;
 
-					UITaskHelper.Invoke( ct,
+					UITaskHelper.Invoke( rtb, ct,
 						( ) =>
 						{
 							eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
@@ -589,7 +589,7 @@ namespace RegExpressWPF.Adorners
 			double max_x = double.NaN;
 			Rect end_rect = Rect.Empty;
 
-			UITaskHelper.Invoke( ct,
+			UITaskHelper.Invoke( rtb, ct,
 				( ) =>
 				{
 					var end = rtb.Document.ContentEnd;

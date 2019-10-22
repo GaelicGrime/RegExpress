@@ -45,12 +45,18 @@ namespace RegExpressWPF.Code
 
 			if( !mRtb.Dispatcher.CheckAccess( ) )
 			{
-				return UITaskHelper.BeginInvoke( ct,
-					( ) =>
+				//...
+				//return UITaskHelper.BeginInvoke( ct,
+				//	( ) =>
+				//	{
+				//		ct.ThrowIfCancellationRequested( );
+				//		Do( action );
+				//	} );
+				return mRtb.Dispatcher.InvokeAsync( ( ) =>
 					{
 						ct.ThrowIfCancellationRequested( );
 						Do( action );
-					} );
+					}, DispatcherPriority.Background, ct ).Task;
 			}
 			else
 			{
@@ -68,7 +74,8 @@ namespace RegExpressWPF.Code
 
 			if( !mRtb.Dispatcher.CheckAccess( ) )
 			{
-				UITaskHelper.Invoke( ct, ( ) => Do( action ) );
+				//...UITaskHelper.Invoke( ct, ( ) => Do( action ) );
+				mRtb.Dispatcher.Invoke( ( ) => Do( action ), DispatcherPriority.Input, ct );
 			}
 			else
 			{

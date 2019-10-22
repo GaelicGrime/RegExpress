@@ -284,12 +284,7 @@ namespace RegExpressWPF
 #if DEBUG
 			rtb.Focus( );
 
-			var r = new TextRange( rtb.Document.ContentStart, rtb.Document.ContentEnd );
-
-			using( var fs = File.OpenWrite( @"debug-uctext.xml" ) )
-			{
-				r.Save( fs, DataFormats.Xaml, true );
-			}
+			Utilities.DbgSaveXAML( @"debug-uctext.xml", rtb.Document );
 
 			SaveToPng( Window.GetWindow( this ), "debug-uctext.png" );
 #endif
@@ -413,7 +408,7 @@ namespace RegExpressWPF
 
 				TextData td = null;
 
-				UITaskHelper.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( rtb, ct, ( ) =>
 				{
 					td = rtb.GetTextData( eol );
 					pbProgress.Maximum = matches.Count;

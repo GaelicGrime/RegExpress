@@ -462,6 +462,19 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static TextRange Style( this TextRange range, CancellationToken ct, StyleInfo styleInfo )
+		{
+			foreach( var style_info in styleInfo.Values )
+			{
+				//...ct.ThrowIfCancellationRequested( );
+
+				range.ApplyPropertyValue( style_info.prop, style_info.val );
+			}
+
+			return range;
+		}
+
+
 		public static TextRange Style( this TextRange range, params StyleInfo[] styleInfos )
 		{
 			foreach( var styleInfo in styleInfos )
@@ -529,7 +542,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				UITaskHelper.Invoke( ct, ( ) =>
+				ceh.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -599,7 +612,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				UITaskHelper.Invoke( ct, ( ) =>
+				ceh.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -624,10 +637,10 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					var end = Environment.TickCount + 22;
+					var end = Environment.TickCount + 22;//...
 					do
 					{
-						ct.ThrowIfCancellationRequested( );
+						//ct.ThrowIfCancellationRequested( );
 
 						var segment = segments[i];
 						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );

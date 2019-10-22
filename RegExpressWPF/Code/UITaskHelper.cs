@@ -39,6 +39,7 @@ namespace RegExpressWPF.Code
 		/// </summary>
 		/// <param name="ct"></param>
 		/// <param name="action"></param>
+		[Obsolete( "", true )]
 		public static void Invoke( CancellationToken ct, Action action )
 		{
 			Debug.Assert( taskScheduler != null );
@@ -47,7 +48,7 @@ namespace RegExpressWPF.Code
 
 			try
 			{
-				var task = Task.Factory.StartNew( ( ) => Call( action ), ct, TaskCreationOptions.None, taskScheduler );
+				var task = Task.Factory.StartNew( ( ) => Execute( action ), ct, TaskCreationOptions.None, taskScheduler );
 
 				if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
@@ -68,6 +69,16 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static void Invoke( DispatcherObject obj, CancellationToken ct, Action action )
+		{
+			obj.Dispatcher.Invoke(
+				( ) => Execute( action ),
+				DispatcherPriority.Background,
+				ct );
+		}
+
+
+
 		/// <summary>
 		/// Begin an action on UI thread.
 		/// Use 'task.Wait()' to wait for termination.
@@ -75,6 +86,7 @@ namespace RegExpressWPF.Code
 		/// <param name="ct"></param>
 		/// <param name="action"></param>
 		/// <returns></returns>
+		[Obsolete( "", true )]
 		public static Task BeginInvoke( CancellationToken ct, Action action )
 		{
 			Debug.Assert( taskScheduler != null );
@@ -83,7 +95,7 @@ namespace RegExpressWPF.Code
 
 			try
 			{
-				var task = Task.Factory.StartNew( ( ) => Call( action ), ct, TaskCreationOptions.None, taskScheduler );
+				var task = Task.Factory.StartNew( ( ) => Execute( action ), ct, TaskCreationOptions.None, taskScheduler );
 
 				if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
@@ -102,6 +114,16 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static Task BeginInvoke( DispatcherObject obj, CancellationToken ct, Action action )
+		{
+			return obj.Dispatcher.InvokeAsync(
+				( ) => Execute( action ),
+				DispatcherPriority.Background,
+				ct ).Task;
+		}
+
+
+		[Obsolete( "", true )]
 		public static Task ContinueWith( Task previousTask, CancellationToken ct, Action action )
 		{
 			Debug.Assert( taskScheduler != null );
@@ -109,10 +131,9 @@ namespace RegExpressWPF.Code
 			ct.ThrowIfCancellationRequested( );
 
 			var task = previousTask.ContinueWith(
-				( t ) => Call( action ),
-				ct,
-				TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.NotOnCanceled,
-				taskScheduler );
+				( t ) => Execute( action ),
+				TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.NotOnCanceled
+				);
 
 			if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
@@ -120,7 +141,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		static void Call( Action action )
+		static void Execute( Action action )
 		{
 			try
 			{

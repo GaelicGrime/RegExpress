@@ -252,7 +252,7 @@ namespace RegExpressWPF
 				int top_index = 0;
 				int bottom_index = 0;
 
-				UITaskHelper.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( rtb, ct, ( ) =>
 					{
 						td = null;
 
@@ -330,8 +330,6 @@ namespace RegExpressWPF
 
 
 				t1 = DateTime.Now;
-
-
 
 
 

@@ -506,7 +506,7 @@ namespace RegExpressWPF
 
 				if( string.IsNullOrEmpty( pattern ) )
 				{
-					UITaskHelper.BeginInvoke( ct,
+					UITaskHelper.BeginInvoke( this, ct,
 						( ) =>
 						{
 							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
@@ -527,7 +527,7 @@ namespace RegExpressWPF
 
 				var matches_to_show = firstOnly ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
 
-				UITaskHelper.BeginInvoke( ct,
+				UITaskHelper.BeginInvoke( this, ct,
 					( ) =>
 					{
 						ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
@@ -546,7 +546,7 @@ namespace RegExpressWPF
 			}
 			catch( Exception exc )
 			{
-				UITaskHelper.BeginInvoke( CancellationToken.None,
+				UITaskHelper.BeginInvoke( this, CancellationToken.None,
 					( ) =>
 					{
 						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
@@ -588,12 +588,12 @@ namespace RegExpressWPF
 
 		void RestartUpdateWhitespaceWarning( )
 		{
-			UpdateWhitespaceWarningTask.Restart( UpdateWhitespaceWarning );
+			UpdateWhitespaceWarningTask.Restart( UpdateWhitespaceWarningTaskProc );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void UpdateWhitespaceWarning( CancellationToken ct )
+		void UpdateWhitespaceWarningTaskProc( CancellationToken ct )
 		{
 			try
 			{
@@ -603,7 +603,7 @@ namespace RegExpressWPF
 				Visibility visibility = Visibility.Hidden;
 				string eol = null;
 
-				var task1 = UITaskHelper.BeginInvoke( ct,
+				UITaskHelper.Invoke( this, ct,
 					( ) =>
 					{
 						if( !cbShowWhitespaces.IsChecked == true )
@@ -618,7 +618,9 @@ namespace RegExpressWPF
 						}
 					} );
 
-				var task2 = UITaskHelper.ContinueWith( task1, ct,
+				ct.ThrowIfCancellationRequested( );
+
+				UITaskHelper.Invoke( this, ct,
 					( ) =>
 					{
 						if( visibility == Visibility.Hidden && !cbShowWhitespaces.IsChecked == true )
