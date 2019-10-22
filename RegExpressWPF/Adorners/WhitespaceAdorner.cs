@@ -381,7 +381,8 @@ namespace RegExpressWPF.Adorners
 				do
 				{
 					if( current_i >= indices.Count ) break;
-					//if( ct.IsCancellationRequested ) break; -- not possible
+
+					ct.ThrowIfCancellationRequested( );
 
 					var index = indices[current_i];
 					var left = td.Pointers[index];
@@ -515,6 +516,8 @@ namespace RegExpressWPF.Adorners
 
 							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
 							{
+								ct.ThrowIfCancellationRequested( );
+
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 								if( tp == null ) break;
 

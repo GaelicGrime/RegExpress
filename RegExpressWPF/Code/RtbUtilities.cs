@@ -557,6 +557,8 @@ namespace RegExpressWPF.Code
 					var end = Environment.TickCount + 22;
 					do
 					{
+						ct.ThrowIfCancellationRequested( );
+
 						var segment = segments[i];
 						td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
 
@@ -625,6 +627,8 @@ namespace RegExpressWPF.Code
 					var end = Environment.TickCount + 22;
 					do
 					{
+						ct.ThrowIfCancellationRequested( );
+
 						var segment = segments[i];
 						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
 
@@ -695,6 +699,8 @@ namespace RegExpressWPF.Code
 					var end = Environment.TickCount + 22;
 					do
 					{
+						ct.ThrowIfCancellationRequested( );
+
 						var segment = segments[i];
 						td.Range( segment.index, segment.length ).ClearAllProperties( );
 
@@ -741,6 +747,8 @@ namespace RegExpressWPF.Code
 					var end = Environment.TickCount + 22;
 					do
 					{
+						ct.ThrowIfCancellationRequested( );
+
 						var segment = segments[i];
 						td.Range( segment.index, segment.length ).ApplyPropertyValue( property, value );
 

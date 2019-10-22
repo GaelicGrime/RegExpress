@@ -309,7 +309,7 @@ namespace RegExpressWPF
 				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				var t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring comments: " + ( t2 - t1 ).TotalMilliseconds );
+				Debug.WriteLine( "### Colouring comments: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
 
 				t1 = DateTime.Now;
 
@@ -319,14 +319,14 @@ namespace RegExpressWPF
 				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring escapes: " + ( t2 - t1 ).TotalMilliseconds );
+				Debug.WriteLine( "### Colouring escapes: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
 
 				t1 = DateTime.Now;
 
 				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
 				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring named groups: " + ( t2 - t1 ).TotalMilliseconds );
+				Debug.WriteLine( "### Colouring named groups: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
 
 
 				t1 = DateTime.Now;
@@ -541,7 +541,7 @@ namespace RegExpressWPF
 
 				t2 = DateTime.Now;
 
-				Debug.WriteLine( "### Uncolour: " + ( t2 - t1 ).TotalMilliseconds );
+				Debug.WriteLine( "### Uncolour: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
 
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'

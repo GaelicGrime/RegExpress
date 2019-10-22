@@ -47,7 +47,7 @@ namespace RegExpressWPF.Code
 
 			try
 			{
-				var task = Task.Factory.StartNew( action, ct, TaskCreationOptions.None, taskScheduler );
+				var task = Task.Factory.StartNew( ( ) => Call( action ), ct, TaskCreationOptions.None, taskScheduler );
 
 				if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
@@ -83,7 +83,7 @@ namespace RegExpressWPF.Code
 
 			try
 			{
-				var task = Task.Factory.StartNew( action, ct, TaskCreationOptions.None, taskScheduler );
+				var task = Task.Factory.StartNew( ( ) => Call( action ), ct, TaskCreationOptions.None, taskScheduler );
 
 				if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
@@ -109,7 +109,7 @@ namespace RegExpressWPF.Code
 			ct.ThrowIfCancellationRequested( );
 
 			var task = previousTask.ContinueWith(
-				( t ) => action( ),
+				( t ) => Call( action ),
 				ct,
 				TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.NotOnCanceled,
 				taskScheduler );
@@ -117,6 +117,28 @@ namespace RegExpressWPF.Code
 			if( task.IsFaulted ) throw new AggregateException( task.Exception );
 
 			return task;
+		}
+
+
+		static void Call( Action action )
+		{
+			try
+			{
+				action( );
+			}
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore?
+				throw;//.............
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+				throw;
+			}
 		}
 	}
 }
