@@ -640,7 +640,10 @@ namespace RegExpressWPF
 				ranges.SafeSet( g.Index - topIndex, g.Length );
 			}
 
-			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
+			List<Segment> segments = ranges
+				.GetSegments( ct, true, topIndex )
+				.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo );
 
@@ -688,7 +691,10 @@ namespace RegExpressWPF
 				}
 			}
 
-			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
+			List<Segment> segments = ranges
+					.GetSegments( ct, true, topIndex )
+					.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo );
 
@@ -722,7 +728,10 @@ namespace RegExpressWPF
 				}
 			}
 
-			List<Segment> segments = ranges.GetSegments( ct, true, topIndex ).ToList( );
+			List<Segment> segments = ranges
+				.GetSegments( ct, true, topIndex )
+				.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo );
 

@@ -640,6 +640,11 @@ namespace RegExpressWPF.Code
 			//var rnd = new Random( );
 			//segments = segments.OrderBy( s => rnd.Next( ) ).ToList( ); // just for fun
 
+
+			//...
+			Debug.WriteLine( $"Total segments: {segments.Count}" );
+
+
 			for( int i = 0; i < last_i; )
 			{
 				ct.ThrowIfCancellationRequested( );
@@ -656,6 +661,7 @@ namespace RegExpressWPF.Code
 					}
 
 					var end = Environment.TickCount + 22;
+					int dbg_i = i;//...
 					do
 					{
 						//ct.ThrowIfCancellationRequested( );
@@ -664,6 +670,9 @@ namespace RegExpressWPF.Code
 						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
 
 					} while( ++i < last_i && Environment.TickCount < end );
+
+					Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
+
 				} );
 			}
 		}
