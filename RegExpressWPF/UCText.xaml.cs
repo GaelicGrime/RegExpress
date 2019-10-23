@@ -39,7 +39,7 @@ namespace RegExpressWPF
 		readonly UndoRedoHelper UndoRedoHelper;
 
 		bool AlreadyLoaded = false;
-		IReadOnlyList<Match> LastMatches; // null if no data, or recolouring process is not finished
+		IReadOnlyList<Match> LastMatches;
 		bool LastShowCaptures;
 		string LastEol;
 
@@ -107,29 +107,43 @@ namespace RegExpressWPF
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
+			IReadOnlyList<Match> last_matches;
+			bool last_show_captures;
+			string last_eol;
+
 			lock( this )
 			{
-				if( LastMatches != null )
-				{
-					var old_groups = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
-					var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+				last_matches = LastMatches;
+				last_show_captures = LastShowCaptures;
+				last_eol = LastEol;
+			}
 
-					if( new_groups.SequenceEqual( old_groups ) &&
-						showCaptures == LastShowCaptures &&
-						eol == LastEol )
+			if( last_matches != null )
+			{
+				var old_groups = last_matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+				var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+
+				if( new_groups.SequenceEqual( old_groups ) &&
+					showCaptures == last_show_captures &&
+					eol == last_eol )
+				{
+					lock( this )
 					{
 						LastMatches = matches;
-
-						return;
 					}
+					return;
 				}
 			}
 
 			RecolouringTask.Stop( );
 			UnderliningTask.Stop( );
 
-			LastMatches = null;
-			LastEol = null;
+			lock( this )
+			{
+				LastMatches = matches;
+				LastShowCaptures = showCaptures;
+				LastEol = eol;
+			}
 
 			RestartRecolouring( matches, showCaptures, eol );
 		}
@@ -143,12 +157,9 @@ namespace RegExpressWPF
 
 		public IReadOnlyList<Segment> GetUnderliningInfo( )
 		{
-			lock( this )
+			if( LastMatches == null )
 			{
-				if( LastMatches == null ) // no data or processes not finished
-				{
-					return Enumerable.Empty<Segment>( ).ToList( );
-				}
+				return Enumerable.Empty<Segment>( ).ToList( );
 			}
 
 			TextData td = null;
@@ -171,10 +182,18 @@ namespace RegExpressWPF
 
 		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
+			IReadOnlyList<Match> last_matches;
+			//bool last_show_captures;
+			string last_eol;
+
 			lock( this )
 			{
-				if( LastMatches != null ) RestartExternalUnderlining( segments, LastEol, setSelection );
+				last_matches = LastMatches;
+				//last_show_captures = LastShowCaptures;
+				last_eol = LastEol;
 			}
+
+			if( last_matches != null ) RestartExternalUnderlining( segments, last_eol, setSelection );
 		}
 
 
@@ -205,10 +224,18 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 			if( !rtb.IsFocused ) return;
 
+			IReadOnlyList<Match> last_matches;
+			bool last_show_captures;
+			string last_eol;
+
 			lock( this )
 			{
-				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
+				last_matches = LastMatches;
+				last_show_captures = LastShowCaptures;
+				last_eol = LastEol;
 			}
+
+			if( last_matches != null ) RestartLocalUnderlining( last_matches, last_show_captures, last_eol );
 
 			UndoRedoHelper.HandleSelectionChanged( );
 
@@ -235,12 +262,66 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		private void rtb_ScrollChanged( object sender, ScrollChangedEventArgs e )
 		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			RecolouringTask.Stop( );
+			UnderliningTask.Stop( ); //
+
+			IReadOnlyList<Match> matches;
+			bool show_captures;
+			string eol;
+
 			lock( this )
 			{
-				if( LastMatches != null ) RestartLocalUnderlining( LastMatches, LastShowCaptures, LastEol );
+				matches = LastMatches;
+				show_captures = LastShowCaptures;
+				eol = LastEol;
 			}
+
+			RestartRecolouring( matches, show_captures, eol );
+		}
+
+
+		private void rtb_SizeChanged( object sender, SizeChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			RecolouringTask.Stop( );
+			UnderliningTask.Stop( ); //
+
+			IReadOnlyList<Match> matches;
+			bool show_captures;
+			string eol;
+
+			lock( this )
+			{
+				matches = LastMatches;
+				show_captures = LastShowCaptures;
+				eol = LastEol;
+			}
+
+			RestartRecolouring( matches, show_captures, eol );
+		}
+
+
+		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		{
+			IReadOnlyList<Match> last_matches;
+			bool last_show_captures;
+			string last_eol;
+
+			lock( this )
+			{
+				last_matches = LastMatches;
+				last_show_captures = LastShowCaptures;
+				last_eol = LastEol;
+			}
+
+			if( last_matches != null ) RestartLocalUnderlining( last_matches, last_show_captures, last_eol );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -255,10 +336,18 @@ namespace RegExpressWPF
 
 		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
 		{
+			IReadOnlyList<Match> last_matches;
+			bool last_show_captures;
+			string last_eol;
+
 			lock( this )
 			{
-				if( LastMatches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ), LastShowCaptures, LastEol );
+				last_matches = LastMatches;
+				last_show_captures = LastShowCaptures;
+				last_eol = LastEol;
 			}
+
+			if( last_matches != null ) RestartLocalUnderlining( Enumerable.Empty<Match>( ).ToList( ), last_show_captures, last_eol );
 		}
 
 
@@ -407,61 +496,107 @@ namespace RegExpressWPF
 				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
+				Rect clip_rect = Rect.Empty;
+				int top_index = 0;
+				int bottom_index = 0;
+
+				//...
+				var t1 = Environment.TickCount;
 
 				UITaskHelper.Invoke( rtb, ct, ( ) =>
 				{
-					td = rtb.GetTextData( eol );
-					pbProgress.Maximum = matches.Count;
-					pbProgress.Value = 0;
+					td = null;
+
+					var start_doc = rtb.Document.ContentStart;
+					var end_doc = rtb.Document.ContentStart;
+
+					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+					var td0 = rtb.GetTextData( eol );
+					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+					td = td0;
+					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+					TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+					top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+					if( top_index < 0 ) top_index = 0;
+
+					TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+					// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+					if( bottom_pointer == null || lines_skipped == 0 )
+					{
+						bottom_index = td.Pointers.Count - 2;
+					}
+					else
+					{
+						bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					}
+					if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+					if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
+
+					//...
+					if( ct.IsCancellationRequested )
+					{
+						Debugger.Break( );
+					}
 				} );
+
+				var t2 = Environment.TickCount;
+				Debug.WriteLine( $"Getting text: {t2 - t1:F0}" );
+
+				if( td == null ) return;
+				if( td.Text.Length == 0 ) return;
 
 				ct.ThrowIfCancellationRequested( );
 
+				Debug.Assert( top_index >= 0 );
+				Debug.Assert( bottom_index >= top_index );
+				Debug.Assert( bottom_index < td.Pointers.Count );
+
 				// (NOTE. Overlaps are possible in this example: (?=(..))
 
-				var highlighted_ranges = new NaiveRanges( td.Text.Length );
+				var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 				var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
 				for( int i = 0; i < matches.Count; ++i )
 				{
 					ct.ThrowIfCancellationRequested( );
 
-					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
 					Match match = matches[i];
 					Debug.Assert( match.Success );
 
-					highlighted_ranges.Set( match.Index, match.Length );
+					// TODO: consider these conditions for bi-directional text
+					if( match.Index + match.Length < top_index ) continue;
+					if( match.Index > bottom_index ) continue; // (do not break; the order of indices is unspecified)
+
+					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
+
+					coloured_ranges.SafeSet( match.Index - top_index, match.Length );
 					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
 				}
 
+				List<(Segment segment, StyleInfo styleInfo)> segments_to_uncolour =
+					coloured_ranges
+						.GetSegments( ct, false, top_index )
+						.Select( s => (s, NormalStyleInfo) )
+						.ToList( );
 
-				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, segments_and_styles );
+				int center_index = ( top_index + bottom_index ) / 2;
 
-				Debug.WriteLine( $"MATCHES COLOURED" );
+				var all_segments_and_styles =
+					segments_and_styles.Concat( segments_to_uncolour )
+					.OrderBy( s => Math.Abs( center_index - ( s.segment.Index + s.segment.Length / 2 ) ) )
+					.ToList( );
 
-				ct.ThrowIfCancellationRequested( );
-
-				var unhighlighted_segments = highlighted_ranges.GetSegments( ct, false ).ToList( );
-
-				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
-				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments, NormalStyleInfo );
-
-				Debug.WriteLine( $"NO-MATCHES COLOURED" );
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, all_segments_and_styles );
 
 				ChangeEventHelper.BeginInvoke( ct, ( ) =>
 				{
 					pbProgress.Visibility = Visibility.Hidden;
 				} );
 
-
 				Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
-
-				lock( this )
-				{
-					LastMatches = matches;
-					LastShowCaptures = showCaptures;
-					LastEol = eol;
-				}
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{

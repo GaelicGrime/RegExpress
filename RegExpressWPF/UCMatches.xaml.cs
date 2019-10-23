@@ -167,6 +167,7 @@ namespace RegExpressWPF
 
 		public void SetMatches( string text, IReadOnlyList<Match> matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
+			return;//...
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
 			lock( this )

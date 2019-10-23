@@ -21,6 +21,8 @@
                      Panel.ZIndex="1" 
                      TextChanged="Rtb_TextChanged" 
                      SelectionChanged="Rtb_SelectionChanged" 
+                     ScrollViewer.ScrollChanged="rtb_ScrollChanged"
+                     SizeChanged="rtb_SizeChanged"
                      GotFocus="Rtb_GotFocus" 
                      LostFocus="Rtb_LostFocus" 
                      DataObject.Pasting="Rtb_Pasting" 
