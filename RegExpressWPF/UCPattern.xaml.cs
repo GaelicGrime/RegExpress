@@ -31,20 +31,33 @@ namespace RegExpressWPF
 		readonly WhitespaceAdorner WhitespaceAdorner;
 
 		readonly TaskHelper RecolouringTask = new TaskHelper( );
+		readonly TaskHelper HighlightingTask = new TaskHelper( );
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
 
 		bool AlreadyLoaded = false;
 
+		readonly StyleInfo PatternNormalStyleInfo;
 		readonly StyleInfo PatternParaHighlightStyleInfo;
 		readonly StyleInfo PatternGroupNameStyleInfo;
 		readonly StyleInfo PatternEscapeStyleInfo;
 		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
-		readonly StyleInfo CommentStyleInfo;
+		readonly StyleInfo PatternCommentStyleInfo;
 
-		// (balancing groups covered too)
-		readonly Regex RegexNamedGroups = new Regex( @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
+		readonly Regex NoIgnorePatternWhitespaceRegex;
+		readonly Regex IgnorePatternWhitespaceRegex;
+		readonly Regex NamedGroupsRegex = new Regex( // (balancing groups covered too)
+			@"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))",
+			RegexOptions.ExplicitCapture | RegexOptions.Compiled );
+		readonly Regex EscapeRegex = new Regex(
+			@"(?>\\[0-7]{2,3} | \\x[0-9A-F]{2} | \\c[A-Z] | \\u[0-9A-F]{4} | \\p\{[A-Z]+\} | \\k<[A-Z]+> | \\.)",
+			RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace );
+
+		TextRange LeftHighlightedParantesis = null;
+		TextRange RightHighlightedParantesis = null;
+		TextRange LeftHighlightedBracket = null;
+		TextRange RightHighlightedBracket = null;
 
 		RegexOptions mRegexOptions;
 		string mEol;
@@ -56,16 +69,24 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
+			NoIgnorePatternWhitespaceRegex =
+				new Regex( BuildPattern( RegexOptions.None ),
+					RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline );
+			IgnorePatternWhitespaceRegex =
+				new Regex( BuildPattern( RegexOptions.IgnorePatternWhitespace ),
+					RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline );
+
 			ChangeEventHelper = new ChangeEventHelper( this.rtb );
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
 
+			PatternNormalStyleInfo = new StyleInfo( "PatternNormal" );
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
 			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
 			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
 			PatternCharGroupHighlightStyleInfo = new StyleInfo( "PatternCharGroupHighlight" );
-			CommentStyleInfo = new StyleInfo( "PatternComment" );
+			PatternCommentStyleInfo = new StyleInfo( "PatternComment" );
 		}
 
 
@@ -116,6 +137,7 @@ namespace RegExpressWPF
 		public void StopAll( )
 		{
 			RecolouringTask.Stop( );
+			HighlightingTask.Stop( );
 		}
 
 
@@ -130,7 +152,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
+		private void rtb_SelectionChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
@@ -138,27 +160,46 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleSelectionChanged( );
 
-			RestartRecolouring( );
+			RestartHighlighting( );
 		}
 
 
-		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
+		private void rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
 			UndoRedoHelper.HandleTextChanged( );
+			RestartHighlighting( );
 			RestartRecolouring( );
 			TextChanged?.Invoke( this, null );
 		}
 
 
-		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		private void rtb_ScrollChanged( object sender, ScrollChangedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
 			RestartRecolouring( );
+		}
+
+
+		private void rtb_SizeChanged( object sender, SizeChangedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			RestartRecolouring( );
+		}
+
+
+		private void rtb_GotFocus( object sender, RoutedEventArgs e )
+		{
+			if( !IsLoaded ) return;
+			if( ChangeEventHelper.IsInChange ) return;
+
+			RestartHighlighting( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -171,21 +212,16 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
+		private void rtb_LostFocus( object sender, RoutedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RestartRecolouring( );
+			RestartHighlighting( );
 		}
 
 
-		private void Rtb_Copying( object sender, DataObjectCopyingEventArgs e )
-		{
-		}
-
-
-		private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
+		private void rtb_Pasting( object sender, DataObjectPastingEventArgs e )
 		{
 			if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
 			{
@@ -215,100 +251,206 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 333 ) ) return;
+				if( ct.WaitHandle.WaitOne( 111 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;
+				Rect clip_rect = Rect.Empty;
+				int top_index = 0;
+				int bottom_index = 0;
 
-				ChangeEventHelper.Invoke( ct, ( ) =>
-				{
-					td = rtb.GetTextData( eol );
-				} );
+				UITaskHelper.Invoke( rtb, ct, ( ) =>
+					{
+						td = null;
+
+						var start_doc = rtb.Document.ContentStart;
+						var end_doc = rtb.Document.ContentStart;
+
+						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+						var td0 = rtb.GetTextData( eol );
+						if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+						td = td0;
+						clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+						TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+						top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+						if( top_index < 0 ) top_index = 0;
+
+						TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+						// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+						if( bottom_pointer == null || lines_skipped == 0 )
+						{
+							bottom_index = td.Pointers.Count - 2;
+						}
+						else
+						{
+							bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+						}
+						if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+						if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
+					} );
+
+				if( td == null ) return;
+				if( td.Text.Length == 0 ) return;
 
 				ct.ThrowIfCancellationRequested( );
 
-				var coloured_ranges = new NaiveRanges( td.Text.Length );
+				Debug.Assert( top_index >= 0 );
+				Debug.Assert( bottom_index >= top_index );
+				Debug.Assert( bottom_index < td.Pointers.Count );
 
-				bool ignore_pattern_whitespace = ( regexOptions & RegexOptions.IgnorePatternWhitespace ) != 0;
+				var regex = GetColouringRegex( regexOptions );
+				var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 
-				string pattern = $@"
-					(?'inline_comment'\(\?\#.*?(\)|$)) |
-                    (?'para'(?'left_para'\()|(?'right_para'\))) |
-                    (?'character_group'\[(\\.|.)*?(?'eog'\])) |
-                    {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\n]*) |" : "" )}
-                    (?'other'(\\.|[^\(\)\[\]{( ignore_pattern_whitespace ? "#" : "" )}])+)
-                    ";
-
-				var matches = Regex.Matches( td.Text, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline )
+				var matches = regex.Matches( td.Text )
 					.Cast<Match>( )
 					.ToArray( );
 
 				ct.ThrowIfCancellationRequested( );
 
-				{
-					// process comments
 
-					List<Segment> comment_segments =
-						matches
-							.Select( m => m.Groups["inline_comment"] )
-							.Concat( matches.Select( m => m.Groups["eol_comment"] ) )
-							.Where( g => g.Success )
-							.Select( g => new Segment( g.Index, g.Length ) )
-							.ToList( );
+				//...
+				var t1 = DateTime.Now;
 
-					RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, comment_segments, CommentStyleInfo );
+				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 
-					coloured_ranges.Set( comment_segments );
+				var t2 = DateTime.Now;
+				Debug.WriteLine( "### Colouring comments: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
 
-#if false
-					// highlighting '( )' of active comment too
-					if( is_focused )
+				t1 = DateTime.Now;
+
+				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+
+				t2 = DateTime.Now;
+				Debug.WriteLine( "### Colouring escapes: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
+
+				t1 = DateTime.Now;
+
+				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+
+				t2 = DateTime.Now;
+				Debug.WriteLine( "### Colouring named groups: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
+
+
+				t1 = DateTime.Now;
+
+				ChangeEventHelper.Invoke( ct,
+					( ) =>
 					{
-						Group active_inline_comment =
-							matches
-								.Select( m => m.Groups["inline_comment"] )
-								.FirstOrDefault( g => g.Success && td.SelectionStart >= g.Index && td.SelectionEnd < g.Index + g.Length );
+						// ensure the highlighted items are not lost
+						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
+						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
+						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
+						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
+					} );
 
-						if( active_inline_comment != null )
-						{
-							ChangeEventHelper.BeginInvoke( ct, ( ) =>
-							{
-								td.Range( active_inline_comment.Index, 1 ).Style( PatternParaHighlightStyleInfo );
-								td.Range( active_inline_comment.Index + active_inline_comment.Length - 1, 1 ).Style( PatternParaHighlightStyleInfo );
-							} );
+				int center_index = ( top_index + bottom_index ) / 2;
 
-							coloured_ranges.Set( active_inline_comment.Index );
-							coloured_ranges.Set( active_inline_comment.Index + active_inline_comment.Length - 1 );
-						}
-					}
-#endif
+				var segments_to_uncolour = coloured_ranges
+					.GetSegments( ct, false, top_index )
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
 
-				}
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 
+				t2 = DateTime.Now;
+
+				Debug.WriteLine( "### Uncolour: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
+
+			}
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+				throw;
+			}
+		}
+
+
+		void RestartHighlighting( )
+		{
+			bool is_focused = rtb.IsFocused;
+
+			HighlightingTask.Restart( ct => HighlightingTaskProc( ct, is_focused, mRegexOptions, mEol ) );
+		}
+
+
+		void HighlightingTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions, string eol )
+		{
+			try
+			{
+				if( ct.WaitHandle.WaitOne( 33 ) ) return;
+				ct.ThrowIfCancellationRequested( );
+
+				TextData td = null;
+				Rect clip_rect = Rect.Empty;
+				int top_index = 0;
+				int bottom_index = 0;
+
+				UITaskHelper.Invoke( rtb, ct, ( ) =>
 				{
-					// named groups
+					td = null;
 
-					var left_parentheses = matches.Select( m => m.Groups["left_para"] ).Where( g => g.Success ).ToList( );
+					var start_doc = rtb.Document.ContentStart;
+					var end_doc = rtb.Document.ContentStart;
 
-					foreach( var lp in left_parentheses )
+					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+					var td0 = rtb.GetTextData( eol );
+					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+					td = td0;
+					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+					TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+					top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+					if( top_index < 0 ) top_index = 0;
+
+					TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+					// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+					if( bottom_pointer == null || lines_skipped == 0 )
 					{
-						// (balancing groups covered too)
-
-						var m = RegexNamedGroups.Match( td.Text, lp.Index );
-						if( m.Success )
-						{
-							var gn = m.Groups["name"];
-							Debug.Assert( gn.Success );
-
-							ChangeEventHelper.BeginInvoke( ct, ( ) =>
-							{
-								td.Range( gn.Index, gn.Length ).Style( PatternGroupNameStyleInfo );
-							} );
-
-							coloured_ranges.Set( gn.Index, gn.Length );
-						}
+						bottom_index = td.Pointers.Count - 2;
 					}
-				}
+					else
+					{
+						bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					}
+					if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+					if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
+				} );
+
+				if( td == null ) return;
+				if( td.Text.Length == 0 ) return;
+
+				ct.ThrowIfCancellationRequested( );
+
+				Debug.Assert( top_index >= 0 );
+				Debug.Assert( bottom_index >= top_index );
+				Debug.Assert( bottom_index < td.Pointers.Count );
+
+				var regex = GetColouringRegex( regexOptions );
+
+				var matches = regex
+					.Matches( td.Text )
+					.Cast<Match>( )
+					.ToArray( );
+
+				ct.ThrowIfCancellationRequested( );
+
+				int left_para_index = -1;
+				int right_para_index = -1;
+				int left_bracket_index = -1;
+				int right_bracket_index = -1;
 
 				if( is_focused )
 				{
@@ -339,12 +481,7 @@ namespace RegExpressWPF
 						{
 							var m = parentheses_at_left[found_i];
 
-							ChangeEventHelper.BeginInvoke( ct, ( ) =>
-							{
-								td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
-							} );
-
-							coloured_ranges.Set( m.Index );
+							left_para_index = m.Index;
 						}
 					}
 
@@ -369,80 +506,33 @@ namespace RegExpressWPF
 						{
 							var m = parentheses_at_right[found_i];
 
-							ChangeEventHelper.BeginInvoke( ct, ( ) =>
-							{
-								td.Range( m.Index, 1 ).Style( PatternParaHighlightStyleInfo );
-							} );
-
-							coloured_ranges.Set( m.Index );
+							right_para_index = m.Index;
 						}
 					}
 
-					var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length >= td.SelectionStart ).FirstOrDefault( );
+					var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
 					if( current_group != null )
 					{
 						ct.ThrowIfCancellationRequested( );
 
-						ChangeEventHelper.BeginInvoke( ct, ( ) =>
-						{
-							td.Range( current_group.Index, 1 ).Style( PatternCharGroupHighlightStyleInfo );
-						} );
-
-						coloured_ranges.Set( current_group.Index );
+						left_bracket_index = current_group.Index;
 
 						var eog = current_group.Groups["eog"];
 						if( eog.Success )
 						{
-							ChangeEventHelper.BeginInvoke( ct, ( ) =>
-							{
-								td.Range( eog.Index, 1 ).Style( PatternCharGroupHighlightStyleInfo );
-							} );
-
-							coloured_ranges.Set( eog.Index );
+							right_bracket_index = eog.Index;
 						}
 					}
 				}
 
-				var escapes = new List<Segment>( );
-
-				foreach( Match group in matches.Where( m => { var g = m.Groups["character_group"]; return g.Success && g.Length > 2; } ) )
+				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
-					ct.ThrowIfCancellationRequested( );
-					GetRecolorEscapes( escapes, td, group.Index + 1, group.Length - 2, ct );
-				}
+					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
+				} );
 
-				foreach( Match other in matches.Where( m => m.Groups["other"].Success ) )
-				{
-					ct.ThrowIfCancellationRequested( );
-					GetRecolorEscapes( escapes, td, other.Index, other.Length, ct );
-				}
-
-				coloured_ranges.Set( escapes );
-
-				{
-					int i = 0;
-					while( i < escapes.Count )
-					{
-						ct.ThrowIfCancellationRequested( );
-
-						ChangeEventHelper.Invoke( ct, ( ) =>
-						{
-							var start = Environment.TickCount;
-							var end = unchecked(start + 77); // (in rare case we will have overflow, which we are going to ignore)
-
-							do
-							{
-								var e = escapes[i];
-								td.Range( e ).Style( PatternEscapeStyleInfo );
-							} while( ++i < escapes.Count && Environment.TickCount <= end );
-						} );
-					}
-				}
-
-				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false ).ToList( );
-
-				RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-				//RtbUtilities.ApplyStyle( ct, UniqueChanger, null, td, segments_to_restore, PatternNormalStyleInfo );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -459,21 +549,204 @@ namespace RegExpressWPF
 		}
 
 
-		static void GetRecolorEscapes( List<Segment> list, TextData td, int start, int len, CancellationToken ct )
+		void TryMark( NaiveRanges ranges, int topIndex, TextData td, TextPointer tp )
 		{
-			if( len == 0 ) return;
+			if( tp != null )
+			{
+				int i = RtbUtilities.Find( td.Pointers, tp );
+				if( i >= 0 )
+				{
+					ranges.SafeSet( i - topIndex );
+				}
+			}
+		}
 
-			string s = td.Text.Substring( start, len );
 
-			const string pattern = @"\\[0-7]{2,3}|\\x[0-9A-F]{2}|\\c[A-Z]|\\u[0-9A-F]{4}|\\p\{[A-Z]+\}|\\k<[A-Z]+>|\\.";
+		void TryHighlight( ref TextRange tr, TextData td, int index, StyleInfo styleInfo )
+		{
+			// TODO: avoid flickering
 
-			var ms = Regex.Matches( s, pattern, RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase );
+			if( tr != null )
+			{
+				if( tr.Start.IsInSameDocument( rtb.Document.ContentStart ) )
+				{
+					tr.Style( PatternNormalStyleInfo );
+				}
+			}
 
-			foreach( Match m in ms )
+			tr = null;
+
+			if( index >= 0 ) tr = td.Range( index, 1 );
+
+			if( tr != null ) tr.Style( styleInfo );
+		}
+
+
+		string BuildPattern( RegexOptions options )
+		{
+			bool ignore_pattern_whitespace = options.HasFlag( RegexOptions.IgnorePatternWhitespace );
+
+			string pattern = $@"
+					(?'inline_comment'\(\?\#.*?(\)|$)) |
+                    (?'para'(?'left_para'\()|(?'right_para'\))) |
+                    (?'character_group'\[(\\.|.)*?(?'eog'\])) |
+                    {( ignore_pattern_whitespace ? @"(?'eol_comment'\#[^\n]*) |" : "" )}
+                    (?'other'(\\.|[^\(\)\[\]{( ignore_pattern_whitespace ? "#" : "" )}])+)
+                    ";
+
+			return pattern;
+		}
+
+
+		Regex GetColouringRegex( RegexOptions options )
+		{
+			bool ignore_pattern_whitespace = options.HasFlag( RegexOptions.IgnorePatternWhitespace );
+
+			if( ignore_pattern_whitespace )
+			{
+				return IgnorePatternWhitespaceRegex;
+			}
+			else
+			{
+				return NoIgnorePatternWhitespaceRegex;
+			}
+		}
+
+
+		private void ColouriseComments( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		{
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
+
+			var groups1 =
+				matches
+					.Select( m => m.Groups["inline_comment"] )
+					.Where( g => g.Success );
+
+			var groups2 =
+				matches
+					.Select( m => m.Groups["eol_comment"] )
+					.Where( g => g.Success );
+
+			foreach( Group g in groups1 )
 			{
 				ct.ThrowIfCancellationRequested( );
-				list.Add( new Segment( start + m.Index, m.Length ) );
+
+				if( g.Index > bottomIndex ) break;
+
+				ranges.SafeSet( g.Index - topIndex, g.Length );
 			}
+
+			foreach( Group g in groups2 )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				ranges.SafeSet( g.Index - topIndex, g.Length );
+			}
+
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
+			List<Segment> segments = ranges
+				.GetSegments( ct, true, topIndex )
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
+
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo );
+
+			colouredRanges.Set( ranges );
+		}
+
+
+		private void ColouriseEscapes( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		{
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
+
+			var groups1 = matches
+				.Select( m => m.Groups["character_group"] )
+				.Where( g => g.Success );
+
+			var groups2 = matches
+				.Select( m => m.Groups["other"] )
+				.Where( g => g.Success );
+
+			foreach( Group g in groups1 )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				foreach( Match m in EscapeRegex.Matches( g.Value ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
+				}
+			}
+
+			foreach( Group g in groups2 )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				foreach( Match m in EscapeRegex.Matches( g.Value ) )
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
+				}
+			}
+
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
+			List<Segment> segments = ranges
+					.GetSegments( ct, true, topIndex )
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
+
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo );
+
+			colouredRanges.Set( ranges );
+		}
+
+
+		private void ColouriseNamedGroups( CancellationToken ct, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		{
+			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
+
+			var left_parentheses = matches
+				.Select( m => m.Groups["left_para"] )
+				.Where( g => g.Success );
+
+			foreach( var g in left_parentheses )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				if( g.Index > bottomIndex ) break;
+
+				// (balancing groups covered too)
+
+				var m = NamedGroupsRegex.Match( td.Text, g.Index );
+				if( m.Success )
+				{
+					var gn = m.Groups["name"];
+					Debug.Assert( gn.Success );
+
+					ranges.SafeSet( gn.Index - topIndex, gn.Length );
+				}
+			}
+
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
+			List<Segment> segments = ranges
+				.GetSegments( ct, true, topIndex )
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
+
+			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo );
+
+			colouredRanges.Set( ranges );
 		}
 
 
@@ -516,5 +789,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }

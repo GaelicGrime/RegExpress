@@ -64,10 +64,10 @@
         <!-- size of scrollbars 
         (See: https://stackoverflow.com/questions/1321247/how-to-increase-scrollbar-width-in-wpf-scrollviewer) 
         -->
-        
+
         <sys:Double x:Key="{x:Static SystemParameters.VerticalScrollBarWidthKey}" PresentationOptions:Freeze="True">14</sys:Double>
         <sys:Double x:Key="{x:Static SystemParameters.HorizontalScrollBarHeightKey}" PresentationOptions:Freeze="True">14</sys:Double>
-        
+
 
         <Style x:Key="ProgressBar1" TargetType="ProgressBar" PresentationOptions:Freeze="True">
             <Setter Property="Height" Value="2"/>
@@ -138,7 +138,7 @@
         <Style x:Key="PatternEscape" TargetType="TextBlock" PresentationOptions:Freeze="True">
             <Setter Property="Foreground" Value="DarkCyan"/>
             <!-- AntiqueWhite: #FFFAEBD7 -->
-            <Setter Property="Background" Value="#99FAEBD7"/> 
+            <Setter Property="Background" Value="#99FAEBD7"/>
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
 
@@ -184,6 +184,12 @@
         <Style x:Key="MatchGroupFailed" TargetType="TextBlock" PresentationOptions:Freeze="True">
             <Setter Property="Foreground" Value="#EEFF0000" />
             <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+
+        <Style x:Key="TextNormal" TargetType="TextBlock" PresentationOptions:Freeze="True">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
         </Style>
 
         <Style x:Key="MatchHighlight_0" TargetType="TextBlock" PresentationOptions:Freeze="True" >

@@ -43,18 +43,21 @@ namespace RegExpressWPF.Code
 		{
 			Debug.Assert( !mRtb.Dispatcher.CheckAccess( ) ); // (should not happen, but the code handles it)
 
+			ct.ThrowIfCancellationRequested( );
+
 			if( !mRtb.Dispatcher.CheckAccess( ) )
 			{
-				return UITaskHelper.BeginInvoke( ct,
-					( ) =>
+				return mRtb.Dispatcher.InvokeAsync( ( ) =>
 					{
 						ct.ThrowIfCancellationRequested( );
+
 						Do( action );
-					} );
+					},
+					DispatcherPriority.Background,
+					ct ).Task;
 			}
 			else
 			{
-				ct.ThrowIfCancellationRequested( );
 				Do( action );
 
 				return Task.CompletedTask;
@@ -66,13 +69,31 @@ namespace RegExpressWPF.Code
 		{
 			Debug.Assert( !mRtb.Dispatcher.CheckAccess( ) ); // (should not happen, but the code handles it)
 
+			ct.ThrowIfCancellationRequested( );
+
 			if( !mRtb.Dispatcher.CheckAccess( ) )
 			{
-				UITaskHelper.Invoke( ct, ( ) => Do( action ) );
+				try
+				{
+					mRtb.Dispatcher.Invoke(
+						( ) => Do( action ),
+						DispatcherPriority.Background,
+						ct );
+				}
+				catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+				{
+					_ = exc;
+					throw;
+				}
+				catch( Exception exc )
+				{
+					_ = exc;
+					if( Debugger.IsAttached ) Debugger.Break( );
+					throw;
+				}
 			}
 			else
 			{
-				ct.ThrowIfCancellationRequested( );
 				Do( action );
 			}
 		}

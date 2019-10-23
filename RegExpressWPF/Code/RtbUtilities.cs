@@ -313,6 +313,37 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static int Find( IReadOnlyList<TextPointer> pointers, TextPointer target )
+		{
+			if( pointers.Count == 0 ) return -1;
+
+			Debug.Assert( pointers[0].IsInSameDocument( target ) );
+
+			int left = 0;
+			int right = pointers.Count( ) - 1;
+
+			do
+			{
+				int mid = ( left + right ) / 2;
+
+				int cmp = pointers[mid].CompareTo( target );
+
+				if( cmp == 0 ) return mid;
+
+				if( cmp < 0 )
+				{
+					left = mid + 1;
+				}
+				else
+				{
+					right = mid - 1;
+				}
+			} while( left <= right );
+
+			return -1;
+		}
+
+
 		public static void SafeSelect( RichTextBox rtb, TextData td, int selectionStart, int selectionEnd )
 		{
 			Debug.Assert( td.Pointers.Any( ) );
@@ -334,17 +365,17 @@ namespace RegExpressWPF.Code
 
 				switch( block )
 				{
-					case Paragraph para:
-						bool is_last = lastPara == null;
-						lastPara = para;
-						action( para, is_last );
-						break;
-					case Section section:
-						ForEachParagraphBackward( ct, section.Blocks, ref lastPara, action );
-						break;
-					default:
-						Debug.Fail( "NOT SUPPORTED: " + block.GetType( ) );
-						break;
+				case Paragraph para:
+					bool is_last = lastPara == null;
+					lastPara = para;
+					action( para, is_last );
+					break;
+				case Section section:
+					ForEachParagraphBackward( ct, section.Blocks, ref lastPara, action );
+					break;
+				default:
+					Debug.Fail( "NOT SUPPORTED: " + block.GetType( ) );
+					break;
 				}
 			}
 		}
@@ -356,23 +387,23 @@ namespace RegExpressWPF.Code
 			{
 				switch( block )
 				{
-					case Section section:
-						ProcessBlocks( sb, pointers, ref prevPara, section.Blocks, eol );
-						break;
-					case Paragraph para:
-					{
-						if( prevPara != null )
-						{
-							sb.Append( eol );
-							for( var i = 0; i < eol.Length; ++i ) pointers.Add( prevPara.ContentEnd );
-						}
-						ProcessInlines( sb, pointers, para.Inlines, eol );
-						prevPara = para;
-					}
+				case Section section:
+					ProcessBlocks( sb, pointers, ref prevPara, section.Blocks, eol );
 					break;
-					default:
-						Debug.Assert( false );
-						break;
+				case Paragraph para:
+				{
+					if( prevPara != null )
+					{
+						sb.Append( eol );
+						for( var i = 0; i < eol.Length; ++i ) pointers.Add( prevPara.ContentEnd );
+					}
+					ProcessInlines( sb, pointers, para.Inlines, eol );
+					prevPara = para;
+				}
+				break;
+				default:
+					Debug.Assert( false );
+					break;
 				}
 			}
 		}
@@ -384,43 +415,43 @@ namespace RegExpressWPF.Code
 			{
 				switch( inline )
 				{
-					case Run run:
-						var start = run.ContentStart;
+				case Run run:
+					var start = run.ContentStart;
 
-						for( int i = 0; i < run.Text.Length; ++i )
+					for( int i = 0; i < run.Text.Length; ++i )
+					{
+						var c = run.Text[i];
+						var p = start.GetPositionAtOffset( i );
+						int next_i;
+
+						switch( c )
 						{
-							var c = run.Text[i];
-							var p = start.GetPositionAtOffset( i );
-							int next_i;
-
-							switch( c )
-							{
-								case '\r':
-									sb.Append( eol );
-									for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
-									next_i = i + 1;
-									if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
-									break;
-								case '\n':
-									sb.Append( eol );
-									for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
-									next_i = i + 1;
-									if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
-									break;
-								default:
-									sb.Append( c );
-									pointers.Add( p );
-									break;
-							}
+						case '\r':
+							sb.Append( eol );
+							for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+							next_i = i + 1;
+							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
+							break;
+						case '\n':
+							sb.Append( eol );
+							for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+							next_i = i + 1;
+							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
+							break;
+						default:
+							sb.Append( c );
+							pointers.Add( p );
+							break;
 						}
-						break;
-					case Span span:
-						ProcessInlines( sb, pointers, span.Inlines, eol );
-						break;
-					case LineBreak lb:
-						sb.Append( eol );
-						for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
-						break;
+					}
+					break;
+				case Span span:
+					ProcessInlines( sb, pointers, span.Inlines, eol );
+					break;
+				case LineBreak lb:
+					sb.Append( eol );
+					for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
+					break;
 				}
 			}
 		}
@@ -529,7 +560,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				UITaskHelper.Invoke( ct, ( ) =>
+				ceh.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -545,21 +576,19 @@ namespace RegExpressWPF.Code
 
 				ceh.Invoke( ct, ( ) =>
 				{
-					var now = Environment.TickCount;
-
 					if( pb != null )
 					{
-						if( now > show_pb_time )
+						if( Environment.TickCount > show_pb_time )
 						{
 							pb.Value = i;
 							pb.Visibility = Visibility.Visible;
 						}
 					}
 
-					var end = now + 222;
+					var end = Environment.TickCount + 22;
 					do
 					{
-						if( ct.IsCancellationRequested ) return;
+						ct.ThrowIfCancellationRequested( );
 
 						var segment = segments[i];
 						td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
@@ -571,6 +600,87 @@ namespace RegExpressWPF.Code
 
 
 		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
+		{
+			// split into smaller segments
+
+			var segments = new List<Segment>( segments0.Count );
+
+			foreach( var segment in segments0 )
+			{
+				int j = segment.Index;
+				int rem = segment.Length;
+
+				do
+				{
+					ct.ThrowIfCancellationRequested( );
+
+					int len = Math.Min( SEGMENT_LENGTH, rem );
+
+					segments.Add( new Segment( j, len ) );
+
+					j += len;
+					rem -= len;
+
+				} while( rem > 0 );
+			}
+
+
+			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
+			int last_i = segments.Count;
+
+			if( pb != null )
+			{
+				ceh.Invoke( ct, ( ) =>
+				{
+					pb.Visibility = Visibility.Hidden;
+					pb.Maximum = last_i;
+				} );
+			}
+
+			//var rnd = new Random( );
+			//segments = segments.OrderBy( s => rnd.Next( ) ).ToList( ); // just for fun
+
+
+			//...
+			Debug.WriteLine( $"Total segments: {segments.Count}" );
+
+
+			for( int i = 0; i < last_i; )
+			{
+				ct.ThrowIfCancellationRequested( );
+
+				ceh.Invoke( ct, ( ) =>
+				{
+					if( pb != null )
+					{
+						if( Environment.TickCount > show_pb_time )
+						{
+							pb.Value = i;
+							pb.Visibility = Visibility.Visible;
+						}
+					}
+
+					var end = Environment.TickCount + 22;
+					int dbg_i = i;//...
+					do
+					{
+						//ct.ThrowIfCancellationRequested( );
+
+						var segment = segments[i];
+						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
+
+					} while( ++i < last_i && Environment.TickCount < end );
+
+					Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
+
+				} );
+			}
+		}
+
+
+		// This seems to be too slow compared with ApplyStyle...
+		[Obsolete( "Too slow. Try 'ApplyStyle'.", true )]
+		public static void ClearProperties( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0 )
 		{
 			// split into smaller segments
 
@@ -601,7 +711,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				UITaskHelper.Invoke( ct, ( ) =>
+				ceh.Invoke( ct, ( ) =>
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -617,97 +727,21 @@ namespace RegExpressWPF.Code
 
 				ceh.Invoke( ct, ( ) =>
 				{
-					var now = Environment.TickCount;
-
 					if( pb != null )
 					{
-						if( now > show_pb_time )
+						if( Environment.TickCount > show_pb_time )
 						{
 							pb.Value = i;
 							pb.Visibility = Visibility.Visible;
 						}
 					}
 
-					var end = now + 222;
+					var end = Environment.TickCount + 22;
 					do
 					{
-						if( ct.IsCancellationRequested ) return;
+						ct.ThrowIfCancellationRequested( );
 
 						var segment = segments[i];
-
-						td.Range0F( segment.index, segment.length ).Style( styleInfo );
-
-					} while( ++i < last_i && Environment.TickCount < end );
-				} );
-			}
-		}
-
-
-		public static void ClearProperties( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0 )
-		{
-			// split into smaller segments
-
-			var segments = new List<(int index, int length)>( segments0.Count );
-
-			foreach( var segment in segments0 )
-			{
-				int j = segment.Index;
-				int rem = segment.Length;
-
-				do
-				{
-					ct.ThrowIfCancellationRequested( );
-
-					int len = Math.Min( SEGMENT_LENGTH, rem ); 
-
-					segments.Add( (j, len) );
-
-					j += len;
-					rem -= len;
-
-				} while( rem > 0 );
-			}
-
-
-			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
-			int last_i = segments.Count;
-
-			if( pb != null )
-			{
-				UITaskHelper.Invoke( ct, ( ) =>
-				{
-					pb.Visibility = Visibility.Hidden;
-					pb.Maximum = last_i;
-				} );
-			}
-
-			//var rnd = new Random( );
-			//segments = segments.OrderBy( s => rnd.Next() ).ToList( ); // just for fun
-
-			for( int i = 0; i < last_i; )
-			{
-				ct.ThrowIfCancellationRequested( );
-
-				ceh.Invoke( ct, ( ) =>
-				{
-					var now = Environment.TickCount;
-
-					if( pb != null )
-					{
-						if( now > show_pb_time )
-						{
-							pb.Value = i;
-							pb.Visibility = Visibility.Visible;
-						}
-					}
-
-					var end = now + 222;
-					do
-					{
-						if( ct.IsCancellationRequested ) return;
-
-						var segment = segments[i];
-
 						td.Range( segment.index, segment.length ).ClearAllProperties( );
 
 					} while( ++i < last_i && Environment.TickCount < end );
@@ -750,15 +784,12 @@ namespace RegExpressWPF.Code
 
 				ceh.Invoke( ct, ( ) =>
 				{
-					var now = Environment.TickCount;
-
-					var end = now + 222;
+					var end = Environment.TickCount + 22;
 					do
 					{
-						if( ct.IsCancellationRequested ) return;
+						ct.ThrowIfCancellationRequested( );
 
 						var segment = segments[i];
-
 						td.Range( segment.index, segment.length ).ApplyPropertyValue( property, value );
 
 					} while( ++i < last_i && Environment.TickCount < end );

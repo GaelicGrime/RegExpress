@@ -43,6 +43,7 @@ namespace RegExpressWPF
 		bool LastShowCaptures;
 		string LastEol;
 
+		readonly StyleInfo NormalStyleInfo;
 		readonly StyleInfo[] HighlightStyleInfos;
 
 		readonly LengthConverter LengthConverter = new LengthConverter( );
@@ -62,6 +63,8 @@ namespace RegExpressWPF
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
 			UnderliningAdorner = new UnderliningAdorner( rtb );
+
+			NormalStyleInfo = new StyleInfo( "TextNormal" );
 
 			HighlightStyleInfos = new[]
 			{
@@ -281,12 +284,7 @@ namespace RegExpressWPF
 #if DEBUG
 			rtb.Focus( );
 
-			var r = new TextRange( rtb.Document.ContentStart, rtb.Document.ContentEnd );
-
-			using( var fs = File.OpenWrite( @"debug-uctext.xml" ) )
-			{
-				r.Save( fs, DataFormats.Xaml, true );
-			}
+			Utilities.DbgSaveXAML( @"debug-uctext.xml", rtb.Document );
 
 			SaveToPng( Window.GetWindow( this ), "debug-uctext.png" );
 #endif
@@ -410,7 +408,7 @@ namespace RegExpressWPF
 
 				TextData td = null;
 
-				UITaskHelper.Invoke( ct, ( ) =>
+				UITaskHelper.Invoke( rtb, ct, ( ) =>
 				{
 					td = rtb.GetTextData( eol );
 					pbProgress.Maximum = matches.Count;
@@ -445,7 +443,8 @@ namespace RegExpressWPF
 
 				var unhighlighted_segments = highlighted_ranges.GetSegments( ct, false ).ToList( );
 
-				RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments );
+				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, pbProgress, td, unhighlighted_segments, NormalStyleInfo );
 
 				Debug.WriteLine( $"NO-MATCHES COLOURED" );
 
