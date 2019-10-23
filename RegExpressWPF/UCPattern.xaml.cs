@@ -346,7 +346,12 @@ namespace RegExpressWPF
 						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
 					} );
 
-				var segments_to_uncolour = coloured_ranges.GetSegments( ct, false, top_index ).ToList( );
+				int center_index = ( top_index + bottom_index ) / 2;
+
+				var segments_to_uncolour = coloured_ranges
+					.GetSegments( ct, false, top_index )
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
 
 				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
@@ -640,9 +645,11 @@ namespace RegExpressWPF
 				ranges.SafeSet( g.Index - topIndex, g.Length );
 			}
 
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
 			List<Segment> segments = ranges
 				.GetSegments( ct, true, topIndex )
-				.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 				.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo );
@@ -691,9 +698,11 @@ namespace RegExpressWPF
 				}
 			}
 
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
 			List<Segment> segments = ranges
 					.GetSegments( ct, true, topIndex )
-					.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 					.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo );
@@ -728,9 +737,11 @@ namespace RegExpressWPF
 				}
 			}
 
+			int center_index = ( topIndex + bottomIndex ) / 2;
+
 			List<Segment> segments = ranges
 				.GetSegments( ct, true, topIndex )
-				.OrderBy( s => Math.Abs( td.SelectionStart - ( s.Index + s.Length / 2 ) ) )
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 				.ToList( );
 
 			RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo );
