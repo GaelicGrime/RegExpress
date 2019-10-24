@@ -63,9 +63,13 @@ namespace RegExpressWPF.Code
 
 	public sealed class SimpleTextData
 	{
+#pragma warning disable CA1051 // Do not declare visible instance fields
+
 		public readonly string Text;
 		public readonly int SelectionStart;
 		public readonly int SelectionEnd;
+
+#pragma warning restore CA1051 // Do not declare visible instance fields
 
 		internal SimpleTextData( string text, int selectionStart, int selectionEnd )
 		{
@@ -76,9 +80,29 @@ namespace RegExpressWPF.Code
 	}
 
 
-
 	public static class RtbUtilities
 	{
+		private class TraversalData
+		{
+			internal string Eol;
+
+			internal StringBuilder Sb = new StringBuilder( );
+			internal List<TextPointer> Pointers = new List<TextPointer>( );
+			internal Paragraph PrevPara = null;
+		}
+
+
+		private class SimpleTraversalData
+		{
+			internal string Eol;
+			internal TextSelection Selection;
+
+			internal StringBuilder Sb = new StringBuilder( );
+			internal Paragraph PrevPara = null;
+			internal int SelectionStart = 0;
+			internal int SelectionEnd = 0;
+		}
+
 
 		public static void SetText( RichTextBox rtb, string text )
 		{
@@ -100,49 +124,19 @@ namespace RegExpressWPF.Code
 
 			FlowDocument doc = rtb.Document;
 
-			var pointers = new List<TextPointer>( );
-
-			StringBuilder sb = new StringBuilder( );
-
-			Paragraph prevPara = null;
-			ProcessBlocks( sb, pointers, ref prevPara, doc.Blocks, eol );
-
-			pointers.Add( doc.ContentEnd );
-			string text = sb.ToString( );
-
-			Debug.Assert( text.Length <= pointers.Count );
-
-			return new BaseTextData( text, eol, pointers );
-		}
-
-
-		internal static SimpleTextData GetSimpleTextDataInternal( RichTextBox rtb, string eol, bool excludeText = false )
-		{
-			DbgValidateEol( eol );
-
-			var t1 = Environment.TickCount;
-
-			FlowDocument doc = rtb.Document;
-			string text = "";
-
-			if( !excludeText )
+			TraversalData data = new TraversalData
 			{
-				StringBuilder sb = new StringBuilder( );
+				Eol = eol,
+			};
 
-				Paragraph prevPara = null;
-				ProcessBlocks( sb, ref prevPara, doc.Blocks, eol );
+			ProcessBlocks( data, doc.Blocks );
 
-				text = sb.ToString( );
-			}
+			data.Pointers.Add( doc.ContentEnd );
+			string text = data.Sb.ToString( );
 
-			var selection = rtb.Selection;
-			int selection_start = doc.ContentStart.GetOffsetToPosition( selection.Start );
-			int selection_end = doc.ContentStart.GetOffsetToPosition( selection.End );
+			Debug.Assert( text.Length <= data.Pointers.Count );
 
-			var t2 = Environment.TickCount;
-			Debug.WriteLine( $"///// GetSimpleTextData: {t2 - t1:F0}" );
-
-			return new SimpleTextData( text, selection_start, selection_end );
+			return new BaseTextData( text, eol, data.Pointers );
 		}
 
 
@@ -165,7 +159,7 @@ namespace RegExpressWPF.Code
 					text = btd.Text.Replace( btd.Eol, eol );
 				}
 
-				var (selection_start, selection_end) = GetSelection( rtb, btd.Pointers );
+				var (selection_start, selection_end) = GetSelection( rtb.Selection, btd.Pointers );
 
 				Debug.Assert( text.Length <= btd.Pointers.Count );
 
@@ -227,7 +221,7 @@ namespace RegExpressWPF.Code
 				}
 
 				string text = sb.ToString( );
-				var (selection_start, selection_end) = GetSelection( rtb, pointers );
+				var (selection_start, selection_end) = GetSelection( rtb.Selection, pointers );
 
 				Debug.Assert( text.Length <= pointers.Count );
 
@@ -236,36 +230,44 @@ namespace RegExpressWPF.Code
 		}
 
 
-		private static (int selection_start, int selection_end) GetSelection( RichTextBox rtb, IReadOnlyList<TextPointer> pointers )
+		internal static SimpleTextData GetSimpleTextDataInternal( RichTextBox rtb, string eol )
 		{
-			TextSelection selection = rtb.Selection;
-			TextPointer selection_start_ptr = selection.Start;
-			TextPointer selection_end_ptr = selection.End;
+			DbgValidateEol( eol );
 
-			int selection_start = 0;
-			int selection_end = 0;
+			//...
+			var t1 = Environment.TickCount;
 
-			for( int i = 0; i < pointers.Count; i++ )
+			FlowDocument doc = rtb.Document;
+
+			SimpleTraversalData data = new SimpleTraversalData
 			{
-				TextPointer ptr = pointers[i];
-				if( ptr.CompareTo( selection_start_ptr ) >= 0 )
-				{
-					break;
-				}
+				Eol = eol,
+				Selection = rtb.Selection,
+			};
 
-				++selection_start;
-			}
+			ProcessBlocks( data, doc.Blocks );
 
-			for( int i = 0; i < pointers.Count; i++ )
-			{
-				TextPointer ptr = pointers[i];
-				if( ptr.CompareTo( selection_end_ptr ) >= 0 )
-				{
-					break;
-				}
+			var t2 = Environment.TickCount;
+			Debug.WriteLine( $"///// GetSimpleTextData: {t2 - t1:F0} SEL: {data.SelectionStart}..{data.SelectionEnd}" );
 
-				++selection_end;
-			}
+			return new SimpleTextData( data.Sb.ToString( ), data.SelectionStart, data.SelectionEnd );
+		}
+
+
+		internal static SimpleTextData GetSimpleTextDataInternal( RichTextBox rtb, BaseTextData btd, string eol )
+		{
+			DbgValidateEol( eol );
+
+			var td = GetTextDataInternal( rtb, btd, eol );
+
+			return new SimpleTextData( td.Text, td.SelectionStart, td.SelectionEnd );
+		}
+
+
+		private static (int selection_start, int selection_end) GetSelection( TextSelection selection, IReadOnlyList<TextPointer> pointers )
+		{
+			int selection_start = Math.Max( 0, FindNearestAfter( pointers, selection.Start ) );
+			int selection_end = Math.Max( 0, FindNearestAfter( pointers, selection.End ) );
 
 			return (selection_start, selection_end);
 		}
@@ -427,24 +429,24 @@ namespace RegExpressWPF.Code
 		}
 
 
-		static void ProcessBlocks( StringBuilder sb, IList<TextPointer> pointers, ref Paragraph prevPara, IEnumerable<Block> blocks, string eol )
+		static void ProcessBlocks( TraversalData data, IEnumerable<Block> blocks )
 		{
 			foreach( var block in blocks )
 			{
 				switch( block )
 				{
 				case Section section:
-					ProcessBlocks( sb, pointers, ref prevPara, section.Blocks, eol );
+					ProcessBlocks( data, section.Blocks );
 					break;
 				case Paragraph para:
 				{
-					if( prevPara != null )
+					if( data.PrevPara != null )
 					{
-						sb.Append( eol );
-						for( var i = 0; i < eol.Length; ++i ) pointers.Add( prevPara.ContentEnd );
+						data.Sb.Append( data.Eol );
+						for( var i = 0; i < data.Eol.Length; ++i ) data.Pointers.Add( data.PrevPara.ContentEnd );
 					}
-					ProcessInlines( sb, pointers, para.Inlines, eol );
-					prevPara = para;
+					ProcessInlines( data, para.Inlines );
+					data.PrevPara = para;
 				}
 				break;
 				default:
@@ -455,23 +457,23 @@ namespace RegExpressWPF.Code
 		}
 
 
-		static void ProcessBlocks( StringBuilder sb, ref Paragraph prevPara, IEnumerable<Block> blocks, string eol )
+		static void ProcessBlocks( SimpleTraversalData data, IEnumerable<Block> blocks )
 		{
 			foreach( var block in blocks )
 			{
 				switch( block )
 				{
 				case Section section:
-					ProcessBlocks( sb, ref prevPara, section.Blocks, eol );
+					ProcessBlocks( data, section.Blocks );
 					break;
 				case Paragraph para:
 				{
-					if( prevPara != null )
+					if( data.PrevPara != null )
 					{
-						sb.Append( eol );
+						data.Sb.Append( data.Eol );
 					}
-					ProcessInlines( sb, para.Inlines, eol );
-					prevPara = para;
+					ProcessInlines( data, para.Inlines );
+					data.PrevPara = para;
 				}
 				break;
 				default:
@@ -482,7 +484,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		static void ProcessInlines( StringBuilder sb, IList<TextPointer> pointers, IEnumerable<Inline> inlines, string eol )
+		static void ProcessInlines( TraversalData data, IEnumerable<Inline> inlines )
 		{
 			foreach( Inline inline in inlines )
 			{
@@ -500,37 +502,37 @@ namespace RegExpressWPF.Code
 						switch( c )
 						{
 						case '\r':
-							sb.Append( eol );
-							for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+							data.Sb.Append( data.Eol );
+							for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( p );
 							next_i = i + 1;
 							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
 							break;
 						case '\n':
-							sb.Append( eol );
-							for( int j = 0; j < eol.Length; ++j ) pointers.Add( p );
+							data.Sb.Append( data.Eol );
+							for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( p );
 							next_i = i + 1;
 							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
 							break;
 						default:
-							sb.Append( c );
-							pointers.Add( p );
+							data.Sb.Append( c );
+							data.Pointers.Add( p );
 							break;
 						}
 					}
 					break;
 				case Span span:
-					ProcessInlines( sb, pointers, span.Inlines, eol );
+					ProcessInlines( data, span.Inlines );
 					break;
 				case LineBreak lb:
-					sb.Append( eol );
-					for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
+					data.Sb.Append( data.Eol );
+					for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( lb.ContentStart );
 					break;
 				}
 			}
 		}
 
 
-		static void ProcessInlines( StringBuilder sb, IEnumerable<Inline> inlines, string eol )
+		static void ProcessInlines( SimpleTraversalData data, IEnumerable<Inline> inlines )
 		{
 			foreach( Inline inline in inlines )
 			{
@@ -538,6 +540,15 @@ namespace RegExpressWPF.Code
 				{
 				case Run run:
 					var start = run.ContentStart;
+
+					if( object.ReferenceEquals( data.Selection.Start.Parent, run ) )
+					{
+						data.SelectionStart = data.Sb.Length + start.GetOffsetToPosition( data.Selection.Start );
+					}
+					if( object.ReferenceEquals( data.Selection.End.Parent, run ) )
+					{
+						data.SelectionEnd = data.Sb.Length + start.GetOffsetToPosition( data.Selection.End );
+					}
 
 					for( int i = 0; i < run.Text.Length; ++i )
 					{
@@ -547,26 +558,26 @@ namespace RegExpressWPF.Code
 						switch( c )
 						{
 						case '\r':
-							sb.Append( eol );
+							data.Sb.Append( data.Eol );
 							next_i = i + 1;
 							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
 							break;
 						case '\n':
-							sb.Append( eol );
+							data.Sb.Append( data.Eol );
 							next_i = i + 1;
 							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
 							break;
 						default:
-							sb.Append( c );
+							data.Sb.Append( c );
 							break;
 						}
 					}
 					break;
 				case Span span:
-					ProcessInlines( sb, span.Inlines, eol );
+					ProcessInlines( data, span.Inlines );
 					break;
 				case LineBreak lb:
-					sb.Append( eol );
+					data.Sb.Append( data.Eol );
 					break;
 				}
 			}

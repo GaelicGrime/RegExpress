@@ -90,17 +90,15 @@ namespace RegExpressWPF
 		}
 
 
-		public string GetText( string eol )
-		{
-			var td = rtb.GetTextData( eol );
-
-			return td.Text;
-		}
-
-
 		public TextData GetTextData( string eol )
 		{
 			return rtb.GetTextData( eol );
+		}
+
+
+		public SimpleTextData GetSimpleTextData( string eol )
+		{
+			return rtb.GetSimpleTextData( eol );
 		}
 
 
@@ -159,7 +157,6 @@ namespace RegExpressWPF
 			if( !rtb.IsFocused ) return;
 
 			UndoRedoHelper.HandleSelectionChanged( );
-
 			RestartHighlighting( );
 		}
 
@@ -311,30 +308,9 @@ namespace RegExpressWPF
 				ct.ThrowIfCancellationRequested( );
 
 
-				//...
-				var t1 = DateTime.Now;
-
 				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				var t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring comments: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-				t1 = DateTime.Now;
-
 				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring escapes: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-				t1 = DateTime.Now;
-
 				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring named groups: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-
-				t1 = DateTime.Now;
 
 				ChangeEventHelper.Invoke( ct,
 					( ) =>
@@ -355,11 +331,6 @@ namespace RegExpressWPF
 
 				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-
-				t2 = DateTime.Now;
-
-				Debug.WriteLine( "### Uncolour: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -388,7 +359,7 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 33 ) ) return;
+				if( ct.WaitHandle.WaitOne( 77 ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;

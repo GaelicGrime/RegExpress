@@ -19,7 +19,27 @@ namespace RegExpressWPF.Code
 		{
 			Stop( );
 
-			mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
+			try
+			{
+				//...mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
+				mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ) );
+			}
+			catch( OperationCanceledException exc )
+			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore
+			}
+			catch( AggregateException exc )
+			{
+				if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) )
+				{
+					if( Debugger.IsAttached ) Debugger.Break( );
+					throw;
+				}
+
+				// ignore
+			}
 		}
 
 
@@ -36,9 +56,29 @@ namespace RegExpressWPF.Code
 
 			var ct = ts.Token;
 
-			taskBefore.mTask
-				.ContinueWith( _ => action( ct ), ct, TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted, TaskScheduler.Default )
+			try
+			{
+				taskBefore.mTask
+				//....ContinueWith( _ => action( ct ), ct, TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted, TaskScheduler.Default )
+				.ContinueWith( _ => action( ct ), TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted )
 				.ContinueWith( _ => { ts.Dispose( ); return Task.CompletedTask; } );
+			}
+			catch( OperationCanceledException exc )
+			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore
+			}
+			catch( AggregateException exc )
+			{
+				if( !exc.InnerExceptions.All( e => e is OperationCanceledException ) )
+				{
+					if( Debugger.IsAttached ) Debugger.Break( );
+					throw;
+				}
+
+				// ignore
+			}
 		}
 
 

@@ -42,17 +42,20 @@ namespace RegExpressWPF.Controls
 			var td = RtbUtilities.GetTextDataInternal( this, btd, eol ?? btd.Eol );
 
 			var t2 = Environment.TickCount;
-			Debug.WriteLine( $"[][][] Getting text: {t2 - t1:F0} - {caller}:{line} '{Path.GetFileNameWithoutExtension( file )}'" );
+			//...Debug.WriteLine( $"[][][] Getting text: {t2 - t1:F0} - {caller}:{line} '{Path.GetFileNameWithoutExtension( file )}'" );
 
 			return td;
 		}
 
 
-		internal SimpleTextData GetSimpleTextData( string eol, bool excludeText = false )
+		internal SimpleTextData GetSimpleTextData( string eol )
 		{
-			// TODO: first try getting data from 'GetTextData'; maybe create a cache.
+			if( mCachedTextData.TryGetTarget( out BaseTextData btd ) )
+			{
+				return RtbUtilities.GetSimpleTextDataInternal( this, btd, eol ?? btd.Eol );
+			}
 
-			return RtbUtilities.GetSimpleTextDataInternal( this, eol, excludeText );
+			return RtbUtilities.GetSimpleTextDataInternal( this, eol );
 		}
 
 

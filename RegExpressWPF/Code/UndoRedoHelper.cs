@@ -113,8 +113,7 @@ namespace RegExpressWPF.Code
 				if( IsTrackingTextChange && CanBeCombined( last, ui ) )
 				{
 					last.Diff.Add += ui.Diff.Add;
-					//...last.SelectionInfoB = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
-					last.SelectionInfoB = new SelectionInfo( 0, 0 );
+					last.SelectionInfoB = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 					combined = true;
 				}
 			}
@@ -134,7 +133,7 @@ namespace RegExpressWPF.Code
 		{
 			if( IsUndoOrRedo ) return;
 
-			var td = Rtb.GetSimpleTextData( "\n", excludeText: true );
+			var td = Rtb.GetSimpleTextData( "\n" );
 
 			PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 		}

@@ -117,8 +117,8 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				tabData.Pattern = ucPattern.GetText( "\n" );
-				tabData.Text = ucText.GetText( "\n" );
+				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
+				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
 				tabData.RegexOptions = GetRegexOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
@@ -509,8 +509,8 @@ namespace RegExpressWPF
 					( ) =>
 					{
 						eol = GetEolOption( );
-						pattern = ucPattern.GetText( eol );
-						text = ucText.GetText( eol );
+						pattern = ucPattern.GetSimpleTextData( eol ).Text;
+						text = ucText.GetSimpleTextData( eol ).Text;
 						first_only = cbShowFirstOnly.IsChecked == true;
 						options = GetRegexOptions( excludeIncompatibility: false );
 

@@ -81,17 +81,15 @@ namespace RegExpressWPF
 		}
 
 
-		public string GetText( string eol )
-		{
-			var td = rtb.GetTextData( eol );
-
-			return td.Text;
-		}
-
-
 		public TextData GetTextData( string eol )
 		{
 			return rtb.GetTextData( eol );
+		}
+
+
+		public SimpleTextData GetSimpleTextData( string eol )
+		{
+			return rtb.GetSimpleTextData( eol );
 		}
 
 
