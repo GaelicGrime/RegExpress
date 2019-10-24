@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -26,15 +28,31 @@ namespace RegExpressWPF.Controls
 		}
 
 
-		internal TextData GetTextData( string eol )
+		internal TextData GetTextData( string eol, [CallerMemberName] string caller = null, [CallerLineNumber] int line = 0, [CallerFilePath] string file = null )
 		{
+			//...
+			var t1 = Environment.TickCount;
+
 			if( !mCachedTextData.TryGetTarget( out BaseTextData btd ) )
 			{
-				btd = RtbUtilities.GetBaseTextData( this, eol ?? "\n" );
+				btd = RtbUtilities.GetBaseTextDataInternal( this, eol ?? "\n" );
 				mCachedTextData.SetTarget( btd );
 			}
 
-			return RtbUtilities.GetTextData( this, btd, eol ?? btd.Eol );
+			var td = RtbUtilities.GetTextDataInternal( this, btd, eol ?? btd.Eol );
+
+			var t2 = Environment.TickCount;
+			Debug.WriteLine( $"[][][] Getting text: {t2 - t1:F0} - {caller}:{line} '{Path.GetFileNameWithoutExtension( file )}'" );
+
+			return td;
+		}
+
+
+		internal SimpleTextData GetSimpleTextData( string eol, bool excludeText = false )
+		{
+			// TODO: first try getting data from 'GetTextData'; maybe create a cache.
+
+			return RtbUtilities.GetSimpleTextDataInternal( this, eol, excludeText );
 		}
 
 

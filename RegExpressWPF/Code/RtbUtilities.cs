@@ -52,13 +52,29 @@ namespace RegExpressWPF.Code
 
 #pragma warning restore CA1051 // Do not declare visible instance fields
 
-		public TextData( string text, string eol, IReadOnlyList<TextPointer> pointers, int selectionStart, int selectionEnd )
+		internal TextData( string text, string eol, IReadOnlyList<TextPointer> pointers, int selectionStart, int selectionEnd )
 			: base( text, eol, pointers )
 		{
 			SelectionStart = selectionStart;
 			SelectionEnd = selectionEnd;
 		}
 	}
+
+
+	public sealed class SimpleTextData
+	{
+		public readonly string Text;
+		public readonly int SelectionStart;
+		public readonly int SelectionEnd;
+
+		internal SimpleTextData( string text, int selectionStart, int selectionEnd )
+		{
+			Text = text;
+			SelectionStart = selectionStart;
+			SelectionEnd = selectionEnd;
+		}
+	}
+
 
 
 	public static class RtbUtilities
@@ -78,7 +94,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static BaseTextData GetBaseTextData( RichTextBox rtb, string eol )
+		public static BaseTextData GetBaseTextDataInternal( RichTextBox rtb, string eol )
 		{
 			DbgValidateEol( eol );
 
@@ -100,7 +116,37 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static TextData GetTextData( RichTextBox rtb, BaseTextData btd, string eol )
+		internal static SimpleTextData GetSimpleTextDataInternal( RichTextBox rtb, string eol, bool excludeText = false )
+		{
+			DbgValidateEol( eol );
+
+			var t1 = Environment.TickCount;
+
+			FlowDocument doc = rtb.Document;
+			string text = "";
+
+			if( !excludeText )
+			{
+				StringBuilder sb = new StringBuilder( );
+
+				Paragraph prevPara = null;
+				ProcessBlocks( sb, ref prevPara, doc.Blocks, eol );
+
+				text = sb.ToString( );
+			}
+
+			var selection = rtb.Selection;
+			int selection_start = doc.ContentStart.GetOffsetToPosition( selection.Start );
+			int selection_end = doc.ContentStart.GetOffsetToPosition( selection.End );
+
+			var t2 = Environment.TickCount;
+			Debug.WriteLine( $"///// GetSimpleTextData: {t2 - t1:F0}" );
+
+			return new SimpleTextData( text, selection_start, selection_end );
+		}
+
+
+		public static TextData GetTextDataInternal( RichTextBox rtb, BaseTextData btd, string eol )
 		{
 			DbgValidateEol( eol );
 			DbgValidateEol( btd.Eol );
@@ -409,6 +455,33 @@ namespace RegExpressWPF.Code
 		}
 
 
+		static void ProcessBlocks( StringBuilder sb, ref Paragraph prevPara, IEnumerable<Block> blocks, string eol )
+		{
+			foreach( var block in blocks )
+			{
+				switch( block )
+				{
+				case Section section:
+					ProcessBlocks( sb, ref prevPara, section.Blocks, eol );
+					break;
+				case Paragraph para:
+				{
+					if( prevPara != null )
+					{
+						sb.Append( eol );
+					}
+					ProcessInlines( sb, para.Inlines, eol );
+					prevPara = para;
+				}
+				break;
+				default:
+					Debug.Assert( false );
+					break;
+				}
+			}
+		}
+
+
 		static void ProcessInlines( StringBuilder sb, IList<TextPointer> pointers, IEnumerable<Inline> inlines, string eol )
 		{
 			foreach( Inline inline in inlines )
@@ -451,6 +524,49 @@ namespace RegExpressWPF.Code
 				case LineBreak lb:
 					sb.Append( eol );
 					for( int j = 0; j < eol.Length; ++j ) pointers.Add( lb.ContentStart );
+					break;
+				}
+			}
+		}
+
+
+		static void ProcessInlines( StringBuilder sb, IEnumerable<Inline> inlines, string eol )
+		{
+			foreach( Inline inline in inlines )
+			{
+				switch( inline )
+				{
+				case Run run:
+					var start = run.ContentStart;
+
+					for( int i = 0; i < run.Text.Length; ++i )
+					{
+						var c = run.Text[i];
+						int next_i;
+
+						switch( c )
+						{
+						case '\r':
+							sb.Append( eol );
+							next_i = i + 1;
+							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
+							break;
+						case '\n':
+							sb.Append( eol );
+							next_i = i + 1;
+							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
+							break;
+						default:
+							sb.Append( c );
+							break;
+						}
+					}
+					break;
+				case Span span:
+					ProcessInlines( sb, span.Inlines, eol );
+					break;
+				case LineBreak lb:
+					sb.Append( eol );
 					break;
 				}
 			}

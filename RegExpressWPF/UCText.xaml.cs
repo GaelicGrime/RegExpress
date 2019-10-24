@@ -543,7 +543,7 @@ namespace RegExpressWPF
 				} );
 
 				var t2 = Environment.TickCount;
-				Debug.WriteLine( $"Getting text: {t2 - t1:F0}" );
+				//Debug.WriteLine( $"Getting text: {t2 - t1:F0}" );
 
 				if( td == null ) return;
 				if( td.Text.Length == 0 ) return;
@@ -559,21 +559,24 @@ namespace RegExpressWPF
 				var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 				var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
-				for( int i = 0; i < matches.Count; ++i )
+				if( matches != null )
 				{
-					ct.ThrowIfCancellationRequested( );
+					for( int i = 0; i < matches.Count; ++i )
+					{
+						ct.ThrowIfCancellationRequested( );
 
-					Match match = matches[i];
-					Debug.Assert( match.Success );
+						Match match = matches[i];
+						Debug.Assert( match.Success );
 
-					// TODO: consider these conditions for bi-directional text
-					if( match.Index + match.Length < top_index ) continue;
-					if( match.Index > bottom_index ) continue; // (do not break; the order of indices is unspecified)
+						// TODO: consider these conditions for bi-directional text
+						if( match.Index + match.Length < top_index ) continue;
+						if( match.Index > bottom_index ) continue; // (do not break; the order of indices is unspecified)
 
-					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
+						var highlight_index = unchecked(i % HighlightStyleInfos.Length);
 
-					coloured_ranges.SafeSet( match.Index - top_index, match.Length );
-					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+						coloured_ranges.SafeSet( match.Index - top_index, match.Length );
+						segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+					}
 				}
 
 				List<(Segment segment, StyleInfo styleInfo)> segments_to_uncolour =
