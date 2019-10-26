@@ -21,8 +21,8 @@ namespace RegExpressWPF.Code
 
 			try
 			{
-				//...mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
-				mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ) );
+				mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ), mCancelationTokenSource.Token );
+				//...mTask = Task.Run( ( ) => action( mCancelationTokenSource.Token ) );
 			}
 			catch( OperationCanceledException exc )
 			{
@@ -59,8 +59,8 @@ namespace RegExpressWPF.Code
 			try
 			{
 				taskBefore.mTask
-				//....ContinueWith( _ => action( ct ), ct, TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted, TaskScheduler.Default )
-				.ContinueWith( _ => action( ct ), TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted )
+				.ContinueWith( _ => action( ct ), ct, TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted, TaskScheduler.Default )
+				//....ContinueWith( _ => action( ct ), TaskContinuationOptions.NotOnCanceled | TaskContinuationOptions.NotOnFaulted )
 				.ContinueWith( _ => { ts.Dispose( ); return Task.CompletedTask; } );
 			}
 			catch( OperationCanceledException exc )

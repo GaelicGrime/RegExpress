@@ -166,7 +166,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			UndoRedoHelper.HandleTextChanged( );
+			UndoRedoHelper.HandleTextChanged( e );
 			RestartHighlighting( );
 			RestartRecolouring( );
 			TextChanged?.Invoke( this, null );
@@ -248,7 +248,8 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 222 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;
@@ -266,6 +267,7 @@ namespace RegExpressWPF
 						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 						var td0 = rtb.GetTextData( eol );
+
 						if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 						td = td0;
@@ -359,7 +361,8 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 77 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 111 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;
@@ -377,6 +380,7 @@ namespace RegExpressWPF
 					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 					var td0 = rtb.GetTextData( eol );
+
 					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 					td = td0;

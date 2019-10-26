@@ -26,15 +26,14 @@ namespace RegExpressWPF.Adorners
 		readonly Pen EofPen = new Pen( Brushes.LightSeaGreen, 1 );
 		readonly Brush EofBrush = Brushes.Transparent;
 
+		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
+		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
+
 		readonly TaskHelper CollectWhitespacesTask = new TaskHelper( );
 		List<Rect> PositionsSpaces = new List<Rect>( );
 		List<Rect> PositionsTabs = new List<Rect>( );
 		List<Rect> PositionsEols = new List<Rect>( );
 		Rect PositionEof = Rect.Empty;
-
-		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
-		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
-
 		bool mShowWhitespaces = false;
 
 		public bool IsDbgDisabled; // (disable this adorner for debugging purposes)
@@ -299,7 +298,8 @@ namespace RegExpressWPF.Adorners
 
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 33 ) ) return;
+				int timeout = Math.Max( Rtb.LastGetTextDataDuration, 33 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				var rtb = Rtb;

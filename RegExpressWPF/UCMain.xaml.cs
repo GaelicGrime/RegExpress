@@ -182,17 +182,17 @@ namespace RegExpressWPF
 
 			if( true.Equals( e.NewValue ) && IsFullyLoaded )
 			{
-				StopAll( );
-
 				if( InitialTabData != null )
 				{
+					StopAll( );
+
 					var tab_data = InitialTabData;
 					InitialTabData = null;
 
 					LoadTabData( tab_data );
-				}
 
-				RestartAll( );
+					RestartAll( );
+				}
 			}
 		}
 

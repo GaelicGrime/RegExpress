@@ -92,7 +92,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public void HandleTextChanged( )
+		public void HandleTextChanged( TextChangedEventArgs e )
 		{
 			if( IsUndoOrRedo ) return;
 

@@ -10,7 +10,14 @@
         <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top"  Visibility="Hidden" Style="{StaticResource ProgressBar1}"  />
 
         <AdornerDecorator>
-            <RichTextBox x:Name="rtbMatches" Panel.ZIndex="1" Style="{StaticResource Matches}" SelectionChanged="RtbMatches_SelectionChanged" LostFocus="RtbMatches_LostFocus" IsUndoEnabled="False" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden" GotFocus="RtbMatches_GotFocus" >
+            <RichTextBox x:Name="rtbMatches" Panel.ZIndex="1" Style="{StaticResource Matches}" 
+                         SelectionChanged="rtbMatches_SelectionChanged" 
+                         GotFocus="rtbMatches_GotFocus" 
+                         LostFocus="rtbMatches_LostFocus" 
+                         IsUndoEnabled="False" 
+                         IsReadOnly="True" 
+                         IsReadOnlyCaretVisible="True" 
+                         Visibility="Hidden" >
                 <FlowDocument>
                     <Section x:Name="secMatches"/>
                 </FlowDocument>
@@ -41,8 +48,10 @@
             </FlowDocument>
         </RichTextBox>
 
-        <StackPanel x:Name="pnlDebug" Panel.ZIndex="10" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="0">
+        <StackPanel x:Name="pnlDebug" Panel.ZIndex="10" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="10 5">
             <Label x:Name="lblDbgInfo">(Debug information here)</Label>
+            <Button x:Name="btnDbgSave" Content="save" Click="btnDbgSave_Click" />
+            <Button x:Name="btnDbgLoad" Content="load" Click="btnDbgLoad_Click" />
         </StackPanel>
 
     </Grid>

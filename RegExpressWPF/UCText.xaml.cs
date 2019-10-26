@@ -216,7 +216,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_SelectionChanged( object sender, RoutedEventArgs e )
+		private void rtb_SelectionChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
@@ -233,6 +233,7 @@ namespace RegExpressWPF
 				last_eol = LastEol;
 			}
 
+
 			if( last_matches != null ) RestartLocalUnderlining( last_matches, last_show_captures, last_eol );
 
 			UndoRedoHelper.HandleSelectionChanged( );
@@ -243,7 +244,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
+		private void rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
@@ -251,7 +252,7 @@ namespace RegExpressWPF
 			RecolouringTask.Stop( );
 			UnderliningTask.Stop( );
 
-			UndoRedoHelper.HandleTextChanged( );
+			UndoRedoHelper.HandleTextChanged( e );
 
 			LastMatches = null;
 			LastEol = null;
@@ -306,7 +307,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_GotFocus( object sender, RoutedEventArgs e )
+		private void rtb_GotFocus( object sender, RoutedEventArgs e )
 		{
 			IReadOnlyList<Match> last_matches;
 			bool last_show_captures;
@@ -332,7 +333,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_LostFocus( object sender, RoutedEventArgs e )
+		private void rtb_LostFocus( object sender, RoutedEventArgs e )
 		{
 			IReadOnlyList<Match> last_matches;
 			bool last_show_captures;
@@ -349,7 +350,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void Rtb_Pasting( object sender, DataObjectPastingEventArgs e )
+		private void rtb_Pasting( object sender, DataObjectPastingEventArgs e )
 		{
 			if( e.DataObject.GetDataPresent( DataFormats.UnicodeText ) )
 			{
@@ -366,7 +367,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void BtnDbgSave_Click( object sender, RoutedEventArgs e )
+		private void btnDbgSave_Click( object sender, RoutedEventArgs e )
 		{
 #if DEBUG
 			rtb.Focus( );
@@ -378,7 +379,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void BtnDbgInsertB_Click( object sender, RoutedEventArgs e )
+		private void btnDbgInsertB_Click( object sender, RoutedEventArgs e )
 		{
 #if DEBUG
 			var p = rtb.Selection.Start.GetInsertionPosition( LogicalDirection.Backward );
@@ -394,7 +395,7 @@ namespace RegExpressWPF
 #endif
 		}
 
-		private void BtnDbgInsertF_Click( object sender, RoutedEventArgs e )
+		private void btnDbgInsertF_Click( object sender, RoutedEventArgs e )
 		{
 #if DEBUG
 			var p = rtb.Selection.Start.GetInsertionPosition( LogicalDirection.Forward );
@@ -411,7 +412,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void BtnDbgNextInsert_Click( object sender, RoutedEventArgs e )
+		private void btnDbgNextInsert_Click( object sender, RoutedEventArgs e )
 		{
 #if DEBUG
 			var p = rtb.Selection.Start.GetNextInsertionPosition( LogicalDirection.Forward );
@@ -427,7 +428,7 @@ namespace RegExpressWPF
 #endif
 		}
 
-		private void BtnDbgNextContext_Click( object sender, RoutedEventArgs e )
+		private void btnDbgNextContext_Click( object sender, RoutedEventArgs e )
 		{
 #if DEBUG
 			var p = rtb.Selection.Start.GetNextContextPosition( LogicalDirection.Forward );
@@ -487,10 +488,11 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 333 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 333 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Debug.WriteLine( $"START RECOLOURING" );
+				//...Debug.WriteLine( $"START RECOLOURING" );
 				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
@@ -597,7 +599,7 @@ namespace RegExpressWPF
 					pbProgress.Visibility = Visibility.Hidden;
 				} );
 
-				Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+				//...Debug.WriteLine( $"TEXT RECOLOURED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -631,10 +633,11 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 222 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 222 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Debug.WriteLine( $"START LOCAL UNDERLINING" );
+				//...Debug.WriteLine( $"START LOCAL UNDERLINING" );
 				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
@@ -656,7 +659,7 @@ namespace RegExpressWPF
 					LocalUnderliningFinished?.Invoke( this, null );
 				} );
 
-				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+				//...Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -678,10 +681,11 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 333 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 333 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
-				Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
+				//...Debug.WriteLine( $"START EXTERNAL UNDERLINING" );
 				DateTime start_time = DateTime.UtcNow;
 
 				TextData td = null;
@@ -722,7 +726,7 @@ namespace RegExpressWPF
 					} );
 				}
 
-				Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
+				//...Debug.WriteLine( $"TEXT UNDERLINED: {( DateTime.UtcNow - start_time ).TotalMilliseconds:#,##0}" );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
