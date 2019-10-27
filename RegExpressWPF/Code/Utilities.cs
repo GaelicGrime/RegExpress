@@ -19,6 +19,17 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static string SubstringFromTo( string text, int from, int toExcluding ) // TODO: move to utilities
+		{
+			from = Math.Max( 0, from );
+			toExcluding = Math.Min( text.Length, toExcluding );
+
+			if( from >= toExcluding ) return string.Empty;
+
+			return text.Substring( from, toExcluding - from );
+		}
+
+
 		[Conditional( "DEBUG" )]
 		public static void DbgSimpleLog( Exception exc, [CallerFilePath] string filePath = null, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber = 0 )
 		{
@@ -26,13 +37,40 @@ namespace RegExpressWPF.Code
 		}
 
 
+		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		public static void DbgSaveXAML( string filename, FlowDocument doc )
 		{
-			var r = new TextRange( doc.ContentStart, doc.ContentEnd );
-
-			using( var fs = File.OpenWrite( filename ) )
+			try
 			{
-				r.Save( fs, DataFormats.Xaml, true );
+				var r = new TextRange( doc.ContentStart, doc.ContentEnd );
+
+				using( var fs = File.OpenWrite( filename ) )
+				{
+					r.Save( fs, DataFormats.Xaml, true );
+				}
+			}
+			catch( Exception )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
+			}
+		}
+
+
+		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		public static void DbgLoadXAML( FlowDocument doc, string filename )
+		{
+			try
+			{
+				var r = new TextRange( doc.ContentStart, doc.ContentEnd );
+
+				using( var fs = File.OpenRead( filename ) )
+				{
+					r.Load( fs, DataFormats.Xaml );
+				}
+			}
+			catch( Exception )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
 			}
 		}
 	}

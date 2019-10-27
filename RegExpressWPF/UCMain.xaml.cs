@@ -29,6 +29,7 @@ namespace RegExpressWPF
 	{
 		readonly TaskHelper FindMatchesTask = new TaskHelper( );
 		readonly TaskHelper UpdateWhitespaceWarningTask = new TaskHelper( );
+		readonly TaskHelper ShowTextInfoTask = new TaskHelper( );
 
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
@@ -116,8 +117,8 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				tabData.Pattern = ucPattern.GetText( "\n" );
-				tabData.Text = ucText.GetText( "\n" );
+				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
+				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
 				tabData.RegexOptions = GetRegexOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
@@ -181,17 +182,17 @@ namespace RegExpressWPF
 
 			if( true.Equals( e.NewValue ) && IsFullyLoaded )
 			{
-				StopAll( );
-
 				if( InitialTabData != null )
 				{
+					StopAll( );
+
 					var tab_data = InitialTabData;
 					InitialTabData = null;
 
 					LoadTabData( tab_data );
-				}
 
-				RestartAll( );
+					RestartAll( );
+				}
 			}
 		}
 
@@ -478,6 +479,7 @@ namespace RegExpressWPF
 		{
 			FindMatchesTask.Stop( );
 			UpdateWhitespaceWarningTask.Stop( );
+			ShowTextInfoTask.Stop( );
 		}
 
 
@@ -485,24 +487,34 @@ namespace RegExpressWPF
 		{
 			FindMatchesTask.Stop( );
 
-			string eol = GetEolOption( );
-
-			string pattern = ucPattern.GetText( eol );
-			string text = ucText.GetText( eol );
-			bool first_only = cbShowFirstOnly.IsChecked == true;
-			RegexOptions options = GetRegexOptions( excludeIncompatibility: false );
-
-			FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct, pattern, text, first_only, options ) );
+			FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct ) );
 		}
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		private void FindMatchesTaskProc( CancellationToken ct, string pattern, string text, bool firstOnly, RegexOptions options )
+		private void FindMatchesTaskProc( CancellationToken ct )
 		{
 			try
 			{
 				if( ct.WaitHandle.WaitOne( 333 ) ) return;
 				ct.ThrowIfCancellationRequested( );
+
+				string eol = null;
+				string pattern = null;
+				string text = null;
+				bool first_only = false;
+				RegexOptions options = RegexOptions.None;
+
+				UITaskHelper.Invoke( this, ct,
+					( ) =>
+					{
+						eol = GetEolOption( );
+						pattern = ucPattern.GetSimpleTextData( eol ).Text;
+						text = ucText.GetSimpleTextData( eol ).Text;
+						first_only = cbShowFirstOnly.IsChecked == true;
+						options = GetRegexOptions( excludeIncompatibility: false );
+
+					} );
 
 				if( string.IsNullOrEmpty( pattern ) )
 				{
@@ -525,17 +537,17 @@ namespace RegExpressWPF
 
 				ct.ThrowIfCancellationRequested( );
 
-				var matches_to_show = firstOnly ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
+				var matches_to_show = first_only ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
 
 				UITaskHelper.BeginInvoke( this, ct,
 					( ) =>
 					{
 						ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-						ucMatches.SetMatches( text, matches_to_show, firstOnly, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
+						ucMatches.SetMatches( text, matches_to_show, first_only, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
 
 						lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-						pnlShowAll.Visibility = firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-						pnlShowFirst.Visibility = !firstOnly && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+						pnlShowAll.Visibility = first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+						pnlShowFirst.Visibility = !first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
 					} );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
@@ -561,27 +573,50 @@ namespace RegExpressWPF
 
 		void RestartShowTextInfo( )
 		{
-			Dispatcher.InvokeAsync( ShowTextInfo, DispatcherPriority.ApplicationIdle );
+			ShowTextInfoTask.Restart( ShowTextInfoTaskProc );
 		}
 
 
-		void ShowTextInfo( )
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void ShowTextInfoTaskProc( CancellationToken ct )
 		{
-			var td = ucText.GetTextData( GetEolOption( ) );
-
-			lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
-			if( lblTextInfo.Visibility == Visibility.Visible )
+			try
 			{
-				string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
+				if( ct.WaitHandle.WaitOne( 222 ) ) return;
+				ct.ThrowIfCancellationRequested( );
 
-				if( ucTextHadFocus )
-				{
-					s += $", Index: {td.SelectionStart:#,##0}";
-				}
+				UITaskHelper.BeginInvoke( this, ct,
+					( ) =>
+					{
+						var td = ucText.GetTextData( GetEolOption( ) );
 
-				s += ")";
+						lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
+						if( lblTextInfo.Visibility == Visibility.Visible )
+						{
+							string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
 
-				lblTextInfo.Text = s;
+							if( ucTextHadFocus )
+							{
+								s += $", Index: {td.SelectionStart:#,##0}";
+							}
+
+							s += ")";
+
+							lblTextInfo.Text = s;
+						}
+					} );
+			}
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			{
+				Utilities.DbgSimpleLog( exc );
+
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+				// TODO: report
 			}
 		}
 
@@ -665,6 +700,7 @@ namespace RegExpressWPF
 
 					using( FindMatchesTask ) { }
 					using( UpdateWhitespaceWarningTask ) { }
+					using( ShowTextInfoTask ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

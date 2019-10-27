@@ -105,7 +105,7 @@ namespace RegExpressWPF
 
 			UnderliningAdorner = new UnderliningAdorner( rtbMatches );
 
-			ChangeEventHelper = new ChangeEventHelper( this.rtbMatches );
+			ChangeEventHelper = new ChangeEventHelper( rtbMatches );
 
 			HighlightStyleInfos = new[]
 			{
@@ -277,7 +277,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void RtbMatches_SelectionChanged( object sender, RoutedEventArgs e )
+		private void rtbMatches_SelectionChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
@@ -290,7 +290,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void RtbMatches_GotFocus( object sender, RoutedEventArgs e )
+		private void rtbMatches_GotFocus( object sender, RoutedEventArgs e )
 		{
 			RestartLocalUnderlining( true );
 			SelectionChanged?.Invoke( this, null );
@@ -306,7 +306,7 @@ namespace RegExpressWPF
 		}
 
 
-		private void RtbMatches_LostFocus( object sender, RoutedEventArgs e )
+		private void rtbMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
 			RestartLocalUnderlining( false );
 		}
@@ -487,9 +487,9 @@ namespace RegExpressWPF
 							}
 							else
 							{
-								string left = SubstringFromTo( text, match.Index, group.Index );
+								string left = Utilities.SubstringFromTo( text, match.Index, group.Index );
 								string middle = group.Value;
-								string right = SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
+								string right = Utilities.SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
 								inl = sibling_run_builder.Build( left, span.ContentEnd );
 								inl.Style( GroupSiblingValueStyleInfo );
@@ -614,9 +614,9 @@ namespace RegExpressWPF
 				}
 				else
 				{
-					string left = SubstringFromTo( text, Math.Min( match.Index, group.Index ), capture.Index );
+					string left = Utilities.SubstringFromTo( text, Math.Min( match.Index, group.Index ), capture.Index );
 					string middle = capture.Value;
-					string right = SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
+					string right = Utilities.SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
 
 					inline = siblingRunBuilder.Build( left, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
@@ -645,17 +645,6 @@ namespace RegExpressWPF
 
 				groupInfo.CaptureInfos.Add( capture_info );
 			}
-		}
-
-
-		static string SubstringFromTo( string text, int from, int toExcluding ) // TODO: move to utilities
-		{
-			from = Math.Max( 0, from );
-			toExcluding = Math.Min( text.Length, toExcluding );
-
-			if( from >= toExcluding ) return string.Empty;
-
-			return text.Substring( from, toExcluding - from );
 		}
 
 
@@ -1136,6 +1125,28 @@ namespace RegExpressWPF
 			s += $", Bc: '{( bn == 0 ? '∅' : bc[0] )}', Fc: '{( fn == 0 ? '∅' : fc[0] )}";
 
 			lblDbgInfo.Content = s;
+		}
+
+
+		private void btnDbgSave_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			rtbMatches.Focus( );
+
+			Utilities.DbgSaveXAML( @"debug-ucmatches.xml", rtbMatches.Document );
+
+			//SaveToPng( Window.GetWindow( this ), "debug-ucmatches.png" );
+#endif
+		}
+
+
+		private void btnDbgLoad_Click( object sender, RoutedEventArgs e )
+		{
+#if DEBUG
+			rtbMatches.Focus( );
+
+			Utilities.DbgLoadXAML( rtbMatches.Document, @"debug-ucmatches.xml" );
+#endif
 		}
 
 

@@ -90,17 +90,15 @@ namespace RegExpressWPF
 		}
 
 
-		public string GetText( string eol )
-		{
-			var td = rtb.GetTextData( eol );
-
-			return td.Text;
-		}
-
-
 		public TextData GetTextData( string eol )
 		{
 			return rtb.GetTextData( eol );
+		}
+
+
+		public SimpleTextData GetSimpleTextData( string eol )
+		{
+			return rtb.GetSimpleTextData( eol );
 		}
 
 
@@ -159,7 +157,6 @@ namespace RegExpressWPF
 			if( !rtb.IsFocused ) return;
 
 			UndoRedoHelper.HandleSelectionChanged( );
-
 			RestartHighlighting( );
 		}
 
@@ -169,7 +166,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			UndoRedoHelper.HandleTextChanged( );
+			UndoRedoHelper.HandleTextChanged( e );
 			RestartHighlighting( );
 			RestartRecolouring( );
 			TextChanged?.Invoke( this, null );
@@ -251,7 +248,8 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 111 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 222 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;
@@ -269,6 +267,7 @@ namespace RegExpressWPF
 						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 						var td0 = rtb.GetTextData( eol );
+
 						if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 						td = td0;
@@ -311,38 +310,20 @@ namespace RegExpressWPF
 				ct.ThrowIfCancellationRequested( );
 
 
-				//...
-				var t1 = DateTime.Now;
-
 				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				var t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring comments: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-				t1 = DateTime.Now;
-
 				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring escapes: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-				t1 = DateTime.Now;
-
 				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				t2 = DateTime.Now;
-				Debug.WriteLine( "### Colouring named groups: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
-
-				t1 = DateTime.Now;
 
 				ChangeEventHelper.Invoke( ct,
 					( ) =>
 					{
 						// ensure the highlighted items are not lost
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
 					} );
 
@@ -355,11 +336,6 @@ namespace RegExpressWPF
 
 				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-
-				t2 = DateTime.Now;
-
-				Debug.WriteLine( "### Uncolour: {0:F0}", ( t2 - t1 ).TotalMilliseconds );
-
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
@@ -388,7 +364,8 @@ namespace RegExpressWPF
 		{
 			try
 			{
-				if( ct.WaitHandle.WaitOne( 33 ) ) return;
+				int timeout = Math.Max( rtb.LastGetTextDataDuration, 111 );
+				if( ct.WaitHandle.WaitOne( timeout ) ) return;
 				ct.ThrowIfCancellationRequested( );
 
 				TextData td = null;
@@ -406,6 +383,7 @@ namespace RegExpressWPF
 					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 					var td0 = rtb.GetTextData( eol );
+
 					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 					td = td0;
@@ -511,10 +489,11 @@ namespace RegExpressWPF
 					}
 
 					var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
+
+					ct.ThrowIfCancellationRequested( );
+
 					if( current_group != null )
 					{
-						ct.ThrowIfCancellationRequested( );
-
 						left_bracket_index = current_group.Index;
 
 						var eog = current_group.Groups["eog"];
@@ -528,8 +507,11 @@ namespace RegExpressWPF
 				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
 					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
 				} );
 
