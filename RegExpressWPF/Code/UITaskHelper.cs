@@ -47,6 +47,24 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static void Invoke( DispatcherObject obj, Action action )
+		{
+			Debug.Assert( !obj.Dispatcher.CheckAccess( ) );
+
+			try
+			{
+				obj.Dispatcher.Invoke(
+					( ) => Execute( action ),
+					DispatcherPriority.Background );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+				throw;
+			}
+		}
+
 
 		/// <summary>
 		/// Begin an action on UI thread. Should not be called from UI thread.
@@ -65,6 +83,17 @@ namespace RegExpressWPF.Code
 				( ) => Execute( action ),
 				DispatcherPriority.Background,
 				ct ).Task;
+		}
+
+
+		public static Task BeginInvoke( DispatcherObject obj, Action action )
+		{
+			Debug.Assert( !obj.Dispatcher.CheckAccess( ) );
+
+			return obj.Dispatcher.InvokeAsync(
+				( ) => Execute( action ),
+				DispatcherPriority.Background
+				).Task;
 		}
 
 
