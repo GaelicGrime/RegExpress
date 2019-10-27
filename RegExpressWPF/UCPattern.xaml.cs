@@ -319,8 +319,11 @@ namespace RegExpressWPF
 					{
 						// ensure the highlighted items are not lost
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
+						ct.ThrowIfCancellationRequested( );
 						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
 					} );
 
@@ -486,10 +489,11 @@ namespace RegExpressWPF
 					}
 
 					var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
+
+					ct.ThrowIfCancellationRequested( );
+
 					if( current_group != null )
 					{
-						ct.ThrowIfCancellationRequested( );
-
 						left_bracket_index = current_group.Index;
 
 						var eog = current_group.Groups["eog"];
@@ -503,8 +507,11 @@ namespace RegExpressWPF
 				ChangeEventHelper.Invoke( ct, ( ) =>
 				{
 					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+					ct.ThrowIfCancellationRequested( );
 					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
 				} );
 

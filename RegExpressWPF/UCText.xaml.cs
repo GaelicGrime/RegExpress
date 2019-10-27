@@ -534,12 +534,6 @@ namespace RegExpressWPF
 					}
 					if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 					if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
-
-					//...
-					if( ct.IsCancellationRequested )
-					{
-						Debugger.Break( );
-					}
 				} );
 
 				var t2 = Environment.TickCount;

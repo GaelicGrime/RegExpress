@@ -29,9 +29,9 @@ namespace RegExpressWPF.Code
 			try
 			{
 				obj.Dispatcher.Invoke(
-				( ) => Execute( action ),
-				DispatcherPriority.Background,
-				ct );
+					( ) => Execute( action ),
+					DispatcherPriority.Background,
+					ct );
 			}
 			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
 			{
