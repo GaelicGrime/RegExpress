@@ -54,15 +54,15 @@ namespace RegExpressWPF.Adorners
 
 			IsHitTestVisible = false;
 
-			WorkerThread = new Thread( WorkerThreadProc )
+			Rtb.TextChanged += Rtb_TextChanged;
+			Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
+
+			WorkerThread = new Thread( ThreadProc )
 			{
 				IsBackground = true,
 				Priority = ThreadPriority.BelowNormal,
 			};
 			WorkerThread.Start( );
-
-			Rtb.TextChanged += Rtb_TextChanged;
-			Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
 		}
 
 
@@ -304,56 +304,76 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		void WorkerThreadProc( )
+		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void ThreadProc( )
 		{
-			for(; ; )
+			try
 			{
-				// TODO: consider things related to termination
-
-				RestartEvent.WaitOne( Timeout.Infinite );
-
-				if( !mShowWhitespaces ) continue;
-
 				for(; ; )
 				{
-					int timeout = 33;
-					while( RestartEvent.WaitOne( timeout ) ) { timeout = 777; }
+					// TODO: consider things related to termination
 
-					var rtb = Rtb;
-					TextData td = null;
-					Rect clip_rect = Rect.Empty;
-					int top_index = 0;
+					RestartEvent.WaitOne( Timeout.Infinite );
 
-					UITaskHelper.Invoke( rtb,
-						( ) =>
+					if( !mShowWhitespaces ) continue;
+
+					for(; ; )
+					{
+						int timeout = 33;
+						while( RestartEvent.WaitOne( timeout ) ) { timeout = 777; }
+
+						var rtb = Rtb;
+						TextData td = null;
+						Rect clip_rect = Rect.Empty;
+						int top_index = 0;
+
+						UITaskHelper.Invoke( rtb,
+							( ) =>
+							{
+								td = null;
+
+								var start_doc = rtb.Document.ContentStart;
+								var end_doc = rtb.Document.ContentStart;
+
+								if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+								var td0 = rtb.GetTextData( null );
+								if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+								td = td0;
+								clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+								TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
+								top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+								if( top_index < 0 ) top_index = 0;
+							} );
+
+						if( MustRestart( ) ) continue;
+
+						if( td != null )
 						{
-							td = null;
+							if( !CollectEols( td, clip_rect, top_index ) ) continue;
+							if( !CollectEof( td, clip_rect, top_index ) ) continue;
+							if( !CollectSpaces( td, clip_rect, top_index ) ) continue;
+						}
 
-							var start_doc = rtb.Document.ContentStart;
-							var end_doc = rtb.Document.ContentStart;
-
-							if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-
-							var td0 = rtb.GetTextData( null );
-							if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
-							td = td0;
-							clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-							TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-							top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
-							if( top_index < 0 ) top_index = 0;
-						} );
-
-					if( td == null ) return;
-					if( MustRestart( ) ) continue;
-
-					if( !CollectEols( td, clip_rect, top_index ) ) continue;
-					if( !CollectEof( td, clip_rect, top_index ) ) continue;
-					if( !CollectSpaces( td, clip_rect, top_index ) ) continue;
-
-					break;
+						break;
+					}
 				}
+			}
+			catch( ThreadInterruptedException )
+			{
+				// ignore
+			}
+			catch( ThreadAbortException )
+			{
+				// ignore
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+				throw;
 			}
 		}
 
