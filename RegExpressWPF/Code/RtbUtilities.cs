@@ -163,7 +163,7 @@ namespace RegExpressWPF.Code
 				}
 				else
 				{
-					text = btd.Text.Replace( btd.Eol, eol  );
+					text = btd.Text.Replace( btd.Eol, eol );
 				}
 
 				var (selection_start, selection_end) = GetSelection( rtb.Selection, btd.Pointers );
@@ -787,6 +787,85 @@ namespace RegExpressWPF.Code
 
 				} );
 			}
+		}
+
+
+		public static bool ApplyStyle( WaitHandle wh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
+		{
+			// split into smaller segments
+
+			var segments = new List<Segment>( segments0.Count );
+
+			foreach( var segment in segments0 )
+			{
+				int j = segment.Index;
+				int rem = segment.Length;
+
+				do
+				{
+					if( wh.WaitOne( 0 ) ) return false;
+
+					int len = Math.Min( SEGMENT_LENGTH, rem );
+
+					segments.Add( new Segment( j, len ) );
+
+					j += len;
+					rem -= len;
+
+				} while( rem > 0 );
+			}
+
+
+			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
+			int last_i = segments.Count;
+
+			if( pb != null )
+			{
+				ceh.Invoke( CancellationToken.None, ( ) => //...
+				{
+					pb.Visibility = Visibility.Hidden;
+					pb.Maximum = last_i;
+				} );
+			}
+
+			//var rnd = new Random( );
+			//segments = segments.OrderBy( s => rnd.Next( ) ).ToList( ); // just for fun
+
+			//...
+			//Debug.WriteLine( $"Total segments: {segments.Count}" );
+
+			for( int i = 0; i < last_i; )
+			{
+				if( wh.WaitOne( 0 ) ) return false;
+
+				ceh.Invoke( CancellationToken.None, ( ) =>
+				{
+					if( pb != null )
+					{
+						if( Environment.TickCount > show_pb_time )
+						{
+							pb.Value = i;
+							pb.Visibility = Visibility.Visible;
+						}
+					}
+
+					var end = Environment.TickCount + 22;
+					int dbg_i = i;//...
+					do
+					{
+						//ct.ThrowIfCancellationRequested( );
+
+						var segment = segments[i];
+						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
+
+					} while( ++i < last_i && Environment.TickCount < end );
+
+					//Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
+
+				} );
+			}
+
+			return true;
 		}
 
 

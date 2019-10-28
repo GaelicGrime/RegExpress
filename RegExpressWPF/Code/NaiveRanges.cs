@@ -155,6 +155,7 @@ namespace RegExpressWPF.Code
 		}
 
 
+		[Obsolete( "Use the event-based variant", false )]
 		public IEnumerable<Segment> GetSegments( CancellationToken ct, bool valuesToInclude, int offset = 0 )
 		{
 			for( int i = 0; ; )
@@ -175,5 +176,32 @@ namespace RegExpressWPF.Code
 				yield return new Segment( start + offset, length );
 			}
 		}
+
+
+		public IList<Segment> GetSegments( WaitHandle wh, bool valuesToInclude, int offset = 0 )
+		{
+			List<Segment> list = new List<Segment>( );
+
+			for( int i = 0; ; )
+			{
+				if( wh.WaitOne( 0 ) ) return null;
+				while( i < data.Length && data[i] != valuesToInclude ) ++i;
+
+				if( i >= data.Length ) break;
+
+				int start = i;
+
+				if( wh.WaitOne( 0 ) ) return null;
+				while( i < data.Length && data[i] == valuesToInclude ) ++i;
+
+				int length = i - start;
+
+				if( wh.WaitOne( 0 ) ) return null;
+				list.Add( new Segment( start + offset, length ) );
+			}
+
+			return list;
+		}
+
 	}
 }

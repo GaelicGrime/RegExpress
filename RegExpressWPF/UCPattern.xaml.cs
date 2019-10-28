@@ -485,17 +485,24 @@ namespace RegExpressWPF
 						int center_index = ( top_index + bottom_index ) / 2;
 
 						var segments_to_uncolour = coloured_ranges
-							.GetSegments( CancellationToken.None, false, top_index ) //... make it cancellable
-							.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-							.ToList( );
+							.GetSegments( RecolouringEvent, false, top_index )
+							?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+							?.ToList( );
 
-						//... make it cancellable
+						if( segments_to_uncolour == null ) continue;
+						if( MustRestart( ) ) continue;
+
 						//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-						RtbUtilities.ApplyStyle( CancellationToken.None, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
+						if( !RtbUtilities.ApplyStyle( RecolouringEvent, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo ) )
+							continue;
 
 						break;
 					}
 				}
+			}
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			{
+				// ignore
 			}
 			catch( ThreadInterruptedException )
 			{
@@ -824,12 +831,14 @@ namespace RegExpressWPF
 			int center_index = ( topIndex + bottomIndex ) / 2;
 
 			List<Segment> segments = ranges
-				.GetSegments( CancellationToken.None, true, topIndex ) //... make it cancellable
-				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-				.ToList( );
+				.GetSegments( RecolouringEvent, true, topIndex )
+				?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				?.ToList( );
 
-			//...
-			RtbUtilities.ApplyStyle( CancellationToken.None, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo );
+			if( segments == null ) return false;
+
+			if( !RtbUtilities.ApplyStyle( RecolouringEvent, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo ) )
+				return false;
 
 			colouredRanges.Set( ranges );
 
@@ -880,12 +889,14 @@ namespace RegExpressWPF
 			int center_index = ( topIndex + bottomIndex ) / 2;
 
 			List<Segment> segments = ranges
-					.GetSegments( CancellationToken.None, true, topIndex ) //...
-					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-					.ToList( );
+					.GetSegments( RecolouringEvent, true, topIndex )
+					?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					?.ToList( );
 
-			//...
-			RtbUtilities.ApplyStyle( CancellationToken.None, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo );
+			if( segments == null ) return false;
+
+			if( !RtbUtilities.ApplyStyle( RecolouringEvent, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo ) )
+				return false;
 
 			colouredRanges.Set( ranges );
 
@@ -922,12 +933,14 @@ namespace RegExpressWPF
 			int center_index = ( topIndex + bottomIndex ) / 2;
 
 			List<Segment> segments = ranges
-				.GetSegments( CancellationToken.None, true, topIndex ) //...
-				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-				.ToList( );
+				.GetSegments( RecolouringEvent, true, topIndex )
+				?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				?.ToList( );
 
-			//...
-			RtbUtilities.ApplyStyle( CancellationToken.None, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo );
+			if( segments == null ) return false;
+
+			if( !RtbUtilities.ApplyStyle( RecolouringEvent, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo ) )
+				return false;
 
 			colouredRanges.Set( ranges );
 
@@ -947,7 +960,6 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					//...
 					using( RecolouringEvent ) { }
 					using( HighlightingEvent ) { }
 				}
