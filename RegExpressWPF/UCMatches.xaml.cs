@@ -148,6 +148,7 @@ namespace RegExpressWPF
 			{
 				ShowOne( rtbError );
 				runError.Text = exc.Message;
+				rtbError.ScrollToEnd( ); // (the interesting part is at the end)
 			} ) );
 		}
 
