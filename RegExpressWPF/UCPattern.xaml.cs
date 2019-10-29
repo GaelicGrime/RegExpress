@@ -181,6 +181,12 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 
 			UndoRedoHelper.HandleTextChanged( e );
+
+			LeftHighlightedParantesis = null;
+			RightHighlightedParantesis = null;
+			LeftHighlightedBracket = null;
+			RightHighlightedBracket = null;
+
 			RecolouringEvent.Set( );
 			HighlightingEvent.Set( );
 
@@ -263,115 +269,7 @@ namespace RegExpressWPF
 		}
 
 
-#if false
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void RecolouringTaskProc( CancellationToken ct, bool is_focused, RegexOptions regexOptions, string eol )
-		{
-			try
-			{
-				int timeout = Math.Max( rtb.LastGetTextDataDuration, 222 );
-				if( ct.WaitHandle.WaitOne( timeout ) ) return;
-				ct.ThrowIfCancellationRequested( );
-
-				TextData td = null;
-				Rect clip_rect = Rect.Empty;
-				int top_index = 0;
-				int bottom_index = 0;
-
-				UITaskHelper.Invoke( rtb, ct, ( ) =>
-					{
-						td = null;
-
-						var start_doc = rtb.Document.ContentStart;
-						var end_doc = rtb.Document.ContentStart;
-
-						if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-
-						var td0 = rtb.GetTextData( eol );
-
-						if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
-						td = td0;
-						clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-						TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-						top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
-						if( top_index < 0 ) top_index = 0;
-
-						TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-						// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
-						if( bottom_pointer == null || lines_skipped == 0 )
-						{
-							bottom_index = td.Pointers.Count - 2;
-						}
-						else
-						{
-							bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-						}
-						if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
-						if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
-					} );
-
-				if( td == null ) return;
-				if( td.Text.Length == 0 ) return;
-
-				ct.ThrowIfCancellationRequested( );
-
-				Debug.Assert( top_index >= 0 );
-				Debug.Assert( bottom_index >= top_index );
-				Debug.Assert( bottom_index < td.Pointers.Count );
-
-				var regex = GetColouringRegex( regexOptions );
-				var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
-
-				var matches = regex.Matches( td.Text )
-					.Cast<Match>( )
-					.ToArray( );
-
-				ct.ThrowIfCancellationRequested( );
-
-
-				ColouriseComments( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-				ColouriseEscapes( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-				ColouriseNamedGroups( ct, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-
-				ChangeEventHelper.Invoke( ct,
-					( ) =>
-					{
-						// ensure the highlighted items are not lost
-						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
-						ct.ThrowIfCancellationRequested( );
-						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
-						ct.ThrowIfCancellationRequested( );
-						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
-						ct.ThrowIfCancellationRequested( );
-						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
-					} );
-
-				int center_index = ( top_index + bottom_index ) / 2;
-
-				var segments_to_uncolour = coloured_ranges
-					.GetSegments( ct, false, top_index )
-					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-					.ToList( );
-
-				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-				RtbUtilities.ApplyStyle( ct, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
-			{
-				Utilities.DbgSimpleLog( exc );
-
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
-		}
-#endif
+		readonly object Locker = new object( );
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
@@ -462,33 +360,36 @@ namespace RegExpressWPF
 						ColouriseNamedGroups( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
 						if( reh.IsRestartRequested ) continue;
 
-						ChangeEventHelper.Invoke( CancellationToken.None,
-							( ) =>
-							{
-								// ensure the highlighted items are not lost
-								TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
-								if( reh.IsRestartRequested ) return;
-								TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
-								if( reh.IsRestartRequested ) return;
-								TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
-								if( reh.IsRestartRequested ) return;
-								TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
-							} );
+						lock( Locker )
+						{
+							ChangeEventHelper.Invoke( CancellationToken.None,
+								( ) =>
+								{
+									// ensure the highlighted items are not lost
+									TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
+									if( reh.IsRestartRequested ) return;
+									TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
+									if( reh.IsRestartRequested ) return;
+									TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
+									if( reh.IsRestartRequested ) return;
+									TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
+								} );
 
-						if( reh.IsRestartRequested ) continue;
+							if( reh.IsRestartRequested ) continue;
 
-						int center_index = ( top_index + bottom_index ) / 2;
+							int center_index = ( top_index + bottom_index ) / 2;
 
-						var segments_to_uncolour = coloured_ranges
-							.GetSegments( reh, false, top_index )
-							?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-							?.ToList( );
+							var segments_to_uncolour = coloured_ranges
+								.GetSegments( reh, false, top_index )
+								?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+								?.ToList( );
 
-						if( reh.IsRestartRequested ) continue;
+							if( reh.IsRestartRequested ) continue;
 
-						//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-						if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo ) )
-							continue;
+							//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+							if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo ) )
+								continue;
+						}
 
 						break;
 					}
@@ -685,16 +586,19 @@ namespace RegExpressWPF
 
 						if( reh.IsRestartRequested ) continue;
 
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+						lock( Locker )
 						{
-							TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
-							if( reh.IsRestartRequested ) return;
-							TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
-							if( reh.IsRestartRequested ) return;
-							TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
-							if( reh.IsRestartRequested ) return;
-							TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
-						} );
+							ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+							{
+								TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+								if( reh.IsRestartRequested ) return;
+								TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+								if( reh.IsRestartRequested ) return;
+								TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+								if( reh.IsRestartRequested ) return;
+								TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
+							} );
+						}
 
 						if( reh.IsRestartRequested ) continue;
 
@@ -730,12 +634,12 @@ namespace RegExpressWPF
 				int i = RtbUtilities.Find( td.Pointers, tp );
 				if( i >= 0 )
 				{
-					Console.WriteLine($"<<<<<<<<<<<<< MARK: {i}");
+					Console.WriteLine( $"<<<<<<<<<<<<< MARK: {i}" );
 					ranges.SafeSet( i - topIndex );
 				}
 				else
 				{
-				//...
+					//...
 				}
 			}
 			else
@@ -764,9 +668,6 @@ namespace RegExpressWPF
 			if( tr != null )
 			{
 				tr.Style( styleInfo );
-				//.............
-				var span = new Span( tr.Start, tr.End );
-				span.Tag = "HIGHLIGHT1";
 			}
 		}
 
