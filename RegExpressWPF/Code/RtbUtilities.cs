@@ -790,7 +790,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static bool ApplyStyle( WaitHandle wh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
+		public static bool ApplyStyle( RestartEventHelper reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
 		{
 			// split into smaller segments
 
@@ -803,7 +803,7 @@ namespace RegExpressWPF.Code
 
 				do
 				{
-					if( wh.WaitOne( 0 ) ) return false;
+					if( reh.IsRestartRequested ) return false;
 
 					int len = Math.Min( SEGMENT_LENGTH, rem );
 
@@ -836,7 +836,7 @@ namespace RegExpressWPF.Code
 
 			for( int i = 0; i < last_i; )
 			{
-				if( wh.WaitOne( 0 ) ) return false;
+				if( reh.IsRestartRequested ) return false;
 
 				ceh.Invoke( CancellationToken.None, ( ) =>
 				{

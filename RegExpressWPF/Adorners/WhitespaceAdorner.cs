@@ -307,20 +307,21 @@ namespace RegExpressWPF.Adorners
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ThreadProc( )
 		{
+			var reh = new RestartEventHelper( RestartEvent );
+
 			try
 			{
 				for(; ; )
 				{
 					// TODO: consider things related to termination
 
-					RestartEvent.WaitOne( Timeout.Infinite );
+					reh.WaitInfinite( );
 
 					if( !mShowWhitespaces ) continue;
 
 					for(; ; )
 					{
-						int timeout = 33;
-						while( RestartEvent.WaitOne( timeout ) ) { timeout = 777; }
+						reh.WaitForSilence( 33, 777 );
 
 						var rtb = Rtb;
 						TextData td = null;
@@ -348,18 +349,25 @@ namespace RegExpressWPF.Adorners
 								if( top_index < 0 ) top_index = 0;
 							} );
 
-						if( MustRestart( ) ) continue;
+						if( reh.IsRestartRequested ) continue;
 
 						if( td != null )
 						{
-							if( !CollectEols( td, clip_rect, top_index ) ) continue;
-							if( !CollectEof( td, clip_rect, top_index ) ) continue;
-							if( !CollectSpaces( td, clip_rect, top_index ) ) continue;
+							CollectEols( reh, td, clip_rect, top_index );
+							if( reh.IsRestartRequested ) continue;
+							CollectEof( reh, td, clip_rect, top_index );
+							if( reh.IsRestartRequested ) continue;
+							CollectSpaces( reh, td, clip_rect, top_index );
+							if( reh.IsRestartRequested ) continue;
 						}
 
 						break;
 					}
 				}
+			}
+			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			{
+				// ignore
 			}
 			catch( ThreadInterruptedException )
 			{
@@ -378,9 +386,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectSpaces( TextData td, Rect clipRect, int topIndex )
+		bool CollectSpaces( RestartEventHelper reh, TextData td, Rect clipRect, int topIndex )
 		{
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -393,7 +401,7 @@ namespace RegExpressWPF.Adorners
 				i >= 0;
 				i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
 			{
-				if( MustRestart( ) ) return false;
+				if( reh.IsRestartRequested ) return false;
 
 				indices.Add( i );
 			}
@@ -401,7 +409,6 @@ namespace RegExpressWPF.Adorners
 			var intermediate_results1 = new List<(int index, Rect left, Rect right)>( );
 			var intermediate_results2 = new List<(int index, Rect left, Rect right)>( );
 			int current_i = 0;
-			bool must_restart = false;
 
 			void do_things( )
 			{
@@ -412,7 +419,7 @@ namespace RegExpressWPF.Adorners
 				{
 					if( current_i >= indices.Count ) break;
 
-					if( MustRestart( ) ) { must_restart = true; return; }
+					if( reh.IsRestartRequested ) return;
 
 					var index = indices[current_i];
 					var left = td.Pointers[index];
@@ -430,14 +437,15 @@ namespace RegExpressWPF.Adorners
 				} while( Environment.TickCount < end_time );
 			}
 
+			if( reh.IsRestartRequested ) return false;
+
 			var d = UITaskHelper.BeginInvoke( rtb, do_things );
 
 			for(; ; )
 			{
 				d.Wait( );
 
-				if( must_restart ) return false;
-				if( MustRestart( ) ) return false;
+				if( reh.IsRestartRequested ) return false;
 
 				(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
 
@@ -451,7 +459,7 @@ namespace RegExpressWPF.Adorners
 
 				foreach( var (index, left_rect, right_rect) in intermediate_results2 )
 				{
-					if( MustRestart( ) ) return false;
+					if( reh.IsRestartRequested ) return false;
 
 					if( right_rect.Bottom < clipRect.Top ) continue;
 					if( left_rect.Top > clipRect.Bottom )
@@ -479,7 +487,7 @@ namespace RegExpressWPF.Adorners
 				intermediate_results2.Clear( );
 			}
 
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			lock( this )
 			{
@@ -493,9 +501,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEols( TextData td, Rect clip_rect, int top_index )
+		bool CollectEols( RestartEventHelper reh, TextData td, Rect clip_rect, int top_index )
 		{
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -507,7 +515,7 @@ namespace RegExpressWPF.Adorners
 
 			for( int i = 0; i < matches.Count; ++i )
 			{
-				if( MustRestart( ) ) return false;
+				if( reh.IsRestartRequested ) return false;
 
 				int index = matches[i].Index;
 
@@ -519,7 +527,7 @@ namespace RegExpressWPF.Adorners
 
 				for( int k = previous_index; k < index; ++k )
 				{
-					if( MustRestart( ) ) return false;
+					if( reh.IsRestartRequested ) return false;
 
 					if( UnicodeUtilities.IsRTL( td.Text[k] ) )
 					{
@@ -536,7 +544,6 @@ namespace RegExpressWPF.Adorners
 					Rect left_rect = Rect.Empty;
 					double max_x = double.NaN;
 
-					bool must_restart = false;
 					bool should_continue = false;
 					bool should_break = false;
 
@@ -552,7 +559,7 @@ namespace RegExpressWPF.Adorners
 
 							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
 							{
-								if( MustRestart( ) ) { must_restart = true; return; }
+								if( reh.IsRestartRequested ) return;
 
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 								if( tp == null ) break;
@@ -577,7 +584,7 @@ namespace RegExpressWPF.Adorners
 							}
 						} );
 
-					if( must_restart ) return false;
+					if( reh.IsRestartRequested ) return false;
 					if( should_continue ) continue;
 					if( should_break ) break;
 
@@ -608,7 +615,7 @@ namespace RegExpressWPF.Adorners
 				}
 			}
 
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			lock( this )
 			{
@@ -621,15 +628,14 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEof( TextData td, Rect clip_rect, int top_index )
+		bool CollectEof( RestartEventHelper reh, TextData td, Rect clip_rect, int top_index )
 		{
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			var rtb = Rtb;
 
 			double max_x = double.NaN;
 			Rect end_rect = Rect.Empty;
-			bool must_restart = false;
 
 			UITaskHelper.Invoke( rtb,
 				( ) =>
@@ -652,7 +658,7 @@ namespace RegExpressWPF.Adorners
 
 						for( int k = 0; k < text.Length; ++k )
 						{
-							if( MustRestart( ) ) { must_restart = true; return; }
+							if( reh.IsRestartRequested ) return;
 
 							if( UnicodeUtilities.IsRTL( text[k] ) )
 							{
@@ -671,7 +677,7 @@ namespace RegExpressWPF.Adorners
 
 					for( var tp = end; ; )
 					{
-						if( MustRestart( ) ) { must_restart = true; return; }
+						if( reh.IsRestartRequested ) return;
 
 						tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 						if( tp == null ) break;
@@ -686,8 +692,7 @@ namespace RegExpressWPF.Adorners
 					}
 				} );
 
-			if( must_restart ) return false;
-			if( MustRestart( ) ) return false;
+			if( reh.IsRestartRequested ) return false;
 
 			lock( this )
 			{
@@ -705,12 +710,6 @@ namespace RegExpressWPF.Adorners
 			DelayedInvalidateVisual( );
 
 			return true;
-		}
-
-
-		bool MustRestart( )
-		{
-			return RestartEvent.WaitOne( 0 );
 		}
 	}
 }
