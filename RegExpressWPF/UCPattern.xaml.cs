@@ -57,10 +57,10 @@ namespace RegExpressWPF
 			@"(?>\\[0-7]{2,3} | \\x[0-9A-F]{2} | \\c[A-Z] | \\u[0-9A-F]{4} | \\p\{[A-Z]+\} | \\k<[A-Z]+> | \\.)",
 			RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace );
 
-		TextRange LeftHighlightedParantesis = null;
-		TextRange RightHighlightedParantesis = null;
-		TextRange LeftHighlightedBracket = null;
-		TextRange RightHighlightedBracket = null;
+		int LeftHighlightedParantesis = -1;
+		int RightHighlightedParantesis = -1;
+		int LeftHighlightedBracket = -1;
+		int RightHighlightedBracket = -1;
 
 		RegexOptions mRegexOptions;
 		string mEol;
@@ -182,10 +182,10 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleTextChanged( e );
 
-			LeftHighlightedParantesis = null;
-			RightHighlightedParantesis = null;
-			LeftHighlightedBracket = null;
-			RightHighlightedBracket = null;
+			LeftHighlightedParantesis = -1;
+			RightHighlightedParantesis = -1;
+			LeftHighlightedBracket = -1;
+			RightHighlightedBracket = -1;
 
 			RecolouringEvent.Set( );
 			HighlightingEvent.Set( );
@@ -366,13 +366,13 @@ namespace RegExpressWPF
 								( ) =>
 								{
 									// ensure the highlighted items are not lost
-									TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis?.Start );
+									TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis );
 									if( reh.IsRestartRequested ) return;
-									TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis?.Start );
+									TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis );
 									if( reh.IsRestartRequested ) return;
-									TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket?.Start );
+									TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket );
 									if( reh.IsRestartRequested ) return;
-									TryMark( coloured_ranges, top_index, td, RightHighlightedBracket?.Start );
+									TryMark( coloured_ranges, top_index, td, RightHighlightedBracket );
 								} );
 
 							if( reh.IsRestartRequested ) continue;
@@ -568,7 +568,7 @@ namespace RegExpressWPF
 
 							if( reh.IsRestartRequested ) continue;
 
-							var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index <= td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
+							var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
 
 							if( reh.IsRestartRequested ) continue;
 
@@ -627,46 +627,30 @@ namespace RegExpressWPF
 		}
 
 
-		void TryMark( NaiveRanges ranges, int topIndex, TextData td, TextPointer tp )
+		void TryMark( NaiveRanges ranges, int topIndex, TextData td, int index )
 		{
-			if( tp != null )
+			if( index >= 0 )
 			{
-				int i = RtbUtilities.Find( td.Pointers, tp );
-				if( i >= 0 )
-				{
-					Console.WriteLine( $"<<<<<<<<<<<<< MARK: {i}" );
-					ranges.SafeSet( i - topIndex );
-				}
-				else
-				{
-					//...
-				}
-			}
-			else
-			{
-				Console.WriteLine( $"<<<<<<<<<<<<< NO MARK" );
+				ranges.SafeSet( index - topIndex );
 			}
 		}
 
 
-		void TryHighlight( ref TextRange tr, TextData td, int index, StyleInfo styleInfo )
+		void TryHighlight( ref int savedIndex, TextData td, int index, StyleInfo styleInfo )
 		{
 			// TODO: avoid flickering
 
-			if( tr != null )
+			if( savedIndex >= 0 )
 			{
-				if( tr.Start.IsInSameDocument( rtb.Document.ContentStart ) )
-				{
-					tr.Style( PatternNormalStyleInfo );
-				}
+				var tr = td.Range( savedIndex, 1 );
+				tr.Style( PatternNormalStyleInfo );
 			}
 
-			tr = null;
+			savedIndex = index;
 
-			if( index >= 0 ) tr = td.Range( index, 1 );
-
-			if( tr != null )
+			if( index >= 0 )
 			{
+				var tr = td.Range( index, 1 );
 				tr.Style( styleInfo );
 			}
 		}
