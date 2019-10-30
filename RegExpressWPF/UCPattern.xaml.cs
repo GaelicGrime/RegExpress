@@ -31,10 +31,10 @@ namespace RegExpressWPF
 		readonly WhitespaceAdorner WhitespaceAdorner;
 
 		readonly Thread RecolouringThread;
-		readonly AutoResetEvent RecolouringEvent = new AutoResetEvent( false );
-
 		readonly Thread HighlightingThread;
-		readonly AutoResetEvent HighlightingEvent = new AutoResetEvent( false );
+
+		readonly AutoResetEvent RecolouringEvent = new AutoResetEvent( initialState: false );
+		readonly AutoResetEvent HighlightingEvent = new AutoResetEvent( initialState: false );
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
@@ -395,7 +395,7 @@ namespace RegExpressWPF
 					}
 				}
 			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
 				// ignore
 			}
@@ -648,9 +648,9 @@ namespace RegExpressWPF
 
 			savedIndex = index;
 
-			if( index >= 0 )
+			if( savedIndex >= 0 )
 			{
-				var tr = td.Range( index, 1 );
+				var tr = td.RangeFB( savedIndex, 1 );
 				tr.Style( styleInfo );
 			}
 		}

@@ -178,6 +178,7 @@ namespace RegExpressWPF.Code
 		}
 
 
+		//...
 		public IList<Segment> GetSegments( RestartEventHelper reh, bool valuesToInclude, int offset = 0 )
 		{
 			List<Segment> list = new List<Segment>( );
@@ -203,5 +204,30 @@ namespace RegExpressWPF.Code
 			return list;
 		}
 
+
+		public IList<Segment> GetSegments( StoppableRestartEventHewlper reh, bool valuesToInclude, int offset = 0 )
+		{
+			List<Segment> list = new List<Segment>( );
+
+			for( int i = 0; ; )
+			{
+				if( reh.IsAnyRequested ) return null;
+				while( i < data.Length && data[i] != valuesToInclude ) ++i;
+
+				if( i >= data.Length ) break;
+
+				int start = i;
+
+				if( reh.IsAnyRequested ) return null;
+				while( i < data.Length && data[i] == valuesToInclude ) ++i;
+
+				int length = i - start;
+
+				if( reh.IsAnyRequested ) return null;
+				list.Add( new Segment( start + offset, length ) );
+			}
+
+			return list;
+		}
 	}
 }

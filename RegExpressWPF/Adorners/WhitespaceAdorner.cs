@@ -30,7 +30,7 @@ namespace RegExpressWPF.Adorners
 		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
 
 		readonly Thread WorkerThread;
-		readonly AutoResetEvent RestartEvent = new AutoResetEvent( false );
+		readonly AutoResetEvent RestartEvent = new AutoResetEvent( initialState: false );
 		List<Rect> PositionsSpaces = new List<Rect>( );
 		List<Rect> PositionsTabs = new List<Rect>( );
 		List<Rect> PositionsEols = new List<Rect>( );
