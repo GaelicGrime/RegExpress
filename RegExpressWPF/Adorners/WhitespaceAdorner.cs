@@ -30,7 +30,8 @@ namespace RegExpressWPF.Adorners
 		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
 
 		readonly Thread WorkerThread;
-		readonly AutoResetEvent RestartEvent = new AutoResetEvent( initialState: false );
+		readonly RestartEvents RestartEvents = new RestartEvents( );
+
 		List<Rect> PositionsSpaces = new List<Rect>( );
 		List<Rect> PositionsTabs = new List<Rect>( );
 		List<Rect> PositionsEols = new List<Rect>( );
@@ -74,7 +75,7 @@ namespace RegExpressWPF.Adorners
 			{
 				mShowWhitespaces = yes;
 
-				RestartEvent.Set( );
+				RestartEvents.SendRestart( );
 			}
 
 			// switching to "No" is handled here; the thread does not deal with it
@@ -161,7 +162,7 @@ namespace RegExpressWPF.Adorners
 
 			PreviousTextChangedTime = Environment.TickCount;
 
-			RestartEvent.Set( );
+			RestartEvents.SendRestart( );
 		}
 
 
@@ -172,7 +173,7 @@ namespace RegExpressWPF.Adorners
 			if( !mShowWhitespaces ) return;
 
 			InvalidateVisual( ); // to redraw what we already have, in new positions
-			RestartEvent.Set( );
+			RestartEvents.SendRestart( );
 		}
 
 
@@ -235,7 +236,7 @@ namespace RegExpressWPF.Adorners
 			if( IsDbgDisabled ) return;
 
 			DelayedInvalidateVisual( );
-			RestartEvent.Set( );
+			RestartEvents.SendRestart( );
 		}
 
 
@@ -307,7 +308,7 @@ namespace RegExpressWPF.Adorners
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ThreadProc( )
 		{
-			var reh = new RestartEventHelper( RestartEvent );
+			var reh = RestartEvents.BuildHelper( );
 
 			try
 			{
@@ -317,11 +318,17 @@ namespace RegExpressWPF.Adorners
 
 					reh.WaitInfinite( );
 
+					if( reh.IsStopRequested ) continue;
+					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+
 					if( !mShowWhitespaces ) continue;
 
 					for(; ; )
 					{
 						reh.WaitForSilence( 33, 777 );
+
+						if( reh.IsStopRequested ) break;
+						if( reh.IsRestartRequested ) continue;
 
 						var rtb = Rtb;
 						TextData td = null;
@@ -341,6 +348,8 @@ namespace RegExpressWPF.Adorners
 								var td0 = rtb.GetTextData( null );
 								if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
+								if( reh.IsAnyRequested ) return;
+
 								td = td0;
 								clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
@@ -349,16 +358,20 @@ namespace RegExpressWPF.Adorners
 								if( top_index < 0 ) top_index = 0;
 							} );
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
 						if( td != null )
 						{
 							CollectEols( reh, td, clip_rect, top_index );
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
+
 							CollectEof( reh, td, clip_rect, top_index );
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
+
 							CollectSpaces( reh, td, clip_rect, top_index );
-							if( reh.IsRestartRequested ) continue;
 						}
 
 						break;
@@ -386,9 +399,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectSpaces( RestartEventHelper reh, TextData td, Rect clipRect, int topIndex )
+		bool CollectSpaces( ICancellable reh, TextData td, Rect clipRect, int topIndex )
 		{
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -401,7 +414,7 @@ namespace RegExpressWPF.Adorners
 				i >= 0;
 				i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				indices.Add( i );
 			}
@@ -419,7 +432,7 @@ namespace RegExpressWPF.Adorners
 				{
 					if( current_i >= indices.Count ) break;
 
-					if( reh.IsRestartRequested ) return;
+					if( reh.IsCancelRequested ) return;
 
 					var index = indices[current_i];
 					var left = td.Pointers[index];
@@ -437,7 +450,7 @@ namespace RegExpressWPF.Adorners
 				} while( Environment.TickCount < end_time );
 			}
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			var d = UITaskHelper.BeginInvoke( rtb, do_things );
 
@@ -445,7 +458,7 @@ namespace RegExpressWPF.Adorners
 			{
 				d.Wait( );
 
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
 
@@ -459,7 +472,7 @@ namespace RegExpressWPF.Adorners
 
 				foreach( var (index, left_rect, right_rect) in intermediate_results2 )
 				{
-					if( reh.IsRestartRequested ) return false;
+					if( reh.IsCancelRequested ) return false;
 
 					if( right_rect.Bottom < clipRect.Top ) continue;
 					if( left_rect.Top > clipRect.Bottom )
@@ -487,7 +500,7 @@ namespace RegExpressWPF.Adorners
 				intermediate_results2.Clear( );
 			}
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			lock( this )
 			{
@@ -501,9 +514,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEols( RestartEventHelper reh, TextData td, Rect clip_rect, int top_index )
+		bool CollectEols( ICancellable reh, TextData td, Rect clip_rect, int top_index )
 		{
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -515,7 +528,7 @@ namespace RegExpressWPF.Adorners
 
 			for( int i = 0; i < matches.Count; ++i )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				int index = matches[i].Index;
 
@@ -527,7 +540,7 @@ namespace RegExpressWPF.Adorners
 
 				for( int k = previous_index; k < index; ++k )
 				{
-					if( reh.IsRestartRequested ) return false;
+					if( reh.IsCancelRequested ) return false;
 
 					if( UnicodeUtilities.IsRTL( td.Text[k] ) )
 					{
@@ -559,7 +572,7 @@ namespace RegExpressWPF.Adorners
 
 							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
 							{
-								if( reh.IsRestartRequested ) return;
+								if( reh.IsCancelRequested ) return;
 
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 								if( tp == null ) break;
@@ -584,7 +597,7 @@ namespace RegExpressWPF.Adorners
 							}
 						} );
 
-					if( reh.IsRestartRequested ) return false;
+					if( reh.IsCancelRequested ) return false;
 					if( should_continue ) continue;
 					if( should_break ) break;
 
@@ -615,7 +628,7 @@ namespace RegExpressWPF.Adorners
 				}
 			}
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			lock( this )
 			{
@@ -628,9 +641,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEof( RestartEventHelper reh, TextData td, Rect clip_rect, int top_index )
+		bool CollectEof( ICancellable reh, TextData td, Rect clip_rect, int top_index )
 		{
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -658,7 +671,7 @@ namespace RegExpressWPF.Adorners
 
 						for( int k = 0; k < text.Length; ++k )
 						{
-							if( reh.IsRestartRequested ) return;
+							if( reh.IsCancelRequested ) return;
 
 							if( UnicodeUtilities.IsRTL( text[k] ) )
 							{
@@ -677,7 +690,7 @@ namespace RegExpressWPF.Adorners
 
 					for( var tp = end; ; )
 					{
-						if( reh.IsRestartRequested ) return;
+						if( reh.IsCancelRequested ) return;
 
 						tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 						if( tp == null ) break;
@@ -692,7 +705,7 @@ namespace RegExpressWPF.Adorners
 					}
 				} );
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			lock( this )
 			{

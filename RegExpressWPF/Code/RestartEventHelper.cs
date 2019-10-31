@@ -9,59 +9,15 @@ using System.Threading.Tasks;
 namespace RegExpressWPF.Code
 {
 	/// <summary>
-	///  
-	/// </summary>
-	/// <remarks>For local usage only.</remarks>
-	public class RestartEventHelper
-	{
-		readonly AutoResetEvent Event;
-		bool IsRestartRequestDetected;
-
-		public RestartEventHelper( AutoResetEvent ev )
-		{
-			Event = ev;
-			IsRestartRequestDetected = false;
-		}
-
-
-		public void WaitInfinite( )
-		{
-			IsRestartRequestDetected = false;
-			Event.WaitOne( Timeout.Infinite );
-		}
-
-
-		public void WaitForSilence( int timeout1, int timeout2 )
-		{
-			IsRestartRequestDetected = false;
-
-			if( Event.WaitOne( timeout1 ) )
-			{
-				while( Event.WaitOne( timeout2 ) ) {; }
-			}
-		}
-
-
-		public bool IsRestartRequested
-		{
-			get
-			{
-				return IsRestartRequestDetected || ( IsRestartRequestDetected = Event.WaitOne( 0 ) );
-			}
-		}
-	}
-
-
-	/// <summary>
 	/// 
 	/// </summary>
-	public class StoppableRestartEvents : IDisposable
+	public class RestartEvents : IDisposable
 	{
 		readonly AutoResetEvent StopEvent;
 		readonly AutoResetEvent RestartEvent;
 
 
-		public StoppableRestartEvents( )
+		public RestartEvents( )
 		{
 			StopEvent = new AutoResetEvent( initialState: false );
 			RestartEvent = new AutoResetEvent( initialState: false );
@@ -81,9 +37,9 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public StoppableRestartEventHewlper BuildHelper( )
+		public RestartEventsHelper BuildHelper( )
 		{
-			return new StoppableRestartEventHewlper( StopEvent, RestartEvent );
+			return new RestartEventsHelper( StopEvent, RestartEvent );
 		}
 
 
@@ -130,10 +86,16 @@ namespace RegExpressWPF.Code
 	}
 
 
+	public interface ICancellable
+	{
+		bool IsCancelRequested { get; }
+	}
+
+
 	/// <summary>
 	/// 
 	/// </summary>
-	public class StoppableRestartEventHewlper
+	public class RestartEventsHelper : ICancellable
 	{
 		public enum Status
 		{
@@ -149,7 +111,7 @@ namespace RegExpressWPF.Code
 		bool IsRestartRequestDetected;
 
 
-		public StoppableRestartEventHewlper( AutoResetEvent stopEvent, AutoResetEvent restartEvent )
+		public RestartEventsHelper( AutoResetEvent stopEvent, AutoResetEvent restartEvent )
 		{
 			Events = new[] { stopEvent, restartEvent };
 
@@ -261,5 +223,18 @@ namespace RegExpressWPF.Code
 				return GetStatus( ) != Status.None;
 			}
 		}
+
+
+		#region ICancellable
+
+		public bool IsCancelRequested
+		{
+			get
+			{
+				return IsAnyRequested;
+			}
+		}
+
+		#endregion ICancellable
 	}
 }

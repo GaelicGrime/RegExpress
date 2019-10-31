@@ -40,9 +40,9 @@ namespace RegExpressWPF
 		readonly Thread LocalUnderliningThread;
 		readonly Thread ExternalUnderliningThread;
 
-		readonly StoppableRestartEvents RecolouringEvents = new StoppableRestartEvents( );
-		readonly StoppableRestartEvents LocalUnderliningEvents = new StoppableRestartEvents( );
-		readonly StoppableRestartEvents ExternalUnderliningEvents = new StoppableRestartEvents( );
+		readonly RestartEvents RecolouringEvents = new RestartEvents( );
+		readonly RestartEvents LocalUnderliningEvents = new RestartEvents( );
+		readonly RestartEvents ExternalUnderliningEvents = new RestartEvents( );
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
@@ -609,7 +609,7 @@ namespace RegExpressWPF
 						reh.WaitForSilence( 333, 555 );
 
 						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+						if( reh.IsRestartRequested ) continue;
 
 						IReadOnlyList<Match> matches;
 						string eol;
@@ -721,6 +721,9 @@ namespace RegExpressWPF
 							segments_and_styles.Concat( segments_to_uncolour )
 							.OrderBy( s => Math.Abs( center_index - ( s.segment.Index + s.segment.Length / 2 ) ) )
 							.ToList( );
+
+						if( reh.IsStopRequested ) break;
+						if( reh.IsRestartRequested ) continue;
 
 						RtbUtilities.ApplyStyle( reh, ChangeEventHelper, pbProgress, td, all_segments_and_styles );
 

@@ -33,8 +33,8 @@ namespace RegExpressWPF
 		readonly Thread RecolouringThread;
 		readonly Thread HighlightingThread;
 
-		readonly AutoResetEvent RecolouringEvent = new AutoResetEvent( initialState: false );
-		readonly AutoResetEvent HighlightingEvent = new AutoResetEvent( initialState: false );
+		readonly RestartEvents RecolouringEvents = new RestartEvents( );
+		readonly RestartEvents HighlightingEvents = new RestartEvents( );
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
@@ -139,8 +139,8 @@ namespace RegExpressWPF
 
 			if( IsLoaded )
 			{
-				RecolouringEvent.Set( );
-				HighlightingEvent.Set( );
+				RecolouringEvents.SendRestart( );
+				HighlightingEvents.SendRestart( );
 			}
 		}
 
@@ -161,6 +161,9 @@ namespace RegExpressWPF
 		public void StopAll( )
 		{
 			// TODO: stop threads
+
+			RecolouringEvents.SendStop( );
+			HighlightingEvents.SendStop( );
 		}
 
 
@@ -187,8 +190,8 @@ namespace RegExpressWPF
 			LeftHighlightedBracket = -1;
 			RightHighlightedBracket = -1;
 
-			RecolouringEvent.Set( );
-			HighlightingEvent.Set( );
+			RecolouringEvents.SendRestart( );
+			HighlightingEvents.SendRestart( );
 
 			TextChanged?.Invoke( this, null );
 		}
@@ -201,7 +204,7 @@ namespace RegExpressWPF
 			if( !rtb.IsFocused ) return;
 
 			UndoRedoHelper.HandleSelectionChanged( );
-			HighlightingEvent.Set( );
+			HighlightingEvents.SendRestart( );
 		}
 
 
@@ -210,8 +213,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringEvent.Set( );
-			HighlightingEvent.Set( );
+			RecolouringEvents.SendRestart( );
+			HighlightingEvents.SendRestart( );
 		}
 
 
@@ -220,8 +223,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringEvent.Set( );
-			HighlightingEvent.Set( );
+			RecolouringEvents.SendRestart( );
+			HighlightingEvents.SendRestart( );
 		}
 
 
@@ -230,7 +233,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingEvent.Set( );
+			HighlightingEvents.SendRestart( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -248,7 +251,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingEvent.Set( );
+			HighlightingEvents.SendRestart( );
 		}
 
 
@@ -275,7 +278,7 @@ namespace RegExpressWPF
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void RecolouringThreadProc( )
 		{
-			RestartEventHelper reh = new RestartEventHelper( RecolouringEvent );
+			var reh = RecolouringEvents.BuildHelper( );
 			try
 			{
 				for(; ; )
@@ -284,9 +287,15 @@ namespace RegExpressWPF
 
 					reh.WaitInfinite( );
 
+					if( reh.IsStopRequested ) continue;
+					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+
 					for(; ; )
 					{
 						reh.WaitForSilence( 222, 444 );
+
+						if( reh.IsStopRequested ) break;
+						if( reh.IsRestartRequested ) continue;
 
 						RegexOptions regex_options;
 						string eol;
@@ -315,14 +324,21 @@ namespace RegExpressWPF
 
 							if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
+							if( reh.IsAnyRequested ) return;
+
 							td = td0;
 							clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 							TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+							if( reh.IsAnyRequested ) return;
+
 							top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+							if( reh.IsAnyRequested ) return;
 							if( top_index < 0 ) top_index = 0;
 
 							TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+							if( reh.IsAnyRequested ) return;
+
 							// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 							if( bottom_pointer == null || lines_skipped == 0 )
 							{
@@ -331,12 +347,15 @@ namespace RegExpressWPF
 							else
 							{
 								bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+								if( reh.IsAnyRequested ) return;
 							}
 							if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 							if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 						} );
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
+
 						if( td == null ) break;
 						if( td.Text.Length == 0 ) break;
 
@@ -351,13 +370,19 @@ namespace RegExpressWPF
 							.Cast<Match>( )
 							.ToArray( );
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
 						ColouriseComments( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
+
 						ColouriseEscapes( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
+
 						ColouriseNamedGroups( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
 						lock( Locker )
@@ -367,28 +392,32 @@ namespace RegExpressWPF
 								{
 									// ensure the highlighted items are not lost
 									TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis );
-									if( reh.IsRestartRequested ) return;
+									if( reh.IsAnyRequested ) return;
+
 									TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis );
-									if( reh.IsRestartRequested ) return;
+									if( reh.IsAnyRequested ) return;
+
 									TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket );
-									if( reh.IsRestartRequested ) return;
+									if( reh.IsAnyRequested ) return;
+
 									TryMark( coloured_ranges, top_index, td, RightHighlightedBracket );
 								} );
 
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							int center_index = ( top_index + bottom_index ) / 2;
 
 							var segments_to_uncolour = coloured_ranges
 								.GetSegments( reh, false, top_index )
-								?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-								?.ToList( );
+								.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+								.ToList( );
 
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-							if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo ) )
-								continue;
+							RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 						}
 
 						break;
@@ -419,7 +448,7 @@ namespace RegExpressWPF
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void HighlightingThreadProc( )
 		{
-			var reh = new RestartEventHelper( HighlightingEvent );
+			var reh = HighlightingEvents.BuildHelper( );
 			try
 			{
 				for(; ; )
@@ -428,9 +457,15 @@ namespace RegExpressWPF
 
 					reh.WaitInfinite( );
 
+					if( reh.IsStopRequested ) continue;
+					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+
 					for(; ; )
 					{
 						reh.WaitForSilence( 111, 444 );
+
+						if( reh.IsStopRequested ) break;
+						if( reh.IsRestartRequested ) continue;
 
 						RegexOptions regex_options;
 						string eol;
@@ -460,14 +495,20 @@ namespace RegExpressWPF
 
 							if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
+							if( reh.IsAnyRequested ) return;
+
 							td = td0;
 							clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 							TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+							if( reh.IsAnyRequested ) return;
+
 							top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
 							if( top_index < 0 ) top_index = 0;
 
 							TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+							if( reh.IsAnyRequested ) return;
+
 							// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 							if( bottom_pointer == null || lines_skipped == 0 )
 							{
@@ -476,6 +517,7 @@ namespace RegExpressWPF
 							else
 							{
 								bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+								if( reh.IsAnyRequested ) return;
 							}
 							if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 							if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
@@ -483,7 +525,9 @@ namespace RegExpressWPF
 							is_focused = rtb.IsFocused;
 						} );
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
+
 						if( td == null ) break;
 						if( td.Text.Length == 0 ) break;
 
@@ -498,6 +542,7 @@ namespace RegExpressWPF
 							.Cast<Match>( )
 							.ToArray( );
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
 						int left_para_index = -1;
@@ -508,10 +553,15 @@ namespace RegExpressWPF
 						if( is_focused )
 						{
 							var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
+
 							var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
+
 							var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							if( parentheses_at_left.Any( ) )
@@ -520,7 +570,7 @@ namespace RegExpressWPF
 								int found_i = -1;
 								for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
 								{
-									if( reh.IsRestartRequested ) break;
+									if( reh.IsAnyRequested ) break;
 
 									var m = parentheses_at_left[i];
 									if( m.Value == ")" ) --n;
@@ -539,6 +589,7 @@ namespace RegExpressWPF
 								}
 							}
 
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							if( parentheses_at_right.Any( ) )
@@ -547,7 +598,7 @@ namespace RegExpressWPF
 								int found_i = -1;
 								for( int i = 0; i < parentheses_at_right.Length; ++i )
 								{
-									if( reh.IsRestartRequested ) break;
+									if( reh.IsAnyRequested ) break;
 
 									var m = parentheses_at_right[i];
 									if( m.Value == "(" ) --n;
@@ -566,10 +617,12 @@ namespace RegExpressWPF
 								}
 							}
 
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
 
+							if( reh.IsStopRequested ) break;
 							if( reh.IsRestartRequested ) continue;
 
 							if( current_group != null )
@@ -584,6 +637,7 @@ namespace RegExpressWPF
 							}
 						}
 
+						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
 						lock( Locker )
@@ -591,16 +645,14 @@ namespace RegExpressWPF
 							ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 							{
 								TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
-								if( reh.IsRestartRequested ) return;
+								if( reh.IsAnyRequested ) return;
 								TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
-								if( reh.IsRestartRequested ) return;
+								if( reh.IsAnyRequested ) return;
 								TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
-								if( reh.IsRestartRequested ) return;
+								if( reh.IsAnyRequested ) return;
 								TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
 							} );
 						}
-
-						if( reh.IsRestartRequested ) continue;
 
 						break;
 					}
@@ -687,7 +739,7 @@ namespace RegExpressWPF
 		}
 
 
-		private bool ColouriseComments( RestartEventHelper reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		private bool ColouriseComments( ICancellable reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
 		{
 			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
 
@@ -703,7 +755,7 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups1 )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -712,7 +764,7 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups2 )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -723,10 +775,10 @@ namespace RegExpressWPF
 
 			List<Segment> segments = ranges
 				.GetSegments( reh, true, topIndex )
-				?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-				?.ToList( );
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo ) )
 				return false;
@@ -737,7 +789,7 @@ namespace RegExpressWPF
 		}
 
 
-		private bool ColouriseEscapes( RestartEventHelper reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		private bool ColouriseEscapes( ICancellable reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
 		{
 			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
 
@@ -751,13 +803,13 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups1 )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
 				foreach( Match m in EscapeRegex.Matches( g.Value ) )
 				{
-					if( reh.IsRestartRequested ) return false;
+					if( reh.IsCancelRequested ) return false;
 
 					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
 				}
@@ -765,13 +817,13 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups2 )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
 				foreach( Match m in EscapeRegex.Matches( g.Value ) )
 				{
-					if( reh.IsRestartRequested ) return false;
+					if( reh.IsCancelRequested ) return false;
 
 					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
 				}
@@ -781,10 +833,10 @@ namespace RegExpressWPF
 
 			List<Segment> segments = ranges
 					.GetSegments( reh, true, topIndex )
-					?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-					?.ToList( );
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo ) )
 				return false;
@@ -795,7 +847,7 @@ namespace RegExpressWPF
 		}
 
 
-		private bool ColouriseNamedGroups( RestartEventHelper reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
+		private bool ColouriseNamedGroups( ICancellable reh, TextData td, NaiveRanges colouredRanges, Rect clipRect, int topIndex, int bottomIndex, Match[] matches )
 		{
 			var ranges = new NaiveRanges( bottomIndex - topIndex + 1 );
 
@@ -805,7 +857,7 @@ namespace RegExpressWPF
 
 			foreach( var g in left_parentheses )
 			{
-				if( reh.IsRestartRequested ) return false;
+				if( reh.IsCancelRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -825,10 +877,10 @@ namespace RegExpressWPF
 
 			List<Segment> segments = ranges
 				.GetSegments( reh, true, topIndex )
-				?.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-				?.ToList( );
+				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+				.ToList( );
 
-			if( reh.IsRestartRequested ) return false;
+			if( reh.IsCancelRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo ) )
 				return false;
@@ -851,8 +903,8 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( RecolouringEvent ) { }
-					using( HighlightingEvent ) { }
+					using( RecolouringEvents ) { }
+					using( HighlightingEvents ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
