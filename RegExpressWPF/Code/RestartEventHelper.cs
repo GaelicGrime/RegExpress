@@ -225,15 +225,23 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static ICancellable NonCancellable
+		{
+			get { return NonCancellableS.Instance; }
+		}
+
+		sealed class NonCancellableS : ICancellable
+		{
+			internal static readonly NonCancellableS Instance = new NonCancellableS( );
+
+			public bool IsCancelRequested => false;
+		}
+
+
+
 		#region ICancellable
 
-		public bool IsCancelRequested
-		{
-			get
-			{
-				return IsAnyRequested;
-			}
-		}
+		public bool IsCancelRequested => IsAnyRequested;
 
 		#endregion ICancellable
 	}

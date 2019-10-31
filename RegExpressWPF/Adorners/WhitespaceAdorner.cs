@@ -374,11 +374,12 @@ namespace RegExpressWPF.Adorners
 							CollectSpaces( reh, td, clip_rect, top_index );
 						}
 
+
 						break;
 					}
 				}
 			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
 				// ignore
 			}

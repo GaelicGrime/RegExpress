@@ -420,6 +420,7 @@ namespace RegExpressWPF
 							RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 						}
 
+
 						break;
 					}
 				}
@@ -654,11 +655,12 @@ namespace RegExpressWPF
 							} );
 						}
 
+
 						break;
 					}
 				}
 			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			catch( OperationCanceledException ) // also 'TaskCanceledException'
 			{
 				// ignore
 			}
@@ -692,7 +694,7 @@ namespace RegExpressWPF
 		{
 			// TODO: avoid flickering
 
-			if( savedIndex >= 0 )
+			if( savedIndex >= 0 && savedIndex != index )
 			{
 				var tr = td.Range( savedIndex, 1 );
 				tr.Style( PatternNormalStyleInfo );
