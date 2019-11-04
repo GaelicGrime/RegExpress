@@ -410,9 +410,14 @@ namespace RegExpressWPF
 						if( reh.IsStopRequested ) break;
 						if( reh.IsRestartRequested ) continue;
 
+						lock( MatchInfos )
+						{
+							MatchInfos.Clear( );
+							ExternalUnderliningEvents.SendRestart( );
+						}
+
 						string text;
 						IReadOnlyList<Match> matches;
-						string eol;
 						bool show_captures;
 						bool show_succeeded_groups_only;
 						bool show_first_only;
@@ -541,7 +546,12 @@ namespace RegExpressWPF
 
 								span.Tag = match_info;
 
-								MatchInfos.Add( match_info );
+								lock( MatchInfos )
+								{
+									MatchInfos.Add( match_info );
+
+									//...ExternalUnderliningEvents.SendRestart( );
+								}
 
 								// captures for match
 								//if( showCaptures) AppendCaptures( ct, para, LEFT_WIDTH, match, match );
@@ -661,6 +671,9 @@ namespace RegExpressWPF
 						{
 							pbProgress.Visibility = Visibility.Hidden;
 						} );
+
+
+						ExternalUnderliningEvents.SendRestart( );
 
 
 						break;
@@ -1148,31 +1161,34 @@ namespace RegExpressWPF
 						{
 							var segments = new HashSet<Segment>( segments0 );
 
-							foreach( var mi in MatchInfos )
+							lock( MatchInfos ) //...........
 							{
-								foreach( var gi in mi.GroupInfos )
+								foreach( var mi in MatchInfos )
 								{
-									if( reh.IsCancelRequested ) break;
-
-									if( segments.Contains( gi.GroupSegment ) )
-									{
-										inlines_to_underline.Add( (gi.ValueInline, gi) );
-									}
-
-									foreach( var ci in gi.CaptureInfos )
+									foreach( var gi in mi.GroupInfos )
 									{
 										if( reh.IsCancelRequested ) break;
 
-										if( segments.Contains( ci.CaptureSegment ) )
+										if( segments.Contains( gi.GroupSegment ) )
 										{
-											inlines_to_underline.Add( (ci.ValueInline, ci) );
+											inlines_to_underline.Add( (gi.ValueInline, gi) );
+										}
+
+										foreach( var ci in gi.CaptureInfos )
+										{
+											if( reh.IsCancelRequested ) break;
+
+											if( segments.Contains( ci.CaptureSegment ) )
+											{
+												inlines_to_underline.Add( (ci.ValueInline, ci) );
+											}
 										}
 									}
-								}
 
-								if( segments.Contains( mi.MatchSegment ) )
-								{
-									inlines_to_underline.Add( (mi.ValueInline, mi) );
+									if( segments.Contains( mi.MatchSegment ) )
+									{
+										inlines_to_underline.Add( (mi.ValueInline, mi) );
+									}
 								}
 							}
 
