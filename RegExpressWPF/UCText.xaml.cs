@@ -217,6 +217,57 @@ namespace RegExpressWPF
 		}
 
 
+		public void NextMatch( LogicalDirection direction )
+		{
+			IReadOnlyList<Match> matches;
+			string eol;
+
+			lock( this )
+			{
+				matches = LastMatches;
+				eol = LastEol;
+			}
+
+			if( matches == null || !matches.Any( ) )
+			{
+				SystemSounds.Asterisk.Play( );
+				return;
+			}
+
+			var td = rtb.GetTextData( eol );
+
+			// find active match
+			int active_i = -1;
+
+			for( int i = 0; i < matches.Count; i++ )
+			{
+				var m = matches[i];
+
+				if( td.SelectionStart >= m.Index && td.SelectionStart < m.Index + m.Length )
+				{
+					active_i = i;
+					break;
+				}
+			}
+
+			if( active_i >= 0 )
+			{
+				var next_i = direction == LogicalDirection.Backward ? active_i - 1 : active_i + 1;
+				if( next_i >= matches.Count ) next_i = 0;
+				if( next_i < 0 ) next_i = matches.Count - 1;
+
+				var next_match = matches[next_i];
+
+				RtbUtilities.SafeSelect( rtb, td, next_match.Index, next_match.Index + next_match.Length );
+			}
+			else
+			{
+				//...
+				// TODO: implement.
+			}
+		}
+
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( AlreadyLoaded ) return;
@@ -404,7 +455,6 @@ namespace RegExpressWPF
 			}
 #endif
 		}
-
 
 #if DEBUG
 		// https://blogs.msdn.microsoft.com/kirillosenkov/2009/10/12/saving-images-bmp-png-etc-in-wpfsilverlight/

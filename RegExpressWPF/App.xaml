@@ -24,6 +24,12 @@
             <Setter Property="TextWrapping" Value="NoWrap"/>
         </Style>
 
+        <Style x:Key="NavigationButtons" TargetType="Button" PresentationOptions:Freeze="True">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4 0"/>
+        </Style>
+
         <Style TargetType="GridSplitter" PresentationOptions:Freeze="True">
             <Setter Property="Background" Value="WhiteSmoke"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>

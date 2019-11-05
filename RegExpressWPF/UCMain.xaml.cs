@@ -357,6 +357,17 @@ namespace RegExpressWPF
 		}
 
 
+		private void btnPreviousMatch_Click( object sender, RoutedEventArgs e )
+		{
+			ucText.NextMatch( LogicalDirection.Backward );
+		}
+
+		private void btnNextMatch_Click( object sender, RoutedEventArgs e )
+		{
+			ucText.NextMatch( LogicalDirection.Forward );
+		}
+
+
 		// --------------------
 
 
@@ -683,5 +694,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }

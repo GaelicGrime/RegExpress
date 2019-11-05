@@ -64,6 +64,8 @@
                             </TransformGroup>
                         </TextBlock.RenderTransform>
                     </TextBlock>
+                    <Button x:Name="btnPreviousMatch" Content="&#x23F4;" ToolTip="Previous Match" Style="{StaticResource NavigationButtons}" Margin="16 0 4 0" Click="btnPreviousMatch_Click" />
+                    <Button x:Name="btnNextMatch" Content="&#x23F5;" ToolTip="Next Match" Style="{StaticResource NavigationButtons}" Click="btnNextMatch_Click" />
                 </StackPanel>
                 <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" GotKeyboardFocus="ucText_GotKeyboardFocus" />
             </Grid>
