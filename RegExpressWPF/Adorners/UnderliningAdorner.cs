@@ -55,7 +55,10 @@ namespace RegExpressWPF.Adorners
 						(TextPointer start, TextPointer end) r = ranges[i];
 						(TextPointer start, TextPointer end) R = Ranges[i];
 
-						if( !( r.start.CompareTo( R.start ) == 0 && ( r.end.CompareTo( R.end ) == 0 ) ) )
+						if( !R.start.IsInSameDocument( r.start ) ||
+							(
+							!( r.start.CompareTo( R.start ) == 0 && ( r.end.CompareTo( R.end ) == 0 ) ) )
+							)
 						{
 							are_different = true;
 							break;
@@ -143,8 +146,10 @@ namespace RegExpressWPF.Adorners
 			{
 				if( start0.HasValidLayout && end0.HasValidLayout )
 				{
-					if( start0.IsInSameDocument( start_doc ) && end0.IsInSameDocument( start_doc ) )
+					if( start0.IsInSameDocument( start_doc ) )
 					{
+						Debug.Assert( end0.IsInSameDocument( start0 ) );
+
 						var start = start0.GetInsertionPosition( LogicalDirection.Forward );
 						// next is needed to make it work for various cases of combining marks and bidirectional texts
 						var end = end0.GetInsertionPosition( LogicalDirection.Forward ).GetInsertionPosition( LogicalDirection.Backward );
