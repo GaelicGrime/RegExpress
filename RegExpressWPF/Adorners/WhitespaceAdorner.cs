@@ -29,8 +29,7 @@ namespace RegExpressWPF.Adorners
 		readonly char[] SpacesAndTabs = new[] { ' ', '\t' }; // (For performance reasons, we only consider regular spaces)
 		readonly Regex EolRegex = new Regex( @"(?>\r\n|\n\r|\r|\n)", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace );
 
-		readonly Thread WorkerThread;
-		readonly RestartEvents RestartEvents = new RestartEvents( );
+		readonly ResumableLoop Loop;
 
 		List<Rect> PositionsSpaces = new List<Rect>( );
 		List<Rect> PositionsTabs = new List<Rect>( );
@@ -58,12 +57,7 @@ namespace RegExpressWPF.Adorners
 			Rtb.TextChanged += Rtb_TextChanged;
 			Rtb.AddHandler( ScrollViewer.ScrollChangedEvent, new RoutedEventHandler( Rtb_ScrollChanged ), true );
 
-			WorkerThread = new Thread( ThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			WorkerThread.Start( );
+			Loop = new ResumableLoop( ThreadProc, 33, 33, 444 );
 		}
 
 
@@ -75,7 +69,7 @@ namespace RegExpressWPF.Adorners
 			{
 				mShowWhitespaces = yes;
 
-				RestartEvents.SendRestart( );
+				Loop.SendRestart( );
 			}
 
 			// switching to "No" is handled here; the thread does not deal with it
@@ -162,7 +156,7 @@ namespace RegExpressWPF.Adorners
 
 			PreviousTextChangedTime = Environment.TickCount;
 
-			RestartEvents.SendRestart( );
+			Loop.SendRestart( );
 		}
 
 
@@ -173,7 +167,7 @@ namespace RegExpressWPF.Adorners
 			if( !mShowWhitespaces ) return;
 
 			InvalidateVisual( ); // to redraw what we already have, in new positions
-			RestartEvents.SendRestart( );
+			Loop.SendRestart( );
 		}
 
 
@@ -236,7 +230,7 @@ namespace RegExpressWPF.Adorners
 			if( IsDbgDisabled ) return;
 
 			DelayedInvalidateVisual( );
-			RestartEvents.SendRestart( );
+			Loop.SendRestart( );
 		}
 
 
@@ -306,103 +300,57 @@ namespace RegExpressWPF.Adorners
 
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ThreadProc( )
+		void ThreadProc( ICancellable cnc )
 		{
-			var reh = RestartEvents.BuildHelper( );
+			if( !mShowWhitespaces ) return;
 
-			try
-			{
-				for(; ; )
+			var rtb = Rtb;
+			TextData td = null;
+			Rect clip_rect = Rect.Empty;
+			int top_index = 0;
+
+			UITaskHelper.Invoke( rtb,
+				( ) =>
 				{
-					// TODO: consider things related to termination
+					td = null;
 
-					reh.WaitInfinite( );
+					var start_doc = rtb.Document.ContentStart;
+					var end_doc = rtb.Document.ContentStart;
 
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
-					if( !mShowWhitespaces ) continue;
+					var td0 = rtb.GetTextData( null );
+					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-					for(; ; )
-					{
-						reh.WaitForSilence( 33, 777 );
+					if( cnc.IsCancelRequested ) return;
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+					td = td0;
+					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
-						var rtb = Rtb;
-						TextData td = null;
-						Rect clip_rect = Rect.Empty;
-						int top_index = 0;
+					TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
+					top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+					if( top_index < 0 ) top_index = 0;
+				} );
 
-						UITaskHelper.Invoke( rtb,
-							( ) =>
-							{
-								td = null;
+			if( cnc.IsCancelRequested ) return;
 
-								var start_doc = rtb.Document.ContentStart;
-								var end_doc = rtb.Document.ContentStart;
-
-								if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-
-								var td0 = rtb.GetTextData( null );
-								if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
-								if( reh.IsAnyRequested ) return;
-
-								td = td0;
-								clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-								TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-								top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
-								if( top_index < 0 ) top_index = 0;
-							} );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						if( td != null )
-						{
-							CollectEols( reh, td, clip_rect, top_index );
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							CollectEof( reh, td, clip_rect, top_index );
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							CollectSpaces( reh, td, clip_rect, top_index );
-						}
-
-
-						break;
-					}
-				}
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+			if( td != null )
 			{
-				// ignore
+				CollectEols( cnc, td, clip_rect, top_index );
+				if( cnc.IsCancelRequested ) return;
+
+				CollectEof( cnc, td, clip_rect, top_index );
+				if( cnc.IsCancelRequested ) return;
+
+				CollectSpaces( cnc, td, clip_rect, top_index );
 			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
+
 		}
 
 
-		bool CollectSpaces( ICancellable reh, TextData td, Rect clipRect, int topIndex )
+		bool CollectSpaces( ICancellable cnc, TextData td, Rect clipRect, int topIndex )
 		{
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -415,7 +363,7 @@ namespace RegExpressWPF.Adorners
 				i >= 0;
 				i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( cnc.IsCancelRequested ) return false;
 
 				indices.Add( i );
 			}
@@ -433,7 +381,7 @@ namespace RegExpressWPF.Adorners
 				{
 					if( current_i >= indices.Count ) break;
 
-					if( reh.IsCancelRequested ) return;
+					if( cnc.IsCancelRequested ) return;
 
 					var index = indices[current_i];
 					var left = td.Pointers[index];
@@ -451,7 +399,7 @@ namespace RegExpressWPF.Adorners
 				} while( Environment.TickCount < end_time );
 			}
 
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			var d = UITaskHelper.BeginInvoke( rtb, do_things );
 
@@ -459,7 +407,7 @@ namespace RegExpressWPF.Adorners
 			{
 				d.Wait( );
 
-				if( reh.IsCancelRequested ) return false;
+				if( cnc.IsCancelRequested ) return false;
 
 				(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
 
@@ -473,7 +421,7 @@ namespace RegExpressWPF.Adorners
 
 				foreach( var (index, left_rect, right_rect) in intermediate_results2 )
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( cnc.IsCancelRequested ) return false;
 
 					if( right_rect.Bottom < clipRect.Top ) continue;
 					if( left_rect.Top > clipRect.Bottom )
@@ -501,7 +449,7 @@ namespace RegExpressWPF.Adorners
 				intermediate_results2.Clear( );
 			}
 
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			lock( this )
 			{
@@ -515,9 +463,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEols( ICancellable reh, TextData td, Rect clip_rect, int top_index )
+		bool CollectEols( ICancellable cnc, TextData td, Rect clip_rect, int top_index )
 		{
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -529,7 +477,7 @@ namespace RegExpressWPF.Adorners
 
 			for( int i = 0; i < matches.Count; ++i )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( cnc.IsCancelRequested ) return false;
 
 				int index = matches[i].Index;
 
@@ -541,7 +489,7 @@ namespace RegExpressWPF.Adorners
 
 				for( int k = previous_index; k < index; ++k )
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( cnc.IsCancelRequested ) return false;
 
 					if( UnicodeUtilities.IsRTL( td.Text[k] ) )
 					{
@@ -573,7 +521,7 @@ namespace RegExpressWPF.Adorners
 
 							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
 							{
-								if( reh.IsCancelRequested ) return;
+								if( cnc.IsCancelRequested ) return;
 
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 								if( tp == null ) break;
@@ -583,6 +531,8 @@ namespace RegExpressWPF.Adorners
 
 								var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
 								var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
+
+								if( cnc.IsCancelRequested ) return;
 
 								if( rect_b.Bottom < left_rect.Top && rect_f.Bottom < left_rect.Top ) break;
 
@@ -598,7 +548,7 @@ namespace RegExpressWPF.Adorners
 							}
 						} );
 
-					if( reh.IsCancelRequested ) return false;
+					if( cnc.IsCancelRequested ) return false;
 					if( should_continue ) continue;
 					if( should_break ) break;
 
@@ -629,7 +579,7 @@ namespace RegExpressWPF.Adorners
 				}
 			}
 
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			lock( this )
 			{
@@ -642,9 +592,9 @@ namespace RegExpressWPF.Adorners
 		}
 
 
-		bool CollectEof( ICancellable reh, TextData td, Rect clip_rect, int top_index )
+		bool CollectEof( ICancellable cnc, TextData td, Rect clip_rect, int top_index )
 		{
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -672,7 +622,7 @@ namespace RegExpressWPF.Adorners
 
 						for( int k = 0; k < text.Length; ++k )
 						{
-							if( reh.IsCancelRequested ) return;
+							if( cnc.IsCancelRequested ) return;
 
 							if( UnicodeUtilities.IsRTL( text[k] ) )
 							{
@@ -691,7 +641,7 @@ namespace RegExpressWPF.Adorners
 
 					for( var tp = end; ; )
 					{
-						if( reh.IsCancelRequested ) return;
+						if( cnc.IsCancelRequested ) return;
 
 						tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 						if( tp == null ) break;
@@ -706,7 +656,7 @@ namespace RegExpressWPF.Adorners
 					}
 				} );
 
-			if( reh.IsCancelRequested ) return false;
+			if( cnc.IsCancelRequested ) return false;
 
 			lock( this )
 			{
