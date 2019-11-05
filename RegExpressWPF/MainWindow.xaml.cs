@@ -30,7 +30,7 @@ namespace RegExpressWPF
 	/// </summary>
 	public partial class MainWindow : Window, IDisposable
 	{
-		readonly TaskHelper AutoSaveTask = new TaskHelper( );
+		readonly ResumableLoop AutoSaveLoop;
 
 		bool IsFullyLoaded = false;
 
@@ -41,6 +41,12 @@ namespace RegExpressWPF
 		public MainWindow( )
 		{
 			InitializeComponent( );
+
+			var MIN_INTERVAL = TimeSpan.FromSeconds( 5 );
+			var interval = Properties.Settings.Default.AutoSaveInterval;
+			if( interval < MIN_INTERVAL ) interval = MIN_INTERVAL;
+
+			AutoSaveLoop = new ResumableLoop( AutoSaveThreadProc, (int)interval.TotalMilliseconds );
 		}
 
 
@@ -77,7 +83,7 @@ namespace RegExpressWPF
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		private void Window_Closing( object sender, System.ComponentModel.CancelEventArgs e )
 		{
-			AutoSaveTask.Stop( );
+			AutoSaveLoop.SendStop( );
 
 			try
 			{
@@ -97,7 +103,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			AutoSaveTask.Restart( AutoSaveTaskProc );
+			AutoSaveLoop.SendRestart( );
 		}
 
 
@@ -346,33 +352,9 @@ namespace RegExpressWPF
 		}
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void AutoSaveTaskProc( CancellationToken ct )
+		void AutoSaveThreadProc( ICancellable cnc )
 		{
-			try
-			{
-				var MIN_INTERVAL = TimeSpan.FromSeconds( 5 );
-				var interval = Properties.Settings.Default.AutoSaveInterval;
-				if( interval < MIN_INTERVAL ) interval = MIN_INTERVAL;
-
-				if( ct.WaitHandle.WaitOne( interval ) ) return;
-				ct.ThrowIfCancellationRequested( );
-
-				Dispatcher.InvokeAsync( SaveAllTabData, DispatcherPriority.ApplicationIdle, ct );
-			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
-			{
-				Utilities.DbgSimpleLog( exc );
-
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				if( Debugger.IsAttached ) Debugger.Break( );
-				else Debug.Fail( exc.Message, exc.ToString( ) );
-
-				// ignore
-			}
+			Dispatcher.InvokeAsync( SaveAllTabData, DispatcherPriority.ApplicationIdle );
 		}
 
 
@@ -388,7 +370,7 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( AutoSaveTask ) { }
+					using( AutoSaveLoop ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

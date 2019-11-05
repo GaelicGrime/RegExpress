@@ -27,9 +27,9 @@ namespace RegExpressWPF
 	/// </summary>
 	public partial class UCMain : UserControl, IDisposable
 	{
-		readonly TaskHelper FindMatchesTask = new TaskHelper( );
-		readonly TaskHelper UpdateWhitespaceWarningTask = new TaskHelper( );
-		readonly TaskHelper ShowTextInfoTask = new TaskHelper( );
+		readonly ResumableLoop FindMatchesLoop;
+		readonly ResumableLoop UpdateWhitespaceWarningLoop;
+		readonly ResumableLoop ShowTextInfoLoop;
 
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
@@ -78,6 +78,10 @@ namespace RegExpressWPF
 			pnlShowAll.Visibility = Visibility.Collapsed;
 			pnlShowFirst.Visibility = Visibility.Collapsed;
 			lblWhitespaceWarning.Visibility = Visibility.Hidden;
+
+			FindMatchesLoop = new ResumableLoop( FindMatchesThreadProc, 333, 555 );
+			UpdateWhitespaceWarningLoop = new ResumableLoop( UpdateWhitespaceWarningThreadProc, 444, 777 );
+			ShowTextInfoLoop = new ResumableLoop( ShowTextInfoThreadProc, 333, 555 );
 		}
 
 
@@ -208,8 +212,8 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			RestartFindMatches( );
-			RestartUpdateWhitespaceWarning( );
+			FindMatchesLoop.SendRestart( );
+			UpdateWhitespaceWarningLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -220,9 +224,9 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			RestartFindMatches( );
-			RestartShowTextInfo( );
-			RestartUpdateWhitespaceWarning( );
+			FindMatchesLoop.SendRestart( );
+			ShowTextInfoLoop.SendRestart( );
+			UpdateWhitespaceWarningLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -233,7 +237,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			RestartShowTextInfo( );
+			ShowTextInfoLoop.SendRestart( );
 		}
 
 
@@ -246,7 +250,7 @@ namespace RegExpressWPF
 			{
 				ucTextHadFocus = true;
 
-				RestartShowTextInfo( );
+				ShowTextInfoLoop.SendRestart( );
 			}
 		}
 
@@ -302,7 +306,7 @@ namespace RegExpressWPF
 			UpdateRegexOptionsControls( );
 
 			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
-			RestartFindMatches( );
+			FindMatchesLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -316,7 +320,7 @@ namespace RegExpressWPF
 			ucPattern.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 			ucText.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 
-			RestartUpdateWhitespaceWarning( );
+			UpdateWhitespaceWarningLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -346,8 +350,8 @@ namespace RegExpressWPF
 			if( IsInChange ) return;
 
 			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
-			RestartFindMatches( );
-			RestartShowTextInfo( );
+			FindMatchesLoop.SendRestart( );
+			ShowTextInfoLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -469,220 +473,172 @@ namespace RegExpressWPF
 
 		private void RestartAll( )
 		{
-			RestartFindMatches( );
-			RestartShowTextInfo( );
-			RestartUpdateWhitespaceWarning( );
+			FindMatchesLoop.SendRestart( );
+			ShowTextInfoLoop.SendRestart( );
+			UpdateWhitespaceWarningLoop.SendRestart( );
 		}
 
 
 		private void StopAll( )
 		{
-			FindMatchesTask.Stop( );
-			UpdateWhitespaceWarningTask.Stop( );
-			ShowTextInfoTask.Stop( );
+			FindMatchesLoop.SendStop( );
+			UpdateWhitespaceWarningLoop.SendStop( );
+			ShowTextInfoLoop.SendStop( );
 		}
 
 
-		void RestartFindMatches( )
+		void FindMatchesThreadProc( ICancellable cnc )
 		{
-			FindMatchesTask.Stop( );
+			string eol = null;
+			string pattern = null;
+			string text = null;
+			bool first_only = false;
+			RegexOptions options = RegexOptions.None;
 
-			FindMatchesTask.Restart( ct => FindMatchesTaskProc( ct ) );
-		}
-
-
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		private void FindMatchesTaskProc( CancellationToken ct )
-		{
-			try
-			{
-				if( ct.WaitHandle.WaitOne( 333 ) ) return;
-				ct.ThrowIfCancellationRequested( );
-
-				string eol = null;
-				string pattern = null;
-				string text = null;
-				bool first_only = false;
-				RegexOptions options = RegexOptions.None;
-
-				UITaskHelper.Invoke( this, ct,
-					( ) =>
-					{
-						eol = GetEolOption( );
-						pattern = ucPattern.GetSimpleTextData( eol ).Text;
-						text = ucText.GetSimpleTextData( eol ).Text;
-						first_only = cbShowFirstOnly.IsChecked == true;
-						options = GetRegexOptions( excludeIncompatibility: false );
-
-					} );
-
-				if( string.IsNullOrEmpty( pattern ) )
+			UITaskHelper.Invoke( this,
+				( ) =>
 				{
-					UITaskHelper.BeginInvoke( this, ct,
-						( ) =>
-						{
-							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
-							ucMatches.ShowNoPattern( );
-							lblMatches.Text = "Matches";
-							pnlShowAll.Visibility = Visibility.Collapsed;
-							pnlShowFirst.Visibility = Visibility.Collapsed;
-						} );
+					eol = GetEolOption( );
+					pattern = ucPattern.GetSimpleTextData( eol ).Text;
+					if( cnc.IsCancellationRequested ) return;
+					text = ucText.GetSimpleTextData( eol ).Text;
+					if( cnc.IsCancellationRequested ) return;
+					first_only = cbShowFirstOnly.IsChecked == true;
+					options = GetRegexOptions( excludeIncompatibility: false );
+				} );
 
-					return;
-				}
+			if( cnc.IsCancellationRequested ) return;
 
-				var re = new Regex( pattern, options );
-
-				MatchCollection matches0 = re.Matches( text ); // TODO: make it cancellable
-
-				ct.ThrowIfCancellationRequested( );
-
-				var matches_to_show = first_only ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
-
-				UITaskHelper.BeginInvoke( this, ct,
-					( ) =>
-					{
-						ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-						ucMatches.SetMatches( text, matches_to_show, first_only, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
-
-						lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-						pnlShowAll.Visibility = first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-						pnlShowFirst.Visibility = !first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-					} );
-			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
+			if( string.IsNullOrEmpty( pattern ) )
 			{
-				Utilities.DbgSimpleLog( exc );
-
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				UITaskHelper.BeginInvoke( this, CancellationToken.None,
+				UITaskHelper.BeginInvoke( this,
 					( ) =>
 					{
 						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
-						ucMatches.ShowError( exc );
-						lblMatches.Text = "Error";
+						ucMatches.ShowNoPattern( );
+						lblMatches.Text = "Matches";
 						pnlShowAll.Visibility = Visibility.Collapsed;
 						pnlShowFirst.Visibility = Visibility.Collapsed;
 					} );
 			}
-		}
-
-
-		void RestartShowTextInfo( )
-		{
-			ShowTextInfoTask.Restart( ShowTextInfoTaskProc );
-		}
-
-
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ShowTextInfoTaskProc( CancellationToken ct )
-		{
-			try
+			else
 			{
-				if( ct.WaitHandle.WaitOne( 222 ) ) return;
-				ct.ThrowIfCancellationRequested( );
+				Regex re = null;
+				bool pattern_is_good = false;
 
-				UITaskHelper.BeginInvoke( this, ct,
-					( ) =>
-					{
-						var td = ucText.GetTextData( GetEolOption( ) );
-
-						lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
-						if( lblTextInfo.Visibility == Visibility.Visible )
+				try
+				{
+					re = new Regex( pattern, options );
+					pattern_is_good = true;
+				}
+				catch( Exception exc )
+				{
+					UITaskHelper.BeginInvoke( this, CancellationToken.None,
+						( ) =>
 						{
-							string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
+							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+							ucMatches.ShowError( exc );
+							lblMatches.Text = "Error";
+							pnlShowAll.Visibility = Visibility.Collapsed;
+							pnlShowFirst.Visibility = Visibility.Collapsed;
+						} );
 
-							if( ucTextHadFocus )
-							{
-								s += $", Index: {td.SelectionStart:#,##0}";
-							}
+					Debug.Assert( !pattern_is_good );
+				}
 
-							s += ")";
+				if( pattern_is_good )
+				{
+					MatchCollection matches0 = re.Matches( text ); // TODO: make it cancellable, or use timeout
 
-							lblTextInfo.Text = s;
-						}
-					} );
-			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
-			{
-				Utilities.DbgSimpleLog( exc );
+					if( cnc.IsCancellationRequested ) return;
 
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				// TODO: report
+					var matches_to_show = first_only ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
+
+					if( cnc.IsCancellationRequested ) return;
+
+					UITaskHelper.BeginInvoke( this,
+									( ) =>
+									{
+										ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
+										ucMatches.SetMatches( text, matches_to_show, first_only, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
+
+										lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
+										pnlShowAll.Visibility = first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+										pnlShowFirst.Visibility = !first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+									} );
+				}
 			}
 		}
 
 
-		void RestartUpdateWhitespaceWarning( )
+		void ShowTextInfoThreadProc( ICancellable cnc )
 		{
-			UpdateWhitespaceWarningTask.Restart( UpdateWhitespaceWarningTaskProc );
-		}
+			UITaskHelper.BeginInvoke( this,
+				( ) =>
+				{
+					var td = ucText.GetTextData( GetEolOption( ) );
 
+					if( cnc.IsCancellationRequested ) return;
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void UpdateWhitespaceWarningTaskProc( CancellationToken ct )
-		{
-			try
-			{
-				if( ct.WaitHandle.WaitOne( 777 ) ) return;
-				ct.ThrowIfCancellationRequested( );
-
-				Visibility visibility = Visibility.Hidden;
-				string eol = null;
-
-				UITaskHelper.Invoke( this, ct,
-					( ) =>
+					lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
+					if( lblTextInfo.Visibility == Visibility.Visible )
 					{
-						if( !cbShowWhitespaces.IsChecked == true )
+						string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
+
+						if( ucTextHadFocus )
 						{
-							eol = GetEolOption( );
-							var td = ucPattern.GetTextData( eol );
-
-							if( RegexHasWhitespace.IsMatch( td.Text ) )
-							{
-								visibility = Visibility.Visible;
-							}
-						}
-					} );
-
-				ct.ThrowIfCancellationRequested( );
-
-				UITaskHelper.Invoke( this, ct,
-					( ) =>
-					{
-						if( visibility == Visibility.Hidden && !cbShowWhitespaces.IsChecked == true )
-						{
-							var td = ucText.GetTextData( eol );
-
-							if( RegexHasWhitespace.IsMatch( td.Text ) )
-							{
-								visibility = Visibility.Visible;
-							}
+							s += $", Index: {td.SelectionStart:#,##0}";
 						}
 
-						lblWhitespaceWarning.Visibility = visibility;
-					} );
-			}
-			catch( OperationCanceledException exc ) // also 'TaskCanceledException'
-			{
-				Utilities.DbgSimpleLog( exc );
+						s += ")";
 
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				// TODO: report
-			}
+						lblTextInfo.Text = s;
+					}
+				} );
+		}
+
+
+		void UpdateWhitespaceWarningThreadProc( ICancellable cnc )
+		{
+			Visibility visibility = Visibility.Hidden;
+			string eol = null;
+
+			UITaskHelper.Invoke( this,
+				( ) =>
+				{
+					if( !cbShowWhitespaces.IsChecked == true )
+					{
+						eol = GetEolOption( );
+						var td = ucPattern.GetTextData( eol );
+
+						if( cnc.IsCancellationRequested ) return;
+
+						if( RegexHasWhitespace.IsMatch( td.Text ) )
+						{
+							visibility = Visibility.Visible;
+						}
+					}
+				} );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			UITaskHelper.Invoke( this,
+				( ) =>
+				{
+					if( visibility == Visibility.Hidden && !cbShowWhitespaces.IsChecked == true )
+					{
+						var td = ucText.GetTextData( eol );
+
+						if( cnc.IsCancellationRequested ) return;
+
+						if( RegexHasWhitespace.IsMatch( td.Text ) )
+						{
+							visibility = Visibility.Visible;
+						}
+					}
+
+					lblWhitespaceWarning.Visibility = visibility;
+				} );
 		}
 
 
@@ -698,9 +654,9 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( FindMatchesTask ) { }
-					using( UpdateWhitespaceWarningTask ) { }
-					using( ShowTextInfoTask ) { }
+					using( FindMatchesLoop ) { }
+					using( UpdateWhitespaceWarningLoop ) { }
+					using( ShowTextInfoLoop ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

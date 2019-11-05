@@ -163,7 +163,7 @@ namespace RegExpressWPF.Code
 				}
 				else
 				{
-					text = btd.Text.Replace( btd.Eol, eol  );
+					text = btd.Text.Replace( btd.Eol, eol );
 				}
 
 				var (selection_start, selection_end) = GetSelection( rtb.Selection, btd.Pointers );
@@ -580,6 +580,22 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static TextRange Range0B( this BaseTextData td, int start, int len )
+		{
+			var range = new TextRange( td.Pointers[start], td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Backward ) );
+
+			return range;
+		}
+
+
+		public static TextRange RangeFB( this BaseTextData td, int start, int len )
+		{
+			var range = new TextRange( td.Pointers[start].GetInsertionPosition( LogicalDirection.Forward ), td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Backward ) );
+
+			return range;
+		}
+
+
 		public static TextRange Range( this TextData td, Segment segment )
 		{
 			return Range( td, segment.Index, segment.Length );
@@ -636,7 +652,7 @@ namespace RegExpressWPF.Code
 		const int SEGMENT_LENGTH = 7000;
 
 
-		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
+		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
 		{
 			// split into smaller segments
 
@@ -649,7 +665,7 @@ namespace RegExpressWPF.Code
 
 				do
 				{
-					ct.ThrowIfCancellationRequested( );
+					if( reh.IsCancellationRequested ) return false;
 
 					int len = Math.Min( SEGMENT_LENGTH, rem );
 
@@ -667,7 +683,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				ceh.Invoke( ct, ( ) =>
+				ceh.Invoke( CancellationToken.None, ( ) => //...
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -682,9 +698,9 @@ namespace RegExpressWPF.Code
 
 			for( int i = 0; i < last_i; )
 			{
-				ct.ThrowIfCancellationRequested( );
+				if( reh.IsCancellationRequested ) return false;
 
-				ceh.Invoke( ct, ( ) =>
+				ceh.Invoke( CancellationToken.None, ( ) =>
 				{
 					if( pb != null )
 					{
@@ -699,7 +715,7 @@ namespace RegExpressWPF.Code
 					int dbg_i = i;//...
 					do
 					{
-						ct.ThrowIfCancellationRequested( );
+						//if( reh.IsAnyRequested ) return false;
 
 						var segment = segments[i];
 						td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
@@ -710,10 +726,12 @@ namespace RegExpressWPF.Code
 
 				} );
 			}
+
+			return true;
 		}
 
 
-		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
+		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
 		{
 			// split into smaller segments
 
@@ -726,7 +744,7 @@ namespace RegExpressWPF.Code
 
 				do
 				{
-					ct.ThrowIfCancellationRequested( );
+					if( reh.IsCancellationRequested ) return false;
 
 					int len = Math.Min( SEGMENT_LENGTH, rem );
 
@@ -744,7 +762,7 @@ namespace RegExpressWPF.Code
 
 			if( pb != null )
 			{
-				ceh.Invoke( ct, ( ) =>
+				ceh.Invoke( CancellationToken.None, ( ) => //...
 				{
 					pb.Visibility = Visibility.Hidden;
 					pb.Maximum = last_i;
@@ -759,9 +777,9 @@ namespace RegExpressWPF.Code
 
 			for( int i = 0; i < last_i; )
 			{
-				ct.ThrowIfCancellationRequested( );
+				if( reh.IsCancellationRequested ) return false;
 
-				ceh.Invoke( ct, ( ) =>
+				ceh.Invoke( CancellationToken.None, ( ) =>
 				{
 					if( pb != null )
 					{
@@ -776,8 +794,6 @@ namespace RegExpressWPF.Code
 					int dbg_i = i;//...
 					do
 					{
-						//ct.ThrowIfCancellationRequested( );
-
 						var segment = segments[i];
 						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
 
@@ -787,6 +803,8 @@ namespace RegExpressWPF.Code
 
 				} );
 			}
+
+			return true;
 		}
 
 
