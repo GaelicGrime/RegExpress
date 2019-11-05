@@ -290,20 +290,20 @@ namespace RegExpressWPF
 
 				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
 				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
@@ -313,13 +313,13 @@ namespace RegExpressWPF
 				else
 				{
 					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 				}
 				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( td == null ) return;
 			if( td.Text.Length == 0 ) return;
@@ -335,16 +335,16 @@ namespace RegExpressWPF
 				.Cast<Match>( )
 				.ToArray( );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ColouriseComments( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ColouriseEscapes( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ColouriseNamedGroups( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			lock( Locker )
 			{
@@ -353,18 +353,18 @@ namespace RegExpressWPF
 					{
 						// ensure the highlighted items are not lost
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis );
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis );
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket );
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket );
 					} );
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				int center_index = ( top_index + bottom_index ) / 2;
 
@@ -373,7 +373,7 @@ namespace RegExpressWPF
 					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 					.ToList( );
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
 				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
@@ -411,19 +411,19 @@ namespace RegExpressWPF
 
 				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
 				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
@@ -433,7 +433,7 @@ namespace RegExpressWPF
 				else
 				{
 					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 				}
 				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
@@ -441,7 +441,7 @@ namespace RegExpressWPF
 				is_focused = rtb.IsFocused;
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( td == null ) return;
 			if( td.Text.Length == 0 ) return;
@@ -457,7 +457,7 @@ namespace RegExpressWPF
 				.Cast<Match>( )
 				.ToArray( );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			int left_para_index = -1;
 			int right_para_index = -1;
@@ -467,13 +467,13 @@ namespace RegExpressWPF
 			if( is_focused )
 			{
 				var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				if( parentheses_at_left.Any( ) )
 				{
@@ -481,7 +481,7 @@ namespace RegExpressWPF
 					int found_i = -1;
 					for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
 					{
-						if( cnc.IsCancelRequested ) break;
+						if( cnc.IsCancellationRequested ) break;
 
 						var m = parentheses_at_left[i];
 						if( m.Value == ")" ) --n;
@@ -500,7 +500,7 @@ namespace RegExpressWPF
 					}
 				}
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				if( parentheses_at_right.Any( ) )
 				{
@@ -508,7 +508,7 @@ namespace RegExpressWPF
 					int found_i = -1;
 					for( int i = 0; i < parentheses_at_right.Length; ++i )
 					{
-						if( cnc.IsCancelRequested ) break;
+						if( cnc.IsCancellationRequested ) break;
 
 						var m = parentheses_at_right[i];
 						if( m.Value == "(" ) --n;
@@ -527,11 +527,11 @@ namespace RegExpressWPF
 					}
 				}
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				if( current_group != null )
 				{
@@ -545,18 +545,18 @@ namespace RegExpressWPF
 				}
 			}
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			lock( Locker )
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
 					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
 				} );
 			}
@@ -639,7 +639,7 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups1 )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -648,7 +648,7 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups2 )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -662,7 +662,7 @@ namespace RegExpressWPF
 				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 				.ToList( );
 
-			if( reh.IsCancelRequested ) return false;
+			if( reh.IsCancellationRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternCommentStyleInfo ) )
 				return false;
@@ -687,13 +687,13 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups1 )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
 				foreach( Match m in EscapeRegex.Matches( g.Value ) )
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( reh.IsCancellationRequested ) return false;
 
 					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
 				}
@@ -701,13 +701,13 @@ namespace RegExpressWPF
 
 			foreach( Group g in groups2 )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
 				foreach( Match m in EscapeRegex.Matches( g.Value ) )
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( reh.IsCancellationRequested ) return false;
 
 					ranges.SafeSet( g.Index - topIndex + m.Index, m.Length );
 				}
@@ -720,7 +720,7 @@ namespace RegExpressWPF
 					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 					.ToList( );
 
-			if( reh.IsCancelRequested ) return false;
+			if( reh.IsCancellationRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternEscapeStyleInfo ) )
 				return false;
@@ -741,7 +741,7 @@ namespace RegExpressWPF
 
 			foreach( var g in left_parentheses )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				if( g.Index > bottomIndex ) break;
 
@@ -764,7 +764,7 @@ namespace RegExpressWPF
 				.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
 				.ToList( );
 
-			if( reh.IsCancelRequested ) return false;
+			if( reh.IsCancellationRequested ) return false;
 
 			if( !RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments, PatternGroupNameStyleInfo ) )
 				return false;

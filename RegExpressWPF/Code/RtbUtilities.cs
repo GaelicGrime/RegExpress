@@ -652,83 +652,6 @@ namespace RegExpressWPF.Code
 		const int SEGMENT_LENGTH = 7000;
 
 
-		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
-		{
-			// split into smaller segments
-
-			var segments = new List<(int index, int length, StyleInfo styleInfo)>( segmentsAndStyles.Count );
-
-			foreach( var segment_and_style in segmentsAndStyles )
-			{
-				int j = segment_and_style.segment.Index;
-				int rem = segment_and_style.segment.Length;
-
-				do
-				{
-					ct.ThrowIfCancellationRequested( );
-
-					int len = Math.Min( SEGMENT_LENGTH, rem );
-
-					segments.Add( (j, len, segment_and_style.styleInfo) );
-
-					j += len;
-					rem -= len;
-
-				} while( rem > 0 );
-			}
-
-
-			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
-			int last_i = segments.Count;
-
-			if( pb != null )
-			{
-				ceh.Invoke( ct, ( ) =>
-				{
-					pb.Visibility = Visibility.Hidden;
-					pb.Maximum = last_i;
-				} );
-			}
-
-			//var rnd = new Random( );
-			//segments = segments.OrderBy( s => rnd.Next() ).ToList( ); // just for fun
-
-			//...
-			//Debug.WriteLine( $"Total segments: {segments.Count}" );
-
-			for( int i = 0; i < last_i; )
-			{
-				ct.ThrowIfCancellationRequested( );
-
-				ceh.Invoke( ct, ( ) =>
-				{
-					if( pb != null )
-					{
-						if( Environment.TickCount > show_pb_time )
-						{
-							pb.Value = i;
-							pb.Visibility = Visibility.Visible;
-						}
-					}
-
-					var end = Environment.TickCount + 22;
-					int dbg_i = i;//...
-					do
-					{
-						ct.ThrowIfCancellationRequested( );
-
-						var segment = segments[i];
-						td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
-
-					} while( ++i < last_i && Environment.TickCount < end );
-
-					//Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
-
-				} );
-			}
-		}
-
-
 		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
 		{
 			// split into smaller segments
@@ -742,7 +665,7 @@ namespace RegExpressWPF.Code
 
 				do
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( reh.IsCancellationRequested ) return false;
 
 					int len = Math.Min( SEGMENT_LENGTH, rem );
 
@@ -775,7 +698,7 @@ namespace RegExpressWPF.Code
 
 			for( int i = 0; i < last_i; )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				ceh.Invoke( CancellationToken.None, ( ) =>
 				{
@@ -808,83 +731,6 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static void ApplyStyle( CancellationToken ct, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
-		{
-			// split into smaller segments
-
-			var segments = new List<Segment>( segments0.Count );
-
-			foreach( var segment in segments0 )
-			{
-				int j = segment.Index;
-				int rem = segment.Length;
-
-				do
-				{
-					ct.ThrowIfCancellationRequested( );
-
-					int len = Math.Min( SEGMENT_LENGTH, rem );
-
-					segments.Add( new Segment( j, len ) );
-
-					j += len;
-					rem -= len;
-
-				} while( rem > 0 );
-			}
-
-
-			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
-			int last_i = segments.Count;
-
-			if( pb != null )
-			{
-				ceh.Invoke( ct, ( ) =>
-				{
-					pb.Visibility = Visibility.Hidden;
-					pb.Maximum = last_i;
-				} );
-			}
-
-			//var rnd = new Random( );
-			//segments = segments.OrderBy( s => rnd.Next( ) ).ToList( ); // just for fun
-
-			//...
-			//Debug.WriteLine( $"Total segments: {segments.Count}" );
-
-			for( int i = 0; i < last_i; )
-			{
-				ct.ThrowIfCancellationRequested( );
-
-				ceh.Invoke( ct, ( ) =>
-				{
-					if( pb != null )
-					{
-						if( Environment.TickCount > show_pb_time )
-						{
-							pb.Value = i;
-							pb.Visibility = Visibility.Visible;
-						}
-					}
-
-					var end = Environment.TickCount + 22;
-					int dbg_i = i;//...
-					do
-					{
-						//ct.ThrowIfCancellationRequested( );
-
-						var segment = segments[i];
-						td.Range0F( segment.Index, segment.Length ).Style( styleInfo );
-
-					} while( ++i < last_i && Environment.TickCount < end );
-
-					//Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
-
-				} );
-			}
-		}
-
-
 		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
 		{
 			// split into smaller segments
@@ -898,7 +744,7 @@ namespace RegExpressWPF.Code
 
 				do
 				{
-					if( reh.IsCancelRequested ) return false;
+					if( reh.IsCancellationRequested ) return false;
 
 					int len = Math.Min( SEGMENT_LENGTH, rem );
 
@@ -931,7 +777,7 @@ namespace RegExpressWPF.Code
 
 			for( int i = 0; i < last_i; )
 			{
-				if( reh.IsCancelRequested ) return false;
+				if( reh.IsCancellationRequested ) return false;
 
 				ceh.Invoke( CancellationToken.None, ( ) =>
 				{

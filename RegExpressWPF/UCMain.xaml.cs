@@ -500,14 +500,14 @@ namespace RegExpressWPF
 				{
 					eol = GetEolOption( );
 					pattern = ucPattern.GetSimpleTextData( eol ).Text;
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 					text = ucText.GetSimpleTextData( eol ).Text;
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 					first_only = cbShowFirstOnly.IsChecked == true;
 					options = GetRegexOptions( excludeIncompatibility: false );
 				} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( string.IsNullOrEmpty( pattern ) )
 			{
@@ -550,11 +550,11 @@ namespace RegExpressWPF
 				{
 					MatchCollection matches0 = re.Matches( text ); // TODO: make it cancellable, or use timeout
 
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 
 					var matches_to_show = first_only ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
 
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 
 					UITaskHelper.BeginInvoke( this,
 									( ) =>
@@ -578,7 +578,7 @@ namespace RegExpressWPF
 				{
 					var td = ucText.GetTextData( GetEolOption( ) );
 
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 
 					lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
 					if( lblTextInfo.Visibility == Visibility.Visible )
@@ -611,7 +611,7 @@ namespace RegExpressWPF
 						eol = GetEolOption( );
 						var td = ucPattern.GetTextData( eol );
 
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						if( RegexHasWhitespace.IsMatch( td.Text ) )
 						{
@@ -620,7 +620,7 @@ namespace RegExpressWPF
 					}
 				} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			UITaskHelper.Invoke( this,
 				( ) =>
@@ -629,7 +629,7 @@ namespace RegExpressWPF
 					{
 						var td = ucText.GetTextData( eol );
 
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						if( RegexHasWhitespace.IsMatch( td.Text ) )
 						{

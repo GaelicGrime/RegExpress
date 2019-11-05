@@ -322,7 +322,7 @@ namespace RegExpressWPF.Adorners
 					var td0 = rtb.GetTextData( null );
 					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 
 					td = td0;
 					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
@@ -332,15 +332,15 @@ namespace RegExpressWPF.Adorners
 					if( top_index < 0 ) top_index = 0;
 				} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( td != null )
 			{
 				CollectEols( cnc, td, clip_rect, top_index );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				CollectEof( cnc, td, clip_rect, top_index );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				CollectSpaces( cnc, td, clip_rect, top_index );
 			}
@@ -350,7 +350,7 @@ namespace RegExpressWPF.Adorners
 
 		bool CollectSpaces( ICancellable cnc, TextData td, Rect clipRect, int topIndex )
 		{
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -363,7 +363,7 @@ namespace RegExpressWPF.Adorners
 				i >= 0;
 				i = td.Text.IndexOfAny( SpacesAndTabs, i + 1 ) )
 			{
-				if( cnc.IsCancelRequested ) return false;
+				if( cnc.IsCancellationRequested ) return false;
 
 				indices.Add( i );
 			}
@@ -381,7 +381,7 @@ namespace RegExpressWPF.Adorners
 				{
 					if( current_i >= indices.Count ) break;
 
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 
 					var index = indices[current_i];
 					var left = td.Pointers[index];
@@ -399,7 +399,7 @@ namespace RegExpressWPF.Adorners
 				} while( Environment.TickCount < end_time );
 			}
 
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			var d = UITaskHelper.BeginInvoke( rtb, do_things );
 
@@ -407,7 +407,7 @@ namespace RegExpressWPF.Adorners
 			{
 				d.Wait( );
 
-				if( cnc.IsCancelRequested ) return false;
+				if( cnc.IsCancellationRequested ) return false;
 
 				(intermediate_results1, intermediate_results2) = (intermediate_results2, intermediate_results1);
 
@@ -421,7 +421,7 @@ namespace RegExpressWPF.Adorners
 
 				foreach( var (index, left_rect, right_rect) in intermediate_results2 )
 				{
-					if( cnc.IsCancelRequested ) return false;
+					if( cnc.IsCancellationRequested ) return false;
 
 					if( right_rect.Bottom < clipRect.Top ) continue;
 					if( left_rect.Top > clipRect.Bottom )
@@ -449,7 +449,7 @@ namespace RegExpressWPF.Adorners
 				intermediate_results2.Clear( );
 			}
 
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			lock( this )
 			{
@@ -465,7 +465,7 @@ namespace RegExpressWPF.Adorners
 
 		bool CollectEols( ICancellable cnc, TextData td, Rect clip_rect, int top_index )
 		{
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -477,7 +477,7 @@ namespace RegExpressWPF.Adorners
 
 			for( int i = 0; i < matches.Count; ++i )
 			{
-				if( cnc.IsCancelRequested ) return false;
+				if( cnc.IsCancellationRequested ) return false;
 
 				int index = matches[i].Index;
 
@@ -489,7 +489,7 @@ namespace RegExpressWPF.Adorners
 
 				for( int k = previous_index; k < index; ++k )
 				{
-					if( cnc.IsCancelRequested ) return false;
+					if( cnc.IsCancellationRequested ) return false;
 
 					if( UnicodeUtilities.IsRTL( td.Text[k] ) )
 					{
@@ -521,7 +521,7 @@ namespace RegExpressWPF.Adorners
 
 							for( var tp = left.GetInsertionPosition( LogicalDirection.Backward ); ; )
 							{
-								if( cnc.IsCancelRequested ) return;
+								if( cnc.IsCancellationRequested ) return;
 
 								tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 								if( tp == null ) break;
@@ -532,7 +532,7 @@ namespace RegExpressWPF.Adorners
 								var rect_b = tp.GetCharacterRect( LogicalDirection.Backward );
 								var rect_f = tp.GetCharacterRect( LogicalDirection.Forward );
 
-								if( cnc.IsCancelRequested ) return;
+								if( cnc.IsCancellationRequested ) return;
 
 								if( rect_b.Bottom < left_rect.Top && rect_f.Bottom < left_rect.Top ) break;
 
@@ -548,7 +548,7 @@ namespace RegExpressWPF.Adorners
 							}
 						} );
 
-					if( cnc.IsCancelRequested ) return false;
+					if( cnc.IsCancellationRequested ) return false;
 					if( should_continue ) continue;
 					if( should_break ) break;
 
@@ -579,7 +579,7 @@ namespace RegExpressWPF.Adorners
 				}
 			}
 
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			lock( this )
 			{
@@ -594,7 +594,7 @@ namespace RegExpressWPF.Adorners
 
 		bool CollectEof( ICancellable cnc, TextData td, Rect clip_rect, int top_index )
 		{
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			var rtb = Rtb;
 
@@ -622,7 +622,7 @@ namespace RegExpressWPF.Adorners
 
 						for( int k = 0; k < text.Length; ++k )
 						{
-							if( cnc.IsCancelRequested ) return;
+							if( cnc.IsCancellationRequested ) return;
 
 							if( UnicodeUtilities.IsRTL( text[k] ) )
 							{
@@ -641,7 +641,7 @@ namespace RegExpressWPF.Adorners
 
 					for( var tp = end; ; )
 					{
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						tp = tp.GetNextInsertionPosition( LogicalDirection.Backward );
 						if( tp == null ) break;
@@ -656,7 +656,7 @@ namespace RegExpressWPF.Adorners
 					}
 				} );
 
-			if( cnc.IsCancelRequested ) return false;
+			if( cnc.IsCancellationRequested ) return false;
 
 			lock( this )
 			{

@@ -6,18 +6,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace RegExpressWPF.Code
 {
-
 	public interface ICancellable
 	{
-		bool IsCancelRequested { get; }
+		bool IsCancellationRequested { get; }
 	}
 
 
-	public class ResumableLoop : ICancellable, IDisposable
+	public sealed class ResumableLoop : ICancellable, IDisposable
 	{
-		public enum Status
+		enum Status
 		{
 			None,
 			Stop,
@@ -38,10 +38,10 @@ namespace RegExpressWPF.Code
 		{
 			if( timeout1 <= 0 ) throw new ArgumentException( "Invalid timeout: " + timeout1 );
 
-			Events = new[] { StopEvent, RestartEvent };
-
 			if( timeout2 <= 0 ) timeout2 = timeout1;
 			if( timeout3 <= 0 ) timeout3 = timeout2;
+
+			Events = new[] { StopEvent, RestartEvent };
 
 			StartWorker( action, timeout1, timeout2, timeout3 );
 		}
@@ -77,7 +77,18 @@ namespace RegExpressWPF.Code
 		Status GetStatus( int timeoutMs )
 		{
 			if( IsStopRequestDetected ) return Status.Stop;
-			if( IsRestartRequestDetected ) return Status.Restart;
+
+			if( IsRestartRequestDetected )
+			{
+				if( StopEvent.WaitOne( 0 ) ) // since it has priority
+				{
+					IsStopRequestDetected = true;
+
+					return Status.Stop;
+				}
+
+				return Status.Restart;
+			}
 
 			int n = WaitHandle.WaitAny( Events, timeoutMs );
 
@@ -157,7 +168,6 @@ namespace RegExpressWPF.Code
 					catch( Exception exc )
 					{
 						_ = exc;
-						_ = exc;
 						if( Debugger.IsAttached ) Debugger.Break( );
 
 						throw; // TODO: maybe restart the loop?
@@ -182,7 +192,7 @@ namespace RegExpressWPF.Code
 
 
 		#region ICancellable
-		public bool IsCancelRequested
+		public bool IsCancellationRequested
 		{
 			get
 			{
@@ -194,7 +204,7 @@ namespace RegExpressWPF.Code
 		#region IDisposable Support
 		private bool disposedValue = false; // To detect redundant calls
 
-		protected virtual void Dispose( bool disposing )
+		void Dispose( bool disposing )
 		{
 			if( !disposedValue )
 			{
@@ -242,7 +252,7 @@ namespace RegExpressWPF.Code
 		}
 
 		#region ICancellable
-		public bool IsCancelRequested
+		public bool IsCancellationRequested
 		{
 			get
 			{

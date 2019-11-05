@@ -417,7 +417,7 @@ namespace RegExpressWPF
 				ShowOne( rtbMatches );
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
 
@@ -430,7 +430,7 @@ namespace RegExpressWPF
 
 				++match_index;
 
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				var ordered_groups =
 									match.Groups.Cast<Group>( )
@@ -439,7 +439,7 @@ namespace RegExpressWPF
 										//OrderBy( g => g.Success ? g.Index : match.Index )
 										.ToList( );
 
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
 				if( show_captures )
@@ -447,7 +447,7 @@ namespace RegExpressWPF
 					min_index = ordered_groups.SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
 				}
 
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				const int LEFT_WIDTH = 24;
 
@@ -515,7 +515,7 @@ namespace RegExpressWPF
 					//if( showCaptures) AppendCaptures( ct, para, LEFT_WIDTH, match, match );
 				} );
 
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				// show groups
 
@@ -523,7 +523,7 @@ namespace RegExpressWPF
 
 				foreach( var group in ordered_groups )
 				{
-					if( cnc.IsCancelRequested ) break;
+					if( cnc.IsCancellationRequested ) break;
 
 					string group_name_text = $" • Gʀᴏᴜᴘ ‹{group.Name}›";
 					int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
@@ -566,7 +566,7 @@ namespace RegExpressWPF
 							inl.Style( GroupSiblingValueStyleInfo );
 						}
 
-						if( cnc.IsCancelRequested ) return;
+						if( cnc.IsCancellationRequested ) return;
 
 						run = new Run( $"\x200E  （{group.Index}, {group.Length}）", span.ContentEnd );
 						run.Style( MatchNormalStyleInfo, LocationStyleInfo );
@@ -596,7 +596,7 @@ namespace RegExpressWPF
 					} );
 				}
 
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 							{
@@ -624,7 +624,7 @@ namespace RegExpressWPF
 				previous_para = para;
 			}
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{
@@ -644,7 +644,7 @@ namespace RegExpressWPF
 			int capture_index = -1;
 			foreach( Capture capture in group.Captures )
 			{
-				if( cnc.IsCancelRequested ) break;
+				if( cnc.IsCancellationRequested ) break;
 
 				++capture_index;
 
@@ -932,7 +932,7 @@ namespace RegExpressWPF
 
 			for( var parent = sel.Start.Parent; parent != null; )
 			{
-				if( cnc.IsCancelRequested ) return infos;
+				if( cnc.IsCancellationRequested ) return infos;
 
 				object tag = null;
 
@@ -977,7 +977,7 @@ namespace RegExpressWPF
 				is_focused = rtbMatches.IsFocused;
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			var inlines_to_underline = new List<Inline>( );
 
@@ -985,7 +985,7 @@ namespace RegExpressWPF
 			{
 				foreach( var info in infos )
 				{
-					if( cnc.IsCancelRequested ) break;
+					if( cnc.IsCancellationRequested ) break;
 
 					switch( info )
 					{
@@ -1002,7 +1002,7 @@ namespace RegExpressWPF
 				}
 			}
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{
@@ -1037,7 +1037,7 @@ namespace RegExpressWPF
 					{
 						foreach( var gi in mi.GroupInfos )
 						{
-							if( cnc.IsCancelRequested ) break;
+							if( cnc.IsCancellationRequested ) break;
 
 							if( segments.Contains( gi.GroupSegment ) )
 							{
@@ -1046,7 +1046,7 @@ namespace RegExpressWPF
 
 							foreach( var ci in gi.CaptureInfos )
 							{
-								if( cnc.IsCancelRequested ) break;
+								if( cnc.IsCancellationRequested ) break;
 
 								if( segments.Contains( ci.CaptureSegment ) )
 								{
@@ -1062,7 +1062,7 @@ namespace RegExpressWPF
 					}
 				}
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 			}
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
@@ -1075,7 +1075,7 @@ namespace RegExpressWPF
 				inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{

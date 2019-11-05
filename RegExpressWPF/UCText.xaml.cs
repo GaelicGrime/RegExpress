@@ -259,12 +259,13 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleTextChanged( e );
 
-			lock( this )
-			{
-				LastMatches = null;
-				LastShowCaptures = false;
-				LastEol = null;
-			}
+			//...
+			//lock( this )
+			//{
+			//	LastMatches = null;
+			//	LastShowCaptures = false;
+			//	LastEol = null;
+			//}
 
 			TextChanged?.Invoke( this, null );
 		}
@@ -284,7 +285,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendStop( );
+			RecolouringLoop.SendRestart( );
 		}
 
 
@@ -463,20 +464,20 @@ namespace RegExpressWPF
 				var td0 = rtb.GetTextData( eol );
 				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
 				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
@@ -486,13 +487,13 @@ namespace RegExpressWPF
 				else
 				{
 					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-					if( cnc.IsCancelRequested ) return;
+					if( cnc.IsCancellationRequested ) return;
 				}
 				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( td == null ) return;
 			if( td.Text.Length == 0 ) return;
@@ -510,7 +511,7 @@ namespace RegExpressWPF
 			{
 				for( int i = 0; i < matches.Count; ++i )
 				{
-					if( cnc.IsCancelRequested ) break;
+					if( cnc.IsCancellationRequested ) break;
 
 					Match match = matches[i];
 					Debug.Assert( match.Success );
@@ -526,7 +527,7 @@ namespace RegExpressWPF
 				}
 			}
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			List<(Segment segment, StyleInfo styleInfo)> segments_to_uncolour =
 							coloured_ranges
@@ -534,7 +535,7 @@ namespace RegExpressWPF
 								.Select( s => (s, NormalStyleInfo) )
 								.ToList( );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			int center_index = ( top_index + bottom_index ) / 2;
 
@@ -543,11 +544,11 @@ namespace RegExpressWPF
 				.OrderBy( s => Math.Abs( center_index - ( s.segment.Index + s.segment.Length / 2 ) ) )
 				.ToList( );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, pbProgress, td, all_segments_and_styles );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			UITaskHelper.BeginInvoke( pbProgress, ( ) =>
 						{
@@ -580,7 +581,7 @@ namespace RegExpressWPF
 				if( is_focussed ) td = rtb.GetTextData( eol );
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			List<Segment> segments_to_underline = null;
 
@@ -589,7 +590,7 @@ namespace RegExpressWPF
 				segments_to_underline = GetUnderliningInfo( cnc, td, matches, show_captures ).ToList( );
 			}
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			LocalUnderliningAdorner.SetRangesToUnderline(
 							segments_to_underline
@@ -598,7 +599,7 @@ namespace RegExpressWPF
 
 			if( is_focussed )
 			{
-				if( cnc.IsCancelRequested ) return;
+				if( cnc.IsCancellationRequested ) return;
 
 				ChangeEventHelper.BeginInvoke( CancellationToken.None, ( ) =>
 							{
@@ -628,14 +629,14 @@ namespace RegExpressWPF
 				td = rtb.GetTextData( eol );
 			} );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			ExternalUnderliningAdorner.SetRangesToUnderline(
 							segments
 								?.Select( s => (td.SafeGetPointer( s.Index ), td.SafeGetPointer( s.Index + s.Length )) )
 								?.ToList( ) );
 
-			if( cnc.IsCancelRequested ) return;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( segments?.Count > 0 )
 			{
@@ -673,7 +674,7 @@ namespace RegExpressWPF
 
 			foreach( var match in matches )
 			{
-				if( reh.IsCancelRequested ) break;
+				if( reh.IsCancellationRequested ) break;
 
 				if( !match.Success ) continue;
 
@@ -681,7 +682,7 @@ namespace RegExpressWPF
 
 				foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
 				{
-					if( reh.IsCancelRequested ) break;
+					if( reh.IsCancellationRequested ) break;
 
 					if( !group.Success ) continue;
 
@@ -689,7 +690,7 @@ namespace RegExpressWPF
 					{
 						foreach( Capture capture in group.Captures )
 						{
-							if( reh.IsCancelRequested ) break;
+							if( reh.IsCancellationRequested ) break;
 
 							if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
 							{
