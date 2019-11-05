@@ -7,7 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegExpressWPF", "RegExpress
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7AB6-44CD-A1C9-63566306D6FF}"
 	ProjectSection(SolutionItems) = preProject
+		Misc\ComplexSamples.rtf = Misc\ComplexSamples.rtf
+		Misc\Sample Regex - RFC822.txt = Misc\Sample Regex - RFC822.txt
 		Misc\Screenshot1.png = Misc\Screenshot1.png
+		Misc\UnicodeData8.xlsx = Misc\UnicodeData8.xlsx
 	EndProjectSection
 EndProject
 Global
