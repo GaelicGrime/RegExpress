@@ -423,6 +423,7 @@ namespace RegExpressWPF
 
 			Paragraph previous_para = null;
 			int match_index = -1;
+			bool document_has_changed = false;
 
 			foreach( var match in matches )
 			{
@@ -615,14 +616,26 @@ namespace RegExpressWPF
 								}
 								else
 								{
-									var next = previous_para.NextBlock;
-									if( next != null ) secMatches.Blocks.Remove( next );
-									secMatches.Blocks.InsertAfter( previous_para, para );
+									if( !previous_para.ContentStart.IsInSameDocument( rtbMatches.Document.ContentStart ) )
+									{
+										document_has_changed = true;
+									}
+									else
+									{
+										var next = previous_para.NextBlock;
+										if( next != null ) secMatches.Blocks.Remove( next );
+
+										secMatches.Blocks.InsertAfter( previous_para, para );
+									}
 								}
 							} );
 
+				if( document_has_changed ) break;
+
 				previous_para = para;
 			}
+
+			if( document_has_changed ) return;
 
 			if( cnc.IsCancellationRequested ) return;
 
