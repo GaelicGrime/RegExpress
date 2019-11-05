@@ -32,13 +32,9 @@ namespace RegExpressWPF
 		readonly UnderliningAdorner LocalUnderliningAdorner;
 		readonly UnderliningAdorner ExternalUnderliningAdorner;
 
-		readonly Thread ShowMatchesThread;
-		readonly Thread LocalUnderliningThread;
-		readonly Thread ExternalUnderliningThread;
-
-		readonly RestartEvents ShowMatchesEvents = new RestartEvents( );
-		readonly RestartEvents LocalUnderliningEvents = new RestartEvents( );
-		readonly RestartEvents ExternalUnderliningEvents = new RestartEvents( );
+		readonly ResumableLoop ShowMatchesLoop;
+		readonly ResumableLoop LocalUnderliningLoop;
+		readonly ResumableLoop ExternalUnderliningLoop;
 
 		readonly ChangeEventHelper ChangeEventHelper;
 
@@ -141,26 +137,9 @@ namespace RegExpressWPF
 			GroupFailedStyleInfo = new StyleInfo( "MatchGroupFailed" );
 
 
-			ShowMatchesThread = new Thread( ShowMatchesThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			ShowMatchesThread.Start( );
-
-			LocalUnderliningThread = new Thread( LocalUnderliningThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			LocalUnderliningThread.Start( );
-
-			ExternalUnderliningThread = new Thread( ExternalUnderliningThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			ExternalUnderliningThread.Start( );
+			ShowMatchesLoop = new ResumableLoop( ShowMatchesThreadProc, 333, 555 );
+			LocalUnderliningLoop = new ResumableLoop( LocalUnderliningThreadProc, 222, 444 );
+			ExternalUnderliningLoop = new ResumableLoop( ExternalUnderliningThreadProc, 333, 555 );
 
 
 			pnlDebug.Visibility = Visibility.Collapsed;
@@ -238,9 +217,9 @@ namespace RegExpressWPF
 				}
 			}
 
-			ShowMatchesEvents.SendStop( );
-			LocalUnderliningEvents.SendStop( );
-			ExternalUnderliningEvents.SendStop( );
+			ShowMatchesLoop.SendStop( );
+			LocalUnderliningLoop.SendStop( );
+			ExternalUnderliningLoop.SendStop( );
 			LocalUnderliningAdorner.SetRangesToUnderline( null ); //?
 			ExternalUnderliningAdorner.SetRangesToUnderline( null ); //?
 
@@ -254,15 +233,15 @@ namespace RegExpressWPF
 				LastExternalUnderliningSegments = null;
 			}
 
-			ShowMatchesEvents.SendRestart( );
-			LocalUnderliningEvents.SendRestart( );
-			ExternalUnderliningEvents.SendRestart( );
+			ShowMatchesLoop.SendRestart( );
+			LocalUnderliningLoop.SendRestart( );
+			ExternalUnderliningLoop.SendRestart( );
 		}
 
 
 		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
-			ExternalUnderliningEvents.SendStop( );
+			ExternalUnderliningLoop.SendStop( );
 
 			lock( this )
 			{
@@ -270,7 +249,7 @@ namespace RegExpressWPF
 				LastExternalUnderliningSetSelection = setSelection;
 			}
 
-			ExternalUnderliningEvents.SendRestart( );
+			ExternalUnderliningLoop.SendRestart( );
 		}
 
 
@@ -330,9 +309,9 @@ namespace RegExpressWPF
 
 		public void StopAll( )
 		{
-			ShowMatchesEvents.SendStop( );
-			LocalUnderliningEvents.SendStop( );
-			ExternalUnderliningEvents.SendStop( );
+			ShowMatchesLoop.SendStop( );
+			LocalUnderliningLoop.SendStop( );
+			ExternalUnderliningLoop.SendStop( );
 		}
 
 
@@ -356,7 +335,7 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 			if( !rtbMatches.IsFocused ) return;
 
-			LocalUnderliningEvents.SendRestart( );
+			LocalUnderliningLoop.SendRestart( );
 
 			SelectionChanged?.Invoke( this, null );
 
@@ -366,8 +345,8 @@ namespace RegExpressWPF
 
 		private void rtbMatches_GotFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningEvents.SendRestart( );
-			ExternalUnderliningEvents.SendRestart( );
+			LocalUnderliningLoop.SendRestart( );
+			ExternalUnderliningLoop.SendRestart( );
 
 			//...?SelectionChanged?.Invoke( this, null );
 
@@ -384,261 +363,242 @@ namespace RegExpressWPF
 
 		private void rtbMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningEvents.SendRestart( );
+			LocalUnderliningLoop.SendRestart( );
 		}
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ShowMatchesThreadProc( )
+		void ShowMatchesThreadProc( ICancellable cnc )
 		{
-			var reh = ShowMatchesEvents.BuildHelper( );
-			try
+			lock( MatchInfos )
 			{
-				for(; ; )
+				MatchInfos.Clear( );
+				ExternalUnderliningLoop.SendRestart( );
+			}
+
+			string text;
+			IReadOnlyList<Match> matches;
+			bool show_captures;
+			bool show_succeeded_groups_only;
+			bool show_first_only;
+
+			lock( this )
+			{
+				text = LastText;
+				matches = LastMatches;
+				show_captures = LastShowCaptures;
+				show_succeeded_groups_only = LastShowSucceededGroupsOnly;
+				show_first_only = LastShowFirstOnly;
+			}
+
+
+			if( matches.Count == 0 )
+			{
+				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
-					// TODO: consider things related to termination
+					ShowOne( rtbNoMatches );
+				} ) );
 
-					reh.WaitInfinite( );
+				return;
+			}
 
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
 
-					for(; ; )
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			{
+				pbProgress.Maximum = matches.Count;
+				pbProgress.Value = 0;
+
+				if( secMatches.Blocks.Count > matches.Count )
+				{
+					// remove unneeded paragraphs
+					var r = new TextRange( secMatches.Blocks.ElementAt( matches.Count ).ElementStart, secMatches.ContentEnd );
+					r.Text = "";
+				}
+
+				ShowOne( rtbMatches );
+			} );
+
+			if( cnc.IsCancelRequested ) return;
+
+			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
+
+			Paragraph previous_para = null;
+			int match_index = -1;
+
+			foreach( var match in matches )
+			{
+				Debug.Assert( match.Success );
+
+				++match_index;
+
+				if( cnc.IsCancelRequested ) break;
+
+				var ordered_groups =
+									match.Groups.Cast<Group>( )
+										.Skip( 1 ) // skip match
+										.Where( g => g.Success || !show_succeeded_groups_only )
+										//OrderBy( g => g.Success ? g.Index : match.Index )
+										.ToList( );
+
+				if( cnc.IsCancelRequested ) break;
+
+				int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
+				if( show_captures )
+				{
+					min_index = ordered_groups.SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
+				}
+
+				if( cnc.IsCancelRequested ) break;
+
+				const int LEFT_WIDTH = 24;
+
+				int left_width_for_match = LEFT_WIDTH + ( match.Index - min_index );
+
+				Paragraph para = null;
+				Run run = null;
+				MatchInfo match_info = null;
+				RunBuilder match_run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
+
+				var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
+				var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
+
+				// show match
+
+				string match_name_text = show_first_only ? "Fɪʀꜱᴛ Mᴀᴛᴄʜ" : $"Mᴀᴛᴄʜ {match_index + 1}";
+
+				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+				{
+					pbProgress.Value = match_index;
+					if( Environment.TickCount >= show_pb_time ) pbProgress.Visibility = Visibility.Visible;
+
+					var span = new Span( );
+
+					para = new Paragraph( span );
+
+					var start_run = new Run( match_name_text.PadRight( left_width_for_match, ' ' ), span.ContentEnd );
+					start_run.Style( MatchNormalStyleInfo );
+
+					Inline value_inline;
+
+					if( match.Length == 0 )
 					{
-						reh.WaitForSilence( 333, 555 );
+						value_inline = new Run( "(empty)", span.ContentEnd ); //
+						value_inline.Style( MatchNormalStyleInfo, highlight_style, LocationStyleInfo );
+					}
+					else
+					{
+						value_inline = match_run_builder.Build( match.Value, span.ContentEnd );
+						value_inline.Style( MatchValueStyleInfo, highlight_style );
+					}
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+					run = new Run( $"\x200E  （{match.Index}, {match.Length}）", span.ContentEnd );
+					run.Style( MatchNormalStyleInfo, LocationStyleInfo );
 
-						lock( MatchInfos )
+					_ = new LineBreak( span.ElementEnd ); // (after span)
+
+					match_info = new MatchInfo
+					{
+						MatchSegment = new Segment( match.Index, match.Length ),
+						Span = span,
+						ValueInline = value_inline,
+					};
+
+					span.Tag = match_info;
+
+					lock( MatchInfos )
+					{
+						MatchInfos.Add( match_info );
+
+						//...ExternalUnderliningEvents.SendRestart( );
+					}
+
+					// captures for match
+					//if( showCaptures) AppendCaptures( ct, para, LEFT_WIDTH, match, match );
+				} );
+
+				if( cnc.IsCancelRequested ) break;
+
+				// show groups
+
+				RunBuilder sibling_run_builder = new RunBuilder( null );
+
+				foreach( var group in ordered_groups )
+				{
+					if( cnc.IsCancelRequested ) break;
+
+					string group_name_text = $" • Gʀᴏᴜᴘ ‹{group.Name}›";
+					int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
+
+					ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+					{
+						var span = new Span( );
+
+						var start_run = new Run( group_name_text.PadRight( left_width_for_group, ' ' ), span.ContentEnd );
+						start_run.Style( GroupNameStyleInfo );
+
+						// (NOTE. Overlaps are possible in this example: (?=(..))
+
+						Inline value_inline;
+						Inline inl;
+
+						if( !group.Success )
 						{
-							MatchInfos.Clear( );
-							ExternalUnderliningEvents.SendRestart( );
+							value_inline = new Run( "(fail)", span.ContentEnd );
+							value_inline.Style( GroupFailedStyleInfo );
+						}
+						else if( group.Length == 0 )
+						{
+							value_inline = new Run( "(empty)", span.ContentEnd );
+							value_inline.Style( LocationStyleInfo );
+						}
+						else
+						{
+							string left = Utilities.SubstringFromTo( text, match.Index, group.Index );
+							string middle = group.Value;
+							string right = Utilities.SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
+
+							inl = sibling_run_builder.Build( left, span.ContentEnd );
+							inl.Style( GroupSiblingValueStyleInfo );
+
+							value_inline = match_run_builder.Build( middle, span.ContentEnd );
+							value_inline.Style( GroupValueStyleInfo, highlight_light_style );
+
+							inl = sibling_run_builder.Build( right, span.ContentEnd );
+							inl.Style( GroupSiblingValueStyleInfo );
 						}
 
-						string text;
-						IReadOnlyList<Match> matches;
-						bool show_captures;
-						bool show_succeeded_groups_only;
-						bool show_first_only;
+						if( cnc.IsCancelRequested ) return;
 
-						lock( this )
+						run = new Run( $"\x200E  （{group.Index}, {group.Length}）", span.ContentEnd );
+						run.Style( MatchNormalStyleInfo, LocationStyleInfo );
+
+						para.Inlines.Add( span );
+						_ = new LineBreak( span.ElementEnd ); // (after span)
+
+						var group_info = new GroupInfo
 						{
-							text = LastText;
-							matches = LastMatches;
-							show_captures = LastShowCaptures;
-							show_succeeded_groups_only = LastShowSucceededGroupsOnly;
-							show_first_only = LastShowFirstOnly;
+							Parent = match_info,
+							IsSuccess = group.Success,
+							GroupSegment = new Segment( group.Index, group.Length ),
+							Span = span,
+							ValueInline = value_inline,
+						};
+
+						span.Tag = group_info;
+
+						match_info.GroupInfos.Add( group_info );
+
+
+						// captures for group
+						if( show_captures )
+						{
+							AppendCaptures( cnc, group_info, para, left_width_for_match, text, match, group, highlight_light_style, match_run_builder, sibling_run_builder );
 						}
+					} );
+				}
 
+				if( cnc.IsCancelRequested ) break;
 
-						if( matches.Count == 0 )
-						{
-							Dispatcher.BeginInvoke( new Action( ( ) =>
-							{
-								ShowOne( rtbNoMatches );
-							} ) );
-
-							break;
-						}
-
-
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-						{
-							pbProgress.Maximum = matches.Count;
-							pbProgress.Value = 0;
-
-							if( secMatches.Blocks.Count > matches.Count )
-							{
-								// remove unneeded paragraphs
-								var r = new TextRange( secMatches.Blocks.ElementAt( matches.Count ).ElementStart, secMatches.ContentEnd );
-								r.Text = "";
-							}
-
-							ShowOne( rtbMatches );
-						} );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
-
-						Paragraph previous_para = null;
-						int match_index = -1;
-
-						foreach( var match in matches )
-						{
-							Debug.Assert( match.Success );
-
-							++match_index;
-
-							if( reh.IsCancelRequested ) break;
-
-							var ordered_groups =
-												match.Groups.Cast<Group>( )
-													.Skip( 1 ) // skip match
-													.Where( g => g.Success || !show_succeeded_groups_only )
-													//OrderBy( g => g.Success ? g.Index : match.Index )
-													.ToList( );
-
-							if( reh.IsCancelRequested ) break;
-
-							int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
-							if( show_captures )
-							{
-								min_index = ordered_groups.SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
-							}
-
-							if( reh.IsCancelRequested ) break;
-
-							const int LEFT_WIDTH = 24;
-
-							int left_width_for_match = LEFT_WIDTH + ( match.Index - min_index );
-
-							Paragraph para = null;
-							Run run = null;
-							MatchInfo match_info = null;
-							RunBuilder match_run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
-
-							var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
-							var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
-
-							// show match
-
-							string match_name_text = show_first_only ? "Fɪʀꜱᴛ Mᴀᴛᴄʜ" : $"Mᴀᴛᴄʜ {match_index + 1}";
-
-							ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-							{
-								pbProgress.Value = match_index;
-								if( Environment.TickCount >= show_pb_time ) pbProgress.Visibility = Visibility.Visible;
-
-								var span = new Span( );
-
-								para = new Paragraph( span );
-
-								var start_run = new Run( match_name_text.PadRight( left_width_for_match, ' ' ), span.ContentEnd );
-								start_run.Style( MatchNormalStyleInfo );
-
-								Inline value_inline;
-
-								if( match.Length == 0 )
-								{
-									value_inline = new Run( "(empty)", span.ContentEnd ); //
-									value_inline.Style( MatchNormalStyleInfo, highlight_style, LocationStyleInfo );
-								}
-								else
-								{
-									value_inline = match_run_builder.Build( match.Value, span.ContentEnd );
-									value_inline.Style( MatchValueStyleInfo, highlight_style );
-								}
-
-								run = new Run( $"\x200E  （{match.Index}, {match.Length}）", span.ContentEnd );
-								run.Style( MatchNormalStyleInfo, LocationStyleInfo );
-
-								_ = new LineBreak( span.ElementEnd ); // (after span)
-
-								match_info = new MatchInfo
-								{
-									MatchSegment = new Segment( match.Index, match.Length ),
-									Span = span,
-									ValueInline = value_inline,
-								};
-
-								span.Tag = match_info;
-
-								lock( MatchInfos )
-								{
-									MatchInfos.Add( match_info );
-
-									//...ExternalUnderliningEvents.SendRestart( );
-								}
-
-								// captures for match
-								//if( showCaptures) AppendCaptures( ct, para, LEFT_WIDTH, match, match );
-							} );
-
-							if( reh.IsCancelRequested ) break;
-
-							// show groups
-
-							RunBuilder sibling_run_builder = new RunBuilder( null );
-
-							foreach( var group in ordered_groups )
-							{
-								if( reh.IsCancelRequested ) break;
-
-								string group_name_text = $" • Gʀᴏᴜᴘ ‹{group.Name}›";
-								int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
-
-								ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-								{
-									var span = new Span( );
-
-									var start_run = new Run( group_name_text.PadRight( left_width_for_group, ' ' ), span.ContentEnd );
-									start_run.Style( GroupNameStyleInfo );
-
-									// (NOTE. Overlaps are possible in this example: (?=(..))
-
-									Inline value_inline;
-									Inline inl;
-
-									if( !group.Success )
-									{
-										value_inline = new Run( "(fail)", span.ContentEnd );
-										value_inline.Style( GroupFailedStyleInfo );
-									}
-									else if( group.Length == 0 )
-									{
-										value_inline = new Run( "(empty)", span.ContentEnd );
-										value_inline.Style( LocationStyleInfo );
-									}
-									else
-									{
-										string left = Utilities.SubstringFromTo( text, match.Index, group.Index );
-										string middle = group.Value;
-										string right = Utilities.SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
-
-										inl = sibling_run_builder.Build( left, span.ContentEnd );
-										inl.Style( GroupSiblingValueStyleInfo );
-
-										value_inline = match_run_builder.Build( middle, span.ContentEnd );
-										value_inline.Style( GroupValueStyleInfo, highlight_light_style );
-
-										inl = sibling_run_builder.Build( right, span.ContentEnd );
-										inl.Style( GroupSiblingValueStyleInfo );
-									}
-
-									run = new Run( $"\x200E  （{group.Index}, {group.Length}）", span.ContentEnd );
-									run.Style( MatchNormalStyleInfo, LocationStyleInfo );
-
-									para.Inlines.Add( span );
-									_ = new LineBreak( span.ElementEnd ); // (after span)
-
-									var group_info = new GroupInfo
-									{
-										Parent = match_info,
-										IsSuccess = group.Success,
-										GroupSegment = new Segment( group.Index, group.Length ),
-										Span = span,
-										ValueInline = value_inline,
-									};
-
-									span.Tag = group_info;
-
-									match_info.GroupInfos.Add( group_info );
-
-
-									// captures for group
-									if( show_captures )
-									{
-										AppendCaptures( reh, group_info, para, left_width_for_match, text, match, group, highlight_light_style, match_run_builder, sibling_run_builder );
-									}
-								} );
-							}
-
-							if( reh.IsCancelRequested ) break;
-
-							ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 							{
 								if( previous_para == null )
 								{
@@ -661,54 +621,30 @@ namespace RegExpressWPF
 								}
 							} );
 
-							previous_para = para;
-						}
+				previous_para = para;
+			}
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+			if( cnc.IsCancelRequested ) return;
 
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{
 							pbProgress.Visibility = Visibility.Hidden;
 						} );
 
 
-						ExternalUnderliningEvents.SendRestart( );
-
-
-						break;
-					}
-				}
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
-			{
-				// ignore
-			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
+			ExternalUnderliningLoop.SendRestart( );
 		}
 
 
-		void AppendCaptures( RestartEventsHelper reh, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch,
+
+		void AppendCaptures( ICancellable cnc, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch,
 			string text, Match match, Group group, StyleInfo highlightStyle,
 			RunBuilder runBuilder, RunBuilder siblingRunBuilder )
 		{
 			int capture_index = -1;
 			foreach( Capture capture in group.Captures )
 			{
-				if( reh.IsCancelRequested ) break;
+				if( cnc.IsCancelRequested ) break;
 
 				++capture_index;
 
@@ -988,7 +924,7 @@ namespace RegExpressWPF
 		}
 
 
-		List<Info> GetUnderliningInfos( RestartEventsHelper reh )
+		List<Info> GetUnderliningInfos( ICancellable cnc )
 		{
 			List<Info> infos = new List<Info>( );
 
@@ -996,7 +932,7 @@ namespace RegExpressWPF
 
 			for( var parent = sel.Start.Parent; parent != null; )
 			{
-				if( reh.IsCancelRequested ) return infos;
+				if( cnc.IsCancelRequested ) return infos;
 
 				object tag = null;
 
@@ -1030,186 +966,118 @@ namespace RegExpressWPF
 		}
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void LocalUnderliningThreadProc( )
+		void LocalUnderliningThreadProc( ICancellable cnc )
 		{
-			var reh = LocalUnderliningEvents.BuildHelper( );
-			try
+			List<Info> infos = null;
+			bool is_focused = true;
+
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 			{
-				for(; ; )
+				infos = GetUnderliningInfos( cnc );
+				is_focused = rtbMatches.IsFocused;
+			} );
+
+			if( cnc.IsCancelRequested ) return;
+
+			var inlines_to_underline = new List<Inline>( );
+
+			if( is_focused )
+			{
+				foreach( var info in infos )
 				{
-					// TODO: consider things related to termination
+					if( cnc.IsCancelRequested ) break;
 
-					reh.WaitInfinite( );
-
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
-
-					for(; ; )
+					switch( info )
 					{
-						reh.WaitForSilence( 222, 444 );
+					case MatchInfo mi:
+						inlines_to_underline.Add( mi.ValueInline );
+						break;
+					case GroupInfo gi:
+						if( gi.IsSuccess ) inlines_to_underline.Add( gi.ValueInline );
+						break;
+					case CaptureInfo ci:
+						inlines_to_underline.Add( ci.ValueInline );
+						break;
+					}
+				}
+			}
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+			if( cnc.IsCancelRequested ) return;
 
-						List<Info> infos = null;
-						bool is_focused = true;
-
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-						{
-							infos = GetUnderliningInfos( reh );
-							is_focused = rtbMatches.IsFocused;
-						} );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						var inlines_to_underline = new List<Inline>( );
-
-						if( is_focused )
-						{
-							foreach( var info in infos )
-							{
-								if( reh.IsCancelRequested ) break;
-
-								switch( info )
-								{
-								case MatchInfo mi:
-									inlines_to_underline.Add( mi.ValueInline );
-									break;
-								case GroupInfo gi:
-									if( gi.IsSuccess ) inlines_to_underline.Add( gi.ValueInline );
-									break;
-								case CaptureInfo ci:
-									inlines_to_underline.Add( ci.ValueInline );
-									break;
-								}
-							}
-						}
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{
 							LocalUnderliningAdorner.SetRangesToUnderline(
 								inlines_to_underline
 									.Select( i => (i.ContentStart, i.ContentEnd) )
 									.ToList( ) );
 						} );
-
-
-						break;
-					}
-				}
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
-			{
-				// ignore
-			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
 		}
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void ExternalUnderliningThreadProc( )
+		void ExternalUnderliningThreadProc( ICancellable cnc )
 		{
-			var reh = ExternalUnderliningEvents.BuildHelper( );
-			try
+			IReadOnlyList<Segment> segments0;
+			bool set_selection;
+
+			lock( this )
 			{
-				for(; ; )
+				segments0 = LastExternalUnderliningSegments;
+				set_selection = LastExternalUnderliningSetSelection;
+			}
+
+			var inlines_to_underline = new List<(Inline inline, Info info)>( );
+
+			if( segments0 != null )
+			{
+				var segments = new HashSet<Segment>( segments0 );
+
+				lock( MatchInfos ) //...........
 				{
-					// TODO: consider things related to termination
-
-					reh.WaitInfinite( );
-
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
-
-					for(; ; )
+					foreach( var mi in MatchInfos )
 					{
-						reh.WaitForSilence( 333, 555 );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						IReadOnlyList<Segment> segments0;
-						bool set_selection;
-
-						lock( this )
+						foreach( var gi in mi.GroupInfos )
 						{
-							segments0 = LastExternalUnderliningSegments;
-							set_selection = LastExternalUnderliningSetSelection;
-						}
+							if( cnc.IsCancelRequested ) break;
 
-						var inlines_to_underline = new List<(Inline inline, Info info)>( );
-
-						if( segments0 != null )
-						{
-							var segments = new HashSet<Segment>( segments0 );
-
-							lock( MatchInfos ) //...........
+							if( segments.Contains( gi.GroupSegment ) )
 							{
-								foreach( var mi in MatchInfos )
-								{
-									foreach( var gi in mi.GroupInfos )
-									{
-										if( reh.IsCancelRequested ) break;
-
-										if( segments.Contains( gi.GroupSegment ) )
-										{
-											inlines_to_underline.Add( (gi.ValueInline, gi) );
-										}
-
-										foreach( var ci in gi.CaptureInfos )
-										{
-											if( reh.IsCancelRequested ) break;
-
-											if( segments.Contains( ci.CaptureSegment ) )
-											{
-												inlines_to_underline.Add( (ci.ValueInline, ci) );
-											}
-										}
-									}
-
-									if( segments.Contains( mi.MatchSegment ) )
-									{
-										inlines_to_underline.Add( (mi.ValueInline, mi) );
-									}
-								}
+								inlines_to_underline.Add( (gi.ValueInline, gi) );
 							}
 
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
+							foreach( var ci in gi.CaptureInfos )
+							{
+								if( cnc.IsCancelRequested ) break;
+
+								if( segments.Contains( ci.CaptureSegment ) )
+								{
+									inlines_to_underline.Add( (ci.ValueInline, ci) );
+								}
+							}
 						}
 
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+						if( segments.Contains( mi.MatchSegment ) )
 						{
-							ExternalUnderliningAdorner.SetRangesToUnderline(
-								inlines_to_underline
-									.Select( r => (r.inline.ContentStart, r.inline.ContentEnd) )
-									.ToList( ) );
+							inlines_to_underline.Add( (mi.ValueInline, mi) );
+						}
+					}
+				}
 
-							inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
-						} );
+				if( cnc.IsCancelRequested ) return;
+			}
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			{
+				ExternalUnderliningAdorner.SetRangesToUnderline(
+					inlines_to_underline
+						.Select( r => (r.inline.ContentStart, r.inline.ContentEnd) )
+						.ToList( ) );
 
-						ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+				inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
+			} );
+
+			if( cnc.IsCancelRequested ) return;
+
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 						{
 							var first = inlines_to_underline.FirstOrDefault( ).inline;
 
@@ -1224,30 +1092,6 @@ namespace RegExpressWPF
 								}
 							}
 						} );
-
-
-						break;
-					}
-				}
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
-			{
-				// ignore
-			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
-			}
 		}
 
 
@@ -1339,9 +1183,9 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( ShowMatchesEvents ) { }
-					using( LocalUnderliningEvents ) { }
-					using( ExternalUnderliningEvents ) { }
+					using( ShowMatchesLoop ) { }
+					using( LocalUnderliningLoop ) { }
+					using( ExternalUnderliningLoop ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

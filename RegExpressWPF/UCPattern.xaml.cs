@@ -30,11 +30,8 @@ namespace RegExpressWPF
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
 
-		readonly Thread RecolouringThread;
-		readonly Thread HighlightingThread;
-
-		readonly RestartEvents RecolouringEvents = new RestartEvents( );
-		readonly RestartEvents HighlightingEvents = new RestartEvents( );
+		readonly ResumableLoop RecolouringLoop;
+		readonly ResumableLoop HighlightingLoop;
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
@@ -91,19 +88,8 @@ namespace RegExpressWPF
 			PatternCharGroupHighlightStyleInfo = new StyleInfo( "PatternCharGroupHighlight" );
 			PatternCommentStyleInfo = new StyleInfo( "PatternComment" );
 
-			RecolouringThread = new Thread( RecolouringThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			RecolouringThread.Start( );
-
-			HighlightingThread = new Thread( HighlightingThreadProc )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-			};
-			HighlightingThread.Start( );
+			RecolouringLoop = new ResumableLoop( RecolouringThreadProc, 222, 444 );
+			HighlightingLoop = new ResumableLoop( HighlightingThreadProc, 111, 444 );
 		}
 
 
@@ -139,8 +125,8 @@ namespace RegExpressWPF
 
 			if( IsLoaded )
 			{
-				RecolouringEvents.SendRestart( );
-				HighlightingEvents.SendRestart( );
+				RecolouringLoop.SendRestart( );
+				HighlightingLoop.SendRestart( );
 			}
 		}
 
@@ -162,8 +148,8 @@ namespace RegExpressWPF
 		{
 			// TODO: stop threads
 
-			RecolouringEvents.SendStop( );
-			HighlightingEvents.SendStop( );
+			RecolouringLoop.SendStop( );
+			HighlightingLoop.SendStop( );
 		}
 
 
@@ -190,8 +176,8 @@ namespace RegExpressWPF
 			LeftHighlightedBracket = -1;
 			RightHighlightedBracket = -1;
 
-			RecolouringEvents.SendRestart( );
-			HighlightingEvents.SendRestart( );
+			RecolouringLoop.SendRestart( );
+			HighlightingLoop.SendRestart( );
 
 			TextChanged?.Invoke( this, null );
 		}
@@ -204,7 +190,7 @@ namespace RegExpressWPF
 			if( !rtb.IsFocused ) return;
 
 			UndoRedoHelper.HandleSelectionChanged( );
-			HighlightingEvents.SendRestart( );
+			HighlightingLoop.SendRestart( );
 		}
 
 
@@ -213,8 +199,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringEvents.SendRestart( );
-			HighlightingEvents.SendRestart( );
+			RecolouringLoop.SendRestart( );
+			HighlightingLoop.SendRestart( );
 		}
 
 
@@ -223,8 +209,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringEvents.SendRestart( );
-			HighlightingEvents.SendRestart( );
+			RecolouringLoop.SendRestart( );
+			HighlightingLoop.SendRestart( );
 		}
 
 
@@ -233,7 +219,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingEvents.SendRestart( );
+			HighlightingLoop.SendRestart( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -251,7 +237,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingEvents.SendRestart( );
+			HighlightingLoop.SendRestart( );
 		}
 
 
@@ -275,408 +261,304 @@ namespace RegExpressWPF
 		readonly object Locker = new object( );
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void RecolouringThreadProc( )
+		void RecolouringThreadProc( ICancellable cnc )
 		{
-			var reh = RecolouringEvents.BuildHelper( );
-			try
+			RegexOptions regex_options;
+			string eol;
+
+			lock( this )
 			{
-				for(; ; )
+				regex_options = mRegexOptions;
+				eol = mEol;
+			}
+
+			TextData td = null;
+			Rect clip_rect = Rect.Empty;
+			int top_index = 0;
+			int bottom_index = 0;
+
+			UITaskHelper.Invoke( rtb, ( ) =>
+			{
+				td = null;
+
+				var start_doc = rtb.Document.ContentStart;
+				var end_doc = rtb.Document.ContentStart;
+
+				if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+				var td0 = rtb.GetTextData( eol );
+
+				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+				if( cnc.IsCancelRequested ) return;
+
+				td = td0;
+				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+				if( cnc.IsCancelRequested ) return;
+
+				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				if( cnc.IsCancelRequested ) return;
+				if( top_index < 0 ) top_index = 0;
+
+				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+				if( cnc.IsCancelRequested ) return;
+
+				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					// TODO: consider things related to termination
-
-					reh.WaitInfinite( );
-
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
-
-					for(; ; )
-					{
-						reh.WaitForSilence( 222, 444 );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						RegexOptions regex_options;
-						string eol;
-
-						lock( this )
-						{
-							regex_options = mRegexOptions;
-							eol = mEol;
-						}
-
-						TextData td = null;
-						Rect clip_rect = Rect.Empty;
-						int top_index = 0;
-						int bottom_index = 0;
-
-						UITaskHelper.Invoke( rtb, ( ) =>
-						{
-							td = null;
-
-							var start_doc = rtb.Document.ContentStart;
-							var end_doc = rtb.Document.ContentStart;
-
-							if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-
-							var td0 = rtb.GetTextData( eol );
-
-							if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
-							if( reh.IsAnyRequested ) return;
-
-							td = td0;
-							clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-							TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-							if( reh.IsAnyRequested ) return;
-
-							top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
-							if( reh.IsAnyRequested ) return;
-							if( top_index < 0 ) top_index = 0;
-
-							TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-							if( reh.IsAnyRequested ) return;
-
-							// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
-							if( bottom_pointer == null || lines_skipped == 0 )
-							{
-								bottom_index = td.Pointers.Count - 2;
-							}
-							else
-							{
-								bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-								if( reh.IsAnyRequested ) return;
-							}
-							if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
-							if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
-						} );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						if( td == null ) break;
-						if( td.Text.Length == 0 ) break;
-
-						Debug.Assert( top_index >= 0 );
-						Debug.Assert( bottom_index >= top_index );
-						Debug.Assert( bottom_index < td.Pointers.Count );
-
-						var regex = GetColouringRegex( regex_options );
-						var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
-
-						var matches = regex.Matches( td.Text )
-							.Cast<Match>( )
-							.ToArray( );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						ColouriseComments( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						ColouriseEscapes( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						ColouriseNamedGroups( reh, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						lock( Locker )
-						{
-							ChangeEventHelper.Invoke( CancellationToken.None,
-								( ) =>
-								{
-									// ensure the highlighted items are not lost
-									TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis );
-									if( reh.IsAnyRequested ) return;
-
-									TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis );
-									if( reh.IsAnyRequested ) return;
-
-									TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket );
-									if( reh.IsAnyRequested ) return;
-
-									TryMark( coloured_ranges, top_index, td, RightHighlightedBracket );
-								} );
-
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							int center_index = ( top_index + bottom_index ) / 2;
-
-							var segments_to_uncolour = coloured_ranges
-								.GetSegments( reh, false, top_index )
-								.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-								.ToList( );
-
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-							RtbUtilities.ApplyStyle( reh, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-						}
-
-
-						break;
-					}
+					bottom_index = td.Pointers.Count - 2;
 				}
-			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+				else
+				{
+					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					if( cnc.IsCancelRequested ) return;
+				}
+				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
+			} );
+
+			if( cnc.IsCancelRequested ) return;
+
+			if( td == null ) return;
+			if( td.Text.Length == 0 ) return;
+
+			Debug.Assert( top_index >= 0 );
+			Debug.Assert( bottom_index >= top_index );
+			Debug.Assert( bottom_index < td.Pointers.Count );
+
+			var regex = GetColouringRegex( regex_options );
+			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
+
+			var matches = regex.Matches( td.Text )
+				.Cast<Match>( )
+				.ToArray( );
+
+			if( cnc.IsCancelRequested ) return;
+
+			ColouriseComments( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+			if( cnc.IsCancelRequested ) return;
+
+			ColouriseEscapes( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+			if( cnc.IsCancelRequested ) return;
+
+			ColouriseNamedGroups( cnc, td, coloured_ranges, clip_rect, top_index, bottom_index, matches );
+			if( cnc.IsCancelRequested ) return;
+
+			lock( Locker )
 			{
-				// ignore
-			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
+				ChangeEventHelper.Invoke( CancellationToken.None,
+					( ) =>
+					{
+						// ensure the highlighted items are not lost
+						TryMark( coloured_ranges, top_index, td, LeftHighlightedParantesis );
+						if( cnc.IsCancelRequested ) return;
+
+						TryMark( coloured_ranges, top_index, td, RightHighlightedParantesis );
+						if( cnc.IsCancelRequested ) return;
+
+						TryMark( coloured_ranges, top_index, td, LeftHighlightedBracket );
+						if( cnc.IsCancelRequested ) return;
+
+						TryMark( coloured_ranges, top_index, td, RightHighlightedBracket );
+					} );
+
+				if( cnc.IsCancelRequested ) return;
+
+				int center_index = ( top_index + bottom_index ) / 2;
+
+				var segments_to_uncolour = coloured_ranges
+					.GetSegments( cnc, false, top_index )
+					.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+					.ToList( );
+
+				if( cnc.IsCancelRequested ) return;
+
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 			}
 		}
 
 
-		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void HighlightingThreadProc( )
+		void HighlightingThreadProc( ICancellable cnc )
 		{
-			var reh = HighlightingEvents.BuildHelper( );
-			try
+			RegexOptions regex_options;
+			string eol;
+
+			lock( this )
 			{
-				for(; ; )
+				regex_options = mRegexOptions;
+				eol = mEol;
+			}
+
+			TextData td = null;
+			Rect clip_rect = Rect.Empty;
+			int top_index = 0;
+			int bottom_index = 0;
+			bool is_focused = false;
+
+			UITaskHelper.Invoke( rtb, ( ) =>
+			{
+				td = null;
+
+				var start_doc = rtb.Document.ContentStart;
+				var end_doc = rtb.Document.ContentStart;
+
+				if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+				var td0 = rtb.GetTextData( eol );
+
+				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+				if( cnc.IsCancelRequested ) return;
+
+				td = td0;
+				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+				if( cnc.IsCancelRequested ) return;
+
+				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				if( top_index < 0 ) top_index = 0;
+
+				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+				if( cnc.IsCancelRequested ) return;
+
+				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					// TODO: consider things related to termination
+					bottom_index = td.Pointers.Count - 2;
+				}
+				else
+				{
+					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					if( cnc.IsCancelRequested ) return;
+				}
+				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 
-					reh.WaitInfinite( );
+				is_focused = rtb.IsFocused;
+			} );
 
-					if( reh.IsStopRequested ) continue;
-					if( !reh.IsRestartRequested ) { Debug.Assert( false ); continue; }
+			if( cnc.IsCancelRequested ) return;
 
-					for(; ; )
+			if( td == null ) return;
+			if( td.Text.Length == 0 ) return;
+
+			Debug.Assert( top_index >= 0 );
+			Debug.Assert( bottom_index >= top_index );
+			Debug.Assert( bottom_index < td.Pointers.Count );
+
+			var regex = GetColouringRegex( regex_options );
+
+			var matches = regex
+				.Matches( td.Text )
+				.Cast<Match>( )
+				.ToArray( );
+
+			if( cnc.IsCancelRequested ) return;
+
+			int left_para_index = -1;
+			int right_para_index = -1;
+			int left_bracket_index = -1;
+			int right_bracket_index = -1;
+
+			if( is_focused )
+			{
+				var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
+				if( cnc.IsCancelRequested ) return;
+
+				var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
+				if( cnc.IsCancelRequested ) return;
+
+				var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
+				if( cnc.IsCancelRequested ) return;
+
+				if( parentheses_at_left.Any( ) )
+				{
+					int n = 0;
+					int found_i = -1;
+					for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
 					{
-						reh.WaitForSilence( 111, 444 );
+						if( cnc.IsCancelRequested ) break;
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						RegexOptions regex_options;
-						string eol;
-
-						lock( this )
+						var m = parentheses_at_left[i];
+						if( m.Value == ")" ) --n;
+						else if( m.Value == "(" ) ++n;
+						if( n == +1 )
 						{
-							regex_options = mRegexOptions;
-							eol = mEol;
+							found_i = i;
+							break;
 						}
+					}
+					if( found_i >= 0 )
+					{
+						var m = parentheses_at_left[found_i];
 
-						TextData td = null;
-						Rect clip_rect = Rect.Empty;
-						int top_index = 0;
-						int bottom_index = 0;
-						bool is_focused = false;
+						left_para_index = m.Index;
+					}
+				}
 
-						UITaskHelper.Invoke( rtb, ( ) =>
+				if( cnc.IsCancelRequested ) return;
+
+				if( parentheses_at_right.Any( ) )
+				{
+					int n = 0;
+					int found_i = -1;
+					for( int i = 0; i < parentheses_at_right.Length; ++i )
+					{
+						if( cnc.IsCancelRequested ) break;
+
+						var m = parentheses_at_right[i];
+						if( m.Value == "(" ) --n;
+						else if( m.Value == ")" ) ++n;
+						if( n == +1 )
 						{
-							td = null;
-
-							var start_doc = rtb.Document.ContentStart;
-							var end_doc = rtb.Document.ContentStart;
-
-							if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
-
-							var td0 = rtb.GetTextData( eol );
-
-							if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
-							if( reh.IsAnyRequested ) return;
-
-							td = td0;
-							clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
-
-							TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
-							if( reh.IsAnyRequested ) return;
-
-							top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
-							if( top_index < 0 ) top_index = 0;
-
-							TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
-							if( reh.IsAnyRequested ) return;
-
-							// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
-							if( bottom_pointer == null || lines_skipped == 0 )
-							{
-								bottom_index = td.Pointers.Count - 2;
-							}
-							else
-							{
-								bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
-								if( reh.IsAnyRequested ) return;
-							}
-							if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
-							if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
-
-							is_focused = rtb.IsFocused;
-						} );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						if( td == null ) break;
-						if( td.Text.Length == 0 ) break;
-
-						Debug.Assert( top_index >= 0 );
-						Debug.Assert( bottom_index >= top_index );
-						Debug.Assert( bottom_index < td.Pointers.Count );
-
-						var regex = GetColouringRegex( regex_options );
-
-						var matches = regex
-							.Matches( td.Text )
-							.Cast<Match>( )
-							.ToArray( );
-
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
-
-						int left_para_index = -1;
-						int right_para_index = -1;
-						int left_bracket_index = -1;
-						int right_bracket_index = -1;
-
-						if( is_focused )
-						{
-							var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							if( parentheses_at_left.Any( ) )
-							{
-								int n = 0;
-								int found_i = -1;
-								for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
-								{
-									if( reh.IsAnyRequested ) break;
-
-									var m = parentheses_at_left[i];
-									if( m.Value == ")" ) --n;
-									else if( m.Value == "(" ) ++n;
-									if( n == +1 )
-									{
-										found_i = i;
-										break;
-									}
-								}
-								if( found_i >= 0 )
-								{
-									var m = parentheses_at_left[found_i];
-
-									left_para_index = m.Index;
-								}
-							}
-
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							if( parentheses_at_right.Any( ) )
-							{
-								int n = 0;
-								int found_i = -1;
-								for( int i = 0; i < parentheses_at_right.Length; ++i )
-								{
-									if( reh.IsAnyRequested ) break;
-
-									var m = parentheses_at_right[i];
-									if( m.Value == "(" ) --n;
-									else if( m.Value == ")" ) ++n;
-									if( n == +1 )
-									{
-										found_i = i;
-										break;
-									}
-								}
-								if( found_i >= 0 )
-								{
-									var m = parentheses_at_right[found_i];
-
-									right_para_index = m.Index;
-								}
-							}
-
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
-
-							if( reh.IsStopRequested ) break;
-							if( reh.IsRestartRequested ) continue;
-
-							if( current_group != null )
-							{
-								left_bracket_index = current_group.Index;
-
-								var eog = current_group.Groups["eog"];
-								if( eog.Success )
-								{
-									right_bracket_index = eog.Index;
-								}
-							}
+							found_i = i;
+							break;
 						}
+					}
+					if( found_i >= 0 )
+					{
+						var m = parentheses_at_right[found_i];
 
-						if( reh.IsStopRequested ) break;
-						if( reh.IsRestartRequested ) continue;
+						right_para_index = m.Index;
+					}
+				}
 
-						lock( Locker )
-						{
-							ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-							{
-								TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
-								if( reh.IsAnyRequested ) return;
-								TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
-								if( reh.IsAnyRequested ) return;
-								TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
-								if( reh.IsAnyRequested ) return;
-								TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
-							} );
-						}
+				if( cnc.IsCancelRequested ) return;
 
+				var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
 
-						break;
+				if( cnc.IsCancelRequested ) return;
+
+				if( current_group != null )
+				{
+					left_bracket_index = current_group.Index;
+
+					var eog = current_group.Groups["eog"];
+					if( eog.Success )
+					{
+						right_bracket_index = eog.Index;
 					}
 				}
 			}
-			catch( OperationCanceledException ) // also 'TaskCanceledException'
+
+			if( cnc.IsCancelRequested ) return;
+
+			lock( Locker )
 			{
-				// ignore
-			}
-			catch( ThreadInterruptedException )
-			{
-				// ignore
-			}
-			catch( ThreadAbortException )
-			{
-				// ignore
-			}
-			catch( Exception exc )
-			{
-				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
-				throw;
+				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+				{
+					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+					if( cnc.IsCancelRequested ) return;
+					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+					if( cnc.IsCancelRequested ) return;
+					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+					if( cnc.IsCancelRequested ) return;
+					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
+				} );
 			}
 		}
 
@@ -905,8 +787,8 @@ namespace RegExpressWPF
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( RecolouringEvents ) { }
-					using( HighlightingEvents ) { }
+					using( RecolouringLoop ) { }
+					using( HighlightingLoop ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
