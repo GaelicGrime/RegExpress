@@ -125,13 +125,12 @@
                                     <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                     <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
-                                        <TextBlock>Show whitespaces
-                                            <InlineUIContainer BaselineAlignment="Baseline" 
-                                                               ToolTip="There are imperceptible whitespaces. Click to show.">
-                                                <TextBlock x:Name="lblWhitespaceWarning" Foreground="OrangeRed" Margin="3 0 0 0">
-                                                    <Bold>&#x26a0;</Bold>
-                                                </TextBlock>
-                                            </InlineUIContainer>
+                                        <TextBlock>
+                                            Show whitespaces 
+                                            <Span x:Name="lblWarnings">
+                                                <Run x:Name="lblWhitespaceWarning1" Foreground="OrangeRed" ToolTip="There are imperceptible whitespaces. Click to show.">&#x26a0;</Run>
+                                                <Run x:Name="lblWhitespaceWarning2" Foreground="Silver" ToolTip="There are imperceptible whitespaces.">&#x26a0;</Run>
+                                            </Span>
                                         </TextBlock>
                                     </CheckBox>
                                     <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">

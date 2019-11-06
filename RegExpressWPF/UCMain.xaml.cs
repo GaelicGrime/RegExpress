@@ -77,11 +77,15 @@ namespace RegExpressWPF
 			lblTextInfo.Visibility = Visibility.Collapsed;
 			pnlShowAll.Visibility = Visibility.Collapsed;
 			pnlShowFirst.Visibility = Visibility.Collapsed;
-			lblWhitespaceWarning.Visibility = Visibility.Hidden;
+			lblWarnings.Inlines.Remove( lblWhitespaceWarning1 );
+			lblWarnings.Inlines.Remove( lblWhitespaceWarning2 );
 
 			FindMatchesLoop = new ResumableLoop( FindMatchesThreadProc, 333, 555 );
 			UpdateWhitespaceWarningLoop = new ResumableLoop( UpdateWhitespaceWarningThreadProc, 444, 777 );
 			ShowTextInfoLoop = new ResumableLoop( ShowTextInfoThreadProc, 333, 555 );
+
+			UpdateWhitespaceWarningLoop.Priority = ThreadPriority.Lowest;
+			ShowTextInfoLoop.Priority = ThreadPriority.Lowest;
 		}
 
 
@@ -600,44 +604,61 @@ namespace RegExpressWPF
 
 		void UpdateWhitespaceWarningThreadProc( ICancellable cnc )
 		{
-			Visibility visibility = Visibility.Hidden;
+			bool has_whitespaces = false;
+			bool show_whitespaces_option = false;
 			string eol = null;
+			SimpleTextData td = null;
 
 			UITaskHelper.Invoke( this,
 				( ) =>
 				{
-					if( !cbShowWhitespaces.IsChecked == true )
-					{
-						eol = GetEolOption( );
-						var td = ucPattern.GetTextData( eol );
+					show_whitespaces_option = cbShowWhitespaces.IsChecked == true;
+					eol = GetEolOption( );
+					td = ucPattern.GetSimpleTextData( eol );
 
-						if( cnc.IsCancellationRequested ) return;
-
-						if( RegexHasWhitespace.IsMatch( td.Text ) )
-						{
-							visibility = Visibility.Visible;
-						}
-					}
+					if( cnc.IsCancellationRequested ) return;
 				} );
 
 			if( cnc.IsCancellationRequested ) return;
 
+			has_whitespaces = RegexHasWhitespace.IsMatch( td.Text );
+
+			if( !has_whitespaces )
+			{
+				UITaskHelper.Invoke( this,
+					( ) =>
+					{
+						td = ucText.GetSimpleTextData( eol );
+					} );
+
+				has_whitespaces = RegexHasWhitespace.IsMatch( td.Text );
+			}
+
+			bool show1 = false;
+			bool show2 = false;
+
+			if( show_whitespaces_option )
+			{
+				if( has_whitespaces )
+				{
+					show2 = true;
+				}
+			}
+			else
+			{
+				if( has_whitespaces )
+				{
+					show1 = true;
+				}
+			}
+
 			UITaskHelper.Invoke( this,
 				( ) =>
 				{
-					if( visibility == Visibility.Hidden && !cbShowWhitespaces.IsChecked == true )
-					{
-						var td = ucText.GetTextData( eol );
-
-						if( cnc.IsCancellationRequested ) return;
-
-						if( RegexHasWhitespace.IsMatch( td.Text ) )
-						{
-							visibility = Visibility.Visible;
-						}
-					}
-
-					lblWhitespaceWarning.Visibility = visibility;
+					if( show1 && lblWhitespaceWarning1.Parent == null ) lblWarnings.Inlines.Add( lblWhitespaceWarning1 );
+					if( !show1 && lblWhitespaceWarning1.Parent != null ) lblWarnings.Inlines.Remove( lblWhitespaceWarning1 );
+					if( show2 && lblWhitespaceWarning2.Parent == null ) lblWarnings.Inlines.Add( lblWhitespaceWarning2 );
+					if( !show2 && lblWhitespaceWarning2.Parent != null ) lblWarnings.Inlines.Remove( lblWhitespaceWarning2 );
 				} );
 		}
 
