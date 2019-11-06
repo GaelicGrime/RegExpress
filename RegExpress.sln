@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegExpressWPF", "RegExpressWPF\RegExpressWPF.csproj", "{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432} = {EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7AB6-44CD-A1C9-63566306D6FF}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7
 		Misc\Screenshot1.png = Misc\Screenshot1.png
 		Misc\UnicodeData8.xlsx = Misc\UnicodeData8.xlsx
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AlternativeRegexEngines", "AlternativeRegexEngines", "{C65F974E-C7F1-40AF-851D-11891AE379C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppRegex", "AlternativeRegexEngines\CppRegex\CppRegex.vcxproj", "{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,8 +40,8 @@ Global
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|ARM.Build.0 = Debug|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|ARM64.ActiveCfg = Debug|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x64.Build.0 = Debug|Any CPU
+		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x64.ActiveCfg = Debug|x64
+		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x64.Build.0 = Debug|x64
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Debug|x86.Build.0 = Debug|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,13 +50,30 @@ Global
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|ARM.Build.0 = Release|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|ARM64.Build.0 = Release|Any CPU
-		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x64.ActiveCfg = Release|Any CPU
-		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x64.Build.0 = Release|Any CPU
+		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x64.ActiveCfg = Release|x64
+		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x64.Build.0 = Release|x64
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x86.ActiveCfg = Release|Any CPU
 		{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}.Release|x86.Build.0 = Release|Any CPU
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|ARM.ActiveCfg = Debug|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|x64.ActiveCfg = Debug|x64
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|x64.Build.0 = Debug|x64
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|x86.ActiveCfg = Debug|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Debug|x86.Build.0 = Debug|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|Any CPU.ActiveCfg = Release|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|ARM.ActiveCfg = Release|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|ARM64.ActiveCfg = Release|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|x64.ActiveCfg = Release|x64
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|x64.Build.0 = Release|x64
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|x86.ActiveCfg = Release|Win32
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432} = {C65F974E-C7F1-40AF-851D-11891AE379C3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {817C1536-AED8-4A4A-9E44-80FB8807B1F6}
