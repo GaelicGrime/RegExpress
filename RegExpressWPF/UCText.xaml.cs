@@ -282,7 +282,7 @@ namespace RegExpressWPF
 
 		private void rtb_SizeChanged( object sender, SizeChangedEventArgs e )
 		{
-			if( !IsLoaded ) return;
+			if( !AlreadyLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
 			RecolouringLoop.SendRestart( );
