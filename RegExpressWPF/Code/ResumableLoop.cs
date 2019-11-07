@@ -60,6 +60,15 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public ThreadPriority Priority
+		{
+			set
+			{
+				TheThread.Priority = value;
+			}
+		}
+
+
 		void StartWorker( Action<ICancellable> action, int timeout1, int timeout2, int timeout3 )
 		{
 			if( TheThread != null ) throw new InvalidOperationException( "Thread already started." );
