@@ -491,6 +491,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void FindMatchesThreadProc( ICancellable cnc )
 		{
 			string eol = null;
