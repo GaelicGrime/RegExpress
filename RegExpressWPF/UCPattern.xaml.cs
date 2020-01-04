@@ -17,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegexEngineInfrastructure;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -59,7 +60,8 @@ namespace RegExpressWPF
 		int LeftHighlightedBracket = -1;
 		int RightHighlightedBracket = -1;
 
-		RegexOptions mRegexOptions;
+		RegexEngine mRegexEngine;
+		IReadOnlyCollection<RegexOptionInfo> mRegexOptions;
 		string mEol;
 
 		public event EventHandler TextChanged;
@@ -113,12 +115,13 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetRegexOptions( RegexOptions regexOptions, string eol )
+		public void SetRegexOptions( RegexEngine engine, IReadOnlyCollection<RegexOptionInfo> regexOptions, string eol )
 		{
 			StopAll( );
 
 			lock( this )
 			{
+				mRegexEngine = engine;
 				mRegexOptions = regexOptions;
 				mEol = eol;
 			}
@@ -263,11 +266,13 @@ namespace RegExpressWPF
 
 		void RecolouringThreadProc( ICancellable cnc )
 		{
-			RegexOptions regex_options;
+			RegexEngine regex_engine;
+			IReadOnlyCollection<RegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
 			{
+				regex_engine = mRegexEngine;
 				regex_options = mRegexOptions;
 				eol = mEol;
 			}
@@ -328,7 +333,7 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
-			var regex = GetColouringRegex( regex_options );
+			var regex = GetColouringRegex( regex_engine, regex_options );
 			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 
 			var matches = regex.Matches( td.Text )
@@ -383,11 +388,13 @@ namespace RegExpressWPF
 
 		void HighlightingThreadProc( ICancellable cnc )
 		{
-			RegexOptions regex_options;
+			RegexEngine regex_engine;
+			IReadOnlyCollection<RegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
 			{
+				regex_engine = mRegexEngine;
 				regex_options = mRegexOptions;
 				eol = mEol;
 			}
@@ -450,7 +457,7 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
-			var regex = GetColouringRegex( regex_options );
+			var regex = GetColouringRegex( regex_engine, regex_options );
 
 			var matches = regex
 				.Matches( td.Text )
@@ -608,8 +615,13 @@ namespace RegExpressWPF
 		}
 
 
-		Regex GetColouringRegex( RegexOptions options )
+		Regex GetColouringRegex( RegexEngine engine, IReadOnlyCollection<RegexOptionInfo> options )
 		{
+			//..................
+			// TODO: implement
+			return IgnorePatternWhitespaceRegex;
+
+			/*
 			bool ignore_pattern_whitespace = options.HasFlag( RegexOptions.IgnorePatternWhitespace );
 
 			if( ignore_pattern_whitespace )
@@ -620,6 +632,7 @@ namespace RegExpressWPF
 			{
 				return NoIgnorePatternWhitespaceRegex;
 			}
+			*/
 		}
 
 

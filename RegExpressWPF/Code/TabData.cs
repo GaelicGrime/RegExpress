@@ -16,7 +16,7 @@ namespace RegExpressWPF.Code
 		public string Name;
 		public string Pattern;
 		public string Text;
-		public RegexOptions RegexOptions;
+		public string[] RegexOptions;
 		public bool ShowFirstMatchOnly;
 		public bool ShowSucceededGroupsOnly;
 		public bool ShowCaptures;
