@@ -42,6 +42,7 @@ namespace RegExpressWPF
 
 		bool AlreadyLoaded = false;
 
+		string LastText;
 		IReadOnlyList<Match> LastMatches;
 		bool LastShowCaptures;
 		string LastEol;
@@ -117,31 +118,37 @@ namespace RegExpressWPF
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
+			string last_text;
 			IReadOnlyList<Match> last_matches;
 			bool last_show_captures;
 			string last_eol;
 
 			lock( this )
 			{
+				last_text = LastText;
 				last_matches = LastMatches;
 				last_show_captures = LastShowCaptures;
 				last_eol = LastEol;
 			}
+
+			string text = GetSimpleTextData( eol ).Text;
 
 			if( last_matches != null )
 			{
 				var old_groups = last_matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
 				var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
 
-				if( new_groups.SequenceEqual( old_groups ) &&
+				if( string.Equals( text, last_text ) &&
 					showCaptures == last_show_captures &&
-					eol == last_eol )
+					eol == last_eol &&
+					new_groups.SequenceEqual( old_groups ) )
 				{
 					lock( this )
 					{
 						LastMatches = matches;
 						LastExternalUnderliningSegments = null;
 					}
+
 					return;
 				}
 			}
@@ -152,6 +159,7 @@ namespace RegExpressWPF
 
 			lock( this )
 			{
+				LastText = text;
 				LastMatches = matches;
 				LastShowCaptures = showCaptures;
 				LastEol = eol;
