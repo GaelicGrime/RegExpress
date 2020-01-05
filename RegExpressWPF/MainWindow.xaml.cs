@@ -217,18 +217,26 @@ namespace RegExpressWPF
 			string json;
 
 			{
-				var ms = new MemoryStream( );
-				var ser = new DataContractJsonSerializer( all_tab_data.GetType( ) );
-				ser.WriteObject( ms, all_tab_data );
-				ms.Position = 0;
-
-				using( var sr = new StreamReader( ms, Encoding.UTF8 ) )
+				using( var ms = new MemoryStream( ) )
 				{
-					json = sr.ReadToEnd( );
+					using( var json_writer =
+							JsonReaderWriterFactory.CreateJsonWriter( ms, Encoding.UTF8,
+								ownsStream: false, indent: true, "  " ) )
+					{
+						var ser = new DataContractJsonSerializer( all_tab_data.GetType( ) );
+						ser.WriteObject( json_writer, all_tab_data );
+					}
+
+					ms.Position = 0;
+
+					using( var sr = new StreamReader( ms, Encoding.UTF8 ) )
+					{
+						json = sr.ReadToEnd( );
+					}
 				}
 			}
 
-			Properties.Settings.Default.SavedTabData = json;
+			Properties.Settings.Default.SavedTabData = Environment.NewLine + json + Environment.NewLine;
 			Properties.Settings.Default.Save( );
 		}
 

@@ -2,7 +2,7 @@
 
 using namespace System;
 
-namespace CppRegex
+namespace CppRegexEngine
 {
 	enum class CppRegexOptions
 	{
@@ -21,7 +21,7 @@ namespace CppRegex
 	};
 
 
-	public ref class CppRegex
+	public ref class CppRegexEngine
 	{
 	public:
 
