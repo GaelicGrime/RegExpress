@@ -1,14 +1,14 @@
 #include "pch.h"
 
-#include "CppRegex.h"
+#include "CppRegexEngine.h"
 
 
 using namespace std;
 
 
-namespace CppRegex
+namespace CppRegexEngine
 {
-	void CppRegex::Matches( String^ text0, String^ pattern0, CppRegexOptions options0 )
+	void CppRegexEngine::Matches( String^ text0, String^ pattern0, CppRegexOptions options0 )
 	{
 		msclr::interop::marshal_context context;
 
