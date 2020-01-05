@@ -618,12 +618,9 @@ namespace RegExpressWPF
 
 		Regex GetColouringRegex( RegexEngine engine, IReadOnlyCollection<RegexOptionInfo> options )
 		{
-			//..................
-			// TODO: implement
-			return IgnorePatternWhitespaceRegex;
+			// TODO: implmenet multiple engine support; this is for .NET
 
-			/*
-			bool ignore_pattern_whitespace = options.HasFlag( RegexOptions.IgnorePatternWhitespace );
+			bool ignore_pattern_whitespace = options.Any( o => o.AsText == "IgnorePatternWhitespace" );
 
 			if( ignore_pattern_whitespace )
 			{
@@ -633,7 +630,6 @@ namespace RegExpressWPF
 			{
 				return NoIgnorePatternWhitespaceRegex;
 			}
-			*/
 		}
 
 

@@ -376,7 +376,7 @@ namespace RegExpressWPF
 				}
 
 				// TODO: implement multiple engines; use 'tabData.EngineId'
-				CurrentRegexEngine = dotnet_engine; 
+				CurrentRegexEngine = dotnet_engine;
 
 				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
