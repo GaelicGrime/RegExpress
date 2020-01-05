@@ -50,8 +50,28 @@ namespace DotNetRegexEngine
 		}
 
 
+		public string[] ParseLegacyOptions( int flags )
+		{
+			RegexOptions dotnet_options = (RegexOptions)flags;
+
+			var list = new List<string>( );
+
+			foreach( DotNetRegexOptionInfo o in AllOptions )
+			{
+				if( ( dotnet_options & o.RegexOption ) != 0 )
+				{
+					list.Add( o.AsText );
+				}
+			}
+
+			return list.ToArray( );
+		}
+
 
 		#region RegexEngine
+
+		public override string Id => "DotNetRegex";
+
 
 		public override IReadOnlyCollection<RegexOptionInfo> AllOptions
 		{
@@ -84,17 +104,15 @@ namespace DotNetRegexEngine
 			return new Regex( pattern, regex_options );
 		}
 
-		public override IEnumerable<RegexMatch> Matches( object parsingResult, string text )
+
+		public override RegexMatches Matches( object parsingResult, string text )
 		{
 			Regex regex = (Regex)parsingResult;
+			MatchCollection dotnet_matches = regex.Matches( text );
+			IEnumerable<DotNetRegexMatch> matches = dotnet_matches.OfType<Match>( ).Select( m => new DotNetRegexMatch( m ) );
 
-			return regex.Matches( text ).OfType<Match>( ).Select( m => new DotNetRegexMatch( m ) );
+			return new RegexMatches( dotnet_matches.Count, matches );
 		}
-
-
-
-
-
 
 		#endregion RegexBase
 

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DotNetRegexEngine.Matches
 {
-	class DotNetRegexMatch : RegexMatch
+	class DotNetRegexMatch : IMatch
 	{
 		readonly Match Match;
 
@@ -18,17 +18,20 @@ namespace DotNetRegexEngine.Matches
 			Match = match;
 		}
 
-		public override int Index => Match.Index;
 
-		public override int Length => Match.Length;
+		#region ICapture
 
-		public override string Value => Match.Value;
+		public int Index => Match.Index;
 
-		public override bool Success => Match.Success;
+		public int Length => Match.Length;
 
-		public override string Name => Match.Name;
+		public string Value => Match.Value;
 
-		public override IEnumerable<RegexCapture> Captures
+		public bool Success => Match.Success;
+
+		public string Name => Match.Name;
+
+		public IEnumerable<ICapture> Captures
 		{
 			get
 			{
@@ -36,13 +39,15 @@ namespace DotNetRegexEngine.Matches
 			}
 		}
 
-		public override IEnumerable<RegexGroup> Groups
+		public IEnumerable<IGroup> Groups
 		{
 			get
 			{
 				return Match.Groups.OfType<Group>( ).Select( g => new DotNetRegexGroup( g ) );
 			}
 		}
+
+		#endregion ICapture
 
 		public override string ToString( ) => Match.ToString( );
 	}

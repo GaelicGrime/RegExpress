@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure.Matches
 {
-	public abstract class RegexCapture
+	public interface ICapture
 	{
-		public abstract int Index { get; }
+		int Index { get; }
 
-		public abstract int Length { get; }
+		int Length { get; }
 
-		public abstract string Value { get; }
+		string Value { get; }
 	}
 
 }

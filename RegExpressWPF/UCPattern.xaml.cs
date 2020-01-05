@@ -336,7 +336,8 @@ namespace RegExpressWPF
 			var regex = GetColouringRegex( regex_engine, regex_options );
 			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 
-			var matches = regex.Matches( td.Text )
+			var matches = regex
+				.Matches( td.Text )
 				.Cast<Match>( )
 				.ToArray( );
 

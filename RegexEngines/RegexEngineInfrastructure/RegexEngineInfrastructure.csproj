@@ -30,6 +30,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>RegexEngineInfrastructure.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -41,12 +47,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Matches\RegexCapture.cs" />
-    <Compile Include="Matches\RegexGroup.cs" />
-    <Compile Include="Matches\RegexMatch.cs" />
+    <Compile Include="Matches\ICapture.cs" />
+    <Compile Include="Matches\IGroup.cs" />
+    <Compile Include="Matches\IMatch.cs" />
+    <Compile Include="Matches\RegexMatches.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegexEngine.cs" />
     <Compile Include="RegexOptionInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RegexEngineInfrastructure.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

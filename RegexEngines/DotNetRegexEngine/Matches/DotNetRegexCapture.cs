@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DotNetRegexEngine.Matches
 {
-	class DotNetRegexCapture : RegexCapture
+	class DotNetRegexCapture : ICapture
 	{
 		readonly Capture Capture;
 
@@ -18,11 +18,15 @@ namespace DotNetRegexEngine.Matches
 			Capture = capture;
 		}
 
-		public override int Index => Capture.Index;
+		#region ICapture
 
-		public override int Length => Capture.Length;
+		public int Index => Capture.Index;
 
-		public override string Value => Capture.Value;
+		public int Length => Capture.Length;
+
+		public string Value => Capture.Value;
+
+		#endregion ICapture
 
 		public override string ToString( ) => Capture.ToString( );
 	}

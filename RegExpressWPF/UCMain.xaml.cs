@@ -18,6 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.Matches;
 using RegExpressWPF.Code;
 
 
@@ -35,7 +36,7 @@ namespace RegExpressWPF
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 		// TODO: The active engine will be selectable.
-		readonly RegexEngine CurrentRegexEngine = new DotNetRegexEngine.DotNetRegexEngine( );
+		RegexEngine CurrentRegexEngine = null;
 
 
 		bool IsFullyLoaded = false;
@@ -51,6 +52,8 @@ namespace RegExpressWPF
 		public UCMain( )
 		{
 			InitializeComponent( );
+
+			CurrentRegexEngine = new DotNetRegexEngine.DotNetRegexEngine( ); // the default
 
 			btnNewTab.Visibility = Visibility.Collapsed;
 			lblTextInfo.Visibility = Visibility.Collapsed;
@@ -95,6 +98,7 @@ namespace RegExpressWPF
 
 				tabData.Pattern = InitialTabData.Pattern;
 				tabData.Text = InitialTabData.Text;
+				tabData.RegexEngineId = InitialTabData.RegexEngineId;
 				tabData.RegexOptions = InitialTabData.RegexOptions;
 				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
 				tabData.ShowSucceededGroupsOnly = InitialTabData.ShowSucceededGroupsOnly;
@@ -106,6 +110,7 @@ namespace RegExpressWPF
 			{
 				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
 				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
+				tabData.RegexEngineId = CurrentRegexEngine.Id;
 				tabData.RegexOptions = GetRegexOptions( ).Select( o => o.AsText ).ToArray( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
@@ -350,12 +355,35 @@ namespace RegExpressWPF
 
 			try
 			{
+				// TODO: determine the engine
+
+				var dotnet_engine = new DotNetRegexEngine.DotNetRegexEngine( );
+
+				string[] options_as_text;
+
+				switch( tabData.RegexOptions )
+				{
+				case int flags: // legacy format; replaced on save with 'string[]'
+					options_as_text = dotnet_engine.ParseLegacyOptions( flags );
+					break;
+				case object[] arr:
+					options_as_text = arr.OfType<string>( ).ToArray( );
+					break;
+				case null:
+				default:
+					options_as_text = new string[] { };
+					break;
+				}
+
+				// TODO: implement multiple engines; use 'tabData.EngineId'
+				CurrentRegexEngine = dotnet_engine; 
+
 				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
 					var opt = cb.Tag as RegexOptionInfo;
 					if( opt != null )
 					{
-						cb.IsChecked = tabData.RegexOptions.Contains( opt.AsText );
+						cb.IsChecked = options_as_text.Contains( opt.AsText );
 					}
 				}
 
@@ -377,7 +405,7 @@ namespace RegExpressWPF
 
 				ucPattern.SetFocus( );
 
-				var options = CurrentRegexEngine.AllOptions.Where( o => tabData.RegexOptions.Contains( o.AsText ) ).ToArray( );
+				RegexOptionInfo[] options = CurrentRegexEngine.AllOptions.Where( o => options_as_text.Contains( o.AsText ) ).ToArray( );
 
 				ucPattern.SetRegexOptions( CurrentRegexEngine, options, tabData.Eol );
 
@@ -484,7 +512,7 @@ namespace RegExpressWPF
 				UITaskHelper.BeginInvoke( this,
 					( ) =>
 					{
-						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+						ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 						ucMatches.ShowNoPattern( );
 						lblMatches.Text = "Matches";
 						pnlShowAll.Visibility = Visibility.Collapsed;
@@ -506,7 +534,7 @@ namespace RegExpressWPF
 					UITaskHelper.BeginInvoke( this, CancellationToken.None,
 						( ) =>
 						{
-							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+							ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 							ucMatches.ShowError( exc );
 							lblMatches.Text = "Error";
 							pnlShowAll.Visibility = Visibility.Collapsed;
@@ -518,11 +546,14 @@ namespace RegExpressWPF
 
 				if( pattern_is_good )
 				{
-					var matches0 = CurrentRegexEngine.Matches( parsing_result, text ); // TODO: make it cancellable, or use timeout
+					RegexMatches matches = CurrentRegexEngine.Matches( parsing_result, text ); // TODO: make it cancellable, or use timeout
+					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;
 
-					var matches_to_show = first_only ? matches0.Take( 1 ) : matches0;
+					var matches_to_show = first_only ?
+						new RegexMatches( Math.Min( 1, count ), matches.Matches.Take( 1 ) ) :
+						matches;
 
 					if( cnc.IsCancellationRequested ) return;
 
@@ -532,9 +563,9 @@ namespace RegExpressWPF
 										ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 										ucMatches.SetMatches( text, matches_to_show, first_only, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
 
-										lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-										pnlShowAll.Visibility = first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-										pnlShowFirst.Visibility = !first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+										lblMatches.Text = count == 0 ? "Matches" : count == 1 ? "1 match" : $"{count:#,##0} matches";
+										pnlShowAll.Visibility = first_only && count > 1 ? Visibility.Visible : Visibility.Collapsed;
+										pnlShowFirst.Visibility = !first_only && count > 1 ? Visibility.Visible : Visibility.Collapsed;
 									} );
 				}
 			}

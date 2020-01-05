@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using RegexEngineInfrastructure.Matches;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -43,7 +43,7 @@ namespace RegExpressWPF
 		bool AlreadyLoaded = false;
 
 		string LastText;
-		IReadOnlyList<Match> LastMatches;
+		RegexMatches LastMatches;
 		bool LastShowCaptures;
 		string LastEol;
 		IReadOnlyList<Segment> LastExternalUnderliningSegments;
@@ -114,12 +114,12 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetMatches( IReadOnlyList<Match> matches, bool showCaptures, string eol )
+		public void SetMatches( RegexMatches matches, bool showCaptures, string eol )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
 			string last_text;
-			IReadOnlyList<Match> last_matches;
+			RegexMatches last_matches;
 			bool last_show_captures;
 			string last_eol;
 
@@ -135,8 +135,8 @@ namespace RegExpressWPF
 
 			if( last_matches != null )
 			{
-				var old_groups = last_matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
-				var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value) );
+				var old_groups = last_matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value) );
+				var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value) );
 
 				if( string.Equals( text, last_text ) &&
 					showCaptures == last_show_captures &&
@@ -444,7 +444,7 @@ namespace RegExpressWPF
 
 		void RecolouringThreadProc( ICancellable cnc )
 		{
-			IReadOnlyList<Match> matches;
+			RegexMatches matches;
 			string eol;
 			bool show_captures;
 
@@ -515,13 +515,15 @@ namespace RegExpressWPF
 			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 			var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
 
-			if( matches != null )
+			if( matches != null && matches.Count > 0 )
 			{
-				for( int i = 0; i < matches.Count; ++i )
+				int i = -1;
+				foreach( var match in matches.Matches )
 				{
+					++i;
+
 					if( cnc.IsCancellationRequested ) break;
 
-					Match match = matches[i];
 					Debug.Assert( match.Success );
 
 					// TODO: consider these conditions for bi-directional text
@@ -568,7 +570,7 @@ namespace RegExpressWPF
 		void LocalUnderliningThreadProc( ICancellable cnc )
 		{
 			bool is_focussed = false;
-			IReadOnlyList<Match> matches;
+			RegexMatches matches;
 			string eol;
 			bool show_captures;
 
@@ -674,13 +676,13 @@ namespace RegExpressWPF
 		}
 
 
-		static IReadOnlyList<Segment> GetUnderliningInfo( ICancellable reh, TextData td, IReadOnlyList<Match> matches, bool showCaptures )
+		static IReadOnlyList<Segment> GetUnderliningInfo( ICancellable reh, TextData td, RegexMatches matches, bool showCaptures )
 		{
 			var items = new List<Segment>( );
 
 			// include captures and groups; if no such objects, then include matches
 
-			foreach( var match in matches )
+			foreach( IMatch match in matches.Matches )
 			{
 				if( reh.IsCancellationRequested ) break;
 
@@ -688,7 +690,7 @@ namespace RegExpressWPF
 
 				bool found = false;
 
-				foreach( Group group in match.Groups.Cast<Group>( ).Skip( 1 ) )
+				foreach( IGroup group in match.Groups.Skip( 1 ) )
 				{
 					if( reh.IsCancellationRequested ) break;
 
@@ -696,7 +698,7 @@ namespace RegExpressWPF
 
 					if( showCaptures )
 					{
-						foreach( Capture capture in group.Captures )
+						foreach( ICapture capture in group.Captures )
 						{
 							if( reh.IsCancellationRequested ) break;
 

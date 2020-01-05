@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DotNetRegexEngine.Matches
 {
-	class DotNetRegexGroup : RegexGroup
+	class DotNetRegexGroup : IGroup
 	{
 		readonly Group Group;
 
@@ -18,23 +18,27 @@ namespace DotNetRegexEngine.Matches
 			Group = group;
 		}
 
-		public override int Index => Group.Index;
+		#region ICapture
 
-		public override int Length => Group.Length;
+		public int Index => Group.Index;
 
-		public override string Value => Group.Value;
+		public int Length => Group.Length;
 
-		public override bool Success => Group.Success;
+		public string Value => Group.Value;
 
-		public override string Name => Group.Name;
+		public bool Success => Group.Success;
 
-		public override IEnumerable<RegexCapture> Captures
+		public string Name => Group.Name;
+
+		public IEnumerable<ICapture> Captures
 		{
 			get
 			{
 				return Group.Captures.OfType<Capture>( ).Select( c => new DotNetRegexCapture( c ) );
 			}
 		}
+
+		#endregion ICapture
 
 		public override string ToString( ) => Group.ToString( );
 	}

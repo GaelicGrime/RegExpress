@@ -8,8 +8,8 @@ using RegexEngineInfrastructure.Matches;
 
 namespace RegexEngineInfrastructure.Matches
 {
-	public abstract class RegexMatch : RegexGroup
+	public interface IMatch : IGroup
 	{
-		public abstract IEnumerable<RegexGroup> Groups { get; }
+		IEnumerable<IGroup> Groups { get; }
 	}
 }
