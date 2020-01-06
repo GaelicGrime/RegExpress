@@ -47,13 +47,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IParsedPattern.cs" />
     <Compile Include="Matches\ICapture.cs" />
     <Compile Include="Matches\IGroup.cs" />
     <Compile Include="Matches\IMatch.cs" />
     <Compile Include="Matches\RegexMatches.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegexEngine.cs" />
-    <Compile Include="RegexOptionInfo.cs" />
+    <Compile Include="IRegexEngine.cs" />
+    <Compile Include="IRegexOptionInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RegexEngineInfrastructure.snk" />

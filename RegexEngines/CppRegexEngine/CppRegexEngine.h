@@ -6,6 +6,7 @@ using namespace System;
 using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
+using namespace RegexEngineInfrastructure::Matches;
 
 
 namespace CppRegexEngine
@@ -27,9 +28,11 @@ namespace CppRegexEngine
 	};
 
 
-	public ref class CppRegexEngine : public RegexEngine
+	public ref class CppRegexEngine : public IRegexEngine
 	{
 	public:
+
+#pragma region IRegexEngine
 
 		property String^ Id
 		{
@@ -40,11 +43,11 @@ namespace CppRegexEngine
 		}
 
 
-		property IReadOnlyCollection<RegexOptionInfo^>^ AllOptions
+		property IReadOnlyCollection<IRegexOptionInfo^>^ AllOptions
 		{
-			IReadOnlyCollection<RegexOptionInfo^>^ get( ) override
+			IReadOnlyCollection<IRegexOptionInfo^>^ get( ) override
 			{
-				auto list = gcnew List< RegexOptionInfo^>;
+				auto list = gcnew List<IRegexOptionInfo^>;
 
 #define ADD(flag, note) \
 	list->Add( gcnew CppRegexOptionInfo( L#flag, note, L#flag, std::wregex::flag ) );
@@ -65,6 +68,14 @@ namespace CppRegexEngine
 			}
 		}
 
+
+		IParsedPattern^ ParsePattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options ) override
+		{
+			throw; //..........
+			return nullptr;
+		}
+
+#pragma endregion IRegexEngine
 
 
 

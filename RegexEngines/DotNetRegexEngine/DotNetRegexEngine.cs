@@ -11,44 +11,8 @@ using System.Threading.Tasks;
 
 namespace DotNetRegexEngine
 {
-	public class DotNetRegexEngine : RegexEngine
+	public class DotNetRegexEngine : IRegexEngine
 	{
-
-		class DotNetRegexOptionInfo : RegexOptionInfo
-		{
-			public DotNetRegexOptionInfo( RegexOptions option, string note )
-			{
-				Note = note;
-				RegexOption = option;
-			}
-
-
-			public RegexOptions RegexOption { get; }
-
-
-			#region RegexOptionInfo
-
-			public override string Text
-			{
-				get
-				{
-					return RegexOption.ToString( );
-				}
-			}
-
-			public override string Note { get; }
-
-			public override string AsText
-			{
-				get
-				{
-					return RegexOption.ToString( );
-				}
-			}
-
-			#endregion RegexOptionInfo
-		}
-
 
 		public string[] ParseLegacyOptions( int flags )
 		{
@@ -68,16 +32,16 @@ namespace DotNetRegexEngine
 		}
 
 
-		#region RegexEngine
+		#region IRegexEngine
 
-		public override string Id => "DotNetRegex";
+		public string Id => "DotNetRegex";
 
 
-		public override IReadOnlyCollection<RegexOptionInfo> AllOptions
+		public IReadOnlyCollection<IRegexOptionInfo> AllOptions
 		{
 			get
 			{
-				return new List<RegexOptionInfo>
+				return new List<IRegexOptionInfo>
 				{
 					MakeOptionInfo( RegexOptions.CultureInvariant ),
 					MakeOptionInfo( RegexOptions.ECMAScript ),
@@ -92,7 +56,7 @@ namespace DotNetRegexEngine
 		}
 
 
-		public override object ParsePattern( string pattern, IReadOnlyCollection<RegexOptionInfo> options )
+		public IParsedPattern ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options )
 		{
 			RegexOptions regex_options = RegexOptions.None;
 
@@ -101,23 +65,16 @@ namespace DotNetRegexEngine
 				regex_options |= opt.RegexOption;
 			}
 
-			return new Regex( pattern, regex_options );
+			var regex = new Regex( pattern, regex_options );
+
+			return new DotNetParsedPattern( regex );
 		}
 
 
-		public override RegexMatches Matches( object parsingResult, string text )
-		{
-			Regex regex = (Regex)parsingResult;
-			MatchCollection dotnet_matches = regex.Matches( text );
-			IEnumerable<DotNetRegexMatch> matches = dotnet_matches.OfType<Match>( ).Select( m => new DotNetRegexMatch( m ) );
-
-			return new RegexMatches( dotnet_matches.Count, matches );
-		}
-
-		#endregion RegexBase
+		#endregion IRegexEngine
 
 
-		RegexOptionInfo MakeOptionInfo( RegexOptions option, string note = null )
+		IRegexOptionInfo MakeOptionInfo( RegexOptions option, string note = null )
 		{
 			return new DotNetRegexOptionInfo( option, note );
 		}

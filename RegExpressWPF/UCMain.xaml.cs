@@ -36,7 +36,7 @@ namespace RegExpressWPF
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 		// TODO: The active engine will be selectable.
-		RegexEngine CurrentRegexEngine = null;
+		IRegexEngine CurrentRegexEngine = null;
 
 
 		bool IsFullyLoaded = false;
@@ -380,7 +380,7 @@ namespace RegExpressWPF
 
 				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
-					var opt = cb.Tag as RegexOptionInfo;
+					var opt = cb.Tag as IRegexOptionInfo;
 					if( opt != null )
 					{
 						cb.IsChecked = options_as_text.Contains( opt.AsText );
@@ -405,7 +405,7 @@ namespace RegExpressWPF
 
 				ucPattern.SetFocus( );
 
-				RegexOptionInfo[] options = CurrentRegexEngine.AllOptions.Where( o => options_as_text.Contains( o.AsText ) ).ToArray( );
+				IRegexOptionInfo[] options = CurrentRegexEngine.AllOptions.Where( o => options_as_text.Contains( o.AsText ) ).ToArray( );
 
 				ucPattern.SetRegexOptions( CurrentRegexEngine, options, tabData.Eol );
 
@@ -419,13 +419,13 @@ namespace RegExpressWPF
 		}
 
 
-		IReadOnlyCollection<RegexOptionInfo> GetRegexOptions( )
+		IReadOnlyCollection<IRegexOptionInfo> GetRegexOptions( )
 		{
-			var regex_options = new List<RegexOptionInfo>( );
+			var regex_options = new List<IRegexOptionInfo>( );
 
 			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ).Where( x => x.IsChecked == true ) )
 			{
-				var opt = cb.Tag as RegexOptionInfo;
+				var opt = cb.Tag as IRegexOptionInfo;
 				if( opt != null )
 				{
 					regex_options.Add( opt );
@@ -491,7 +491,7 @@ namespace RegExpressWPF
 			string pattern = null;
 			string text = null;
 			bool first_only = false;
-			IReadOnlyCollection<RegexOptionInfo> options = null;
+			IReadOnlyCollection<IRegexOptionInfo> options = null;
 
 			UITaskHelper.Invoke( this,
 				( ) =>
@@ -521,12 +521,12 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				object parsing_result = null;
+				IParsedPattern parsed_pattern = null;
 				bool pattern_is_good = false;
 
 				try
 				{
-					parsing_result = CurrentRegexEngine.ParsePattern( pattern, options );
+					parsed_pattern = CurrentRegexEngine.ParsePattern( pattern, options );
 					pattern_is_good = true;
 				}
 				catch( Exception exc )
@@ -546,7 +546,7 @@ namespace RegExpressWPF
 
 				if( pattern_is_good )
 				{
-					RegexMatches matches = CurrentRegexEngine.Matches( parsing_result, text ); // TODO: make it cancellable, or use timeout
+					RegexMatches matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
 					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;

@@ -7,7 +7,7 @@ using namespace RegexEngineInfrastructure;
 
 namespace CppRegexEngine
 {
-	ref class CppRegexOptionInfo : public RegexOptionInfo
+	ref class CppRegexOptionInfo : public IRegexOptionInfo
 	{
 	public:
 
@@ -17,7 +17,8 @@ namespace CppRegexEngine
 
 		}
 
-#pragma region RegexOptionInfo
+
+#pragma region IRegexOptionInfo
 
 		property String^ Text
 		{

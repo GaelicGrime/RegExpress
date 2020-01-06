@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure
 {
-	public abstract class RegexOptionInfo
+	public interface IRegexOptionInfo
 	{
-		public abstract string Text { get; }
-		public abstract string Note { get; }
+		string Text { get; }
 
-		public abstract string AsText { get; }
+		string Note { get; }
+
+		string AsText { get; }
 	}
 }

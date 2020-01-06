@@ -60,8 +60,8 @@ namespace RegExpressWPF
 		int LeftHighlightedBracket = -1;
 		int RightHighlightedBracket = -1;
 
-		RegexEngine mRegexEngine;
-		IReadOnlyCollection<RegexOptionInfo> mRegexOptions;
+		IRegexEngine mRegexEngine;
+		IReadOnlyCollection<IRegexOptionInfo> mRegexOptions;
 		string mEol;
 
 		public event EventHandler TextChanged;
@@ -115,7 +115,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetRegexOptions( RegexEngine engine, IReadOnlyCollection<RegexOptionInfo> regexOptions, string eol )
+		public void SetRegexOptions( IRegexEngine engine, IReadOnlyCollection<IRegexOptionInfo> regexOptions, string eol )
 		{
 			StopAll( );
 
@@ -266,8 +266,8 @@ namespace RegExpressWPF
 
 		void RecolouringThreadProc( ICancellable cnc )
 		{
-			RegexEngine regex_engine;
-			IReadOnlyCollection<RegexOptionInfo> regex_options;
+			IRegexEngine regex_engine;
+			IReadOnlyCollection<IRegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
@@ -389,8 +389,8 @@ namespace RegExpressWPF
 
 		void HighlightingThreadProc( ICancellable cnc )
 		{
-			RegexEngine regex_engine;
-			IReadOnlyCollection<RegexOptionInfo> regex_options;
+			IRegexEngine regex_engine;
+			IReadOnlyCollection<IRegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
@@ -616,7 +616,7 @@ namespace RegExpressWPF
 		}
 
 
-		Regex GetColouringRegex( RegexEngine engine, IReadOnlyCollection<RegexOptionInfo> options )
+		Regex GetColouringRegex( IRegexEngine engine, IReadOnlyCollection<IRegexOptionInfo> options )
 		{
 			// TODO: implmenet multiple engine support; this is for .NET
 
