@@ -1,7 +1,6 @@
 #pragma once
 
 #include <regex>
-#include "CppGroup.h"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -13,31 +12,16 @@ using namespace RegexEngineInfrastructure::Matches;
 namespace CppRegexEngine
 {
 
-	ref class CppMatch : IMatch
+	ref class CppGroup : public IGroup
 	{
-
 	public:
 
-		CppMatch( const std::wsmatch& match )
+		CppGroup( int index, std::wssub_match submatch )
 		{
-			mSuccess = !match.empty( );
-			mIndex = match.position( );
-			mValue = gcnew String( match.str( ).c_str( ) );
-
-			mGroups = gcnew List<IGroup^>;
-			int j = 0;
-
-			for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
-			{
-				int submatch_index = match.position( j );
-				std::wssub_match submatch = *i;
-
-				auto group = gcnew CppGroup( submatch_index, submatch );
-
-				mGroups->Add( group );
-			}
+			mSuccess = submatch.matched;
+			mIndex = index;
+			mValue = gcnew String( submatch.str( ).c_str( ) );
 		}
-
 
 #pragma region ICapture
 
@@ -97,25 +81,11 @@ namespace CppRegexEngine
 
 #pragma endregion IGroup
 
-#pragma region IMatch
-
-		virtual property IEnumerable<RegexEngineInfrastructure::Matches::IGroup^>^ Groups
-		{
-			IEnumerable<IGroup^>^ get( )
-			{
-				return mGroups;
-			}
-		}
-
-#pragma endregion IMatch
-
 	private:
 
 		bool mSuccess;
 		int mIndex;
 		String^ mValue;
 
-		List<IGroup^>^ mGroups;
 	};
-
 }

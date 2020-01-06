@@ -521,21 +521,6 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				{
-					//........................
-					try
-					{
-						var eng = new CppRegexEngine.CppRegexEngine( );
-						var pp = eng.ParsePattern( pattern, Enumerable.Empty<IRegexOptionInfo>( ).ToList( ) );
-
-						RegexMatches ms = pp.Matches( text );
-					}
-					catch
-					{
-						
-					}
-				}
-
 				IParsedPattern parsed_pattern = null;
 				bool pattern_is_good = false;
 
@@ -562,6 +547,34 @@ namespace RegExpressWPF
 				if( pattern_is_good )
 				{
 					RegexMatches matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
+
+
+
+					{
+						//........................
+						try
+						{
+							var eng = new CppRegexEngine.CppRegexEngine( );
+							var pp = eng.ParsePattern( pattern, Enumerable.Empty<IRegexOptionInfo>( ).ToList( ) );
+
+							RegexMatches ms = pp.Matches( text );
+
+							matches = ms;
+						}
+						catch
+						{
+
+						}
+					}
+
+
+
+
+
+
+
+
+
 					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;

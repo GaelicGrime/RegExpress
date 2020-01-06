@@ -33,6 +33,9 @@
     <ClInclude Include="CppMatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CppGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -51,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CppMatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppGroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

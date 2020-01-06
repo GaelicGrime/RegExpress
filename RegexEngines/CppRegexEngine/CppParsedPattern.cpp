@@ -2,6 +2,7 @@
 
 #include "CppParsedPattern.h"
 #include "CppRegexOptionInfo.h"
+#include "CppMatch.h"
 
 
 using namespace System::Diagnostics;
@@ -41,8 +42,10 @@ namespace CppRegexEngine
 	}
 
 
-	RegexMatches^ CppParsedPattern::Matches( String^ text0 ) 
+	RegexMatches^ CppParsedPattern::Matches( String^ text0 )
 	{
+		// TODO: re-implement as lazy enumerator?
+
 		msclr::interop::marshal_context context;
 
 		wstring text = context.marshal_as<wstring>( text0 );
@@ -50,37 +53,18 @@ namespace CppRegexEngine
 		auto results_begin = wsregex_iterator( text.cbegin( ), text.cend( ), *mRegex );
 		auto results_end = wsregex_iterator( );
 
-		//List<
+		auto matches = gcnew List<IMatch^>( );
 
 		for( auto i = results_begin; i != results_end; ++i )
 		{
 			const wsmatch& match = *i;
 
-			int Index = match.position();
-			String^ Value = context.marshal_as<String^>( match.str( ) );// gcnew String( match.str( ).c_str( ) );
+			auto m = gcnew CppMatch( match );
 
-			/*
-
-			auto submatches_begin = match.cbegin( );
-			auto submatches_end = match.cend( );
-
-			for( auto j = submatches_begin; j != submatches_end; ++j )
-			{
-				wssub_match submatch = *j;
-
-				wstring value = submatch.str( );
-				int position = submatch.first - text2.cbegin( );
-				int length = submatch.length();
-
-				Debug::Assert( value.length( ) == length );
-
-				//submatch.
-
-			}
-			*/
+			matches->Add( m );
 		}
 
-		return nullptr;
+		return gcnew RegexMatches( matches->Count, matches );
 	}
 
 }
