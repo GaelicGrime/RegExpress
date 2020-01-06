@@ -23,7 +23,7 @@
     <ProjectGuid>{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}</ProjectGuid>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
-    <RootNamespace>CppRegex</RootNamespace>
+    <RootNamespace>CppRegexEngine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>CppRegexEngine</ProjectName>
   </PropertyGroup>
@@ -77,18 +77,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)RegExpressWPF\bin\$(Platform)\$(Configuration)\</OutDir>
+    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)RegExpressWPF\bin\$(Platform)\$(Configuration)\</OutDir>
+    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)RegExpressWPF\bin\$(Platform)\$(Configuration)\</OutDir>
+    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)RegExpressWPF\bin\$(Platform)\$(Configuration)\</OutDir>
+    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CppMatch.h" />
+    <ClInclude Include="CppParsedPattern.h" />
     <ClInclude Include="CppRegexEngine.h" />
     <ClInclude Include="CppRegexOptionInfo.h" />
     <ClInclude Include="pch.h" />
@@ -144,6 +150,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="CppMatch.cpp" />
+    <ClCompile Include="CppParsedPattern.cpp" />
     <ClCompile Include="CppRegexEngine.cpp" />
     <ClCompile Include="CppRegexOptionInfo.cpp" />
     <ClCompile Include="pch.cpp">
@@ -168,6 +176,9 @@
     <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CppRegexEngine.snk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "CppRegexOptionInfo.h"
+#include "CppParsedPattern.h"
+
 
 using namespace System;
 using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
-using namespace RegexEngineInfrastructure::Matches;
 
 
 namespace CppRegexEngine
@@ -34,18 +35,18 @@ namespace CppRegexEngine
 
 #pragma region IRegexEngine
 
-		property String^ Id
+		virtual property String^ Id
 		{
-			String^ get( ) override
+			String^ get( )
 			{
 				return L"CppRegex";
 			}
 		}
 
 
-		property IReadOnlyCollection<IRegexOptionInfo^>^ AllOptions
+		virtual property IReadOnlyCollection<IRegexOptionInfo^>^ AllOptions
 		{
-			IReadOnlyCollection<IRegexOptionInfo^>^ get( ) override
+			IReadOnlyCollection<IRegexOptionInfo^>^ get( ) 
 			{
 				auto list = gcnew List<IRegexOptionInfo^>;
 
@@ -69,10 +70,9 @@ namespace CppRegexEngine
 		}
 
 
-		IParsedPattern^ ParsePattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options ) override
+		virtual IParsedPattern^ ParsePattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options )
 		{
-			throw; //..........
-			return nullptr;
+			return gcnew CppParsedPattern( pattern, options );
 		}
 
 #pragma endregion IRegexEngine

@@ -27,6 +27,12 @@
     <ClInclude Include="CppRegexOptionInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CppParsedPattern.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CppMatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -41,6 +47,12 @@
     <ClCompile Include="CppRegexOptionInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CppParsedPattern.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppMatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc">
@@ -51,5 +63,8 @@
     <Image Include="app.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CppRegexEngine.snk" />
   </ItemGroup>
 </Project>

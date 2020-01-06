@@ -20,25 +20,25 @@ namespace CppRegexEngine
 
 #pragma region IRegexOptionInfo
 
-		property String^ Text
+		virtual property String^ Text
 		{
-			String^ get( ) override
+			String^ get( )
 			{
 				return mText;
 			}
 		}
 
-		property String^ Note
+		virtual property String^ Note
 		{
-			String^ get( ) override
+			String^ get( )
 			{
 				return mNote;
 			}
 		}
 
-		property String^ AsText
+		virtual property String^ AsText
 		{
-			String^ get( ) override
+			String^ get( )
 			{
 				return mAsText;
 			}
@@ -62,8 +62,6 @@ namespace CppRegexEngine
 		String^ const mNote;
 		String^ const mAsText;
 		std::wregex::flag_type const mFlag;
-
-		std::wregex::flag_type mNativeFlag;
 	};
 }
 

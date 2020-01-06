@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexEngineInfrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetRegexEngine", "RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj", "{024A9F29-AE01-4987-86E5-CA4C0CB69E7C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppRegexEngine", "RegexEngines\CppRegexEngine\CppRegex.vcxproj", "{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppRegexEngine", "RegexEngines\CppRegexEngine\CppRegexEngine.vcxproj", "{EFBAC25B-BBF7-4EDE-953A-8CE91D43A432}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

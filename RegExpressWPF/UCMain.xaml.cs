@@ -521,6 +521,21 @@ namespace RegExpressWPF
 			}
 			else
 			{
+				{
+					//........................
+					try
+					{
+						var eng = new CppRegexEngine.CppRegexEngine( );
+						var pp = eng.ParsePattern( pattern, Enumerable.Empty<IRegexOptionInfo>( ).ToList( ) );
+
+						RegexMatches ms = pp.Matches( text );
+					}
+					catch
+					{
+						
+					}
+				}
+
 				IParsedPattern parsed_pattern = null;
 				bool pattern_is_good = false;
 

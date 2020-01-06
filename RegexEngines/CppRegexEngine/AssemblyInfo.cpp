@@ -6,11 +6,11 @@ using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Security::Permissions;
 
-[assembly:AssemblyTitleAttribute(L"CppRegex")];
+[assembly:AssemblyTitleAttribute(L"CppRegexEngine")];
 [assembly:AssemblyDescriptionAttribute(L"")];
 [assembly:AssemblyConfigurationAttribute(L"")];
 [assembly:AssemblyCompanyAttribute(L"")];
-[assembly:AssemblyProductAttribute(L"CppRegex")];
+[assembly:AssemblyProductAttribute(L"CppRegexEngine")];
 [assembly:AssemblyCopyrightAttribute(L"Copyright (c)  2019")];
 [assembly:AssemblyTrademarkAttribute(L"")];
 [assembly:AssemblyCultureAttribute(L"")];

@@ -173,7 +173,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RegexEngines\CppRegexEngine\CppRegex.vcxproj">
+    <ProjectReference Include="..\RegexEngines\CppRegexEngine\CppRegexEngine.vcxproj">
       <Project>{efbac25b-bbf7-4ede-953a-8ce91d43a432}</Project>
       <Name>CppRegexEngine</Name>
     </ProjectReference>
