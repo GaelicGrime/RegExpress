@@ -33,6 +33,11 @@ namespace CppRegexEngine
 	{
 	public:
 
+		CppRegexEngine( )
+		{
+
+		}
+
 #pragma region IRegexEngine
 
 		virtual property String^ Id

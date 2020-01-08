@@ -16,7 +16,7 @@ namespace CppRegexEngine
 	{
 	public:
 
-		CppGroup( int index, std::wssub_match submatch )
+		CppGroup( int index, const std::wssub_match & submatch )
 		{
 			mSuccess = submatch.matched;
 			mIndex = index;

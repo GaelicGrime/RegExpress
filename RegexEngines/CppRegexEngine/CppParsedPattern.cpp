@@ -13,13 +13,13 @@ using namespace std;
 namespace CppRegexEngine
 {
 
-	CppParsedPattern::CppParsedPattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options )
+	CppParsedPattern::CppParsedPattern( String^ pattern0, IReadOnlyCollection<IRegexOptionInfo^>^ options )
 		: mRegex( nullptr )
 	{
 		msclr::interop::marshal_context context;
 		wregex::flag_type flags;
 
-		wstring pattern2 = context.marshal_as<wstring>( pattern );
+		wstring pattern = context.marshal_as<wstring>( pattern0 );
 
 		//auto e = options->GetEnumerator( );
 		//e->Reset( );
@@ -30,15 +30,15 @@ namespace CppRegexEngine
 		{
 			flags |= o->Flag;
 		}
-
-		mRegex = new wregex( pattern2, flags );
+		auto p = new wstring( pattern );
+		mRegex = new wregex( *p, flags );
 	}
 
 
 	CppParsedPattern::!CppParsedPattern( )
 	{
-		delete mRegex;
-		mRegex = nullptr;
+		//.........delete mRegex;
+		//.........mRegex = nullptr;
 	}
 
 
