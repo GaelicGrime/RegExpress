@@ -555,7 +555,7 @@ namespace RegExpressWPF
 						try
 						{
 							var eng = new CppRegexEngine.CppRegexEngine( );
-							Thread.Sleep( 333 );
+							//Thread.Sleep( 333 );
 							var pp = eng.ParsePattern( pattern, Enumerable.Empty<IRegexOptionInfo>( ).ToList( ) );
 							//Thread.Sleep( 333 );
 							RegexMatches ms = pp.Matches( text );

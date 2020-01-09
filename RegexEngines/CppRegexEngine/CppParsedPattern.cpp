@@ -16,8 +16,8 @@ namespace CppRegexEngine
 	CppParsedPattern::CppParsedPattern( String^ pattern0, IReadOnlyCollection<IRegexOptionInfo^>^ options )
 		: mRegex( nullptr )
 	{
-		msclr::interop::marshal_context context;
-		wregex::flag_type flags;
+		msclr::interop::marshal_context context{};
+		wregex::flag_type flags{};
 
 		wstring pattern = context.marshal_as<wstring>( pattern0 );
 
@@ -42,7 +42,7 @@ namespace CppRegexEngine
 	{
 		// TODO: re-implement as lazy enumerator?
 
-		msclr::interop::marshal_context context;
+		msclr::interop::marshal_context context{};
 
 		wstring text = context.marshal_as<wstring>( text0 );
 

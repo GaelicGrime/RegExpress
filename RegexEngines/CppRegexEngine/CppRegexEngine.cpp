@@ -10,7 +10,7 @@ namespace CppRegexEngine
 {
 	void CppRegexEngine::Matches( String^ text0, String^ pattern0, CppRegexOptions options0 )
 	{
-		msclr::interop::marshal_context context;
+		msclr::interop::marshal_context context{};
 
 		wstring text = context.marshal_as<wstring>( text0 );
 		wstring pattern = context.marshal_as<wstring>( pattern0 );
