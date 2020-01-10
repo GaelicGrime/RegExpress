@@ -29,7 +29,25 @@ namespace CppRegexEngine
 
 		mData = new MatcherData{};
 
-		mData->mRegex = wregex( pattern, flags );
+		try
+		{
+			mData->mRegex.assign( pattern, flags );
+		}
+		catch( const regex_error & exc )
+		{
+			//regex_constants::error_type code = exc.code( );
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( what );
+		}
+		catch( const exception & exc )
+		{
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( "Error: " + what );
+		}
+		catch( ... )
+		{
+			throw gcnew Exception( "Unknown error." );
+		}
 	}
 
 
@@ -58,7 +76,7 @@ namespace CppRegexEngine
 
 		auto* native_text = mData->mText.c_str( );
 
-		wcregex_iterator results_begin( native_text, native_text + mData->mText.length(), mData->mRegex, regex_constants::match_flag_type::match_default );
+		wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, regex_constants::match_flag_type::match_default );
 		wcregex_iterator results_end{};
 
 		for( auto i = results_begin; i != results_end; ++i )

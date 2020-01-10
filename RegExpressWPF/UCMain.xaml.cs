@@ -43,6 +43,7 @@ namespace RegExpressWPF
 		};
 
 		IRegexEngine CurrentRegexEngine = null;
+		readonly Dictionary<string, string[]> LastRegexOptions = new Dictionary<string, string[]>( );
 
 
 		bool IsFullyLoaded = false;
@@ -288,6 +289,15 @@ namespace RegExpressWPF
 		{
 			CurrentRegexEngine = Engines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 			FillOptions( CurrentRegexEngine );
+
+			if( LastRegexOptions.TryGetValue( CurrentRegexEngine.Id, out string[] options ) )
+			{
+				SetRegexOptions( options );
+			}
+
+			FindMatchesLoop.SendRestart( );
+
+			Changed?.Invoke( this, null );
 		}
 
 
@@ -295,6 +305,9 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
+
+			var options = GetRegexOptions( ).Select( o => o.AsText ).ToArray( );
+			LastRegexOptions[CurrentRegexEngine.Id] = options;
 
 			UpdateRegexOptionsControls( );
 
@@ -384,15 +397,7 @@ namespace RegExpressWPF
 
 				CurrentRegexEngine = engine;
 				SetEngineOptions( CurrentRegexEngine );
-
-				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
-				{
-					var opt = cb.Tag as IRegexOptionInfo;
-					if( opt != null )
-					{
-						cb.IsChecked = options_as_text.Contains( opt.AsText );
-					}
-				}
+				SetRegexOptions( options_as_text );
 
 				UpdateRegexOptionsControls( );
 
@@ -440,6 +445,19 @@ namespace RegExpressWPF
 			}
 
 			return regex_options;
+		}
+
+
+		void SetRegexOptions( string[] options )
+		{
+			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
+			{
+				var opt = cb.Tag as IRegexOptionInfo;
+				if( opt != null )
+				{
+					cb.IsChecked = options.Contains( opt.AsText );
+				}
+			}
 		}
 
 
