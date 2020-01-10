@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -435,9 +436,9 @@ namespace RegExpressWPF
 		{
 			var regex_options = new List<IRegexOptionInfo>( );
 
-			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ).Where( x => x.IsChecked == true ) )
+			foreach( var tgb in pnlRegexOptions.Children.OfType<ToggleButton>( ).Where( x => x.IsChecked == true ) )
 			{
-				var opt = cb.Tag as IRegexOptionInfo;
+				var opt = tgb.Tag as IRegexOptionInfo;
 				if( opt != null )
 				{
 					regex_options.Add( opt );
@@ -450,12 +451,12 @@ namespace RegExpressWPF
 
 		void SetRegexOptions( string[] options )
 		{
-			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
+			foreach( var tgb in pnlRegexOptions.Children.OfType<ToggleButton>( ) )
 			{
-				var opt = cb.Tag as IRegexOptionInfo;
+				var opt = tgb.Tag as IRegexOptionInfo;
 				if( opt != null )
 				{
-					cb.IsChecked = options.Contains( opt.AsText );
+					tgb.IsChecked = options.Contains( opt.AsText );
 				}
 			}
 		}
@@ -702,12 +703,22 @@ namespace RegExpressWPF
 			{
 				var s = o.Text;
 				if( !string.IsNullOrWhiteSpace( o.Note ) ) s += ' ' + o.Note;
-				var cb = new CheckBox { Content = s, Tag = o };
 
-				cb.Checked += CbOption_CheckedChanged;
-				cb.Unchecked += CbOption_CheckedChanged;
+				ToggleButton tgb;
 
-				pnlRegexOptions.Children.Add( cb );
+				if( string.IsNullOrWhiteSpace( o.GroupName))
+				{
+					tgb = new CheckBox { Content = s, Tag = o };
+				}
+				else
+				{
+					tgb = new RadioButton { Content = s, Tag = o, GroupName = o.GroupName };
+				}
+
+				tgb.Checked += CbOption_CheckedChanged;
+				tgb.Unchecked += CbOption_CheckedChanged;
+
+				pnlRegexOptions.Children.Add( tgb );
 			}
 		}
 

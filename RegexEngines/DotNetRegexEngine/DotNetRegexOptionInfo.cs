@@ -18,23 +18,13 @@ namespace DotNetRegexEngine
 
 		#region IRegexOptionInfo
 
-		public string Text
-		{
-			get
-			{
-				return RegexOption.ToString( );
-			}
-		}
+		public string Text => RegexOption.ToString( );
 
 		public string Note { get; }
 
-		public string AsText
-		{
-			get
-			{
-				return RegexOption.ToString( );
-			}
-		}
+		public string GroupName => null;
+
+		public string AsText => RegexOption.ToString( );
 
 		#endregion IRegexOptionInfo
 	}

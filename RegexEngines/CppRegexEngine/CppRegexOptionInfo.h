@@ -12,7 +12,7 @@ namespace CppRegexEngine
 	public:
 
 		CppRegexOptionInfo( String^ text, String^ note, String^ asText, std::wregex::flag_type flag )
-			: mText( text ), mNote( note ), mAsText( asText ), mFlag( flag)
+			: mText( text ), mNote( note ), mAsText( asText ), mFlag( flag )
 		{
 
 		}
@@ -33,6 +33,21 @@ namespace CppRegexEngine
 			String^ get( )
 			{
 				return mNote;
+			}
+		}
+
+		virtual property String^ GroupName
+		{
+			String^ get( )
+			{
+				if( mFlag & std::wregex::flag_type::_Gmask )
+				{
+					return L"LanguageSpecifier";
+				}
+				else
+				{
+					return nullptr;
+				}
 			}
 		}
 

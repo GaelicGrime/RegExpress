@@ -13,6 +13,8 @@ namespace RegexEngineInfrastructure
 
 		string Note { get; }
 
+		string GroupName { get; }
+
 		string AsText { get; }
 	}
 }
