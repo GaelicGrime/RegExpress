@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace DotNetRegexEngine
 {
-	public class DotNetParsedPattern : IParsedPattern
+	public class DotNetMatcher : IMatcher
 	{
 		readonly Regex mRegex;
 
-		public DotNetParsedPattern( Regex regex )
+		public DotNetMatcher( Regex regex )
 		{
 			mRegex = regex;
 		}

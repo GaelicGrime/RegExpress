@@ -116,6 +116,22 @@
                     <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3">
                         <ScrollViewer Margin="5" VerticalScrollBarVisibility="Auto">
                             <StackPanel >
+                                <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
+                                    <StackPanel.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
+                                            <SkewTransform/>
+                                            <RotateTransform/>
+                                            <TranslateTransform/>
+                                        </TransformGroup>
+                                    </StackPanel.RenderTransform>
+                                    <Label Content="Engine: " VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
+                                        <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
+                                        <ComboBoxItem Tag="DotNetRegex" Content=".NET Regex"/>
+                                        <ComboBoxItem Tag="CppRegex" Content="C++ &lt;regex&gt;"/>
+                                    </ComboBox>
+                                </StackPanel>
                                 <StackPanel x:Name="pnlRegexOptions">
                                     <!-- (filled programmatically) -->
                                 </StackPanel>

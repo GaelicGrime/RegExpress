@@ -35,7 +35,13 @@ namespace RegExpressWPF
 
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
-		// TODO: The active engine will be selectable.
+
+		readonly IRegexEngine[] Engines = new IRegexEngine[]
+		{
+			new DotNetRegexEngine.DotNetRegexEngine(),
+			new CppRegexEngine.CppRegexEngine()
+		};
+
 		IRegexEngine CurrentRegexEngine = null;
 
 
@@ -52,8 +58,6 @@ namespace RegExpressWPF
 		public UCMain( )
 		{
 			InitializeComponent( );
-
-			CurrentRegexEngine = new DotNetRegexEngine.DotNetRegexEngine( ); // the default
 
 			btnNewTab.Visibility = Visibility.Collapsed;
 			lblTextInfo.Visibility = Visibility.Collapsed;
@@ -131,17 +135,8 @@ namespace RegExpressWPF
 		{
 			if( IsFullyLoaded ) return;
 
-			foreach( var o in CurrentRegexEngine.AllOptions )
-			{
-				var s = o.Text;
-				if( !string.IsNullOrWhiteSpace( o.Note ) ) s += ' ' + o.Note;
-				var cb = new CheckBox { Content = s, Tag = o };
-
-				cb.Checked += CbOption_CheckedChanged;
-				cb.Unchecked += CbOption_CheckedChanged;
-
-				pnlRegexOptions.Children.Add( cb );
-			}
+			CurrentRegexEngine = Engines.Single( n => n.Id == "DotNetRegex" ); // default
+			SetEngineOptions( CurrentRegexEngine );
 
 			ucPattern.SetFocus( );
 
@@ -163,6 +158,9 @@ namespace RegExpressWPF
 				else
 				{
 					ucPattern.SetRegexOptions( CurrentRegexEngine, GetRegexOptions( ), GetEolOption( ) );
+
+					StopAll( );
+					RestartAll( );
 				}
 			}
 		}
@@ -286,6 +284,13 @@ namespace RegExpressWPF
 		}
 
 
+		private void cbxEngine_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			CurrentRegexEngine = Engines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
+			FillOptions( CurrentRegexEngine );
+		}
+
+
 		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
@@ -355,28 +360,30 @@ namespace RegExpressWPF
 
 			try
 			{
-				// TODO: determine the engine
+				IRegexEngine engine = Engines.SingleOrDefault( n => n.Id == tabData.RegexEngineId );
+				if( engine == null ) engine = new DotNetRegexEngine.DotNetRegexEngine( );
 
-				var dotnet_engine = new DotNetRegexEngine.DotNetRegexEngine( );
-
-				string[] options_as_text;
+				string[] options_as_text = new string[] { };
 
 				switch( tabData.RegexOptions )
 				{
 				case int flags: // legacy format; replaced on save with 'string[]'
-					options_as_text = dotnet_engine.ParseLegacyOptions( flags );
+					var dotnet_engine = engine as DotNetRegexEngine.DotNetRegexEngine;
+					if( dotnet_engine != null )
+					{
+						options_as_text = dotnet_engine.ParseLegacyOptions( flags );
+					}
 					break;
 				case object[] arr:
 					options_as_text = arr.OfType<string>( ).ToArray( );
 					break;
 				case null:
 				default:
-					options_as_text = new string[] { };
 					break;
 				}
 
-				// TODO: implement multiple engines; use 'tabData.EngineId'
-				CurrentRegexEngine = dotnet_engine;
+				CurrentRegexEngine = engine;
+				SetEngineOptions( CurrentRegexEngine );
 
 				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
 				{
@@ -491,6 +498,7 @@ namespace RegExpressWPF
 			string pattern = null;
 			string text = null;
 			bool first_only = false;
+			IRegexEngine engine = null;
 			IReadOnlyCollection<IRegexOptionInfo> options = null;
 
 			UITaskHelper.Invoke( this,
@@ -502,6 +510,7 @@ namespace RegExpressWPF
 					text = ucText.GetSimpleTextData( eol ).Text;
 					if( cnc.IsCancellationRequested ) return;
 					first_only = cbShowFirstOnly.IsChecked == true;
+					engine = CurrentRegexEngine;
 					options = GetRegexOptions( );
 				} );
 
@@ -521,12 +530,12 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				IParsedPattern parsed_pattern = null;
+				IMatcher parsed_pattern = null;
 				bool pattern_is_good = false;
 
 				try
 				{
-					parsed_pattern = CurrentRegexEngine.ParsePattern( pattern, options );
+					parsed_pattern = engine.ParsePattern( pattern, options );
 					pattern_is_good = true;
 				}
 				catch( Exception exc )
@@ -547,35 +556,6 @@ namespace RegExpressWPF
 				if( pattern_is_good )
 				{
 					RegexMatches matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
-
-
-
-					{
-						//........................
-						try
-						{
-							var eng = new CppRegexEngine.CppRegexEngine( );
-							//Thread.Sleep( 333 );
-							var pp = eng.ParsePattern( pattern, Enumerable.Empty<IRegexOptionInfo>( ).ToList( ) );
-							//Thread.Sleep( 333 );
-							RegexMatches ms = pp.Matches( text );
-
-							matches = ms;
-						}
-						catch
-						{
-
-						}
-					}
-
-
-
-
-
-
-
-
-
 					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;
@@ -689,6 +669,31 @@ namespace RegExpressWPF
 		}
 
 
+		void SetEngineOptions( IRegexEngine engine )
+		{
+			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == CurrentRegexEngine.Id );
+			cbxEngine.SelectedItem = cbxitem; // (causes 'FillOptions')
+		}
+
+
+		void FillOptions( IRegexEngine engine )
+		{
+			pnlRegexOptions.Children.Clear( );
+
+			foreach( var o in engine.AllOptions )
+			{
+				var s = o.Text;
+				if( !string.IsNullOrWhiteSpace( o.Note ) ) s += ' ' + o.Note;
+				var cb = new CheckBox { Content = s, Tag = o };
+
+				cb.Checked += CbOption_CheckedChanged;
+				cb.Unchecked += CbOption_CheckedChanged;
+
+				pnlRegexOptions.Children.Add( cb );
+			}
+		}
+
+
 		#region IDisposable Support
 
 		private bool disposedValue = false; // To detect redundant calls
@@ -730,5 +735,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }

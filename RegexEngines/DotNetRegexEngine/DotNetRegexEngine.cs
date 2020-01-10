@@ -56,7 +56,7 @@ namespace DotNetRegexEngine
 		}
 
 
-		public IParsedPattern ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options )
+		public IMatcher ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options )
 		{
 			RegexOptions regex_options = RegexOptions.None;
 
@@ -67,7 +67,7 @@ namespace DotNetRegexEngine
 
 			var regex = new Regex( pattern, regex_options );
 
-			return new DotNetParsedPattern( regex );
+			return new DotNetMatcher( regex );
 		}
 
 

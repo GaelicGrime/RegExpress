@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure
 {
-	public interface IParsedPattern
+	public interface IMatcher
 	{
 		RegexMatches Matches( string text );
 	}

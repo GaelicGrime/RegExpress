@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DotNetParsedPattern.cs" />
+    <Compile Include="DotNetMatcher.cs" />
     <Compile Include="DotNetRegexOptionInfo.cs" />
     <Compile Include="Matches\DotNetRegexCapture.cs" />
     <Compile Include="Matches\DotNetRegexGroup.cs" />

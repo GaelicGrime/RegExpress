@@ -14,6 +14,6 @@ namespace RegexEngineInfrastructure
 
 		IReadOnlyCollection<IRegexOptionInfo> AllOptions { get; }
 
-		IParsedPattern ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options );
+		IMatcher ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options );
 	}
 }

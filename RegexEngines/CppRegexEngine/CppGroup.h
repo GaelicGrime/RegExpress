@@ -11,17 +11,14 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace CppRegexEngine
 {
+	ref class CppMatch;
+
 
 	ref class CppGroup : public IGroup
 	{
 	public:
 
-		CppGroup( int index, const std::wssub_match & submatch )
-		{
-			mSuccess = submatch.matched;
-			mIndex = index;
-			mValue = gcnew String( submatch.str( ).c_str( ) );
-		}
+		CppGroup( CppMatch^ parent, int groupNumber, int index, const std::wcsub_match& submatch );
 
 #pragma region ICapture
 
@@ -37,16 +34,13 @@ namespace CppRegexEngine
 		{
 			int get( )
 			{
-				return mValue->Length;
+				return mLength;
 			}
 		}
 
 		virtual property String^ Value
 		{
-			String^ get( )
-			{
-				return mValue;
-			}
+			String^ get();
 		}
 
 #pragma endregion ICapture
@@ -65,7 +59,7 @@ namespace CppRegexEngine
 		{
 			String^ get( )
 			{
-				return L""; //...?
+				return mGroupNumber.ToString(); // TODO: culture?
 			}
 		}
 
@@ -73,9 +67,7 @@ namespace CppRegexEngine
 		{
 			IEnumerable<ICapture^>^ get( )
 			{
-				//...........
-				// TODO: implement.
-				return Enumerable::Empty<ICapture^>( );
+				return mCaptures;
 			}
 		}
 
@@ -83,9 +75,14 @@ namespace CppRegexEngine
 
 	private:
 
-		bool mSuccess;
-		int mIndex;
-		String^ mValue;
+		CppMatch^ const mParent;
 
+		bool const mSuccess;
+		int const mIndex;
+		int const mLength;
+		int const mGroupNumber;
+
+
+		IEnumerable<ICapture^>^ mCaptures;
 	};
 }

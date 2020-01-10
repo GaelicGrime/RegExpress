@@ -12,31 +12,14 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace CppRegexEngine
 {
+	ref class CppMatcher;
 
 	ref class CppMatch : IMatch
 	{
 
 	public:
 
-		CppMatch( const std::wsmatch& match )
-		{
-			mSuccess = !match.empty( );
-			mIndex = match.position( );
-			mValue = gcnew String( match.str( ).c_str( ) );
-
-			mGroups = gcnew List<IGroup^>;
-			int j = 0;
-
-			for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
-			{
-				int submatch_index = match.position( j );
-				std::wssub_match submatch = *i;
-
-				auto group = gcnew CppGroup( submatch_index, submatch );
-
-				mGroups->Add( group );
-			}
-		}
+		CppMatch( CppMatcher^ parent, const std::wcmatch& match );
 
 
 #pragma region ICapture
@@ -53,16 +36,13 @@ namespace CppRegexEngine
 		{
 			int get( )
 			{
-				return mValue->Length;
+				return mLength;
 			}
 		}
 
 		virtual property String^ Value
 		{
-			String^ get( )
-			{
-				return mValue;
-			}
+			String^ get( );
 		}
 
 #pragma endregion ICapture
@@ -81,7 +61,9 @@ namespace CppRegexEngine
 		{
 			String^ get( )
 			{
-				return L""; //...?
+				System::Diagnostics::Debug::Assert( false );
+
+				return nullptr; // not expected to be called; only group's name is needed
 			}
 		}
 
@@ -89,9 +71,9 @@ namespace CppRegexEngine
 		{
 			IEnumerable<ICapture^>^ get( )
 			{
-				//...........
-				// TODO: implement.
-				return Enumerable::Empty<ICapture^>( );
+				System::Diagnostics::Debug::Assert( false );
+
+				return nullptr; // not expected to be called; only group's captures are needed
 			}
 		}
 
@@ -109,11 +91,22 @@ namespace CppRegexEngine
 
 #pragma endregion IMatch
 
+
+		property CppMatcher^ Parent
+		{
+			CppMatcher^ get( )
+			{
+				return mParent;
+			}
+		}
+
+
 	private:
 
-		bool mSuccess;
-		int mIndex;
-		String^ mValue;
+		CppMatcher^ const mParent;
+		bool const mSuccess;
+		int const mIndex;
+		int const mLength;
 
 		List<IGroup^>^ mGroups;
 	};

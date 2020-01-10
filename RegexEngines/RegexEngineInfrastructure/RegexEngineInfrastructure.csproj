@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IParsedPattern.cs" />
+    <Compile Include="IMatcher.cs" />
     <Compile Include="Matches\ICapture.cs" />
     <Compile Include="Matches\IGroup.cs" />
     <Compile Include="Matches\IMatch.cs" />

@@ -10,14 +10,21 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace CppRegexEngine
 {
+	struct MatcherData
+	{
+		std::wstring mText;
+		std::wregex mRegex;
+	};
 
-	ref class CppParsedPattern : IParsedPattern
+
+	ref class CppMatcher : IMatcher
 	{
 	public:
 
-		CppParsedPattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options );
+		CppMatcher( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options );
 
-		!CppParsedPattern( );
+		~CppMatcher( );
+		!CppMatcher( );
 
 
 #pragma region IParsedPattern
@@ -26,9 +33,11 @@ namespace CppRegexEngine
 
 #pragma endregion
 
+		const MatcherData* GetData( ) { return mData; }
+
 	private:
 
-		std::wregex * mRegex;
+		MatcherData* mData;
 	};
 
 }
