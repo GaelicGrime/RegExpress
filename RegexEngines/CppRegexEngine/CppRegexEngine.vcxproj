@@ -170,12 +170,17 @@
     <Image Include="app.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CppRegexEngineControls\CppRegexEngineControls.csproj">
+      <Project>{671f9bfa-8585-4814-ba23-e26c5abdd200}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
     </ProjectReference>

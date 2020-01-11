@@ -22,7 +22,7 @@ namespace RegExpressWPF.Code
 		public string Pattern;
 		public string Text;
 		public string RegexEngineId;
-		public object RegexOptions; // currently saved as 'string[]'; is 'System.Text.RegularExpressions.RegexOptions' flags (int) for legacy data
+		public object RegexOptions;
 		public bool ShowFirstMatchOnly;
 		public bool ShowSucceededGroupsOnly;
 		public bool ShowCaptures;

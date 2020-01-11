@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 
 namespace RegexEngineInfrastructure
@@ -12,8 +13,14 @@ namespace RegexEngineInfrastructure
 	{
 		string Id { get; }
 
-		IReadOnlyCollection<IRegexOptionInfo> AllOptions { get; }
+		event EventHandler OptionsChanged;
 
-		IMatcher ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options );
+		Control GetOptionsControl( );
+
+		object SerializeOptions( );
+
+		void DeserializeOptions( object obj );
+
+		IMatcher ParsePattern( string pattern);
 	}
 }

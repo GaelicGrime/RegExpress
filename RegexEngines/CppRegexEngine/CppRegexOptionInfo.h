@@ -7,11 +7,11 @@ using namespace RegexEngineInfrastructure;
 
 namespace CppRegexEngine
 {
-	ref class CppRegexOptionInfo : public IRegexOptionInfo
+	ref class CppRegexSimpleOptionInfo : public IRegexSimpleOptionInfo
 	{
 	public:
 
-		CppRegexOptionInfo( String^ text, String^ note, String^ asText, std::wregex::flag_type flag )
+		CppRegexSimpleOptionInfo( String^ text, String^ note, String^ asText, std::wregex::flag_type flag )
 			: mText( text ), mNote( note ), mAsText( asText ), mFlag( flag )
 		{
 
@@ -28,26 +28,16 @@ namespace CppRegexEngine
 			}
 		}
 
+#pragma endregion IRegexOptionInfo
+
+
+#pragma region IRegexSimpleOptionInfo
+
 		virtual property String^ Note
 		{
 			String^ get( )
 			{
 				return mNote;
-			}
-		}
-
-		virtual property String^ GroupName
-		{
-			String^ get( )
-			{
-				if( mFlag & std::wregex::flag_type::_Gmask )
-				{
-					return L"LanguageSpecifier";
-				}
-				else
-				{
-					return nullptr;
-				}
 			}
 		}
 
@@ -59,7 +49,7 @@ namespace CppRegexEngine
 			}
 		}
 
-#pragma endregion
+#pragma endregion IRegexSimpleOptionInfo
 
 
 		property std::wregex::flag_type Flag

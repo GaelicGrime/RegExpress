@@ -1,4 +1,4 @@
-﻿using DotNetRegexEngine.Matches;
+﻿using DotNetRegexEngineNs.Matches;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using System;
@@ -8,9 +8,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace DotNetRegexEngine
+
+namespace DotNetRegexEngineNs
 {
-	public class DotNetMatcher : IMatcher
+	class DotNetMatcher : IMatcher
 	{
 		readonly Regex mRegex;
 

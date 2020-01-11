@@ -129,12 +129,12 @@
                                     <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
                                         <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
                                         <ComboBoxItem Tag="DotNetRegex" Content=".NET Regex"/>
-                                        <ComboBoxItem Tag="CppRegex" Content="C++ &lt;regex&gt;"/>
+                                        <!--<ComboBoxItem Tag="CppRegex" Content="C++ STL &lt;regex&gt;"/>-->
                                     </ComboBox>
                                 </StackPanel>
-                                <StackPanel x:Name="pnlRegexOptions">
-                                    <!-- (filled programmatically) -->
-                                </StackPanel>
+                                <Grid x:Name="pnlRegexOptions">
+                                    <!-- (filled programmatically based on current engine) -->
+                                </Grid>
                                 <Separator/>
                                 <StackPanel>
                                     <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>

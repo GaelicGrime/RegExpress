@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
-namespace DotNetRegexEngine.Matches
+namespace DotNetRegexEngineNs.Matches
 {
 	class DotNetRegexMatch : IMatch
 	{

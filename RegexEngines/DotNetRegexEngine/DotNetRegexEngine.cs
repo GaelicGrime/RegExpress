@@ -1,4 +1,4 @@
-﻿using DotNetRegexEngine.Matches;
+﻿using DotNetRegexEngineNs.Matches;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using System;
@@ -7,28 +7,19 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 
-namespace DotNetRegexEngine
+namespace DotNetRegexEngineNs
 {
 	public class DotNetRegexEngine : IRegexEngine
 	{
+		readonly UCDotNetRegexOptions OptionsControl;
 
-		public string[] ParseLegacyOptions( int flags )
+		public DotNetRegexEngine( )
 		{
-			RegexOptions dotnet_options = (RegexOptions)flags;
-
-			var list = new List<string>( );
-
-			foreach( DotNetRegexOptionInfo o in AllOptions )
-			{
-				if( ( dotnet_options & o.RegexOption ) != 0 )
-				{
-					list.Add( o.AsText );
-				}
-			}
-
-			return list.ToArray( );
+			OptionsControl = new UCDotNetRegexOptions( );
+			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 
@@ -37,46 +28,43 @@ namespace DotNetRegexEngine
 		public string Id => "DotNetRegex";
 
 
-		public IReadOnlyCollection<IRegexOptionInfo> AllOptions
+		public event EventHandler OptionsChanged;
+
+
+		public Control GetOptionsControl( )
 		{
-			get
-			{
-				return new List<IRegexOptionInfo>
-				{
-					MakeOptionInfo( RegexOptions.CultureInvariant ),
-					MakeOptionInfo( RegexOptions.ECMAScript ),
-					MakeOptionInfo( RegexOptions.ExplicitCapture ),
-					MakeOptionInfo( RegexOptions.IgnoreCase ),
-					MakeOptionInfo( RegexOptions.IgnorePatternWhitespace ),
-					MakeOptionInfo( RegexOptions.Multiline, "('^', '$' at '\\n' too)" ),
-					MakeOptionInfo( RegexOptions.RightToLeft ),
-					MakeOptionInfo( RegexOptions.Singleline, "('.' matches '\\n' too)" ),
-				};
-			}
+			return OptionsControl;
 		}
 
 
-		public IMatcher ParsePattern( string pattern, IReadOnlyCollection<IRegexOptionInfo> options )
+		public object SerializeOptions( )
 		{
-			RegexOptions regex_options = RegexOptions.None;
+			return OptionsControl.ToSerialisableObject( );
+		}
 
-			foreach( DotNetRegexOptionInfo opt in options )
-			{
-				regex_options |= opt.RegexOption;
-			}
 
-			var regex = new Regex( pattern, regex_options );
+		public void DeserializeOptions( object obj )
+		{
+			OptionsControl.FromSerializableObject( obj );
+		}
+
+
+		public IMatcher ParsePattern( string pattern )
+		{
+			RegexOptions selected_options = OptionsControl.CachedRegexOptions;
+			var regex = new Regex( pattern, selected_options );
 
 			return new DotNetMatcher( regex );
 		}
 
-
 		#endregion IRegexEngine
 
 
-		IRegexOptionInfo MakeOptionInfo( RegexOptions option, string note = null )
+		private void OptionsControl_Changed( object sender, EventArgs e )
 		{
-			return new DotNetRegexOptionInfo( option, note );
+			OptionsChanged?.Invoke( this, null );
 		}
+
+
 	}
 }

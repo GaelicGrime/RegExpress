@@ -4,7 +4,7 @@
 
 
 
-namespace CppRegexEngine
+namespace CppRegexEngineNs
 {
 
 	CppMatch::CppMatch( CppMatcher^ parent, const std::wcmatch& match )

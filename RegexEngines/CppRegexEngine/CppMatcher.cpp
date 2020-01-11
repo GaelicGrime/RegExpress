@@ -11,10 +11,10 @@ using namespace std;
 using namespace msclr::interop;
 
 
-namespace CppRegexEngine
+namespace CppRegexEngineNs
 {
 
-	CppMatcher::CppMatcher( String^ pattern0, IReadOnlyCollection<IRegexOptionInfo^>^ options )
+	CppMatcher::CppMatcher( String^ pattern0, IReadOnlyCollection<IRegexSimpleOptionInfo^>^ options )
 		: mData( nullptr )
 	{
 		marshal_context context{};
@@ -22,7 +22,7 @@ namespace CppRegexEngine
 
 		wstring pattern = context.marshal_as<wstring>( pattern0 );
 
-		for each( CppRegexOptionInfo ^ o in options )
+		for each( CppRegexSimpleOptionInfo ^ o in options )
 		{
 			flags |= o->Flag;
 		}

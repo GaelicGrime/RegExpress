@@ -61,7 +61,6 @@ namespace RegExpressWPF
 		int RightHighlightedBracket = -1;
 
 		IRegexEngine mRegexEngine;
-		IReadOnlyCollection<IRegexOptionInfo> mRegexOptions;
 		string mEol;
 
 		public event EventHandler TextChanged;
@@ -115,14 +114,13 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetRegexOptions( IRegexEngine engine, IReadOnlyCollection<IRegexOptionInfo> regexOptions, string eol )
+		public void SetRegexOptions( IRegexEngine engine, string eol )
 		{
 			StopAll( );
 
 			lock( this )
 			{
 				mRegexEngine = engine;
-				mRegexOptions = regexOptions;
 				mEol = eol;
 			}
 
@@ -267,13 +265,11 @@ namespace RegExpressWPF
 		void RecolouringThreadProc( ICancellable cnc )
 		{
 			IRegexEngine regex_engine;
-			IReadOnlyCollection<IRegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
 			{
 				regex_engine = mRegexEngine;
-				regex_options = mRegexOptions;
 				eol = mEol;
 			}
 
@@ -333,7 +329,7 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
-			var regex = GetColouringRegex( regex_engine, regex_options );
+			var regex = GetColouringRegex( regex_engine );
 			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 
 			var matches = regex
@@ -390,13 +386,11 @@ namespace RegExpressWPF
 		void HighlightingThreadProc( ICancellable cnc )
 		{
 			IRegexEngine regex_engine;
-			IReadOnlyCollection<IRegexOptionInfo> regex_options;
 			string eol;
 
 			lock( this )
 			{
 				regex_engine = mRegexEngine;
-				regex_options = mRegexOptions;
 				eol = mEol;
 			}
 
@@ -458,7 +452,7 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
-			var regex = GetColouringRegex( regex_engine, regex_options );
+			var regex = GetColouringRegex( regex_engine );
 
 			var matches = regex
 				.Matches( td.Text )
@@ -616,11 +610,11 @@ namespace RegExpressWPF
 		}
 
 
-		Regex GetColouringRegex( IRegexEngine engine, IReadOnlyCollection<IRegexOptionInfo> options )
+		Regex GetColouringRegex( IRegexEngine engine )
 		{
-			// TODO: implmenet multiple engine support; this is for .NET
+			// TODO: implement multiple engine support; this is for .NET
 
-			bool ignore_pattern_whitespace = options.Any( o => o.AsText == "IgnorePatternWhitespace" );
+			bool ignore_pattern_whitespace = false; //........... options.Any( o => o.AsText == "IgnorePatternWhitespace" );
 
 			if( ignore_pattern_whitespace )
 			{

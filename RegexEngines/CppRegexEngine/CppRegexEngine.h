@@ -6,11 +6,12 @@
 
 using namespace System;
 using namespace System::Collections::Generic;
+using namespace System::Windows::Controls;
 
 using namespace RegexEngineInfrastructure;
 
 
-namespace CppRegexEngine
+namespace CppRegexEngineNs
 {
 	public ref class CppRegexEngine : public IRegexEngine
 	{
@@ -27,36 +28,19 @@ namespace CppRegexEngine
 		}
 
 
+		virtual UserControl^ GetOptionsUserControl( )
+		{
+			return gcnew CppRegexEngineControls::UCCppRegexOptions( );
+		}
+
+
 		virtual property IReadOnlyCollection<IRegexOptionInfo^>^ AllOptions
 		{
-			IReadOnlyCollection<IRegexOptionInfo^>^ get( ) 
-			{
-				auto list = gcnew List<IRegexOptionInfo^>;
-
-#define ADD(flag, note) \
-	list->Add( gcnew CppRegexOptionInfo( L#flag, note, L#flag, std::wregex::flag ) );
-
-				ADD( ECMAScript, L"" );
-				ADD( basic, L"" );
-				ADD( extended, L"" );
-				ADD( awk, L"" );
-				ADD( grep, L"" );
-				ADD( egrep, L"" );
-				ADD( icase, L"" );
-				ADD( nosubs, L"" );
-				ADD( optimize, L"" );
-				ADD( collate, L"" );
-#undef ADD
-
-				return list;
-			}
+			IReadOnlyCollection<IRegexOptionInfo^>^ get( );
 		}
 
 
-		virtual IMatcher^ ParsePattern( String^ pattern, IReadOnlyCollection<IRegexOptionInfo^>^ options )
-		{
-			return gcnew CppMatcher( pattern, options );
-		}
+		virtual IMatcher^ ParsePattern( String^ pattern, IReadOnlyCollection<IRegexSimpleOptionInfo^>^ options );
 
 #pragma endregion IRegexEngine
 
