@@ -13,6 +13,7 @@ using namespace msclr::interop;
 namespace CppStdRegexInterop
 {
 
+
 	CppMatcher::CppMatcher( String^ pattern0, cli::array<String^>^ options )
 		: mData( nullptr )
 	{
@@ -21,11 +22,26 @@ namespace CppStdRegexInterop
 
 		wstring pattern = context.marshal_as<wstring>( pattern0 );
 
-		//..................
-		//for each( CppRegexSimpleOptionInfo ^ o in options )
-		//{
-		//	flags |= o->Flag;
-		//}
+		for each( String ^ o in options )
+		{
+#define C(n) \
+	if( o == L#n ) flags |= regex_constants::syntax_option_type::##n; \
+	else
+
+			C( ECMAScript )
+				C( basic )
+				C( extended )
+				C( awk )
+				C( grep )
+				C( egrep )
+				C( icase )
+				C( nosubs )
+				C( optimize )
+				C( collate )
+				;
+
+#undef C
+		}
 
 		mData = new MatcherData{};
 

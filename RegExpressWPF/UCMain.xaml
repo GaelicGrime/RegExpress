@@ -17,7 +17,7 @@
             <RowDefinition Height="5" />
             <RowDefinition Height="*" MinHeight="33" />
             <RowDefinition Height="5" />
-            <RowDefinition Height="302" MinHeight="33" />
+            <RowDefinition Height="276" MinHeight="33" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0 0 0 1">
@@ -117,14 +117,14 @@
                         <ScrollViewer Margin="5 1 5 5" VerticalScrollBarVisibility="Auto">
                             <StackPanel >
                                 <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 0 0 0">
-                                    <!--<StackPanel.RenderTransform>
+                                    <StackPanel.RenderTransform>
                                         <TransformGroup>
                                             <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                                             <SkewTransform/>
                                             <RotateTransform/>
                                             <TranslateTransform/>
                                         </TransformGroup>
-                                    </StackPanel.RenderTransform>-->
+                                    </StackPanel.RenderTransform>
                                     <Label Content="Engine: " VerticalAlignment="Center"/>
                                     <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
                                         <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
@@ -151,7 +151,7 @@
                                     <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
                                         <StackPanel.RenderTransform>
                                             <TransformGroup>
-                                                <ScaleTransform ScaleX="0.8" ScaleY="0.8"/>
+                                                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                                                 <SkewTransform/>
                                                 <RotateTransform/>
                                                 <TranslateTransform/>

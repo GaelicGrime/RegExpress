@@ -7,7 +7,15 @@
              mc:Ignorable="d" d:DesignWidth="178" Height="120">
     <Grid>
         <StackPanel x:Name="pnl">
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" >
+                <StackPanel.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.RenderTransform>
                 <Label Content="Grammar: "/>
                 <ComboBox x:Name="cbxGrammar" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxGrammar_SelectionChanged" >
                     <ComboBoxItem Tag ="ECMAScript" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" IsSelected="True" />
