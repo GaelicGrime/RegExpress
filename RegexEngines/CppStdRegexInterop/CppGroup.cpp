@@ -4,7 +4,7 @@
 #include "CppMatcher.h"
 
 
-namespace CppRegexEngineNs
+namespace CppStdRegexInterop
 {
 
 	CppGroup::CppGroup( CppMatch^ parent, int groupNumber, int index, const std::wcsub_match& submatch )

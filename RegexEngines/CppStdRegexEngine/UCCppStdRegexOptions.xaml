@@ -1,19 +1,15 @@
-﻿<UserControl x:Class="CppRegexEngineControls.UCCppRegexOptions"
+﻿<UserControl x:Class="CppStdRegexEngineNs.UCCppStdRegexOptions"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:CppRegexEngineControls"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="182.043"
-             Width="170"
-             Height="110"
-             >
+             xmlns:local="clr-namespace:CppStdRegexEngineNs"
+             mc:Ignorable="d" d:DesignWidth="178" Height="120">
     <Grid>
         <StackPanel x:Name="pnl">
             <StackPanel Orientation="Horizontal">
                 <Label Content="Grammar: "/>
-                <ComboBox x:Name="cbxGrammar" HorizontalAlignment="Left" VerticalAlignment="Top" >
+                <ComboBox x:Name="cbxGrammar" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxGrammar_SelectionChanged" >
                     <ComboBoxItem Tag ="ECMAScript" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" IsSelected="True" />
                     <ComboBoxItem Tag ="basic" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
                     <ComboBoxItem Tag ="extended" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
@@ -22,13 +18,11 @@
                     <ComboBoxItem Tag ="egrep" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
                 </ComboBox>
             </StackPanel>
-            <CheckBox Tag="icase" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}"/>
-            <CheckBox Tag="nosubs" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}"/>
-            <CheckBox Tag="optimize" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}"/>
-            <CheckBox Tag="collate" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}"/>
-            <CheckBox Tag="multiline" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}"/>
+            <CheckBox Tag="icase" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+            <CheckBox Tag="nosubs" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+            <CheckBox Tag="optimize" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+            <CheckBox Tag="collate" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+            <CheckBox Tag="multiline" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
         </StackPanel>
-
-
     </Grid>
 </UserControl>

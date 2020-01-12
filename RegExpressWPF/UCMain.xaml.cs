@@ -57,7 +57,7 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
-			RegexEngines = new[] { DefaultRegexEngine };
+			RegexEngines = new[] { DefaultRegexEngine, new CppStdRegexEngineNs.CppStdRegexEngine( ) };
 
 			btnNewTab.Visibility = Visibility.Collapsed;
 			lblTextInfo.Visibility = Visibility.Collapsed;
@@ -76,6 +76,9 @@ namespace RegExpressWPF
 			foreach( var eng in RegexEngines )
 			{
 				eng.OptionsChanged += Engine_OptionsChanged;
+
+				var cbxi = new ComboBoxItem { Tag = eng.Id, Content = eng.Name, IsSelected = eng.Id == DefaultRegexEngine.Id };
+				cbxEngine.Items.Add( cbxi );
 			}
 		}
 

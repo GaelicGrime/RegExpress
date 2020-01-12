@@ -173,6 +173,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\RegexEngines\CppStdRegexEngine\CppStdRegexEngine.csproj">
+      <Project>{1bc5cc50-c0f6-4598-934f-e772938da825}</Project>
+      <Name>CppStdRegexEngine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj">
       <Project>{024a9f29-ae01-4987-86e5-ca4c0cb69e7c}</Project>
       <Name>DotNetRegexEngine</Name>

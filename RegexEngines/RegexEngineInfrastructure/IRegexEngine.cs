@@ -13,6 +13,8 @@ namespace RegexEngineInfrastructure
 	{
 		string Id { get; }
 
+		string Name { get; }
+
 		event EventHandler OptionsChanged;
 
 		Control GetOptionsControl( );

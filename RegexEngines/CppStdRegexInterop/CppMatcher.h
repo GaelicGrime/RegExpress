@@ -8,7 +8,7 @@ using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
 
 
-namespace CppRegexEngineNs
+namespace CppStdRegexInterop
 {
 	struct MatcherData
 	{
@@ -17,11 +17,11 @@ namespace CppRegexEngineNs
 	};
 
 
-	ref class CppMatcher : IMatcher
+	public ref class CppMatcher : IMatcher
 	{
 	public:
 
-		CppMatcher( String^ pattern, IReadOnlyCollection<IRegexSimpleOptionInfo^>^ options );
+		CppMatcher( String^ pattern, cli::array<String^>^ options );
 
 		~CppMatcher( );
 		!CppMatcher( );

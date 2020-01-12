@@ -23,7 +23,7 @@ namespace DotNetRegexEngineNs
 	/// </summary>
 	public partial class UCDotNetRegexOptions : UserControl
 	{
-		public event EventHandler Changed;
+		internal event EventHandler Changed;
 
 		internal RegexOptions CachedRegexOptions; // (accessible from threads)
 

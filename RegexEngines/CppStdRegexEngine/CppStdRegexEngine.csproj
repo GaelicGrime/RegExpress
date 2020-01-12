@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{862F8D21-C7D3-4AEC-A802-5431063C9F49}</ProjectGuid>
+    <ProjectGuid>{1BC5CC50-C0F6-4598-934F-E772938DA825}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RegexEngineInfrastructure</RootNamespace>
-    <AssemblyName>RegexEngineInfrastructure</AssemblyName>
+    <RootNamespace>CppStdRegexEngineNs</RootNamespace>
+    <AssemblyName>CppStdRegexEngine</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -34,7 +34,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>RegexEngineInfrastructure.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>CppStdRegexEngine.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -57,27 +57,44 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IMatcher.cs" />
-    <Compile Include="Matches\ICapture.cs" />
-    <Compile Include="Matches\IGroup.cs" />
-    <Compile Include="Matches\IMatch.cs" />
-    <Compile Include="Matches\RegexMatches.cs" />
+    <Compile Include="CppStdRegexEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IRegexEngine.cs" />
+    <Compile Include="UCCppStdRegexOptions.xaml.cs">
+      <DependentUpon>UCCppStdRegexOptions.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="RegexEngineInfrastructure.snk" />
+    <ProjectReference Include="..\CppStdRegexInterop\CppStdRegexInterop.vcxproj">
+      <Project>{d6f5056e-fab0-4c60-a02f-8e56fa9f42d1}</Project>
+      <Name>CppStdRegexInterop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
+      <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
+      <Name>RegexEngineInfrastructure</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CppStdRegexEngine.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="UCCppStdRegexOptions.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

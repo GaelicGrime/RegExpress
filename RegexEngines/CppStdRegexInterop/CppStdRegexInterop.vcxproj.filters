@@ -21,16 +21,10 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CppRegexEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CppRegexOptionInfo.h">
+    <ClInclude Include="CppGroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CppMatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CppGroup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CppMatcher.h">
@@ -44,16 +38,10 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CppRegexEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CppRegexOptionInfo.cpp">
+    <ClCompile Include="CppGroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CppMatch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CppGroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CppMatcher.cpp">

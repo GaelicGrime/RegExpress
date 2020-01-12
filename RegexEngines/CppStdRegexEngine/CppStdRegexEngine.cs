@@ -1,6 +1,4 @@
-﻿using DotNetRegexEngineNs.Matches;
-using RegexEngineInfrastructure;
-using RegexEngineInfrastructure.Matches;
+﻿using RegexEngineInfrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,25 +7,24 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
-
-namespace DotNetRegexEngineNs
+namespace CppStdRegexEngineNs
 {
-	public class DotNetRegexEngine : IRegexEngine
+	public class CppStdRegexEngine : IRegexEngine
 	{
-		readonly UCDotNetRegexOptions OptionsControl;
+		readonly UCCppStdRegexOptions OptionsControl;
 
-		public DotNetRegexEngine( )
+		public CppStdRegexEngine( )
 		{
-			OptionsControl = new UCDotNetRegexOptions( );
+			OptionsControl = new UCCppStdRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 
 		#region IRegexEngine
 
-		public string Id => "DotNetRegex";
-		
-		public string Name => ".NET Regex";
+		public string Id => "CppStdRegex";
+
+		public string Name => "C++ STL <regex>";
 
 		public event EventHandler OptionsChanged;
 
@@ -52,10 +49,9 @@ namespace DotNetRegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			RegexOptions selected_options = OptionsControl.CachedRegexOptions;
-			var regex = new Regex( pattern, selected_options );
+			var selected_options = OptionsControl.CachedOptions;
 
-			return new DotNetMatcher( regex );
+			return new CppStdRegexInterop.CppMatcher( pattern, selected_options );
 		}
 
 		#endregion IRegexEngine
@@ -65,7 +61,6 @@ namespace DotNetRegexEngineNs
 		{
 			OptionsChanged?.Invoke( this, null );
 		}
-
 
 	}
 }

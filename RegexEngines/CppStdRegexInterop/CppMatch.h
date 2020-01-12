@@ -10,7 +10,7 @@ using namespace System::Linq;
 using namespace RegexEngineInfrastructure::Matches;
 
 
-namespace CppRegexEngineNs
+namespace CppStdRegexInterop
 {
 	ref class CppMatcher;
 
