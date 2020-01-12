@@ -21,7 +21,7 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		#region IParsedPattern
+		#region IMatcher
 
 		public RegexMatches Matches( string text )
 		{
@@ -31,6 +31,6 @@ namespace DotNetRegexEngineNs
 			return new RegexMatches( dotnet_matches.Count, matches );
 		}
 
-		#endregion IParsedPattern
+		#endregion IMatcher
 	}
 }

@@ -27,11 +27,12 @@ namespace CppStdRegexInterop
 		!CppMatcher( );
 
 
-#pragma region IParsedPattern
+#pragma region IMatcher
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion
+#pragma endregion IMatcher
+
 
 		const MatcherData* GetData( ) { return mData; }
 

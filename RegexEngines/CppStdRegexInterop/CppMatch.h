@@ -47,6 +47,7 @@ namespace CppStdRegexInterop
 
 #pragma endregion ICapture
 
+
 #pragma region IGroup
 
 		virtual property bool Success
@@ -79,6 +80,7 @@ namespace CppStdRegexInterop
 
 #pragma endregion IGroup
 
+
 #pragma region IMatch
 
 		virtual property IEnumerable<RegexEngineInfrastructure::Matches::IGroup^>^ Groups
@@ -99,7 +101,6 @@ namespace CppStdRegexInterop
 				return mParent;
 			}
 		}
-
 
 	private:
 

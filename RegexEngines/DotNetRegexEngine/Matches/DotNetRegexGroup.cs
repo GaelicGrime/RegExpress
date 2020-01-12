@@ -18,6 +18,7 @@ namespace DotNetRegexEngineNs.Matches
 			Group = group;
 		}
 
+
 		#region ICapture
 
 		public int Index => Group.Index;
@@ -25,6 +26,11 @@ namespace DotNetRegexEngineNs.Matches
 		public int Length => Group.Length;
 
 		public string Value => Group.Value;
+
+		#endregion ICapture
+
+
+		#region IGroup
 
 		public bool Success => Group.Success;
 
@@ -38,7 +44,8 @@ namespace DotNetRegexEngineNs.Matches
 			}
 		}
 
-		#endregion ICapture
+		#endregion IGroup
+
 
 		public override string ToString( ) => Group.ToString( );
 	}

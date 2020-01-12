@@ -27,6 +27,8 @@ namespace DotNetRegexEngineNs
 
 		internal RegexOptions CachedRegexOptions; // (accessible from threads)
 
+		bool IsFullyLoaded = false;
+
 
 		public UCDotNetRegexOptions( )
 		{
@@ -106,12 +108,19 @@ namespace DotNetRegexEngineNs
 
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
+			if( IsFullyLoaded ) return;
+
 			EnsureControls( );
+			CachedRegexOptions = GetSelectedOptions( );
+
+			IsFullyLoaded = true;
 		}
 
 
 		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+
 			CachedRegexOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( sender, e );

@@ -27,6 +27,11 @@ namespace DotNetRegexEngineNs.Matches
 
 		public string Value => Match.Value;
 
+		#endregion ICapture
+
+
+		#region IGroup
+
 		public bool Success => Match.Success;
 
 		public string Name => Match.Name;
@@ -39,6 +44,11 @@ namespace DotNetRegexEngineNs.Matches
 			}
 		}
 
+		#endregion IGroup
+
+
+		#region IMatch
+
 		public IEnumerable<IGroup> Groups
 		{
 			get
@@ -47,7 +57,8 @@ namespace DotNetRegexEngineNs.Matches
 			}
 		}
 
-		#endregion ICapture
+		#endregion IMatch
+
 
 		public override string ToString( ) => Match.ToString( );
 	}

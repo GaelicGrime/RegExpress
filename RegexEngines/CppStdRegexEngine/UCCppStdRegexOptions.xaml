@@ -4,9 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:CppStdRegexEngineNs"
-             mc:Ignorable="d" d:DesignWidth="178" Height="120">
+             mc:Ignorable="d" d:DesignWidth="191.333" Loaded="UserControl_Loaded">
     <Grid>
-        <StackPanel x:Name="pnl">
+        <StackPanel>
             <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" >
                 <StackPanel.RenderTransform>
                     <TransformGroup>
@@ -26,11 +26,30 @@
                     <ComboBoxItem Tag ="egrep" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
                 </ComboBox>
             </StackPanel>
-            <CheckBox Tag="icase" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
-            <CheckBox Tag="nosubs" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
-            <CheckBox Tag="optimize" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
-            <CheckBox Tag="collate" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
-            <CheckBox Tag="multiline" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+
+            <StackPanel Orientation="Horizontal">
+                <StackPanel x:Name="pnl1" Orientation="Vertical">
+                    <CheckBox Tag="match_not_bol" Content="match__not__bol" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_not_eol" Content="match__not__eol" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_not_bow" Content="match__not__bow" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_not_eow" Content="match__not__eow" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_any" Content="match__any" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_not_null" Content="match__not__null" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_continuous" Content="match__continuous" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="match_prev_avail" Content="match__prev__avail" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                </StackPanel>
+                <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="4 0 0 0">
+                    <CheckBox Tag="icase" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="nosubs" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="optimize" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <CheckBox Tag="collate" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    <!--
+                    TODO: adjust for C++17.
+                    <CheckBox Tag="multiline" Content="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Checked="CheckBox_Changed" Unchecked="CheckBox_Changed"/>
+                    -->
+                </StackPanel>
+            </StackPanel>
+
         </StackPanel>
     </Grid>
 </UserControl>

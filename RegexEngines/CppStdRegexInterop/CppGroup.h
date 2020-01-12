@@ -20,6 +20,7 @@ namespace CppStdRegexInterop
 
 		CppGroup( CppMatch^ parent, int groupNumber, int index, const std::wcsub_match& submatch );
 
+
 #pragma region ICapture
 
 		virtual property int Index
@@ -44,6 +45,7 @@ namespace CppStdRegexInterop
 		}
 
 #pragma endregion ICapture
+
 
 #pragma region IGroup
 
@@ -81,7 +83,6 @@ namespace CppStdRegexInterop
 		int const mIndex;
 		int const mLength;
 		int const mGroupNumber;
-
 
 		IEnumerable<ICapture^>^ mCaptures;
 	};

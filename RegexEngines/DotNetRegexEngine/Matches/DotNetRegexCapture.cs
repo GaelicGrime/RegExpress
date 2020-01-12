@@ -18,6 +18,7 @@ namespace DotNetRegexEngineNs.Matches
 			Capture = capture;
 		}
 
+
 		#region ICapture
 
 		public int Index => Capture.Index;
@@ -27,6 +28,7 @@ namespace DotNetRegexEngineNs.Matches
 		public string Value => Capture.Value;
 
 		#endregion ICapture
+
 
 		public override string ToString( ) => Capture.ToString( );
 	}

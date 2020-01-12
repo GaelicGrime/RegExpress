@@ -25,6 +25,8 @@ namespace CppStdRegexEngineNs
 
 		internal string[] CachedOptions; // (accessible from threads)
 
+		bool IsFullyLoaded = false;
+
 
 		public UCCppStdRegexOptions( )
 		{
@@ -53,9 +55,9 @@ namespace CppStdRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			return pnl
-					.Children
-					.OfType<CheckBox>( )
+			var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
+
+			return cbs
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) )
 					.Concat( new[] { ( (ComboBoxItem)cbxGrammar.SelectedItem ).Tag.ToString( ) } )
@@ -69,7 +71,9 @@ namespace CppStdRegexEngineNs
 			var g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
 			cbxGrammar.SelectedItem = g;
 
-			foreach( var cb in pnl.Children.OfType<CheckBox>( ) )
+			var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
+
+			foreach( var cb in cbs )
 			{
 				cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
 			}
@@ -78,16 +82,31 @@ namespace CppStdRegexEngineNs
 
 		private void cbxGrammar_SelectionChanged( object sender, SelectionChangedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, null );
 		}
 
+
 		private void CheckBox_Changed( object sender, RoutedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, null );
+		}
+
+
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( IsFullyLoaded ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			IsFullyLoaded = true;
 		}
 	}
 }
