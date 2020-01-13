@@ -14,6 +14,7 @@ namespace CppStdRegexInterop
 	{
 		std::wstring mText;
 		std::wregex mRegex;
+		std::regex_constants::match_flag_type mMatchFlags;
 	};
 
 

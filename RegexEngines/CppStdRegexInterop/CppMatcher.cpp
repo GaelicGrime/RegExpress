@@ -18,14 +18,15 @@ namespace CppStdRegexInterop
 		: mData( nullptr )
 	{
 		marshal_context context{};
-		wregex::flag_type flags{};
+		wregex::flag_type regex_flags{};
+		regex_constants::match_flag_type match_flags = regex_constants::match_flag_type::match_default;
 
 		wstring pattern = context.marshal_as<wstring>( pattern0 );
 
 		for each( String ^ o in options )
 		{
 #define C(n) \
-	if( o == L#n ) flags |= regex_constants::syntax_option_type::##n; \
+	if( o == L#n ) regex_flags |= regex_constants::syntax_option_type::##n; \
 	else
 
 			C( ECMAScript )
@@ -41,13 +42,31 @@ namespace CppStdRegexInterop
 				;
 
 #undef C
+
+#define C(n) \
+	if( o == L#n ) match_flags |= regex_constants::match_flag_type::##n; \
+	else
+
+			C( match_not_bol )
+				C( match_not_eol )
+				C( match_not_bow )
+				C( match_not_eow )
+				C( match_any )
+				C( match_not_null )
+				C( match_continuous )
+				C( match_prev_avail )
+				;
+
+#undef C
+
 		}
 
 		mData = new MatcherData{};
+		mData->mMatchFlags = match_flags;
 
 		try
 		{
-			mData->mRegex.assign( pattern, flags );
+			mData->mRegex.assign( pattern, regex_flags );
 		}
 		catch( const regex_error & exc )
 		{
@@ -92,7 +111,7 @@ namespace CppStdRegexInterop
 
 		auto* native_text = mData->mText.c_str( );
 
-		wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, regex_constants::match_flag_type::match_default );
+		wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags );
 		wcregex_iterator results_end{};
 
 		for( auto i = results_begin; i != results_end; ++i )
