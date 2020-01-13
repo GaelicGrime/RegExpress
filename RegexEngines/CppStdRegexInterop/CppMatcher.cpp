@@ -13,7 +13,6 @@ using namespace msclr::interop;
 namespace CppStdRegexInterop
 {
 
-
 	CppMatcher::CppMatcher( String^ pattern0, cli::array<String^>^ options )
 		: mData( nullptr )
 	{
