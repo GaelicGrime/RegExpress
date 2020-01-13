@@ -273,6 +273,8 @@ namespace RegExpressWPF
 				eol = mEol;
 			}
 
+			if( regex_engine == null ) return;
+
 			TextData td = null;
 			Rect clip_rect = Rect.Empty;
 			int top_index = 0;
@@ -393,6 +395,8 @@ namespace RegExpressWPF
 				regex_engine = mRegexEngine;
 				eol = mEol;
 			}
+
+			if( regex_engine == null ) return;
 
 			TextData td = null;
 			Rect clip_rect = Rect.Empty;
@@ -612,7 +616,13 @@ namespace RegExpressWPF
 
 		Regex GetColouringRegex( IRegexEngine engine )
 		{
-			// TODO: implement multiple engine support; this is for .NET
+			// TODO: implement multiple engine support; this is for .NET only
+
+			if( engine.Id != "DotNetRegex" )
+			{
+				return new Regex( "(?!)" );
+			}
+
 
 			bool ignore_pattern_whitespace = false; //........... options.Any( o => o.AsText == "IgnorePatternWhitespace" );
 

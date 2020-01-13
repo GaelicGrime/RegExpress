@@ -299,6 +299,8 @@ namespace RegExpressWPF
 			pnlRegexOptions.Children.Clear( );
 			pnlRegexOptions.Children.Add( CurrentRegexEngine.GetOptionsControl( ) );
 
+			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
+
 			FindMatchesLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
