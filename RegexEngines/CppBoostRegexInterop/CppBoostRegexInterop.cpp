@@ -2,3 +2,8 @@
 
 #include "CppBoostRegexInterop.h"
 
+
+namespace CppBoostRegexInterop
+{
+
+}

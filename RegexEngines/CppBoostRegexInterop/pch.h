@@ -10,9 +10,11 @@
 // add headers that you want to pre-compile here
 
 //#define BOOST_REGEX_DYN_LINK
-//#define BOOST_REGEX_STATIC_LINK //?
 #define BOOST_REGEX_NO_LIB
-#define BOOST_REGEX_NO_FASTCALL
+//#define BOOST_REGEX_NO_FASTCALL
+
+#define BOOST_REGEX_WIDE_INSTANTIATE
+#define BOOST_REGEX_NARROW_INSTANTIATE
 
 #include "boost/regex.hpp"
 

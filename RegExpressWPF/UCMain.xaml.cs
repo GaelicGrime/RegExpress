@@ -57,7 +57,12 @@ namespace RegExpressWPF
 		{
 			InitializeComponent( );
 
-			RegexEngines = new[] { DefaultRegexEngine, new CppStdRegexEngineNs.CppStdRegexEngine( ) };
+			RegexEngines = new[]
+			{
+				DefaultRegexEngine,
+				new CppStdRegexEngineNs.CppStdRegexEngine( ),
+				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
+			};
 
 			btnNewTab.Visibility = Visibility.Collapsed;
 			lblTextInfo.Visibility = Visibility.Collapsed;

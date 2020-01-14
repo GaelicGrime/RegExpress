@@ -4,7 +4,7 @@
 
 
 
-namespace CppStdRegexInterop
+namespace CppBoostRegexInterop
 {
 
 	CppMatch::CppMatch( CppMatcher^ parent, const boost::wcmatch& match )

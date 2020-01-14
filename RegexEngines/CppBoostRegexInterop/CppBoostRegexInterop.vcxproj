@@ -74,19 +74,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>CppBoostRegexEngine.snk</LinkKeyFile>
     <IncludePath>$(ProjectDir)boost_1_72_0_min;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>CppBoostRegexEngine.snk</LinkKeyFile>
     <IncludePath>$(ProjectDir)boost_1_72_0_min;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>CppBoostRegexEngine.snk</LinkKeyFile>
     <IncludePath>$(ProjectDir)boost_1_72_0_min;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkKeyFile>CppRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>CppBoostRegexEngine.snk</LinkKeyFile>
     <IncludePath>$(ProjectDir)boost_1_72_0_min;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -277,6 +277,9 @@
     <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CppBoostRegexEngine.snk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

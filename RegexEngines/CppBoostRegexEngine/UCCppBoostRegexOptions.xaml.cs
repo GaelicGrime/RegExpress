@@ -14,12 +14,12 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace CppStdRegexEngineNs
+namespace CppBoostRegexEngineNs
 {
 	/// <summary>
-	/// Interaction logic for UCCppStdRegexOptions.xaml
+	/// Interaction logic for UCCppBoostRegexOptions.xaml
 	/// </summary>
-	public partial class UCCppStdRegexOptions : UserControl
+	public partial class UCCppBoostRegexOptions : UserControl
 	{
 		internal event EventHandler Changed;
 		internal string[] CachedOptions; // (accessible from threads)
@@ -28,7 +28,7 @@ namespace CppStdRegexEngineNs
 		bool IsFullyLoaded = false;
 
 
-		public UCCppStdRegexOptions( )
+		public UCCppBoostRegexOptions( )
 		{
 			InitializeComponent( );
 		}
@@ -108,5 +108,6 @@ namespace CppStdRegexEngineNs
 
 			Changed?.Invoke( null, null );
 		}
+
 	}
 }

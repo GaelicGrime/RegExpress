@@ -3,29 +3,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
-
-namespace CppStdRegexEngineNs
+namespace CppBoostRegexEngineNs
 {
-	public class CppStdRegexEngine : IRegexEngine
+	public class CppBoostRegexEngine : IRegexEngine
 	{
-		readonly UCCppStdRegexOptions OptionsControl;
+		readonly UCCppBoostRegexOptions OptionsControl;
 
-		public CppStdRegexEngine( )
+
+		public CppBoostRegexEngine( )
 		{
-			OptionsControl = new UCCppStdRegexOptions( );
+			OptionsControl = new UCCppBoostRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 
 		#region IRegexEngine
 
-		public string Id => "CppStdRegex";
+		public string Id => "CppBoostRegex";
 
-		public string Name => "C++ STL <regex>";
+		public string Name => "C++ Boost Regex";
 
 		public event EventHandler OptionsChanged;
 
@@ -52,7 +51,7 @@ namespace CppStdRegexEngineNs
 		{
 			var selected_options = OptionsControl.CachedOptions;
 
-			return new CppStdRegexInterop.CppMatcher( pattern, selected_options );
+			return new CppBoostRegexInterop.CppMatcher( pattern, selected_options );
 		}
 
 		#endregion IRegexEngine

@@ -10,7 +10,7 @@ using namespace boost;
 using namespace msclr::interop;
 
 
-namespace CppStdRegexInterop
+namespace CppBoostRegexInterop
 {
 
 	CppMatcher::CppMatcher( String^ pattern0, cli::array<String^>^ options )
@@ -27,21 +27,41 @@ namespace CppStdRegexInterop
 
 		for each( String ^ o in options )
 		{
-			/*
 #define C(n) \
-	if( o == L#n ) regex_flags |= regex_constants::syntax_option_type::##n; \
+	if( o == L#n ) regex_flags |= regex_constants::##n; \
 	else
 
-			C( ECMAScript )
+			C( normal )
+				C( ECMAScript )
+				C( JavaScript )
+				C( JScript )
+				C( perl )
 				C( basic )
+				C( sed )
 				C( extended )
 				C( awk )
 				C( grep )
 				C( egrep )
+
 				C( icase )
 				C( nosubs )
 				C( optimize )
 				C( collate )
+				//?C( newline_alt ) // wrong documentation?
+				C( no_except )
+				C( save_subexpression_location )
+				C( no_mod_m )
+				C( no_mod_s )
+				C( mod_s )
+				C( mod_x )
+				C( no_empty_expressions )
+				C( no_escape_in_lists )
+				//?C( no_bk_refs ) // wrong documentation?
+				C( no_char_classes )
+				C( no_intervals )
+				C( bk_plus_qm )
+				C( bk_vbar )
+
 				;
 
 #undef C
@@ -50,18 +70,27 @@ namespace CppStdRegexInterop
 	if( o == L#n ) match_flags |= regex_constants::match_flag_type::##n; \
 	else
 
-			C( match_not_bol )
+				C( match_default )
+				C( match_not_bob )
+				C( match_not_eob )
+				C( match_not_bol )
 				C( match_not_eol )
 				C( match_not_bow )
 				C( match_not_eow )
 				C( match_any )
 				C( match_not_null )
 				C( match_continuous )
+				C( match_partial )
+				C( match_single_line )
 				C( match_prev_avail )
+				C( match_not_dot_newline )
+				C( match_not_dot_null )
+				C( match_posix )
+				C( match_perl )
+				C( match_nosubs )
+				C( match_extra )
 				;
-
 #undef C
-			 */
 		}
 
 		mData = new MatcherData{};

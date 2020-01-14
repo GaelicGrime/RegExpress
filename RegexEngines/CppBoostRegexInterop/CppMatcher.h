@@ -8,7 +8,7 @@ using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
 
 
-namespace CppStdRegexInterop
+namespace CppBoostRegexInterop
 {
 	struct MatcherData
 	{
