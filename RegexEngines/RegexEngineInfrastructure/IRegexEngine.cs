@@ -1,4 +1,5 @@
 ﻿using RegexEngineInfrastructure.Matches;
+using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +25,7 @@ namespace RegexEngineInfrastructure
 		void DeserializeOptions( object obj );
 
 		IMatcher ParsePattern( string pattern);
+
+		ICollection<SyntaxHighlightSegment> ColourisePattern( string text, int start, int length );
 	}
 }

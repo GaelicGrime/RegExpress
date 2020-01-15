@@ -1,6 +1,7 @@
 ﻿using DotNetRegexEngineNs.Matches;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
+using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,23 @@ namespace DotNetRegexEngineNs
 	public class DotNetRegexEngine : IRegexEngine
 	{
 		readonly UCDotNetRegexOptions OptionsControl;
+
+
+		const string IgnoreWhitespacePattern = @"(?nsx)
+(
+(?'comment'\(\?\#.*?(\)|(?'unfinished'$))) |
+(?'char_group'\[(\\.|.)*?(\]|(?'unfinished'$))) |
+(?'eol_comment'\#[^n]*) |
+\\. | .
+)";
+
+		const string NoIgnoreWhitespacePattern = @"
+..............
+";
+
+
+		readonly Regex ReIgnorePatternWhitespace = new Regex( IgnoreWhitespacePattern, RegexOptions.Compiled );
+		readonly Regex ReNoIgnorePatternWhitespace = new Regex( NoIgnoreWhitespacePattern, RegexOptions.Compiled );
 
 		public DotNetRegexEngine( )
 		{
@@ -59,6 +77,26 @@ namespace DotNetRegexEngineNs
 			var regex = new Regex( pattern, selected_options );
 
 			return new DotNetMatcher( regex );
+		}
+
+
+		public ICollection<SyntaxHighlightSegment> ColourisePattern( string pattern, int start, int length )
+		{
+			// TODO: implement
+
+			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
+			Regex re = ignore_pattern_whitespaces ? ReIgnorePatternWhitespace : ReNoIgnorePatternWhitespace;
+
+
+			foreach(Match m in re.Matches(pattern))
+			{
+				if( m.Index + m.Length < start ) continue;
+				if( m.Index + m.Length > start + length ) continue;
+
+
+			}
+
+			return null;
 		}
 
 		#endregion IRegexEngine

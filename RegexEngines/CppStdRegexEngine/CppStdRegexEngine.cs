@@ -1,4 +1,5 @@
 ﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +54,14 @@ namespace CppStdRegexEngineNs
 			var selected_options = OptionsControl.CachedOptions;
 
 			return new CppStdRegexInterop.CppMatcher( pattern, selected_options );
+		}
+
+
+		public ICollection<SyntaxHighlightSegment> ColourisePattern( string text, int start, int length )
+		{
+			// TODO: implement
+
+			return null;
 		}
 
 		#endregion IRegexEngine

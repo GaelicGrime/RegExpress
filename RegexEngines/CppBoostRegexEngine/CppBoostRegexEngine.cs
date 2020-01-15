@@ -1,10 +1,12 @@
 ﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+
 
 namespace CppBoostRegexEngineNs
 {
@@ -53,6 +55,15 @@ namespace CppBoostRegexEngineNs
 
 			return new CppBoostRegexInterop.CppMatcher( pattern, selected_options );
 		}
+
+
+		public ICollection<SyntaxHighlightSegment> ColourisePattern( string text, int start, int length )
+		{
+			// TODO: implement
+
+			return null;
+		}
+
 
 		#endregion IRegexEngine
 
