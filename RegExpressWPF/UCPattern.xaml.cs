@@ -623,8 +623,7 @@ namespace RegExpressWPF
 				return new Regex( "(?!)" );
 			}
 
-
-			bool ignore_pattern_whitespace = false; //........... options.Any( o => o.AsText == "IgnorePatternWhitespace" );
+			bool ignore_pattern_whitespace = ( engine as DotNetRegexEngineNs.DotNetRegexEngine )?.RegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace ) == true;
 
 			if( ignore_pattern_whitespace )
 			{

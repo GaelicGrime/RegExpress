@@ -26,7 +26,7 @@ namespace DotNetRegexEngineNs
 		#region IRegexEngine
 
 		public string Id => "DotNetRegex";
-		
+
 		public string Name => ".NET Regex";
 
 		public event EventHandler OptionsChanged;
@@ -36,6 +36,9 @@ namespace DotNetRegexEngineNs
 		{
 			return OptionsControl;
 		}
+
+
+		public RegexOptions RegexOptions => OptionsControl.CachedRegexOptions;
 
 
 		public object SerializeOptions( )
