@@ -1,4 +1,5 @@
 ﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
@@ -57,11 +58,11 @@ namespace CppBoostRegexEngineNs
 		}
 
 
-		public ICollection<SyntaxHighlightSegment> ColourisePattern( string text, int start, int length )
+		public void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment )
 		{
 			// TODO: implement
 
-			return null;
+			return;
 		}
 
 

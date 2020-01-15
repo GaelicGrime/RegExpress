@@ -17,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;

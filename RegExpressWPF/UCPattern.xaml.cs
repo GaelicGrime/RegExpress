@@ -18,6 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.SyntaxColouring;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -262,7 +263,8 @@ namespace RegExpressWPF
 		readonly object Locker = new object( );
 
 
-		void RecolouringThreadProc( ICancellable cnc )
+		//..................
+		void RecolouringThreadProc_OLD( ICancellable cnc )
 		{
 			IRegexEngine regex_engine;
 			string eol;
@@ -385,8 +387,195 @@ namespace RegExpressWPF
 		}
 
 
+		class Colouriser : IColouriser
+		{
+			ICancellable Cnc { get; }
+			UCPattern Parent { get; }
+			TextData Td { get; }
+			NaiveRanges ColouredRanges { get; }
+
+
+			public Colouriser(UCPattern parent , TextData td, Segment visibleSegment)
+			{
+				Cnc = cnc;
+				Parent = parent;
+				Td = td;
+				ColouredRanges = new NaiveRanges( visibleSegment.Length + 1 );
+			}
+
+
+			#region IColouriser
+
+			public void Colourise( Segment segment, SyntaxHighlightCategoryEnum category )
+			{
+				ColouredRanges.SafeSet( segment );
+				Parent.Colourise( Td, segment, category );
+			}
+
+			internal void ColouriseRest( ICancellable cnc, StyleInfo patternNormalStyleInfo )
+			{
+				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
+			}
+
+			#endregion IColouriser
+		}
+
+		void Colourise( TextData td, Segment segment, SyntaxHighlightCategoryEnum category )
+		{
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			{
+				switch( category )
+				{
+				case SyntaxHighlightCategoryEnum.Comment:
+					td.Range0F( segment.Index, segment.Length ).Style( CommentStyleInfo );
+					break;
+				}
+			}
+		}
+
+
+
+		void RecolouringThreadProc( ICancellable cnc )
+		{
+			IRegexEngine regex_engine;
+			string eol;
+
+			lock( this )
+			{
+				regex_engine = mRegexEngine;
+				eol = mEol;
+			}
+
+			if( regex_engine == null ) return;
+
+			TextData td = null;
+			Rect clip_rect = Rect.Empty;
+			int top_index = 0;
+			int bottom_index = 0;
+
+			UITaskHelper.Invoke( rtb, ( ) =>
+			{
+				td = null;
+
+				var start_doc = rtb.Document.ContentStart;
+				var end_doc = rtb.Document.ContentStart;
+
+				if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
+
+				var td0 = rtb.GetTextData( eol );
+
+				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
+
+				if( cnc.IsCancellationRequested ) return;
+
+				td = td0;
+				clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
+
+				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
+				if( cnc.IsCancellationRequested ) return;
+
+				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				if( cnc.IsCancellationRequested ) return;
+				if( top_index < 0 ) top_index = 0;
+
+				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
+				if( cnc.IsCancellationRequested ) return;
+
+				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
+				if( bottom_pointer == null || lines_skipped == 0 )
+				{
+					bottom_index = td.Pointers.Count - 2;
+				}
+				else
+				{
+					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					if( cnc.IsCancellationRequested ) return;
+				}
+				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
+			} );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			if( td == null ) return;
+			if( td.Text.Length == 0 ) return;
+
+			Debug.Assert( top_index >= 0 );
+			Debug.Assert( bottom_index >= top_index );
+			Debug.Assert( bottom_index < td.Pointers.Count );
+
+
+			var visible_segment = new Segment( top_index, bottom_index - top_index );
+
+			var colouriser = new Colouriser( td, visible_segment, PatternCommentStyleInfo );
+
+			regex_engine.ColourisePattern( cnc, colouriser, td.Text, new Segment( top_index, bottom_index - top_index ) );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			colouriser.ColouriseRest( PatternNormalStyleInfo );
+
+#if false
+
+			// TODO: pass 'cnc'
+
+			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
+
+			var comment_ranges = new NaiveRanges( bottom_index - top_index + 1 );
+			int center_index = ( top_index + bottom_index ) / 2;
+
+			Func<int/*index*/, int/*length*/, SyntaxHighlightCategoryEnum, bool> callback = ( index, length, category ) =>
+			{
+				if( cnc.IsCancellationRequested ) return false;
+
+				switch( category )
+				{
+				case SyntaxHighlightCategoryEnum.Comment:
+					comment_ranges.SafeSet( index - top_index, length );
+					break;
+				}
+
+				return true;
+			};
+
+
+			regex_engine.ColourisePattern( cnc, colouriser, td.Text, new Segment( top_index, bottom_index - top_index ));
+
+
+			List<Segment> comment_segments = comment_ranges
+							.GetSegments( cnc, true, top_index )
+							.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+							.ToList( );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			if( !RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, comment_segments, PatternCommentStyleInfo ) )
+				return;
+
+
+			coloured_ranges.Set( comment_ranges );
+
+
+			var segments_to_uncolour = coloured_ranges
+								.GetSegments( cnc, false, top_index )
+								.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+								.ToList( );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
+			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
+#endif
+		}
+
+
+
 		void HighlightingThreadProc( ICancellable cnc )
 		{
+			//..........................
+			return;
+
 			IRegexEngine regex_engine;
 			string eol;
 

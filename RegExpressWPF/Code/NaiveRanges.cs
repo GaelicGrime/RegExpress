@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -94,6 +95,12 @@ namespace RegExpressWPF.Code
 			if( index + length >= data.Length ) length = data.Length - index;
 
 			Set( index, length );
+		}
+
+
+		public void SafeSet( Segment segment )
+		{
+			SafeSet( segment.Index, segment.Length );
 		}
 
 

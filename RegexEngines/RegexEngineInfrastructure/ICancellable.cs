@@ -1,5 +1,4 @@
-﻿using RegexEngineInfrastructure.Matches;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure
 {
-	public interface IMatcher
+	public interface ICancellable
 	{
-		RegexMatches Matches( string text );
+		bool IsCancellationRequested { get; }
 	}
 }

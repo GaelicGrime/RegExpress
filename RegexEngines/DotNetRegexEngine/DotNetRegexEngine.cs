@@ -4,6 +4,7 @@ using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,12 +23,17 @@ namespace DotNetRegexEngineNs
 (
 (?'comment'\(\?\#.*?(\)|(?'unfinished'$))) |
 (?'char_group'\[(\\.|.)*?(\]|(?'unfinished'$))) |
-(?'eol_comment'\#[^n]*) |
+(?'eol_comment'\#[^\n]*) |
 \\. | .
-)";
+)+
+";
 
-		const string NoIgnoreWhitespacePattern = @"
-..............
+		const string NoIgnoreWhitespacePattern = @"(?nsx)
+(
+(?'comment'\(\?\#.*?(\)|(?'unfinished'$))) |
+(?'char_group'\[(\\.|.)*?(\]|(?'unfinished'$))) |
+\\. | .
+)+
 ";
 
 
@@ -80,23 +86,39 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public ICollection<SyntaxHighlightSegment> ColourisePattern( string pattern, int start, int length )
+		public void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment )
 		{
-			// TODO: implement
-
 			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
 			Regex re = ignore_pattern_whitespaces ? ReIgnorePatternWhitespace : ReNoIgnorePatternWhitespace;
 
-
-			foreach(Match m in re.Matches(pattern))
+			foreach( Match m in re.Matches( pattern ) ) // (only one)
 			{
-				if( m.Index + m.Length < start ) continue;
-				if( m.Index + m.Length > start + length ) continue;
+				Debug.Assert( m.Success );
 
+				if( cnc.IsCancellationRequested ) return;
+
+				// comments, '(?#...)'
+				{
+					var g = m.Groups["comment"];
+					if( g.Success )
+					{
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if(!intersection.IsEmpty)
+							{
+								colouriser.Colourise( intersection, SyntaxHighlightCategoryEnum.Comment );
+							}
+						}
+					}
+				}
+
+				// end-on-line comments, '#...'
 
 			}
-
-			return null;
 		}
 
 		#endregion IRegexEngine

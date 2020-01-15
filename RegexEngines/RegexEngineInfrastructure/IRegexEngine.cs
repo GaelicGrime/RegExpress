@@ -24,8 +24,8 @@ namespace RegexEngineInfrastructure
 
 		void DeserializeOptions( object obj );
 
-		IMatcher ParsePattern( string pattern);
+		IMatcher ParsePattern( string pattern );
 
-		ICollection<SyntaxHighlightSegment> ColourisePattern( string text, int start, int length );
+		void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment );
 	}
 }
