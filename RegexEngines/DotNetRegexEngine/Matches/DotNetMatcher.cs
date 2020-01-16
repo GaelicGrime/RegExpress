@@ -1,5 +1,4 @@
-﻿using DotNetRegexEngineNs.Matches;
-using RegexEngineInfrastructure;
+﻿using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
-namespace DotNetRegexEngineNs
+namespace DotNetRegexEngineNs.Matches
 {
 	class DotNetMatcher : IMatcher
 	{

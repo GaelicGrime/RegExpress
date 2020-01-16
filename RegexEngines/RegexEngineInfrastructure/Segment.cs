@@ -21,6 +21,14 @@ namespace RegexEngineInfrastructure
 			Length = length;
 		}
 
+
+		public Segment( Segment a )
+			: this( a.Index, a.Length )
+		{
+
+		}
+
+
 		public bool IsEmpty => Length == 0;
 		public int End => Index + Length;
 
