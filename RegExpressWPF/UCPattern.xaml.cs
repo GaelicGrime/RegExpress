@@ -31,6 +31,7 @@ namespace RegExpressWPF
 	public partial class UCPattern : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
+		readonly PatternHighlightsAdorner PatternHighlightsAdorner;
 
 		readonly ResumableLoop RecolouringLoop;
 		readonly ResumableLoop HighlightingLoop;
@@ -67,6 +68,7 @@ namespace RegExpressWPF
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
+			PatternHighlightsAdorner = new PatternHighlightsAdorner( rtb, ChangeEventHelper );
 
 			PatternNormalStyleInfo = new StyleInfo( "PatternNormal" );
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
@@ -146,6 +148,7 @@ namespace RegExpressWPF
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );
+			adorner_layer.Add( PatternHighlightsAdorner );
 
 			AlreadyLoaded = true;
 		}
