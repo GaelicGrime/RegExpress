@@ -9,16 +9,16 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 {
 	public class ColouredSegments
 	{
-		public List<Segment> Comments { get; }
+		public List<Segment> Comments { get; } = new List<Segment>( );
+		public List<Segment> Escapes { get; } = new List<Segment>( );
+		public List<Segment> GroupNames { get; } = new List<Segment>( );
 
 		public IEnumerable<List<Segment>> All { get; }
 
 
 		public ColouredSegments( )
 		{
-			Comments = new List<Segment>( );
-
-			All = new List<List<Segment>> { Comments };
+			All = new List<List<Segment>> { Comments, Escapes, GroupNames };
 		}
 	}
 }

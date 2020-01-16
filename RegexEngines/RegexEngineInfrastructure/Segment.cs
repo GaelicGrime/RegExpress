@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure
 {
-	public class Segment
+	public struct Segment
 	{
 		public int Index { get; }
 		public int Length { get; }
@@ -44,6 +44,75 @@ namespace RegexEngineInfrastructure
 		}
 
 
+		public static void Except( List<Segment> list, Segment a )
+		{
+			Exclude( list, a.Index, a.Length );
+		}
+
+
+		public static void Exclude( List<Segment> list, int index, int length )
+		{
+			if( length == 0 ) return;
+
+			int initial_count = list.Count;
+
+			for( int i = 0; i < initial_count; ++i )
+			{
+				var s = list[i];
+				if( s.IsEmpty ) continue;
+
+				var s1 = LeftIntersection( s, index );
+				var s2 = RightIntersection( s, index + length );
+
+				if( s1.IsEmpty )
+				{
+					if( s2.IsEmpty )
+					{
+						list[i] = Empty;
+					}
+					else
+					{
+						list[i] = s2;
+					}
+				}
+				else
+				{
+					if( s2.IsEmpty )
+					{
+						list[i] = s1;
+					}
+					else
+					{
+						list[i] = s1;
+						list.Add( s2 );
+					}
+				}
+			}
+		}
+
+
+		static Segment LeftIntersection( Segment a, int bIndex )
+		{
+			var i = a.Index;
+			var e = Math.Min( a.End, bIndex );
+
+			if( e < i ) return Empty;
+
+			return new Segment( i, e - i );
+		}
+
+
+		static Segment RightIntersection( Segment a, int bEnd )
+		{
+			var i = Math.Max( a.Index, bEnd );
+			var e = a.End;
+
+			if( e < i ) return Empty;
+
+			return new Segment( i, e - i );
+		}
+
+
 		#region Object
 
 		public override string ToString( )
@@ -68,7 +137,7 @@ namespace RegexEngineInfrastructure
 		#endregion
 
 
-		/* ?
+		// Recommended overloads for structures
 
 		public static bool operator ==( Segment left, Segment right )
 		{
@@ -80,8 +149,6 @@ namespace RegexEngineInfrastructure
 		{
 			return !( left == right );
 		}
-
-		*/
 
 	}
 }

@@ -41,11 +41,12 @@ namespace RegExpressWPF
 		bool AlreadyLoaded = false;
 
 		readonly StyleInfo PatternNormalStyleInfo;
-		readonly StyleInfo PatternParaHighlightStyleInfo;
 		readonly StyleInfo PatternGroupNameStyleInfo;
 		readonly StyleInfo PatternEscapeStyleInfo;
-		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
 		readonly StyleInfo PatternCommentStyleInfo;
+
+		readonly StyleInfo PatternParaHighlightStyleInfo;
+		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
 
 		readonly Regex NoIgnorePatternWhitespaceRegex;
 		readonly Regex IgnorePatternWhitespaceRegex;
@@ -465,8 +466,9 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-
 			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_colourise.Comments, PatternCommentStyleInfo );
+			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_colourise.Escapes, PatternEscapeStyleInfo );
+			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_colourise.GroupNames, PatternGroupNameStyleInfo );
 
 			var coloured_ranges = new NaiveRanges( visible_segment.Length );
 
@@ -482,57 +484,6 @@ namespace RegExpressWPF
 			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
 
 
-#if false
-
-			// TODO: pass 'cnc'
-
-			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
-
-			var comment_ranges = new NaiveRanges( bottom_index - top_index + 1 );
-			int center_index = ( top_index + bottom_index ) / 2;
-
-			Func<int/*index*/, int/*length*/, SyntaxHighlightCategoryEnum, bool> callback = ( index, length, category ) =>
-			{
-				if( cnc.IsCancellationRequested ) return false;
-
-				switch( category )
-				{
-				case SyntaxHighlightCategoryEnum.Comment:
-					comment_ranges.SafeSet( index - top_index, length );
-					break;
-				}
-
-				return true;
-			};
-
-
-			regex_engine.ColourisePattern( cnc, colouriser, td.Text, new Segment( top_index, bottom_index - top_index ));
-
-
-			List<Segment> comment_segments = comment_ranges
-							.GetSegments( cnc, true, top_index )
-							.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-							.ToList( );
-
-			if( cnc.IsCancellationRequested ) return;
-
-			if( !RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, comment_segments, PatternCommentStyleInfo ) )
-				return;
-
-
-			coloured_ranges.Set( comment_ranges );
-
-
-			var segments_to_uncolour = coloured_ranges
-								.GetSegments( cnc, false, top_index )
-								.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
-								.ToList( );
-
-			if( cnc.IsCancellationRequested ) return;
-
-			//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-#endif
 		}
 
 
