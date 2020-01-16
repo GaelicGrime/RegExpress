@@ -32,6 +32,7 @@ namespace DotNetRegexEngineNs
 (
 (?'comment'\(\?\#.*?(\)|(?'unfinished'$))) |
 (?'char_group'\[(\\.|.)*?(\]|(?'unfinished'$))) |
+(?'eol_comment'(?!)) 
 \\. | .
 )+
 ";
@@ -86,7 +87,7 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment )
+		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
 			Regex re = ignore_pattern_whitespaces ? ReIgnorePatternWhitespace : ReNoIgnorePatternWhitespace;
@@ -110,14 +111,30 @@ namespace DotNetRegexEngineNs
 
 							if(!intersection.IsEmpty)
 							{
-								colouriser.Colourise( intersection, SyntaxHighlightCategoryEnum.Comment );
+								colouredSegments.Comments.Add( intersection );
 							}
 						}
 					}
 				}
 
 				// end-on-line comments, '#...'
+				{
+					var g = m.Groups["eol_comment"];
+					if( g.Success )
+					{
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
 
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Comments.Add( intersection );
+							}
+						}
+					}
+				}
 			}
 		}
 

@@ -49,9 +49,21 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public void Set( int offset, Segment segment )
+		{
+			Set( segment.Index + offset, segment.Length );
+		}
+
+
 		public void Set( IEnumerable<Segment> segments )
 		{
 			foreach( var segment in segments ) Set( segment );
+		}
+
+
+		public void Set( int offset, IEnumerable<Segment> segments )
+		{
+			foreach( var segment in segments ) Set( offset, segment );
 		}
 
 

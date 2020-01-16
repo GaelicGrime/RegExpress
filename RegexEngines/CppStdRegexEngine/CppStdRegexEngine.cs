@@ -58,11 +58,10 @@ namespace CppStdRegexEngineNs
 		}
 
 
-		public void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment )
+		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 			// TODO: implement
 
-			return;
 		}
 
 		#endregion IRegexEngine

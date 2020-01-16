@@ -26,6 +26,6 @@ namespace RegexEngineInfrastructure
 
 		IMatcher ParsePattern( string pattern );
 
-		void ColourisePattern( ICancellable cnc, IColouriser colouriser, string pattern, Segment visibleSegment );
+		void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment );
 	}
 }

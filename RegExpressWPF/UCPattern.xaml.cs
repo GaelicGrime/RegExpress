@@ -387,55 +387,6 @@ namespace RegExpressWPF
 		}
 
 
-		class Colouriser : IColouriser
-		{
-			ICancellable Cnc { get; }
-			UCPattern Parent { get; }
-			TextData Td { get; }
-			NaiveRanges ColouredRanges { get; }
-
-
-			public Colouriser(UCPattern parent , TextData td, Segment visibleSegment)
-			{
-				Cnc = cnc;
-				Parent = parent;
-				Td = td;
-				ColouredRanges = new NaiveRanges( visibleSegment.Length + 1 );
-			}
-
-
-			#region IColouriser
-
-			public void Colourise( Segment segment, SyntaxHighlightCategoryEnum category )
-			{
-				ColouredRanges.SafeSet( segment );
-				Parent.Colourise( Td, segment, category );
-			}
-
-			internal void ColouriseRest( ICancellable cnc, StyleInfo patternNormalStyleInfo )
-			{
-				//RtbUtilities.ClearProperties( ct, ChangeEventHelper, null, td, segments_to_uncolour );
-				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
-			}
-
-			#endregion IColouriser
-		}
-
-		void Colourise( TextData td, Segment segment, SyntaxHighlightCategoryEnum category )
-		{
-			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-			{
-				switch( category )
-				{
-				case SyntaxHighlightCategoryEnum.Comment:
-					td.Range0F( segment.Index, segment.Length ).Style( CommentStyleInfo );
-					break;
-				}
-			}
-		}
-
-
-
 		void RecolouringThreadProc( ICancellable cnc )
 		{
 			IRegexEngine regex_engine;
@@ -505,16 +456,31 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
+			int center_index = ( top_index + bottom_index ) / 2;
 
-			var visible_segment = new Segment( top_index, bottom_index - top_index );
+			var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
+			var segments_to_colourise = new ColouredSegments( );
 
-			var colouriser = new Colouriser( td, visible_segment, PatternCommentStyleInfo );
-
-			regex_engine.ColourisePattern( cnc, colouriser, td.Text, new Segment( top_index, bottom_index - top_index ) );
+			regex_engine.ColourisePattern( cnc, segments_to_colourise, td.Text, visible_segment );
 
 			if( cnc.IsCancellationRequested ) return;
 
-			colouriser.ColouriseRest( PatternNormalStyleInfo );
+
+			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_colourise.Comments, PatternCommentStyleInfo );
+
+			var coloured_ranges = new NaiveRanges( visible_segment.Length );
+
+			coloured_ranges.Set( -top_index, segments_to_colourise.All.SelectMany( s => s ) );
+
+			var segments_to_uncolour = coloured_ranges
+								.GetSegments( cnc, false, top_index )
+								.OrderBy( s => Math.Abs( center_index - ( s.Index + s.Length / 2 ) ) )
+								.ToList( );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, null, td, segments_to_uncolour, PatternNormalStyleInfo );
+
 
 #if false
 
