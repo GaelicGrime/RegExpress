@@ -199,6 +199,41 @@ namespace DotNetRegexEngineNs
 			}
 		}
 
+
+		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
+		{
+			Highlights highlights = new Highlights( );
+
+			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
+			Regex re = ignore_pattern_whitespaces ? CombinedRegexIgnoreWhitespaces : CombinedRegexNoIgnoreWhitespaces;
+
+			foreach( Match m in re.Matches( pattern ) )
+			{
+				Debug.Assert( m.Success );
+
+				if( cnc.IsCancellationRequested ) return null;
+
+
+				// character groups, '[...]'
+				{
+					var g = m.Groups["char_group"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return null;
+
+						if( g.Index < startSelection && startSelection <= g.Index + g.Length )
+						{
+							highlights.LeftBracket = g.Index;
+
+							break;
+						}
+					}
+				}
+			}
+
+			return highlights;
+		}
+
 		#endregion IRegexEngine
 
 

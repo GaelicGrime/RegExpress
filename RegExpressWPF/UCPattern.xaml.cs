@@ -357,10 +357,6 @@ namespace RegExpressWPF
 
 		void HighlightingThreadProc( ICancellable cnc )
 		{
-			//..........................
-			// TODO: reimplement
-			return;
-#if false
 			IRegexEngine regex_engine;
 			string eol;
 
@@ -430,6 +426,13 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
+			var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
+
+			Highlights highlights = regex_engine.GetHighlightsInPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
+
+			PatternHighlightsAdorner.SetBrackets( td, highlights?.LeftBracket ?? -1, -1 );
+
+#if false
 			var regex = GetColouringRegex( regex_engine );
 
 			var matches = regex

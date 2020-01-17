@@ -20,6 +20,8 @@ namespace RegExpressWPF.Adorners
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly ResumableLoop Loop;
 
+		Rect RectLeftBracket;
+
 		public bool IsDbgDisabled; // (disable this adorner for debugging purposes)
 
 
@@ -41,12 +43,43 @@ namespace RegExpressWPF.Adorners
 		}
 
 
+		internal void SetBrackets( TextData td, int leftIndex, int rightIndex )
+		{
+			Rect rect_left_bracket = Rect.Empty;
+
+			UITaskHelper.Invoke( Rtb,
+				( ) =>
+				{
+					if( leftIndex >= 0 )
+					{
+						var rect1 = td.Pointers[leftIndex].GetCharacterRect( LogicalDirection.Forward );
+						var rect2 = td.Pointers[leftIndex + 1].GetCharacterRect( LogicalDirection.Forward );
+
+						rect_left_bracket = Rect.Union( rect1, rect2 );
+					}
+				} );
+
+			lock( this )
+			{
+				RectLeftBracket = rect_left_bracket;
+
+				DelayedInvalidateVisual( );
+			}
+		}
+
+
+
 		private void Rtb_TextChanged( object sender, TextChangedEventArgs e )
 		{
 			if( IsDbgDisabled ) return;
 			if( ChangeEventHelper == null || ChangeEventHelper.IsInChange ) return;
 
-			//........
+			lock( this )
+			{
+				RectLeftBracket = Rect.Empty; //...
+
+				DelayedInvalidateVisual( ); //...
+			}
 		}
 
 
@@ -79,6 +112,12 @@ namespace RegExpressWPF.Adorners
 			//......
 			//dc.DrawLine( new Pen( Brushes.Red, 1 ), new Point( 0, 0 ), new Point( 100, 100 ) );
 
+			if( !RectLeftBracket.IsEmpty )
+			{
+				var b = new SolidColorBrush { Color = Colors.Red, Opacity = 0.1 };
+				dc.DrawRectangle( b, new Pen( b, 1 ), RectLeftBracket ); //...
+			}
+
 
 			dc.Pop( ); // (transform)
 			dc.Pop( ); // (clip)
@@ -106,5 +145,6 @@ namespace RegExpressWPF.Adorners
 		{
 			//.........
 		}
+
 	}
 }

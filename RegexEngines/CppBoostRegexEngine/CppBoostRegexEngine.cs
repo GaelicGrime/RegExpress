@@ -65,6 +65,13 @@ namespace CppBoostRegexEngineNs
 		}
 
 
+		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
+		{
+			// TODO: implement
+
+			return null;
+		}
+
 		#endregion IRegexEngine
 
 

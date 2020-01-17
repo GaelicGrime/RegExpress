@@ -78,6 +78,7 @@
     <Compile Include="IRegexEngine.cs" />
     <Compile Include="Segment.cs" />
     <Compile Include="SyntaxColouring\ColouredSegments.cs" />
+    <Compile Include="SyntaxColouring\Highlights.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RegexEngineInfrastructure.snk" />
