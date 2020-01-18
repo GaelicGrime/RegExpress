@@ -89,7 +89,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Adorners\PatternHighlightsAdorner.cs" />
     <Compile Include="Adorners\UnderliningAdorner.cs" />
     <Compile Include="Adorners\WhitespaceAdorner.cs" />
     <Compile Include="Code\ResumableLoop.cs" />

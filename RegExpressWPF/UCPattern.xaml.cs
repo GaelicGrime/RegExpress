@@ -31,7 +31,6 @@ namespace RegExpressWPF
 	public partial class UCPattern : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
-		readonly PatternHighlightsAdorner PatternHighlightsAdorner;
 
 		readonly ResumableLoop RecolouringLoop;
 		readonly ResumableLoop HighlightingLoop;
@@ -68,7 +67,6 @@ namespace RegExpressWPF
 			UndoRedoHelper = new UndoRedoHelper( this.rtb );
 
 			WhitespaceAdorner = new WhitespaceAdorner( rtb, ChangeEventHelper );
-			PatternHighlightsAdorner = new PatternHighlightsAdorner( rtb, ChangeEventHelper );
 
 			PatternNormalStyleInfo = new StyleInfo( "PatternNormal" );
 			PatternParaHighlightStyleInfo = new StyleInfo( "PatternParaHighlight" );
@@ -148,7 +146,6 @@ namespace RegExpressWPF
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );
-			adorner_layer.Add( PatternHighlightsAdorner );
 
 			AlreadyLoaded = true;
 		}
@@ -341,6 +338,11 @@ namespace RegExpressWPF
 				Segment.Except( uncovered_segments, s );
 			}
 
+			if( LeftHighlightedParantesis >= 0 ) Segment.Except( uncovered_segments, new Segment( LeftHighlightedParantesis, 1 ) );
+			if( RightHighlightedParantesis >= 0 ) Segment.Except( uncovered_segments, new Segment( RightHighlightedParantesis, 1 ) );
+			if( LeftHighlightedBracket >= 0 ) Segment.Except( uncovered_segments, new Segment( LeftHighlightedBracket, 1 ) );
+			if( RightHighlightedBracket >= 0 ) Segment.Except( uncovered_segments, new Segment( RightHighlightedBracket, 1 ) );
+
 			var segments_to_uncolour =
 				uncovered_segments
 					.Select( s => Segment.Intersection( s, visible_segment ) )
@@ -426,106 +428,13 @@ namespace RegExpressWPF
 			Debug.Assert( bottom_index >= top_index );
 			Debug.Assert( bottom_index < td.Pointers.Count );
 
-			var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
-
-			Highlights highlights = regex_engine.GetHighlightsInPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
-
-			PatternHighlightsAdorner.SetBrackets( td, highlights?.LeftBracket ?? -1, -1 );
-
-#if false
-			var regex = GetColouringRegex( regex_engine );
-
-			var matches = regex
-				.Matches( td.Text )
-				.Cast<Match>( )
-				.ToArray( );
-
-			if( cnc.IsCancellationRequested ) return;
-
-			int left_para_index = -1;
-			int right_para_index = -1;
-			int left_bracket_index = -1;
-			int right_bracket_index = -1;
+			Highlights highlights = null;
 
 			if( is_focused )
 			{
-				var parentheses = matches.Where( m => m.Groups["para"].Success ).ToArray( );
-				if( cnc.IsCancellationRequested ) return;
+				var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
 
-				var parentheses_at_left = parentheses.Where( m => m.Index < td.SelectionStart ).ToArray( );
-				if( cnc.IsCancellationRequested ) return;
-
-				var parentheses_at_right = parentheses.Where( m => m.Index >= td.SelectionStart ).ToArray( );
-				if( cnc.IsCancellationRequested ) return;
-
-				if( parentheses_at_left.Any( ) )
-				{
-					int n = 0;
-					int found_i = -1;
-					for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
-					{
-						if( cnc.IsCancellationRequested ) break;
-
-						var m = parentheses_at_left[i];
-						if( m.Value == ")" ) --n;
-						else if( m.Value == "(" ) ++n;
-						if( n == +1 )
-						{
-							found_i = i;
-							break;
-						}
-					}
-					if( found_i >= 0 )
-					{
-						var m = parentheses_at_left[found_i];
-
-						left_para_index = m.Index;
-					}
-				}
-
-				if( cnc.IsCancellationRequested ) return;
-
-				if( parentheses_at_right.Any( ) )
-				{
-					int n = 0;
-					int found_i = -1;
-					for( int i = 0; i < parentheses_at_right.Length; ++i )
-					{
-						if( cnc.IsCancellationRequested ) break;
-
-						var m = parentheses_at_right[i];
-						if( m.Value == "(" ) --n;
-						else if( m.Value == ")" ) ++n;
-						if( n == +1 )
-						{
-							found_i = i;
-							break;
-						}
-					}
-					if( found_i >= 0 )
-					{
-						var m = parentheses_at_right[found_i];
-
-						right_para_index = m.Index;
-					}
-				}
-
-				if( cnc.IsCancellationRequested ) return;
-
-				var current_group = matches.Where( m => m.Groups["character_group"].Success && m.Index < td.SelectionStart && m.Index + m.Length > td.SelectionStart ).FirstOrDefault( );
-
-				if( cnc.IsCancellationRequested ) return;
-
-				if( current_group != null )
-				{
-					left_bracket_index = current_group.Index;
-
-					var eog = current_group.Groups["eog"];
-					if( eog.Success )
-					{
-						right_bracket_index = eog.Index;
-					}
-				}
+				highlights = regex_engine.GetHighlightsInPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
 			}
 
 			if( cnc.IsCancellationRequested ) return;
@@ -534,47 +443,41 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					TryHighlight( ref LeftHighlightedParantesis, td, left_para_index, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPara ?? -1, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
-					TryHighlight( ref RightHighlightedParantesis, td, right_para_index, PatternParaHighlightStyleInfo );
+
+					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPara ?? -1, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
-					TryHighlight( ref LeftHighlightedBracket, td, left_bracket_index, PatternCharGroupHighlightStyleInfo );
+
+					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? -1, td, PatternCharGroupHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
-					TryHighlight( ref RightHighlightedBracket, td, right_bracket_index, PatternCharGroupHighlightStyleInfo );
+
+					TryHighlight( ref RightHighlightedBracket, highlights?.RightBracket ?? -1, td, PatternCharGroupHighlightStyleInfo );
+					if( cnc.IsCancellationRequested ) return;
 				} );
 			}
-#endif
-		}
-
-#if false
-		void TryMark( NaiveRanges ranges, int topIndex, TextData td, int index )
-		{
-			if( index >= 0 )
-			{
-				ranges.SafeSet( index - topIndex );
-			}
 		}
 
 
-		void TryHighlight( ref int savedIndex, TextData td, int index, StyleInfo styleInfo )
+		void TryHighlight( ref int currentIndex, int newIndex, TextData td, StyleInfo styleInfo )
 		{
 			// TODO: avoid flickering
 
-			if( savedIndex >= 0 && savedIndex != index )
+			if( currentIndex >= 0 && currentIndex != newIndex )
 			{
-				var tr = td.Range( savedIndex, 1 );
+				var tr = td.Range( currentIndex, 1 );
 				tr.Style( PatternNormalStyleInfo );
 			}
 
-			savedIndex = index;
+			currentIndex = newIndex;
 
-			if( savedIndex >= 0 )
+			if( currentIndex >= 0 )
 			{
-				var tr = td.RangeFB( savedIndex, 1 );
+				var tr = td.RangeFB( currentIndex, 1 );
 				tr.Style( styleInfo );
 			}
 		}
-#endif
+
 
 		#region IDisposable Support
 

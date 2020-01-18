@@ -4,11 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace RegexEngineInfrastructure.SyntaxColouring
 {
 	public class Highlights
 	{
 		// (Positions in the text; negative if no highlights)
+
+		public int LeftPara = -1;
+		public int RightPara = -1;
 
 		public int LeftBracket = -1;
 		public int RightBracket = -1;

@@ -32,6 +32,12 @@ namespace RegexEngineInfrastructure
 		public bool IsEmpty => Length == 0;
 		public int End => Index + Length;
 
+		public bool Contains( int x )
+		{
+			return !IsEmpty && x >= Index && x < End;
+		}
+
+
 		public static Segment Empty => new Segment( 0, 0 );
 
 

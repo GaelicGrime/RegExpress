@@ -20,7 +20,7 @@ namespace DotNetRegexEngineNs
 
 		const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
 		const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
-		const string CharGroupPattern = @"(?'char_group'\[(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
+		const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
 		const string EscapesPattern = @"(?'escape'
 \\[0-7]{2,3} | 
 \\x[0-9A-Fa-f]{2} | 
@@ -32,11 +32,34 @@ namespace DotNetRegexEngineNs
 )"; // including incomplete '\p' and '\k'
 		const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
 
+		const string HighlightPatternIgnoreWhitespace = @"(?nsx)
+(
+(\(\?\#.*?(\)|$)) |
+(\#[^\n]*) |
+(?'left_para'\() |
+(?'right_para'\)) |
+(?'char_group'\[(\\.|.)*?(\]|$))
+)
+";
+		const string HighlightPatternNoIgnoreWhitespace = @"(?nsx)
+(
+(\(\?\#.*?(\)|$)) |
+#(\#[^\n]*) |
+(?'left_para'\() |
+(?'right_para'\)) |
+(?'char_group'\[(\\.|.)*?(\]|$))
+)
+";
+
 		readonly static string CombinedPatternIgnoreWhitespaces;
 		readonly static string CombinedPatternNoIgnoreWhitespaces;
 
 		readonly static Regex CombinedRegexIgnoreWhitespaces;
 		readonly static Regex CombinedRegexNoIgnoreWhitespaces;
+
+		readonly static Regex HighlightRegexIgnoreWhitespaces;
+		readonly static Regex HighlightRegexNoIgnoreWhitespaces;
+
 
 
 		static DotNetRegexEngine( )
@@ -46,7 +69,7 @@ namespace DotNetRegexEngineNs
 					 CommentPattern + " |" + Environment.NewLine +
 					 EolCommentPattern + " |" + Environment.NewLine +
 					 CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-					 EscapesPattern +" |" + Environment.NewLine +
+					 EscapesPattern + " |" + Environment.NewLine +
 					 NamedGroupPattern + " |" + Environment.NewLine +
 					 "(?>.(?!))" + Environment.NewLine +
 				")";
@@ -63,6 +86,9 @@ namespace DotNetRegexEngineNs
 
 			CombinedRegexIgnoreWhitespaces = new Regex( CombinedPatternIgnoreWhitespaces, RegexOptions.Compiled );
 			CombinedRegexNoIgnoreWhitespaces = new Regex( CombinedPatternNoIgnoreWhitespaces, RegexOptions.Compiled );
+
+			HighlightRegexIgnoreWhitespaces = new Regex( HighlightPatternIgnoreWhitespace, RegexOptions.Compiled );
+			HighlightRegexNoIgnoreWhitespaces = new Regex( HighlightPatternNoIgnoreWhitespace, RegexOptions.Compiled );
 		}
 
 
@@ -200,12 +226,14 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
+		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			Highlights highlights = new Highlights( );
 
 			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
-			Regex re = ignore_pattern_whitespaces ? CombinedRegexIgnoreWhitespaces : CombinedRegexNoIgnoreWhitespaces;
+			Regex re = ignore_pattern_whitespaces ? HighlightRegexIgnoreWhitespaces : HighlightRegexNoIgnoreWhitespaces;
+
+			var parentheses = new List<(int Index, char Value)>( );
 
 			foreach( Match m in re.Matches( pattern ) )
 			{
@@ -213,23 +241,100 @@ namespace DotNetRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return null;
 
+				// parantheses, '(' or ')'
+				{
+					var g = m.Groups["left_para"];
+					if( g.Success )
+					{
+						parentheses.Add( (g.Index, '(') );
+					}
+
+					g = m.Groups["right_para"];
+					if( g.Success )
+					{
+						parentheses.Add( (g.Index, ')') );
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return null;
 
 				// character groups, '[...]'
 				{
 					var g = m.Groups["char_group"];
 					if( g.Success )
 					{
-						if( cnc.IsCancellationRequested ) return null;
-
-						if( g.Index < startSelection && startSelection <= g.Index + g.Length )
+						if( g.Index < selectionStart && selectionStart < g.Index + g.Length )
 						{
-							highlights.LeftBracket = g.Index;
+							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = g.Index;
+
+							var right = g.Value.EndsWith( "]" ) ? g.Index + g.Length - 1 : -1;
+							if( right >= 0 && visibleSegment.Contains( right ) ) highlights.RightBracket = right;
 
 							break;
 						}
 					}
 				}
 			}
+
+			var parentheses_at_left = parentheses.Where( g => g.Index < selectionStart ).ToArray( );
+			if( cnc.IsCancellationRequested ) return null;
+
+			var parentheses_at_right = parentheses.Where( g => g.Index >= selectionStart ).ToArray( );
+			if( cnc.IsCancellationRequested ) return null;
+
+			if( parentheses_at_left.Any( ) )
+			{
+				int n = 0;
+				int found_i = -1;
+				for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
+				{
+					if( cnc.IsCancellationRequested ) break;
+
+					var g = parentheses_at_left[i];
+					if( g.Value == ')' ) --n;
+					else if( g.Value == '(' ) ++n;
+					if( n == +1 )
+					{
+						found_i = i;
+						break;
+					}
+				}
+				if( found_i >= 0 )
+				{
+					var g = parentheses_at_left[found_i];
+
+					if( visibleSegment.Contains( g.Index ) ) highlights.LeftPara = g.Index;
+				}
+			}
+
+			if( cnc.IsCancellationRequested ) return null;
+
+			if( parentheses_at_right.Any( ) )
+			{
+				int n = 0;
+				int found_i = -1;
+				for( int i = 0; i < parentheses_at_right.Length; ++i )
+				{
+					if( cnc.IsCancellationRequested ) break;
+
+					var g = parentheses_at_right[i];
+					if( g.Value == '(' ) --n;
+					else if( g.Value == ')' ) ++n;
+					if( n == +1 )
+					{
+						found_i = i;
+						break;
+					}
+				}
+				if( found_i >= 0 )
+				{
+					var g = parentheses_at_right[found_i];
+
+					if( visibleSegment.Contains( g.Index ) ) highlights.RightPara = g.Index;
+				}
+			}
+
+			if( cnc.IsCancellationRequested ) return null;
 
 			return highlights;
 		}
