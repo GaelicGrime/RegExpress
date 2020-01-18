@@ -28,6 +28,6 @@ namespace RegexEngineInfrastructure
 
 		void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment );
 
-		Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment );
+		Highlights HighlightPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment );
 	}
 }

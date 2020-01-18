@@ -23,13 +23,13 @@ namespace DotNetRegexEngineNs
 		const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
 		const string EscapesPattern = @"(?'escape'
 \\[0-7]{2,3} | 
-\\x[0-9A-Fa-f]{2} | 
+\\x[0-9A-Fa-f]{1,2} | 
 \\c[A-Za-z] | 
-\\u[0-9A-Fa-f]{4} | 
+\\u[0-9A-Fa-f]{1,4} | 
 \\(p|P)\{([A-Za-z]+\})? | 
 \\k<([A-Za-z]+>)? |
 \\.
-)"; // including incomplete '\p' and '\k'
+)"; // including incomplete '\x', '\u', '\p', '\k'
 		const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
 
 		const string HighlightPatternIgnoreWhitespace = @"(?nsx)
@@ -38,7 +38,8 @@ namespace DotNetRegexEngineNs
 (\#[^\n]*) |
 (?'left_para'\() |
 (?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$))
+(?'char_group'\[(\\.|.)*?(\]|$)) |
+(\\.)
 )
 ";
 		const string HighlightPatternNoIgnoreWhitespace = @"(?nsx)
@@ -47,7 +48,8 @@ namespace DotNetRegexEngineNs
 #(\#[^\n]*) |
 (?'left_para'\() |
 (?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$))
+(?'char_group'\[(\\.|.)*?(\]|$)) |
+(\\.)
 )
 ";
 
@@ -141,9 +143,9 @@ namespace DotNetRegexEngineNs
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
-			Regex re = ignore_pattern_whitespaces ? CombinedRegexIgnoreWhitespaces : CombinedRegexNoIgnoreWhitespaces;
+			Regex regex = ignore_pattern_whitespaces ? CombinedRegexIgnoreWhitespaces : CombinedRegexNoIgnoreWhitespaces;
 
-			foreach( Match m in re.Matches( pattern ) )
+			foreach( Match m in regex.Matches( pattern ) )
 			{
 				Debug.Assert( m.Success );
 
@@ -226,16 +228,16 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
+		public Highlights HighlightPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			Highlights highlights = new Highlights( );
 
 			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
-			Regex re = ignore_pattern_whitespaces ? HighlightRegexIgnoreWhitespaces : HighlightRegexNoIgnoreWhitespaces;
+			Regex regex = ignore_pattern_whitespaces ? HighlightRegexIgnoreWhitespaces : HighlightRegexNoIgnoreWhitespaces;
 
 			var parentheses = new List<(int Index, char Value)>( );
 
-			foreach( Match m in re.Matches( pattern ) )
+			foreach( Match m in regex.Matches( pattern ) )
 			{
 				Debug.Assert( m.Success );
 
@@ -265,10 +267,10 @@ namespace DotNetRegexEngineNs
 					{
 						if( g.Index < selectionStart && selectionStart < g.Index + g.Length )
 						{
-							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = g.Index;
+							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
 
 							var right = g.Value.EndsWith( "]" ) ? g.Index + g.Length - 1 : -1;
-							if( right >= 0 && visibleSegment.Contains( right ) ) highlights.RightBracket = right;
+							if( right >= 0 && visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
 
 							break;
 						}
@@ -303,7 +305,7 @@ namespace DotNetRegexEngineNs
 				{
 					var g = parentheses_at_left[found_i];
 
-					if( visibleSegment.Contains( g.Index ) ) highlights.LeftPara = g.Index;
+					if( visibleSegment.Contains( g.Index ) ) highlights.LeftPara = new Segment( g.Index, 1 );
 				}
 			}
 
@@ -330,7 +332,7 @@ namespace DotNetRegexEngineNs
 				{
 					var g = parentheses_at_right[found_i];
 
-					if( visibleSegment.Contains( g.Index ) ) highlights.RightPara = g.Index;
+					if( visibleSegment.Contains( g.Index ) ) highlights.RightPara = new Segment( g.Index, 1 );
 				}
 			}
 

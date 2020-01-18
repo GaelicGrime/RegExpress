@@ -38,6 +38,15 @@ namespace RegexEngineInfrastructure
 		}
 
 
+		public bool Intersects( Segment b )
+		{
+			var i = Math.Max( Index, b.Index );
+			var e = Math.Min( End, b.Index + b.Length );
+
+			return e > i;
+		}
+
+
 		public static Segment Empty => new Segment( 0, 0 );
 
 

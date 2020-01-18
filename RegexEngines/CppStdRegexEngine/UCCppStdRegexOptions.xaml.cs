@@ -53,7 +53,7 @@ namespace CppStdRegexEngineNs
 		}
 
 
-		internal string[] GetSelectedOptions( )
+		string[] GetSelectedOptions( ) // (not accessible from threads; use 'CachedOptions')
 		{
 			var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
 
@@ -64,7 +64,8 @@ namespace CppStdRegexEngineNs
 					.ToArray( );
 		}
 
-		internal void SetSelectedOptions( string[] options )
+
+		void SetSelectedOptions( string[] options )
 		{
 			options = options ?? new string[] { };
 
@@ -77,6 +78,15 @@ namespace CppStdRegexEngineNs
 			{
 				cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
 			}
+		}
+
+
+		internal GrammarEnum GetGrammar( ) // (accessible from threads)
+		{
+			string grammar_s = Enum.GetNames( typeof( GrammarEnum ) ).FirstOrDefault( n => n != "None" && CachedOptions.Contains( n ) );
+			if( grammar_s == null ) return GrammarEnum.None;
+
+			return (GrammarEnum)Enum.Parse( typeof( GrammarEnum ), grammar_s );
 		}
 
 

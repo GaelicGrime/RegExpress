@@ -124,4 +124,9 @@
   <ItemGroup>
     <None Include="CppBoostRegexEngine.snk" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="boost_1_72_0_min\LICENSE_1_0.txt">
+      <Filter>Boost</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

@@ -48,10 +48,10 @@ namespace RegExpressWPF
 		readonly StyleInfo PatternParaHighlightStyleInfo;
 		readonly StyleInfo PatternCharGroupHighlightStyleInfo;
 
-		int LeftHighlightedParantesis = -1;
-		int RightHighlightedParantesis = -1;
-		int LeftHighlightedBracket = -1;
-		int RightHighlightedBracket = -1;
+		Segment LeftHighlightedParantesis = Segment.Empty;
+		Segment RightHighlightedParantesis = Segment.Empty;
+		Segment LeftHighlightedBracket = Segment.Empty;
+		Segment RightHighlightedBracket = Segment.Empty;
 
 		IRegexEngine mRegexEngine;
 		string mEol;
@@ -158,10 +158,10 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleTextChanged( e );
 
-			LeftHighlightedParantesis = -1;
-			RightHighlightedParantesis = -1;
-			LeftHighlightedBracket = -1;
-			RightHighlightedBracket = -1;
+			LeftHighlightedParantesis = Segment.Empty;
+			RightHighlightedParantesis = Segment.Empty;
+			LeftHighlightedBracket = Segment.Empty;
+			RightHighlightedBracket = Segment.Empty;
 
 			RecolouringLoop.SendRestart( );
 			HighlightingLoop.SendRestart( );
@@ -338,10 +338,10 @@ namespace RegExpressWPF
 				Segment.Except( uncovered_segments, s );
 			}
 
-			if( LeftHighlightedParantesis >= 0 ) Segment.Except( uncovered_segments, new Segment( LeftHighlightedParantesis, 1 ) );
-			if( RightHighlightedParantesis >= 0 ) Segment.Except( uncovered_segments, new Segment( RightHighlightedParantesis, 1 ) );
-			if( LeftHighlightedBracket >= 0 ) Segment.Except( uncovered_segments, new Segment( LeftHighlightedBracket, 1 ) );
-			if( RightHighlightedBracket >= 0 ) Segment.Except( uncovered_segments, new Segment( RightHighlightedBracket, 1 ) );
+			Segment.Except( uncovered_segments, LeftHighlightedParantesis );
+			Segment.Except( uncovered_segments, RightHighlightedParantesis );
+			Segment.Except( uncovered_segments, LeftHighlightedBracket );
+			Segment.Except( uncovered_segments, RightHighlightedBracket );
 
 			var segments_to_uncolour =
 				uncovered_segments
@@ -434,7 +434,7 @@ namespace RegExpressWPF
 			{
 				var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
 
-				highlights = regex_engine.GetHighlightsInPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
+				highlights = regex_engine.HighlightPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
 			}
 
 			if( cnc.IsCancellationRequested ) return;
@@ -443,37 +443,37 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPara ?? -1, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPara ?? -1, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? -1, td, PatternCharGroupHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? Segment.Empty, td, PatternCharGroupHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedBracket, highlights?.RightBracket ?? -1, td, PatternCharGroupHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedBracket, highlights?.RightBracket ?? Segment.Empty, td, PatternCharGroupHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 				} );
 			}
 		}
 
 
-		void TryHighlight( ref int currentIndex, int newIndex, TextData td, StyleInfo styleInfo )
+		void TryHighlight( ref Segment currentSegment, Segment newSegment, TextData td, StyleInfo styleInfo )
 		{
 			// TODO: avoid flickering
 
-			if( currentIndex >= 0 && currentIndex != newIndex )
+			if( !currentSegment.IsEmpty && currentSegment != newSegment )
 			{
-				var tr = td.Range( currentIndex, 1 );
+				var tr = td.Range( currentSegment );
 				tr.Style( PatternNormalStyleInfo );
 			}
 
-			currentIndex = newIndex;
+			currentSegment = newSegment;
 
-			if( currentIndex >= 0 )
+			if( !currentSegment.IsEmpty )
 			{
-				var tr = td.RangeFB( currentIndex, 1 );
+				var tr = td.RangeFB( currentSegment.Index, currentSegment.Length );
 				tr.Style( styleInfo );
 			}
 		}

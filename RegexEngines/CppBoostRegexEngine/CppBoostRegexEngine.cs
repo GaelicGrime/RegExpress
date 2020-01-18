@@ -65,7 +65,7 @@ namespace CppBoostRegexEngineNs
 		}
 
 
-		public Highlights GetHighlightsInPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
+		public Highlights HighlightPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
 		{
 			// TODO: implement
 
