@@ -1,7 +1,7 @@
 #include "pch.h"
+#include "CppGroup.h"
 #include "CppMatch.h"
 #include "CppMatcher.h"
-
 
 
 namespace CppBoostRegexInterop
@@ -14,17 +14,36 @@ namespace CppBoostRegexInterop
 		mIndex( match.position( ) ), // TODO: deals with overflows
 		mLength( match.length( ) ) // TODO: deals with overflows
 	{
- 		mGroups = gcnew List<IGroup^>;
-		int j = 0;
-
-		for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
+		try
 		{
-			int submatch_index = match.position( j );
-			boost::wcsub_match submatch = *i;
+			mGroups = gcnew List<IGroup^>;
+			int j = 0;
 
-			auto group = gcnew CppGroup( this, j, submatch_index, submatch );
+			for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
+			{
+				int submatch_index = match.position( j );
+				boost::wcsub_match submatch = *i;
 
-			mGroups->Add( group );
+				auto group = gcnew CppGroup( this, j, submatch_index, submatch );
+
+				mGroups->Add( group );
+			}
+		}
+		catch( const boost::regex_error & exc )
+		{
+			//regex_constants::error_type code = exc.code( );
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( what );
+		}
+		catch( const std::exception & exc )
+		{
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( "Error: " + what );
+		}
+		catch( ... )
+		{
+			// TODO: also catch 'boost::exception'?
+			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 	}
 

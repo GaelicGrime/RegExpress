@@ -483,12 +483,14 @@ namespace RegExpressWPF
 			else
 			{
 				IMatcher parsed_pattern = null;
-				bool pattern_is_good = false;
+				RegexMatches matches = null;
+				bool is_good = false;
 
 				try
 				{
 					parsed_pattern = engine.ParsePattern( pattern );
-					pattern_is_good = true;
+					matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
+					is_good = true;
 				}
 				catch( Exception exc )
 				{
@@ -502,12 +504,11 @@ namespace RegExpressWPF
 							pnlShowFirst.Visibility = Visibility.Collapsed;
 						} );
 
-					Debug.Assert( !pattern_is_good );
+					Debug.Assert( !is_good );
 				}
 
-				if( pattern_is_good )
+				if( is_good )
 				{
-					RegexMatches matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
 					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;

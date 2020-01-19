@@ -18,79 +18,12 @@ namespace DotNetRegexEngineNs
 	{
 		readonly UCDotNetRegexOptions OptionsControl;
 
-		const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
-		const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
-		const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
-		const string EscapesPattern = @"(?'escape'
-\\[0-7]{2,3} | 
-\\x[0-9A-Fa-f]{1,2} | 
-\\c[A-Za-z] | 
-\\u[0-9A-Fa-f]{1,4} | 
-\\(p|P)\{([A-Za-z]+\})? | 
-\\k<([A-Za-z]+>)? |
-\\.
-)"; // including incomplete '\x', '\u', '\p', '\k'
-		const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
-
-		const string HighlightPatternIgnoreWhitespace = @"(?nsx)
-(
-(\(\?\#.*?(\)|$)) |
-(\#[^\n]*) |
-(?'left_para'\() |
-(?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$)) |
-(\\.)
-)
-";
-		const string HighlightPatternNoIgnoreWhitespace = @"(?nsx)
-(
-(\(\?\#.*?(\)|$)) |
-#(\#[^\n]*) |
-(?'left_para'\() |
-(?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$)) |
-(\\.)
-)
-";
-
-		readonly static string CombinedPatternIgnoreWhitespaces;
-		readonly static string CombinedPatternNoIgnoreWhitespaces;
-
-		readonly static Regex CombinedRegexIgnoreWhitespaces;
-		readonly static Regex CombinedRegexNoIgnoreWhitespaces;
-
-		readonly static Regex HighlightRegexIgnoreWhitespaces;
-		readonly static Regex HighlightRegexNoIgnoreWhitespaces;
-
+		static readonly Dictionary<RegexOptions, Regex> CachedColouringRegexes = new Dictionary<RegexOptions, Regex>( );
+		static readonly Dictionary<RegexOptions, Regex> CachedHighlightingRegexes = new Dictionary<RegexOptions, Regex>( );
 
 
 		static DotNetRegexEngine( )
 		{
-			CombinedPatternIgnoreWhitespaces =
-				@"(?nsx)(" + Environment.NewLine +
-					 CommentPattern + " |" + Environment.NewLine +
-					 EolCommentPattern + " |" + Environment.NewLine +
-					 CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-					 EscapesPattern + " |" + Environment.NewLine +
-					 NamedGroupPattern + " |" + Environment.NewLine +
-					 "(?>.(?!))" + Environment.NewLine +
-				")";
-
-			CombinedPatternNoIgnoreWhitespaces =
-				@"(?nsx)(" + Environment.NewLine +
-					 CommentPattern + " |" + Environment.NewLine +
-					 //EolCommentPattern + " |" + Environment.NewLine +
-					 CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-					 EscapesPattern + " |" + Environment.NewLine +
-					 NamedGroupPattern + " |" + Environment.NewLine +
-					 "(?>.(?!))" + Environment.NewLine +
-				")";
-
-			CombinedRegexIgnoreWhitespaces = new Regex( CombinedPatternIgnoreWhitespaces, RegexOptions.Compiled );
-			CombinedRegexNoIgnoreWhitespaces = new Regex( CombinedPatternNoIgnoreWhitespaces, RegexOptions.Compiled );
-
-			HighlightRegexIgnoreWhitespaces = new Regex( HighlightPatternIgnoreWhitespace, RegexOptions.Compiled );
-			HighlightRegexNoIgnoreWhitespaces = new Regex( HighlightPatternNoIgnoreWhitespace, RegexOptions.Compiled );
 		}
 
 
@@ -142,8 +75,7 @@ namespace DotNetRegexEngineNs
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
-			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
-			Regex regex = ignore_pattern_whitespaces ? CombinedRegexIgnoreWhitespaces : CombinedRegexNoIgnoreWhitespaces;
+			Regex regex = GetCachedColouringRegex( OptionsControl.CachedRegexOptions );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -200,11 +132,15 @@ namespace DotNetRegexEngineNs
 					{
 						if( cnc.IsCancellationRequested ) return;
 
-						var intersection = Segment.Intersection( visibleSegment, g.Index, g.Length );
-
-						if( !intersection.IsEmpty )
+						// we need captures because of '*?'
+						foreach( Capture c in g.Captures )
 						{
-							colouredSegments.Escapes.Add( intersection );
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Escapes.Add( intersection );
+							}
 						}
 					}
 				}
@@ -232,8 +168,7 @@ namespace DotNetRegexEngineNs
 		{
 			Highlights highlights = new Highlights( );
 
-			bool ignore_pattern_whitespaces = OptionsControl.CachedRegexOptions.HasFlag( RegexOptions.IgnorePatternWhitespace );
-			Regex regex = ignore_pattern_whitespaces ? HighlightRegexIgnoreWhitespaces : HighlightRegexNoIgnoreWhitespaces;
+			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
 
 			var parentheses = new List<(int Index, char Value)>( );
 
@@ -348,5 +283,112 @@ namespace DotNetRegexEngineNs
 		{
 			OptionsChanged?.Invoke( this, null );
 		}
+
+
+		static Regex GetCachedColouringRegex( RegexOptions options )
+		{
+			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
+
+			lock( CachedColouringRegexes )
+			{
+				if( CachedColouringRegexes.TryGetValue( options, out Regex regex ) ) return regex;
+
+				const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
+				const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
+				const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
+				const string EscapesPattern = @"(?'escape'
+\\[0-7]{2,3} | 
+\\x[0-9A-Fa-f]{1,2} | 
+\\c[A-Za-z] | 
+\\u[0-9A-Fa-f]{1,4} | 
+\\(p|P)\{([A-Za-z]+\})? | 
+\\k<([A-Za-z]+>)? |
+\\.
+)"; // including incomplete '\x', '\u', '\p', '\k'
+				const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
+
+				string pattern;
+
+				if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
+				{
+					pattern =
+						@"(?nsx)(" + Environment.NewLine +
+							CommentPattern + " |" + Environment.NewLine +
+							EolCommentPattern + " |" + Environment.NewLine +
+							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+							EscapesPattern + " |" + Environment.NewLine +
+							NamedGroupPattern + " |" + Environment.NewLine +
+							".(?!)" + Environment.NewLine +
+						")";
+				}
+				else
+				{
+					pattern =
+						@"(?nsx)(" + Environment.NewLine +
+							CommentPattern + " |" + Environment.NewLine +
+							//EolCommentPattern + " |" + Environment.NewLine +
+							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+							EscapesPattern + " |" + Environment.NewLine +
+							NamedGroupPattern + " |" + Environment.NewLine +
+							".(?!)" + Environment.NewLine +
+						")";
+				}
+
+				regex = new Regex( pattern, RegexOptions.Compiled );
+
+				CachedColouringRegexes.Add( options, regex );
+
+				return regex;
+			}
+		}
+
+		static Regex GetCachedHighlightingRegex( RegexOptions options )
+		{
+			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
+
+			lock( CachedHighlightingRegexes )
+			{
+				if( CachedHighlightingRegexes.TryGetValue( options, out Regex regex ) ) return regex;
+
+				const string HighlightPatternIgnoreWhitespace = @"(?nsx)
+(
+(\(\?\#.*?(\)|$)) |
+(\#[^\n]*) |
+(?'left_para'\() |
+(?'right_para'\)) |
+(?'char_group'\[(\\.|.)*?(\]|$)) |
+(\\.)
+)
+";
+				const string HighlightPatternNoIgnoreWhitespace = @"(?nsx)
+(
+(\(\?\#.*?(\)|$)) |
+#(\#[^\n]*) |
+(?'left_para'\() |
+(?'right_para'\)) |
+(?'char_group'\[(\\.|.)*?(\]|$)) |
+(\\.)
+)
+";
+
+				string pattern;
+
+				if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
+				{
+					pattern = HighlightPatternIgnoreWhitespace;
+				}
+				else
+				{
+					pattern = HighlightPatternNoIgnoreWhitespace;
+				}
+
+				regex = new Regex( pattern, RegexOptions.Compiled );
+
+				CachedHighlightingRegexes.Add( options, regex );
+
+				return regex;
+			}
+		}
 	}
 }
+

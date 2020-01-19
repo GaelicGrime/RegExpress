@@ -16,6 +16,8 @@
 #define BOOST_REGEX_WIDE_INSTANTIATE
 #define BOOST_REGEX_NARROW_INSTANTIATE
 
+#define BOOST_REGEX_MATCH_EXTRA // for captures
+
 #include "boost/regex.hpp"
 
 #include <msclr\marshal_cppstd.h>

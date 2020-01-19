@@ -80,7 +80,7 @@ namespace CppStdRegexInterop
 		}
 		catch( ... )
 		{
-			throw gcnew Exception( "Unknown error." );
+			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 	}
 

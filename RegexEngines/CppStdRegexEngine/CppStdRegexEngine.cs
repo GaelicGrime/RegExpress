@@ -63,27 +63,29 @@ namespace CppStdRegexEngineNs
 		{
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
 
-			StringBuilder sb = new StringBuilder( @"(?nsx)(?'escape'" );
+			//StringBuilder sb = new StringBuilder( @"(?nsx)(?'escape'" );
 
-			if( grammar == GrammarEnum.ECMAScript )
-				sb.AppendLine( @"\\c[A-Za-z] |" );
+			// TODO: cache
 
-			if( grammar == GrammarEnum.ECMAScript )
-				sb.AppendLine( @"\\x[0-9A-Fa-f]{1,2} |" ); // (two digits required)
+			string escape = @"(?'escape'";
 
-			if( grammar == GrammarEnum.awk )
-				sb.AppendLine( @"\\[0-7]{1,3} |" ); // octal code
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
+			if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
+			escape += @"\\.)";
 
-			if( grammar == GrammarEnum.ECMAScript )
-				sb.AppendLine( @"\\u[0-9A-Fa-f]{1,4} |" ); // (four digits required)
+			string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
 
-			sb.AppendLine( @"\[:.*?(:\]|$) |" ); // (including incomplete classes)
-			sb.AppendLine( @"\\." );
-			sb.AppendLine( @")" );
+			string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")?? \] )";
 
-			// group names and comments are not supported by C++ Regex
+			// (group names and comments are not supported by C++ Regex)
 
-			string full_pattern = sb.ToString( );
+			string full_pattern = @"(?nsx)(" + Environment.NewLine +
+				escape + " | " + Environment.NewLine +
+				char_group + " | " + Environment.NewLine +
+				".)";
+
 			var regex = new Regex( full_pattern, RegexOptions.Compiled );
 
 			foreach( Match m in regex.Matches( pattern ) )

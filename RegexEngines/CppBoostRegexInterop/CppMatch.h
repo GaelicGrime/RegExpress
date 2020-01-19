@@ -1,8 +1,5 @@
 #pragma once
 
-#include <regex>
-#include "CppGroup.h"
-
 using namespace System;
 using namespace System::Collections::Generic;
 using namespace System::Linq;

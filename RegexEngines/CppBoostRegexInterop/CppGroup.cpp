@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "CppCapture.h"
 #include "CppGroup.h"
 #include "CppMatch.h"
 #include "CppMatcher.h"
@@ -15,9 +16,37 @@ namespace CppBoostRegexInterop
 		mIndex( index ), // TODO: deals with overflows
 		mLength( submatch.length( ) ) // TODO: deals with overflows
 	{
-		mCaptures = gcnew List<ICapture^>;
+		try
+		{
+			mCaptures = gcnew List<ICapture^>;
 
-		// TODO: collect captures
+			const MatcherData* d = parent->Parent->GetData( );
+
+			for( const boost::wcsub_match& c : submatch.captures( ) )
+			{
+				int index = c.first - d->mText.c_str( );
+
+				CppCapture^ capture = gcnew CppCapture( this, index, c );
+
+				mCaptures->Add( capture );
+			}
+		}
+		catch( const boost::regex_error & exc )
+		{
+			//regex_constants::error_type code = exc.code( );
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( what );
+		}
+		catch( const std::exception & exc )
+		{
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( "Error: " + what );
+		}
+		catch( ... )
+		{
+			// TODO: also catch 'boost::exception'?
+			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
+		}
 	}
 
 

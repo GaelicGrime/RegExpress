@@ -1,7 +1,5 @@
 #pragma once
 
-#include <regex>
-
 using namespace System;
 using namespace System::Collections::Generic;
 using namespace System::Linq;
@@ -75,6 +73,16 @@ namespace CppBoostRegexInterop
 
 #pragma endregion IGroup
 
+
+		property CppMatch^ Parent
+		{
+			CppMatch^ get( )
+			{
+				return mParent;
+			}
+		}
+
+
 	private:
 
 		CppMatch^ const mParent;
@@ -84,6 +92,6 @@ namespace CppBoostRegexInterop
 		int const mLength;
 		int const mGroupNumber;
 
-		IEnumerable<ICapture^>^ mCaptures;
+		IList<ICapture^>^ mCaptures;
 	};
 }
