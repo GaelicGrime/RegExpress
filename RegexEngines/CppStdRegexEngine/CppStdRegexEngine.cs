@@ -17,6 +17,10 @@ namespace CppStdRegexEngineNs
 	{
 		readonly UCCppStdRegexOptions OptionsControl;
 
+		static readonly Dictionary<GrammarEnum, Regex> CachedColouringRegexes = new Dictionary<GrammarEnum, Regex>( );
+		static readonly Dictionary<GrammarEnum, Regex> CachedHighlightingRegexes = new Dictionary<GrammarEnum, Regex>( );
+
+
 		public CppStdRegexEngine( )
 		{
 			OptionsControl = new UCCppStdRegexOptions( );
@@ -63,30 +67,7 @@ namespace CppStdRegexEngineNs
 		{
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
 
-			//StringBuilder sb = new StringBuilder( @"(?nsx)(?'escape'" );
-
-			// TODO: cache
-
-			string escape = @"(?'escape'";
-
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
-			if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
-			escape += @"\\.)";
-
-			string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
-
-			string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")?? \] )";
-
-			// (group names and comments are not supported by C++ Regex)
-
-			string full_pattern = @"(?nsx)(" + Environment.NewLine +
-				escape + " | " + Environment.NewLine +
-				char_group + " | " + Environment.NewLine +
-				".)";
-
-			var regex = new Regex( full_pattern, RegexOptions.Compiled );
+			Regex regex = GetCachedColouringRegex( grammar );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -94,18 +75,40 @@ namespace CppStdRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// escapes and classes, '\...', [:...:]
+				// escapes, '\...'
 				{
 					var g = m.Groups["escape"];
 					if( g.Success )
 					{
 						if( cnc.IsCancellationRequested ) return;
 
-						var intersection = Segment.Intersection( visibleSegment, g.Index, g.Length );
-
-						if( !intersection.IsEmpty )
+						foreach( Capture c in g.Captures )
 						{
-							colouredSegments.Escapes.Add( intersection );
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Escapes.Add( intersection );
+							}
+						}
+					}
+				}
+
+				// classes within character groups, [ ... [:...:] ... ]
+				{
+					var g = m.Groups["class"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						foreach( Capture c in g.Captures )
+						{
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Escapes.Add( intersection );
+							}
 						}
 					}
 				}
@@ -118,33 +121,15 @@ namespace CppStdRegexEngineNs
 			Highlights highlights = new Highlights( );
 
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
-			StringBuilder sb = new StringBuilder( @"(?nsx)(" );
 			int para_size = 1;
-
-			if( grammar == GrammarEnum.extended ||
-				grammar == GrammarEnum.ECMAScript ||
-				grammar == GrammarEnum.egrep ||
-				grammar == GrammarEnum.awk )
-			{
-				sb.AppendLine( @"(?'left_para'\() |" );
-				sb.AppendLine( @"(?'right_para'\)) |" );
-			}
 
 			if( grammar == GrammarEnum.basic ||
 				grammar == GrammarEnum.grep )
 			{
-				sb.AppendLine( @"(?'left_para'\\\() |" );
-				sb.AppendLine( @"(?'right_para'\\\)) |" );
 				para_size = 2;
 			}
 
-			sb.AppendLine( @"(?'char_group'\[(\\.|.)*?(((?<!:)\])|$)) |" ); // (including incomplete classes)
-			sb.AppendLine( @"(\\.)" );
-			sb.AppendLine( @")" );
-
-			string full_pattern = sb.ToString( );
-
-			var regex = new Regex( full_pattern, RegexOptions.Compiled );
+			var regex = GetCachedHighlightingRegex( grammar );
 
 			var parentheses = new List<(int Index, char Value)>( );
 
@@ -176,13 +161,18 @@ namespace CppStdRegexEngineNs
 					var g = m.Groups["char_group"];
 					if( g.Success )
 					{
-						if( g.Index < selectionStart && selectionStart < g.Index + g.Length )
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
 						{
 							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
 
-							var right = g.Value.EndsWith( "]" ) ? g.Index + g.Length - 1 : -1;
-							if( right >= 0 && visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - 1;
 
+								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							}
 							break;
 						}
 					}
@@ -251,8 +241,6 @@ namespace CppStdRegexEngineNs
 
 			if( cnc.IsCancellationRequested ) return null;
 
-
-
 			return highlights;
 		}
 
@@ -264,5 +252,76 @@ namespace CppStdRegexEngineNs
 			OptionsChanged?.Invoke( this, null );
 		}
 
+
+		static Regex GetCachedColouringRegex( GrammarEnum grammar )
+		{
+			lock( CachedColouringRegexes )
+			{
+				if( CachedColouringRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
+
+				string escape = @"(?'escape'";
+
+				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
+				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
+				if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
+				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
+				escape += @"\\.)";
+
+				string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
+
+				string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) )";
+
+				// (group names and comments are not supported by C++ Regex)
+
+				string full_pattern = @"(?nsx)(" + Environment.NewLine +
+					escape + " | " + Environment.NewLine +
+					char_group + " | " + Environment.NewLine +
+					"(.(?!)) )";
+
+				regex = new Regex( full_pattern, RegexOptions.Compiled );
+
+				CachedColouringRegexes.Add( grammar, regex );
+
+				return regex;
+			}
+		}
+
+
+		static Regex GetCachedHighlightingRegex( GrammarEnum grammar )
+		{
+			lock( CachedHighlightingRegexes )
+			{
+				if( CachedHighlightingRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
+
+
+				string pattern = @"(?nsx)(";
+
+				if( grammar == GrammarEnum.extended ||
+					grammar == GrammarEnum.ECMAScript ||
+					grammar == GrammarEnum.egrep ||
+					grammar == GrammarEnum.awk )
+				{
+					pattern += @"(?'left_para'\() |";
+					pattern += @"(?'right_para'\)) |";
+				}
+
+				if( grammar == GrammarEnum.basic ||
+					grammar == GrammarEnum.grep )
+				{
+					pattern += @"(?'left_para'\\\() |";
+					pattern += @"(?'right_para'\\\)) |";
+				}
+
+				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) |"; // (including incomplete classes)
+				pattern += @"(\\.|.)(?!)";
+				pattern += @")";
+
+				regex = new Regex( pattern, RegexOptions.Compiled );
+
+				CachedHighlightingRegexes.Add( grammar, regex );
+
+				return regex;
+			}
+		}
 	}
 }

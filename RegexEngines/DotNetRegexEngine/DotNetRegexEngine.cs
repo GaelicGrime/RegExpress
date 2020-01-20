@@ -200,13 +200,18 @@ namespace DotNetRegexEngineNs
 					var g = m.Groups["char_group"];
 					if( g.Success )
 					{
-						if( g.Index < selectionStart && selectionStart < g.Index + g.Length )
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
 						{
 							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
 
-							var right = g.Value.EndsWith( "]" ) ? g.Index + g.Length - 1 : -1;
-							if( right >= 0 && visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - 1;
 
+								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							}
 							break;
 						}
 					}
@@ -356,7 +361,7 @@ namespace DotNetRegexEngineNs
 (\#[^\n]*) |
 (?'left_para'\() |
 (?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$)) |
+(?'char_group'\[(\\.|.)*?(\](?'end')|$)) |
 (\\.)
 )
 ";
@@ -366,7 +371,7 @@ namespace DotNetRegexEngineNs
 #(\#[^\n]*) |
 (?'left_para'\() |
 (?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\]|$)) |
+(?'char_group'\[(\\.|.)*?(\](?'end')|$)) |
 (\\.)
 )
 ";
