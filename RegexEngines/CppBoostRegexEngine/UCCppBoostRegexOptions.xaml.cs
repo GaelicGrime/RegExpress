@@ -80,6 +80,15 @@ namespace CppBoostRegexEngineNs
 		}
 
 
+		internal GrammarEnum GetGrammar( ) // (accessible from threads)
+		{
+			string grammar_s = Enum.GetNames( typeof( GrammarEnum ) ).FirstOrDefault( n => n != "None" && CachedOptions.Contains( n ) );
+			if( grammar_s == null ) return GrammarEnum.None;
+
+			return (GrammarEnum)Enum.Parse( typeof( GrammarEnum ), grammar_s );
+		}
+
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;

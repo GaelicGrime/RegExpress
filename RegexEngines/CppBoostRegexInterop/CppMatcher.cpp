@@ -44,6 +44,7 @@ namespace CppBoostRegexInterop
 					C( awk )
 					C( grep )
 					C( egrep )
+					C( literal )
 
 					C( icase )
 					C( nosubs )

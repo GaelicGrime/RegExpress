@@ -84,6 +84,8 @@ namespace CppStdRegexEngineNs
 
 						foreach( Capture c in g.Captures )
 						{
+							if( cnc.IsCancellationRequested ) return;
+
 							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
 
 							if( !intersection.IsEmpty )
@@ -103,6 +105,8 @@ namespace CppStdRegexEngineNs
 
 						foreach( Capture c in g.Captures )
 						{
+							if( cnc.IsCancellationRequested ) return;
+
 							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
 
 							if( !intersection.IsEmpty )
@@ -273,12 +277,12 @@ namespace CppStdRegexEngineNs
 
 				// (group names and comments are not supported by C++ Regex)
 
-				string full_pattern = @"(?nsx)(" + Environment.NewLine +
+				string pattern = @"(?nsx)(" + Environment.NewLine +
 					escape + " | " + Environment.NewLine +
 					char_group + " | " + Environment.NewLine +
 					"(.(?!)) )";
 
-				regex = new Regex( full_pattern, RegexOptions.Compiled );
+				regex = new Regex( pattern, RegexOptions.Compiled );
 
 				CachedColouringRegexes.Add( grammar, regex );
 

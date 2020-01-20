@@ -42,6 +42,7 @@
                     <ComboBoxItem Tag ="awk" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                     <ComboBoxItem Tag ="grep" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                     <ComboBoxItem Tag ="egrep" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
+                    <ComboBoxItem Tag ="literal" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                 </ComboBox>
             </StackPanel>
 

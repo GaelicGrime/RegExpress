@@ -4,17 +4,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-namespace CppStdRegexEngineNs
+namespace CppBoostRegexEngineNs
 {
 	enum GrammarEnum
 	{
 		None,
+		normal,
 		ECMAScript,
+		JavaScript,
+		JScript,
+		perl,
 		basic,
+		sed,
 		extended,
 		awk,
 		grep,
 		egrep,
+		literal,
 	}
 }

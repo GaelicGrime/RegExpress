@@ -135,6 +135,8 @@ namespace DotNetRegexEngineNs
 						// we need captures because of '*?'
 						foreach( Capture c in g.Captures )
 						{
+							if( cnc.IsCancellationRequested ) return;
+
 							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
 
 							if( !intersection.IsEmpty )
