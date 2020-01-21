@@ -20,6 +20,7 @@ namespace CppBoostRegexEngineNs
 		awk,
 		grep,
 		egrep,
+		emacs,
 		literal,
 	}
 }

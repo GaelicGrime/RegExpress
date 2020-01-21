@@ -28,7 +28,7 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </StackPanel.RenderTransform>
-                
+
                 <Label Content="Grammar: " Target="{Binding ElementName=cbxGrammar}"/>
                 <ComboBox x:Name="cbxGrammar" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxGrammar_SelectionChanged" >
                     <ComboBoxItem Tag ="normal" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
@@ -42,6 +42,7 @@
                     <ComboBoxItem Tag ="awk" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                     <ComboBoxItem Tag ="grep" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                     <ComboBoxItem Tag ="egrep" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
+                    <ComboBoxItem Tag ="emacs" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                     <ComboBoxItem Tag ="literal" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" />
                 </ComboBox>
             </StackPanel>

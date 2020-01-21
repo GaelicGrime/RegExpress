@@ -164,22 +164,44 @@ namespace CppBoostRegexEngineNs
 			{
 				if( CachedColouringRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
 
+				bool is_perl =
+					grammar == GrammarEnum.perl ||
+					grammar == GrammarEnum.ECMAScript ||
+					grammar == GrammarEnum.normal ||
+					grammar == GrammarEnum.JavaScript ||
+					grammar == GrammarEnum.JScript;
+
+				bool is_POSIX_extended =
+					grammar == GrammarEnum.extended ||
+					grammar == GrammarEnum.egrep ||
+					grammar == GrammarEnum.awk;
+
+				bool is_POSIX_basic =
+					grammar == GrammarEnum.basic ||
+					grammar == GrammarEnum.sed ||
+					grammar == GrammarEnum.grep ||
+					grammar == GrammarEnum.emacs;
+
+				bool is_emacs =
+					grammar == GrammarEnum.emacs;
+
 				string escape = @"(?'escape'";
 
-				if( grammar == GrammarEnum.perl ) escape += @"\\[1-9] | "; // back reference
-				if( grammar == GrammarEnum.perl ) escape += @"\\g-?[1-9] | \\g\{.*?\} | "; // back reference
-				if( grammar == GrammarEnum.perl ) escape += @"\\k<.*?(>|$) | "; // back reference
+				if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\[1-9] | "; // back reference
+				if( is_perl ) escape += @"\\g-?[1-9] | \\g\{.*?\} | "; // back reference
+				if( is_perl ) escape += @"\\k<.*?(>|$) | "; // back reference
 
-				if( grammar == GrammarEnum.perl ) escape += @"\\c[A-Za-z] | "; // ASCII escape
-				if( grammar == GrammarEnum.perl ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // hex, two digits
-				if( grammar == GrammarEnum.perl ) escape += @"\\x\{[0-9A-Fa-f]+(\}|$) | "; // hex, four digits
-				if( grammar == GrammarEnum.perl ) escape += @"\\0[0-7]{1,3} | "; // octal, three digits
-				if( grammar == GrammarEnum.perl ) escape += @"\\N\{.*?(\}|$) | "; // symbolic name
-				if( grammar == GrammarEnum.perl ) escape += @"\\[pP]\{.*?(\}|$) | "; // property
-				if( grammar == GrammarEnum.perl ) escape += @"\\[pP]. | "; // property, short name
-				if( grammar == GrammarEnum.perl ) escape += @"\\Q.*?(\\E|$) | "; // quoted sequence
+				if( is_perl || is_POSIX_extended ) escape += @"\\c[A-Za-z] | "; // ASCII escape
+				if( is_perl || is_POSIX_extended ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // hex, two digits
+				if( is_perl || is_POSIX_extended ) escape += @"\\x\{[0-9A-Fa-f]+(\}|$) | "; // hex, four digits
+				if( is_perl || is_POSIX_extended ) escape += @"\\0[0-7]{1,3} | "; // octal, three digits
+				if( is_perl || is_POSIX_extended ) escape += @"\\N\{.*?(\}|$) | "; // symbolic name
+				if( is_perl || is_POSIX_extended ) escape += @"\\[pP]\{.*?(\}|$) | "; // property
+				if( is_perl || is_POSIX_extended ) escape += @"\\[pP]. | "; // property, short name
+				if( is_perl || is_POSIX_extended ) escape += @"\\Q.*?(\\E|$) | "; // quoted sequence
+				if( is_emacs ) escape += @"\\[sS]. | "; // syntax group
 
-				if( grammar == GrammarEnum.perl ) escape += @"\\. | "; // various
+				if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\. | "; // various
 
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";
@@ -188,7 +210,7 @@ namespace CppBoostRegexEngineNs
 
 				string comment = @"(?'comment'";
 
-				if( grammar == GrammarEnum.perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
+				if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
 				/*if(  ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
 				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
@@ -198,7 +220,7 @@ namespace CppBoostRegexEngineNs
 
 				string @class = @"(?'class'";
 
-				if( grammar == GrammarEnum.perl ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
+				if( is_perl || is_POSIX_extended || is_POSIX_basic ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
 
 				@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
 				@class += ")";
@@ -207,7 +229,7 @@ namespace CppBoostRegexEngineNs
 
 				string char_group = @"(";
 
-				if( grammar == GrammarEnum.perl ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+				if( is_perl || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
 				char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
 				char_group += ")";
@@ -216,11 +238,10 @@ namespace CppBoostRegexEngineNs
 
 				string named_group = @"(?'named_group'";
 
-				if( grammar == GrammarEnum.perl ) named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>))";
+				if( is_perl ) named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>))";
 
 				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
 				named_group += ")";
-
 
 
 				// 
