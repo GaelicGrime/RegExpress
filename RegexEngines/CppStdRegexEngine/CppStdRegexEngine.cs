@@ -149,12 +149,16 @@ namespace CppStdRegexEngineNs
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, '(') );
+
+						continue;
 					}
 
 					g = m.Groups["right_para"];
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, ')') );
+
+						continue;
 					}
 				}
 
@@ -178,6 +182,34 @@ namespace CppStdRegexEngineNs
 								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
 							}
 						}
+
+						continue;
+					}
+				}
+
+				// range, '{...}'
+				{
+					var g = m.Groups["range"];
+					if( g.Success )
+					{
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
+						{
+							var s = new Segment( g.Index, para_size );
+
+							if( visibleSegment.Intersects( s ) ) highlights.LeftBracket = s;
+
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - para_size;
+								s = new Segment( right, para_size );
+
+								if( visibleSegment.Intersects( s ) ) highlights.RightBracket = s;
+							}
+						}
+
+						continue;
 					}
 				}
 			}
@@ -268,7 +300,17 @@ namespace CppStdRegexEngineNs
 				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
 				if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
 				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
-				escape += @"\\.)";
+
+				if( grammar == GrammarEnum.basic ||
+					grammar == GrammarEnum.grep )
+				{
+					escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\.";
+				}
+				else
+				{
+					escape += @"\\.";
+				}
+				escape += @")";
 
 				string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
 
@@ -296,7 +338,6 @@ namespace CppStdRegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
 
-
 				string pattern = @"(?nsx)(";
 
 				if( grammar == GrammarEnum.extended ||
@@ -306,6 +347,8 @@ namespace CppStdRegexEngineNs
 				{
 					pattern += @"(?'left_para'\() | ";
 					pattern += @"(?'right_para'\)) | ";
+
+					pattern += @"(?'range'\{.*?(\}(?'end')|$)) | "; // '{...}'
 				}
 
 				if( grammar == GrammarEnum.basic ||
@@ -313,7 +356,10 @@ namespace CppStdRegexEngineNs
 				{
 					pattern += @"(?'left_para'\\\() | ";
 					pattern += @"(?'right_para'\\\)) | ";
+
+					pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
 				}
+
 
 				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
 				pattern += @"\\. | .";

@@ -186,12 +186,16 @@ namespace DotNetRegexEngineNs
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, '(') );
+
+						continue;
 					}
 
 					g = m.Groups["right_para"];
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, ')') );
+
+						continue;
 					}
 				}
 
@@ -214,8 +218,34 @@ namespace DotNetRegexEngineNs
 
 								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
 							}
-							break;
 						}
+
+						continue;
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return null;
+
+				// range, '{...}'
+				{
+					var g = m.Groups["range"];
+					if( g.Success )
+					{
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
+						{
+							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
+
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - 1;
+
+								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							}
+						}
+
+						continue;
 					}
 				}
 			}
@@ -357,37 +387,16 @@ namespace DotNetRegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( options, out Regex regex ) ) return regex;
 
-				const string HighlightPatternIgnoreWhitespace = @"(?nsx)
-(
-(\(\?\#.*?(\)|$)) |
-(\#[^\n]*) |
-(?'left_para'\() |
-(?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\](?'end')|$)) |
-(\\.)
-)
-";
-				const string HighlightPatternNoIgnoreWhitespace = @"(?nsx)
-(
-(\(\?\#.*?(\)|$)) |
-#(\#[^\n]*) |
-(?'left_para'\() |
-(?'right_para'\)) |
-(?'char_group'\[(\\.|.)*?(\](?'end')|$)) |
-(\\.)
-)
-";
-
-				string pattern;
-
+				string pattern = "(?nsx)(";
+				pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
 				if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
-				{
-					pattern = HighlightPatternIgnoreWhitespace;
-				}
-				else
-				{
-					pattern = HighlightPatternNoIgnoreWhitespace;
-				}
+					pattern += @"(\#[^\n]*) | ";
+				pattern += @"(?'left_para'\() | "; // '('
+				pattern += @"(?'right_para'\)) | "; // ')'
+				pattern += @"(?'char_group'\[(\\.|.)*?(\](?'end')|$)) | "; // '[...]'
+				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
+				pattern += @"(\\.)";
+				pattern += @")";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );
 
