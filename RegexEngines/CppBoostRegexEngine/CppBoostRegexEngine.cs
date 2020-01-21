@@ -141,11 +141,136 @@ namespace CppBoostRegexEngineNs
 		}
 
 
-		public Highlights HighlightPattern( ICancellable cnc, string pattern, int startSelection, int endSelection, Segment visibleSegment )
+		public Highlights HighlightPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			// TODO: implement
+			Highlights highlights = new Highlights( );
 
-			return null;
+			GrammarEnum grammar = OptionsControl.GetGrammar( );
+			int para_size = 1;
+
+			bool is_POSIX_basic =
+				grammar == GrammarEnum.basic ||
+				grammar == GrammarEnum.sed ||
+				grammar == GrammarEnum.grep ||
+				grammar == GrammarEnum.emacs;
+
+			if( is_POSIX_basic )
+			{
+				para_size = 2;
+			}
+
+			var regex = GetCachedHighlightingRegex( grammar );
+
+			var parentheses = new List<(int Index, char Value)>( );
+
+			foreach( Match m in regex.Matches( pattern ) )
+			{
+				Debug.Assert( m.Success );
+
+				if( cnc.IsCancellationRequested ) return null;
+
+				// parantheses, '(' or ')'
+				{
+					var g = m.Groups["left_para"];
+					if( g.Success )
+					{
+						parentheses.Add( (g.Index, '(') );
+					}
+
+					g = m.Groups["right_para"];
+					if( g.Success )
+					{
+						parentheses.Add( (g.Index, ')') );
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return null;
+
+				// character groups, '[...]'
+				{
+					var g = m.Groups["char_group"];
+					if( g.Success )
+					{
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
+						{
+							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
+
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - 1;
+
+								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+							}
+						}
+					}
+				}
+			}
+
+			var parentheses_at_left = parentheses.Where( g => ( g.Value == '(' && selectionStart > g.Index ) || ( g.Value == ')' && selectionStart > g.Index + ( para_size - 1 ) ) ).ToArray( );
+			if( cnc.IsCancellationRequested ) return null;
+
+			var parentheses_at_right = parentheses.Where( g => ( g.Value == '(' && selectionStart <= g.Index ) || ( g.Value == ')' && selectionStart <= g.Index + ( para_size - 1 ) ) ).ToArray( );
+			if( cnc.IsCancellationRequested ) return null;
+
+			if( parentheses_at_left.Any( ) )
+			{
+				int n = 0;
+				int found_i = -1;
+				for( int i = parentheses_at_left.Length - 1; i >= 0; --i )
+				{
+					if( cnc.IsCancellationRequested ) break;
+
+					var g = parentheses_at_left[i];
+					if( g.Value == ')' ) --n;
+					else if( g.Value == '(' ) ++n;
+					if( n == +1 )
+					{
+						found_i = i;
+						break;
+					}
+				}
+				if( found_i >= 0 )
+				{
+					var g = parentheses_at_left[found_i];
+					var s = new Segment( g.Index, para_size );
+
+					if( visibleSegment.Intersects( s ) ) highlights.LeftPara = s;
+				}
+			}
+
+			if( cnc.IsCancellationRequested ) return null;
+
+			if( parentheses_at_right.Any( ) )
+			{
+				int n = 0;
+				int found_i = -1;
+				for( int i = 0; i < parentheses_at_right.Length; ++i )
+				{
+					if( cnc.IsCancellationRequested ) break;
+
+					var g = parentheses_at_right[i];
+					if( g.Value == '(' ) --n;
+					else if( g.Value == ')' ) ++n;
+					if( n == +1 )
+					{
+						found_i = i;
+						break;
+					}
+				}
+				if( found_i >= 0 )
+				{
+					var g = parentheses_at_right[found_i];
+					var s = new Segment( g.Index, para_size );
+
+					if( visibleSegment.Intersects( s ) ) highlights.RightPara = s;
+				}
+			}
+
+			if( cnc.IsCancellationRequested ) return null;
+
+			return highlights;
 		}
 
 		#endregion IRegexEngine
@@ -256,6 +381,63 @@ namespace CppBoostRegexEngineNs
 				regex = new Regex( pattern, RegexOptions.Compiled );
 
 				CachedColouringRegexes.Add( grammar, regex );
+
+				return regex;
+			}
+		}
+
+
+		static Regex GetCachedHighlightingRegex( GrammarEnum grammar )
+		{
+			lock( CachedHighlightingRegexes )
+			{
+				if( CachedHighlightingRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
+
+				bool is_perl =
+					grammar == GrammarEnum.perl ||
+					grammar == GrammarEnum.ECMAScript ||
+					grammar == GrammarEnum.normal ||
+					grammar == GrammarEnum.JavaScript ||
+					grammar == GrammarEnum.JScript;
+
+				bool is_POSIX_extended =
+					grammar == GrammarEnum.extended ||
+					grammar == GrammarEnum.egrep ||
+					grammar == GrammarEnum.awk;
+
+				bool is_POSIX_basic =
+					grammar == GrammarEnum.basic ||
+					grammar == GrammarEnum.sed ||
+					grammar == GrammarEnum.grep ||
+					grammar == GrammarEnum.emacs;
+
+				bool is_emacs =
+					grammar == GrammarEnum.emacs;
+
+				string pattern = @"(?nsx)(";
+
+				if( is_perl || is_POSIX_extended )
+				{
+					pattern += @"(?'left_para'\() | ";
+					pattern += @"(?'right_para'\)) | ";
+				}
+
+				if( is_POSIX_basic )
+				{
+					pattern += @"(?'left_para'\\\() | ";
+					pattern += @"(?'right_para'\\\)) | ";
+				}
+
+				if( is_perl || is_POSIX_extended || is_POSIX_basic )
+				{
+					pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+					pattern += @"\\. | .";
+					pattern += @")";
+				}
+
+				regex = new Regex( pattern, RegexOptions.Compiled );
+
+				CachedHighlightingRegexes.Add( grammar, regex );
 
 				return regex;
 			}

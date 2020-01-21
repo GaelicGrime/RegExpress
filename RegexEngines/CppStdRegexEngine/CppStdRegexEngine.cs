@@ -177,7 +177,6 @@ namespace CppStdRegexEngineNs
 
 								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
 							}
-							break;
 						}
 					}
 				}
@@ -305,19 +304,19 @@ namespace CppStdRegexEngineNs
 					grammar == GrammarEnum.egrep ||
 					grammar == GrammarEnum.awk )
 				{
-					pattern += @"(?'left_para'\() |";
-					pattern += @"(?'right_para'\)) |";
+					pattern += @"(?'left_para'\() | ";
+					pattern += @"(?'right_para'\)) | ";
 				}
 
 				if( grammar == GrammarEnum.basic ||
 					grammar == GrammarEnum.grep )
 				{
-					pattern += @"(?'left_para'\\\() |";
-					pattern += @"(?'right_para'\\\)) |";
+					pattern += @"(?'left_para'\\\() | ";
+					pattern += @"(?'right_para'\\\)) | ";
 				}
 
-				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) |"; // (including incomplete classes)
-				pattern += @"(\\.|.)(?!)";
+				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+				pattern += @"\\. | .";
 				pattern += @")";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );
