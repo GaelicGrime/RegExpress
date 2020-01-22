@@ -16,6 +16,8 @@ namespace RegexEngineInfrastructure
 
 		string Name { get; }
 
+		string EngineVersion { get; }
+
 		event EventHandler OptionsChanged;
 
 		Control GetOptionsControl( );

@@ -54,15 +54,15 @@
 
                 <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
                     <TextBlock Text="Text" Style="{StaticResource Labels}"/>
-                    <TextBlock x:Name="lblTextInfo" Text="(Length)" Margin="16 0 0 0" RenderTransformOrigin="0.5,0.5" >
-                        <TextBlock.RenderTransform>
+                    <TextBlock x:Name="lblTextInfo" Text="(Length)" Margin="16 0 0 0" >
+                        <TextBlock.LayoutTransform>
                             <TransformGroup>
                                 <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                                 <SkewTransform/>
                                 <RotateTransform/>
                                 <TranslateTransform/>
                             </TransformGroup>
-                        </TextBlock.RenderTransform>
+                        </TextBlock.LayoutTransform>
                     </TextBlock>
                 </StackPanel>
                 <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" GotKeyboardFocus="ucText_GotKeyboardFocus" />
@@ -116,15 +116,15 @@
                     <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3">
                         <ScrollViewer Margin="5 1 5 5" VerticalScrollBarVisibility="Auto">
                             <StackPanel >
-                                <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 0 0 0">
-                                    <StackPanel.RenderTransform>
+                                <StackPanel Orientation="Horizontal" Margin="0 0 0 0">
+                                    <StackPanel.LayoutTransform>
                                         <TransformGroup>
                                             <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                                             <SkewTransform/>
                                             <RotateTransform/>
                                             <TranslateTransform/>
                                         </TransformGroup>
-                                    </StackPanel.RenderTransform>
+                                    </StackPanel.LayoutTransform>
                                     <Label Content="Engine: " VerticalAlignment="Center"/>
                                     <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
                                         <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
@@ -148,15 +148,15 @@
                                             </Span>
                                         </TextBlock>
                                     </CheckBox>
-                                    <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" Margin="0 2 0 0">
-                                        <StackPanel.RenderTransform>
+                                    <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
+                                        <StackPanel.LayoutTransform>
                                             <TransformGroup>
                                                 <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                                                 <SkewTransform/>
                                                 <RotateTransform/>
                                                 <TranslateTransform/>
                                             </TransformGroup>
-                                        </StackPanel.RenderTransform>
+                                        </StackPanel.LayoutTransform>
                                         <Label Content="Newline:" VerticalAlignment="Center"/>
                                         <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
                                             <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>

@@ -17,8 +17,14 @@ namespace CppBoostRegexEngineNs
 	{
 		readonly UCCppBoostRegexOptions OptionsControl;
 
-		static readonly Dictionary<GrammarEnum, Regex> CachedColouringRegexes = new Dictionary<GrammarEnum, Regex>( );
-		static readonly Dictionary<GrammarEnum, Regex> CachedHighlightingRegexes = new Dictionary<GrammarEnum, Regex>( );
+		struct Key
+		{
+			internal GrammarEnum Grammar;
+			internal bool ModX;
+		}
+
+		static readonly Dictionary<Key, Regex> CachedColouringRegexes = new Dictionary<Key, Regex>( );
+		static readonly Dictionary<Key, Regex> CachedHighlightingRegexes = new Dictionary<Key, Regex>( );
 
 
 		public CppBoostRegexEngine( )
@@ -32,7 +38,9 @@ namespace CppBoostRegexEngineNs
 
 		public string Id => "CppBoostRegex";
 
-		public string Name => "C++ Boost Regex";
+		public string Name => "C++ Boost.Regex";
+
+		public string EngineVersion => CppBoostRegexInterop.CppMatcher.GetBoostVersion( );
 
 		public event EventHandler OptionsChanged;
 
@@ -66,8 +74,9 @@ namespace CppBoostRegexEngineNs
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
+			bool mod_x = OptionsControl.GetModX( );
 
-			Regex regex = GetCachedColouringRegex( grammar );
+			Regex regex = GetCachedColouringRegex( grammar, mod_x );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -93,8 +102,12 @@ namespace CppBoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
 
 				// comments, '(?#...)', '#...'
 				{
@@ -114,8 +127,12 @@ namespace CppBoostRegexEngineNs
 								colouredSegments.Comments.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
 
 				// class (within [...] groups), '[:...:]', '[=...=]', '[. ... .]'
 				{
@@ -135,6 +152,8 @@ namespace CppBoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
 			}
@@ -146,6 +165,8 @@ namespace CppBoostRegexEngineNs
 			Highlights highlights = new Highlights( );
 
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
+			bool mod_x = OptionsControl.GetModX( );
+
 			int para_size = 1;
 
 			bool is_POSIX_basic =
@@ -159,7 +180,7 @@ namespace CppBoostRegexEngineNs
 				para_size = 2;
 			}
 
-			var regex = GetCachedHighlightingRegex( grammar );
+			var regex = GetCachedHighlightingRegex( grammar, mod_x );
 
 			var parentheses = new List<(int Index, char Value)>( );
 
@@ -175,12 +196,16 @@ namespace CppBoostRegexEngineNs
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, '(') );
+
+						continue;
 					}
 
 					g = m.Groups["right_para"];
 					if( g.Success )
 					{
 						parentheses.Add( (g.Index, ')') );
+
+						continue;
 					}
 				}
 
@@ -204,6 +229,36 @@ namespace CppBoostRegexEngineNs
 								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
 							}
 						}
+
+						continue;
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return null;
+
+				// range, '{...}'
+				{
+					var g = m.Groups["range"];
+					if( g.Success )
+					{
+						var normal_end = m.Groups["end"].Success;
+
+						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
+						{
+							var s = new Segment( g.Index, para_size );
+
+							if( visibleSegment.Intersects( s ) ) highlights.LeftBracket = s;
+
+							if( normal_end )
+							{
+								var right = g.Index + g.Length - para_size;
+								s = new Segment( right, para_size );
+
+								if( visibleSegment.Intersects( s ) ) highlights.RightBracket = s;
+							}
+						}
+
+						continue;
 					}
 				}
 			}
@@ -283,11 +338,13 @@ namespace CppBoostRegexEngineNs
 
 
 
-		static Regex GetCachedColouringRegex( GrammarEnum grammar )
+		static Regex GetCachedColouringRegex( GrammarEnum grammar, bool modX )
 		{
+			var key = new Key { Grammar = grammar, ModX = modX };
+
 			lock( CachedColouringRegexes )
 			{
-				if( CachedColouringRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
+				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
 				bool is_perl =
 					grammar == GrammarEnum.perl ||
@@ -326,7 +383,8 @@ namespace CppBoostRegexEngineNs
 				if( is_perl || is_POSIX_extended ) escape += @"\\Q.*?(\\E|$) | "; // quoted sequence
 				if( is_emacs ) escape += @"\\[sS]. | "; // syntax group
 
-				if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\. | "; // various
+				if( is_perl || is_POSIX_extended ) escape += @"\\. | "; // various
+				if( is_POSIX_basic ) escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\. | "; // various
 
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";
@@ -336,7 +394,7 @@ namespace CppBoostRegexEngineNs
 				string comment = @"(?'comment'";
 
 				if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
-				/*if(  ) comment += @"\#.*?(\n|$) | "; // line-comment*/
+				if( is_perl && modX ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
 				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
 				comment += ")";
@@ -380,18 +438,20 @@ namespace CppBoostRegexEngineNs
 
 				regex = new Regex( pattern, RegexOptions.Compiled );
 
-				CachedColouringRegexes.Add( grammar, regex );
+				CachedColouringRegexes.Add( key, regex );
 
 				return regex;
 			}
 		}
 
 
-		static Regex GetCachedHighlightingRegex( GrammarEnum grammar )
+		static Regex GetCachedHighlightingRegex( GrammarEnum grammar, bool modX )
 		{
+			var key = new Key { Grammar = grammar, ModX = modX };
+
 			lock( CachedHighlightingRegexes )
 			{
-				if( CachedHighlightingRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
+				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
 				bool is_perl =
 					grammar == GrammarEnum.perl ||
@@ -418,26 +478,30 @@ namespace CppBoostRegexEngineNs
 
 				if( is_perl || is_POSIX_extended )
 				{
-					pattern += @"(?'left_para'\() | ";
-					pattern += @"(?'right_para'\)) | ";
+					pattern += @"(?'left_para'\() | "; // '('
+					pattern += @"(?'right_para'\)) | "; // ')'
+					pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
 				}
 
 				if( is_POSIX_basic )
 				{
-					pattern += @"(?'left_para'\\\() | ";
-					pattern += @"(?'right_para'\\\)) | ";
+					pattern += @"(?'left_para'\\\() | "; // '\('
+					pattern += @"(?'right_para'\\\)) | "; // '\)'
+					pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
 				}
 
 				if( is_perl || is_POSIX_extended || is_POSIX_basic )
 				{
 					pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-					pattern += @"\\. | .";
-					pattern += @")";
+					pattern += @"\\. | . | ";
 				}
+
+				pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
+				pattern += @")";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );
 
-				CachedHighlightingRegexes.Add( grammar, regex );
+				CachedHighlightingRegexes.Add( key, regex );
 
 				return regex;
 			}

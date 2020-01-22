@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -39,6 +40,35 @@ namespace DotNetRegexEngineNs
 		public string Id => "DotNetRegex";
 
 		public string Name => ".NET Regex";
+
+		public string EngineVersion
+		{
+			get
+			{
+				try
+				{
+					// see: https://stackoverflow.com/questions/19096841
+
+					System.Runtime.Versioning.TargetFrameworkAttribute target_framework_attribute =
+						(System.Runtime.Versioning.TargetFrameworkAttribute)
+						Assembly
+							.GetExecutingAssembly( )
+							.GetCustomAttributes( typeof( System.Runtime.Versioning.TargetFrameworkAttribute ), false )
+							.SingleOrDefault( );
+
+					if( target_framework_attribute == null ) return null;
+
+					return Regex.Match( target_framework_attribute.FrameworkName, @"\d+(\.\d+)*", RegexOptions.ExplicitCapture | RegexOptions.Compiled ).Value;
+				}
+				catch( Exception exc )
+				{
+					_ = exc;
+					if( Debugger.IsAttached ) Debugger.Break( );
+
+					return null;
+				}
+			}
+		}
 
 		public event EventHandler OptionsChanged;
 
@@ -96,8 +126,12 @@ namespace DotNetRegexEngineNs
 						{
 							colouredSegments.Comments.Add( intersection );
 						}
+
+						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
 
 				// end-on-line comments, '#...', only if 'IgnorePatternWhitespace' option is specified
 				{
@@ -112,8 +146,12 @@ namespace DotNetRegexEngineNs
 						{
 							colouredSegments.Comments.Add( intersection );
 						}
+
+						continue;
 					}
 				}
+
+				//if( cnc.IsCancellationRequested ) return;
 
 				// character groups, '[...]'
 				//{
@@ -124,6 +162,7 @@ namespace DotNetRegexEngineNs
 				//	}
 				//}
 
+				if( cnc.IsCancellationRequested ) return;
 
 				// escapes, '\...'
 				{
@@ -144,8 +183,12 @@ namespace DotNetRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
 
 				// named groups, '(?<name>...' and "(?'name'...", including balancing groups
 				{
@@ -160,6 +203,8 @@ namespace DotNetRegexEngineNs
 						{
 							colouredSegments.GroupNames.Add( intersection );
 						}
+
+						continue;
 					}
 				}
 			}

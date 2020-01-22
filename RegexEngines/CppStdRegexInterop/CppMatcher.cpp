@@ -98,6 +98,15 @@ namespace CppStdRegexInterop
 	}
 
 
+	String^ CppMatcher::GetCRTVersion( )
+	{
+		// see "crtversion.h"
+
+		return String::Format( "{0}.{1}.{2}", _VC_CRT_MAJOR_VERSION, _VC_CRT_MINOR_VERSION, _VC_CRT_BUILD_VERSION );
+	}
+
+
+
 	RegexMatches^ CppMatcher::Matches( String^ text0 )
 	{
 		// TODO: re-implement as lazy enumerator?

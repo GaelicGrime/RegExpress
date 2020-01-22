@@ -18,15 +18,15 @@
 
     <Grid>
         <StackPanel>
-            <StackPanel Orientation="Horizontal" RenderTransformOrigin="0,0.5" >
-                <StackPanel.RenderTransform>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.LayoutTransform>
                     <TransformGroup>
                         <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                         <SkewTransform/>
                         <RotateTransform/>
                         <TranslateTransform/>
                     </TransformGroup>
-                </StackPanel.RenderTransform>
+                </StackPanel.LayoutTransform>
 
                 <Label Content="Grammar: " Target="{Binding ElementName=cbxGrammar}"/>
                 <ComboBox x:Name="cbxGrammar" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxGrammar_SelectionChanged" >

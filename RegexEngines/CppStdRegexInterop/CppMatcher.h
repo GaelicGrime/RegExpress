@@ -28,6 +28,9 @@ namespace CppStdRegexInterop
 		!CppMatcher( );
 
 
+		static String^ GetCRTVersion( );
+
+
 #pragma region IMatcher
 
 		virtual RegexMatches^ Matches( String^ text );

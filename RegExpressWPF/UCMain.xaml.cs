@@ -82,7 +82,13 @@ namespace RegExpressWPF
 			{
 				eng.OptionsChanged += Engine_OptionsChanged;
 
-				var cbxi = new ComboBoxItem { Tag = eng.Id, Content = eng.Name, IsSelected = eng.Id == DefaultRegexEngine.Id };
+				var cbxi = new ComboBoxItem
+				{
+					Tag = eng.Id,
+					Content = eng.Name + " " + ( eng.EngineVersion ?? "" ),
+					IsSelected = eng.Id == DefaultRegexEngine.Id
+				};
+
 				cbxEngine.Items.Add( cbxi );
 			}
 		}

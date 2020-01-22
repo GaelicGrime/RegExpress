@@ -89,6 +89,12 @@ namespace CppBoostRegexEngineNs
 		}
 
 
+		internal bool GetModX( ) // (accessible from threads)
+		{
+			return CachedOptions.Contains( "mod_x" );
+		}
+
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;

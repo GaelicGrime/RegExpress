@@ -28,6 +28,9 @@ namespace CppBoostRegexInterop
 		!CppMatcher( );
 
 
+		static String^ GetBoostVersion( );
+
+
 #pragma region IMatcher
 
 		virtual RegexMatches^ Matches( String^ text );

@@ -32,7 +32,9 @@ namespace CppStdRegexEngineNs
 
 		public string Id => "CppStdRegex";
 
-		public string Name => "C++ STL <regex>";
+		public string Name => "C++ <regex>";
+
+		public string EngineVersion => CppStdRegexInterop.CppMatcher.GetCRTVersion( );
 
 		public event EventHandler OptionsChanged;
 
@@ -93,8 +95,12 @@ namespace CppStdRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
 
 				// classes within character groups, [ ... [:...:] ... ]
 				{
@@ -114,6 +120,8 @@ namespace CppStdRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
+
+						continue;
 					}
 				}
 			}
@@ -186,6 +194,8 @@ namespace CppStdRegexEngineNs
 						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return null;
 
 				// range, '{...}'
 				{
@@ -345,24 +355,22 @@ namespace CppStdRegexEngineNs
 					grammar == GrammarEnum.egrep ||
 					grammar == GrammarEnum.awk )
 				{
-					pattern += @"(?'left_para'\() | ";
-					pattern += @"(?'right_para'\)) | ";
-
-					pattern += @"(?'range'\{.*?(\}(?'end')|$)) | "; // '{...}'
+					pattern += @"(?'left_para'\() | "; // '('
+					pattern += @"(?'right_para'\)) | "; // ')'
+					pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
 				}
 
 				if( grammar == GrammarEnum.basic ||
 					grammar == GrammarEnum.grep )
 				{
-					pattern += @"(?'left_para'\\\() | ";
-					pattern += @"(?'right_para'\\\)) | ";
-
+					pattern += @"(?'left_para'\\\() | "; // '\)'
+					pattern += @"(?'right_para'\\\)) | "; // '\('
 					pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
 				}
 
-
 				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
 				pattern += @"\\. | .";
+
 				pattern += @")";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );

@@ -134,6 +134,21 @@ namespace CppBoostRegexInterop
 	}
 
 
+	String^ CppMatcher::GetBoostVersion( )
+	{
+		/*
+		For Boost Documentation:
+			BOOST_VERSION
+			<boost/version.hpp>
+			Describes the boost version number in XYYYZZ format such that:
+			(BOOST_VERSION % 100) is the sub-minor version,
+			((BOOST_VERSION / 100) % 1000) is the minor version,
+			and (BOOST_VERSION / 100000) is the major version.
+		*/
+
+		return String::Format( "{0}.{1}.{2}", BOOST_VERSION / 100000, ( BOOST_VERSION / 100 ) % 1000, BOOST_VERSION % 100 );
+	}
+
 	RegexMatches^ CppMatcher::Matches( String^ text0 )
 	{
 		// TODO: re-implement as lazy enumerator?
