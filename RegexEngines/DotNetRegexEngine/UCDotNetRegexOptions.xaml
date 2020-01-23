@@ -8,7 +8,22 @@
              d:DesignHeight="450" d:DesignWidth="800" 
              Loaded="UserControl_Loaded">
     <Grid>
-        <StackPanel x:Name="pnl"/>
-
+        <StackPanel>
+            <StackPanel x:Name="pnl"/>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.LayoutTransform>
+                    <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                </StackPanel.LayoutTransform>
+                <Label Content="Timeout" Target="{Binding ElementName=cbxTimeout}"/>
+                <ComboBox x:Name="cbxTimeout" SelectionChanged="cbxTimeout_SelectionChanged">
+                    <ComboBoxItem Tag="00:00:01" Content="1 s"/>
+                    <ComboBoxItem Tag="00:00:02" Content="2 s"/>
+                    <ComboBoxItem Tag="00:00:05" Content="5 s"/>
+                    <ComboBoxItem Tag="00:00:10" Content="10 s" IsSelected="True"/>
+                    <ComboBoxItem Tag="00:00:15" Content="15 s"/>
+                    <ComboBoxItem Tag="00:00:30" Content="30 s"/>
+                </ComboBox>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

@@ -97,7 +97,10 @@ namespace DotNetRegexEngineNs
 		public IMatcher ParsePattern( string pattern )
 		{
 			RegexOptions selected_options = OptionsControl.CachedRegexOptions;
-			var regex = new Regex( pattern, selected_options );
+			TimeSpan timeout = OptionsControl.CachedTimeout;
+			if( timeout <= TimeSpan.Zero ) timeout = TimeSpan.FromSeconds( 10 );
+
+			var regex = new Regex( pattern, selected_options, timeout );
 
 			return new DotNetMatcher( regex );
 		}

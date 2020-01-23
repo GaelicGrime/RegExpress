@@ -26,6 +26,7 @@ namespace CppStdRegexEngineNs
 
 
 		bool IsFullyLoaded = false;
+		int ChangeCounter = 0;
 
 
 		public UCCppStdRegexOptions( )
@@ -67,16 +68,25 @@ namespace CppStdRegexEngineNs
 
 		void SetSelectedOptions( string[] options )
 		{
-			options = options ?? new string[] { };
-
-			var g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
-			cbxGrammar.SelectedItem = g;
-
-			var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
-
-			foreach( var cb in cbs )
+			try
 			{
-				cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				++ChangeCounter;
+
+				options = options ?? new string[] { };
+
+				var g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
+				cbxGrammar.SelectedItem = g;
+
+				var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
+
+				foreach( var cb in cbs )
+				{
+					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				}
+			}
+			finally
+			{
+				--ChangeCounter;
 			}
 		}
 
@@ -103,6 +113,7 @@ namespace CppStdRegexEngineNs
 		private void cbxGrammar_SelectionChanged( object sender, SelectionChangedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
 
 			CachedOptions = GetSelectedOptions( );
 
@@ -113,6 +124,7 @@ namespace CppStdRegexEngineNs
 		private void CheckBox_Changed( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
 
 			CachedOptions = GetSelectedOptions( );
 
