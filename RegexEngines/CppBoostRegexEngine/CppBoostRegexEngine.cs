@@ -247,14 +247,14 @@ namespace CppBoostRegexEngineNs
 						{
 							var s = new Segment( g.Index, para_size );
 
-							if( visibleSegment.Intersects( s ) ) highlights.LeftBracket = s;
+							if( visibleSegment.Intersects( s ) ) highlights.LeftCurlyBracket = s;
 
 							if( normal_end )
 							{
 								var right = g.Index + g.Length - para_size;
 								s = new Segment( right, para_size );
 
-								if( visibleSegment.Intersects( s ) ) highlights.RightBracket = s;
+								if( visibleSegment.Intersects( s ) ) highlights.RightCurlyBracket = s;
 							}
 						}
 

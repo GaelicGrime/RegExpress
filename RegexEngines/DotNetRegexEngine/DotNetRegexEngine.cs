@@ -280,13 +280,13 @@ namespace DotNetRegexEngineNs
 
 						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
 						{
-							if( visibleSegment.Contains( g.Index ) ) highlights.LeftBracket = new Segment( g.Index, 1 );
+							if( visibleSegment.Contains( g.Index ) ) highlights.LeftCurlyBracket = new Segment( g.Index, 1 );
 
 							if( normal_end )
 							{
 								var right = g.Index + g.Length - 1;
 
-								if( visibleSegment.Contains( right ) ) highlights.RightBracket = new Segment( right, 1 );
+								if( visibleSegment.Contains( right ) ) highlights.RightCurlyBracket = new Segment( right, 1 );
 							}
 						}
 

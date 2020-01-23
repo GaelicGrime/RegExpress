@@ -178,7 +178,7 @@ namespace RegExpressWPF
 			}
 		}
 
-
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void SaveAllTabData( )
 		{
 			var all_tab_data = new List<TabData>( );
@@ -238,7 +238,19 @@ namespace RegExpressWPF
 			}
 
 			Properties.Settings.Default.SavedTabData = Environment.NewLine + json + Environment.NewLine;
-			Properties.Settings.Default.Save( );
+
+			try
+			{
+				Properties.Settings.Default.Save( );
+			}
+			catch( Exception exc )
+			{
+				// e.g.: the file is read-only
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				// ignore
+			}
 		}
 
 
