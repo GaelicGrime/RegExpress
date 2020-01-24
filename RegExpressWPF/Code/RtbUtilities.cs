@@ -713,7 +713,7 @@ namespace RegExpressWPF.Code
 					}
 
 					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
-					int dbg_i = i;//...
+					//int dbg_i = i;//...
 					do
 					{
 						//if( reh.IsAnyRequested ) return false;
@@ -792,7 +792,7 @@ namespace RegExpressWPF.Code
 					}
 
 					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
-					int dbg_i = i;//...
+					//int dbg_i = i;//...
 					do
 					{
 						var segment = segments[i];

@@ -24,6 +24,8 @@ namespace CppBoostRegexInterop
 
 			for( const boost::wcsub_match& c : submatch.captures( ) )
 			{
+				if( !c.matched ) continue;
+
 				int index = c.first - d->mText.c_str( );
 
 				CppCapture^ capture = gcnew CppCapture( this, index, c );

@@ -14,13 +14,16 @@ namespace CppStdRegexInterop
 		mIndex( match.position( ) ), // TODO: deals with overflows
 		mLength( match.length( ) ) // TODO: deals with overflows
 	{
- 		mGroups = gcnew List<IGroup^>;
+		mGroups = gcnew List<IGroup^>;
 		int j = 0;
 
 		for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
 		{
+			const std::wcsub_match& submatch = *i;
+
+			if( !submatch.matched ) continue;
+
 			int submatch_index = match.position( j );
-			std::wcsub_match submatch = *i;
 
 			auto group = gcnew CppGroup( this, j, submatch_index, submatch );
 

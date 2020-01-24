@@ -21,8 +21,11 @@ namespace CppBoostRegexInterop
 
 			for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
 			{
+				const boost::wcsub_match& submatch = *i;
+
+				if( !submatch.matched ) continue;
+
 				int submatch_index = match.position( j );
-				boost::wcsub_match submatch = *i;
 
 				auto group = gcnew CppGroup( this, j, submatch_index, submatch );
 
