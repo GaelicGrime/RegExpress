@@ -111,27 +111,45 @@ namespace CppStdRegexInterop
 	{
 		// TODO: re-implement as lazy enumerator?
 
-		marshal_context context{};
-
-		mData->mText = context.marshal_as<wstring>( text0 );
-
-		auto matches = gcnew List<IMatch^>( );
-
-		auto* native_text = mData->mText.c_str( );
-
-		wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags );
-		wcregex_iterator results_end{};
-
-		for( auto i = results_begin; i != results_end; ++i )
+		try
 		{
-			const wcmatch& match = *i;
+			marshal_context context{};
 
-			auto m = gcnew CppMatch( this, match );
+			mData->mText = context.marshal_as<wstring>( text0 );
 
-			matches->Add( m );
+			auto matches = gcnew List<IMatch^>( );
+
+			auto* native_text = mData->mText.c_str( );
+
+			wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags );
+			wcregex_iterator results_end{};
+
+			for( auto i = results_begin; i != results_end; ++i )
+			{
+				const wcmatch& match = *i;
+
+				auto m = gcnew CppMatch( this, match );
+
+				matches->Add( m );
+			}
+
+			return gcnew RegexMatches( matches->Count, matches );
 		}
-
-		return gcnew RegexMatches( matches->Count, matches );
+		catch( const regex_error & exc )
+		{
+			//regex_constants::error_type code = exc.code( );
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( what );
+		}
+		catch( const exception & exc )
+		{
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( "Error: " + what );
+		}
+		catch( ... )
+		{
+			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
+		}
 	}
 
 }

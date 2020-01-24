@@ -99,6 +99,16 @@
             </Style.Triggers>
         </Style>
 
+        <Style TargetType="ComboBox"  BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="Padding" Value="3 2"/>
+            <Setter Property="Height" Value="20"/>
+        </Style>
+        
+        <Style TargetType="ComboBoxItem"  BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+            <Setter Property="Padding" Value="3 2"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
 
         <!-- Inline Styles -->
 

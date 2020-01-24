@@ -42,12 +42,10 @@ namespace RegExpressWPF
 
 		IRegexEngine CurrentRegexEngine = null;
 
-
 		bool IsFullyLoaded = false;
 		bool IsInChange = false;
 		TabData InitialTabData = null;
 		bool ucTextHadFocus = false;
-
 
 		public event EventHandler Changed;
 		public event EventHandler NewTabClicked;
@@ -305,6 +303,11 @@ namespace RegExpressWPF
 
 		private void cbxEngine_SelectionChanged( object sender, SelectionChangedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			ucMatches.ShowInfo( "Matching…", delayed: false );
+
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 
 			pnlRegexOptions.Children.Clear( );
@@ -320,6 +323,9 @@ namespace RegExpressWPF
 
 		private void Engine_OptionsChanged( object sender, EventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
 			CbOption_CheckedChanged( null, null );
 		}
 
@@ -632,6 +638,9 @@ namespace RegExpressWPF
 		{
 			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == engine.Id );
 			cbxEngine.SelectedItem = cbxitem;
+
+			pnlRegexOptions.Children.Clear( );
+			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
 		}
 
 

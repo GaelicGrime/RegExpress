@@ -40,6 +40,14 @@
             </FlowDocument>
         </RichTextBox>
 
+        <RichTextBox x:Name="rtbInfo" Panel.ZIndex="8" Style="{StaticResource NoMatches}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
+            <FlowDocument>
+                <Paragraph>
+                    <Run x:Name="runInfo" />
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+
         <RichTextBox x:Name="rtbError" Style="{StaticResource Error}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
             <FlowDocument>
                 <Paragraph>

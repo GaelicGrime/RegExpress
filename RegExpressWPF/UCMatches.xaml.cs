@@ -50,6 +50,9 @@ namespace RegExpressWPF
 		readonly StyleInfo GroupValueStyleInfo;
 		readonly StyleInfo GroupFailedStyleInfo;
 
+		readonly DispatcherTimer TimerShowInfo;
+		string InfoText;
+
 		readonly LengthConverter LengthConverter = new LengthConverter( );
 
 		bool AlreadyLoaded = false;
@@ -112,6 +115,9 @@ namespace RegExpressWPF
 			LocalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 			ExternalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 
+			TimerShowInfo = new DispatcherTimer { Interval = TimeSpan.FromSeconds( 1 ), IsEnabled = false };
+			TimerShowInfo.Tick += TimerShowInfo_Tick;
+
 			ChangeEventHelper = new ChangeEventHelper( rtbMatches );
 
 			HighlightStyleInfos = new[]
@@ -151,8 +157,36 @@ namespace RegExpressWPF
 		}
 
 
+		public void ShowInfo( string text, bool delayed = false )
+		{
+			TimerShowInfo.Stop( ); //
+			InfoText = null;
+
+			if( delayed )
+			{
+				InfoText = text;
+				TimerShowInfo.Start( );
+			}
+			else
+			{
+				runInfo.Text = text;
+				rtbInfo.ScrollToHome( );
+				rtbInfo.Visibility = Visibility.Visible;
+			}
+		}
+
+
+		private void CancelInfo( )
+		{
+			TimerShowInfo.Stop( );
+			InfoText = null;
+			rtbInfo.Visibility = Visibility.Hidden;
+		}
+
+
 		public void ShowError( Exception exc )
 		{
+			CancelInfo( );
 			StopAll( );
 
 			lock( this )
@@ -173,6 +207,7 @@ namespace RegExpressWPF
 
 		public void ShowNoPattern( )
 		{
+			CancelInfo( );
 			StopAll( );
 
 			lock( this )
@@ -192,6 +227,8 @@ namespace RegExpressWPF
 		public void SetMatches( string text, RegexMatches matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
+
+			CancelInfo( );
 
 			lock( this )
 			{
@@ -368,6 +405,14 @@ namespace RegExpressWPF
 		}
 
 
+		private void TimerShowInfo_Tick( object sender, EventArgs e )
+		{
+			TimerShowInfo.Stop( );
+
+			ShowInfo( InfoText, delayed: false );
+		}
+
+
 		void ShowMatchesThreadProc( ICancellable cnc )
 		{
 			lock( MatchInfos )
@@ -396,6 +441,7 @@ namespace RegExpressWPF
 			{
 				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
+					CancelInfo( );
 					ShowOne( rtbNoMatches );
 				} ) );
 
@@ -415,6 +461,7 @@ namespace RegExpressWPF
 					r.Text = "";
 				}
 
+				CancelInfo( );
 				ShowOne( rtbMatches );
 			} );
 
