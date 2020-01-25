@@ -12,23 +12,31 @@
         >
 
     <Grid Margin="9 7 9 9">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="73" MinHeight="33" />
-            <RowDefinition Height="5" />
-            <RowDefinition Height="*" MinHeight="33" />
-            <RowDefinition Height="5" />
-            <RowDefinition Height="276" MinHeight="33" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="33"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="222" MinWidth="33"/>
+        </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Margin="0 0 0 1">
+        <Grid Grid.Column="0">
+
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="73" MinHeight="33" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="*" MinHeight="33" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="276" MinHeight="33" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}" >
-                <TextBlock Text="Pattern" Style="{StaticResource Labels}" VerticalAlignment="Center" />
-                <Button x:Name="btnNewTab" 
+            <Grid Grid.Row="0" Margin="0 0 0 1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}" >
+                    <TextBlock Text="Pattern" Style="{StaticResource Labels}" VerticalAlignment="Center" />
+                    <Button x:Name="btnNewTab" 
                         Content="➕" 
                         ToolTip="New Tab"
                         Margin="14 0 0 2"
@@ -38,50 +46,43 @@
                         BorderThickness="0"
                         Click="BtnNewTab_Click" IsTabStop="False"
                         />
-            </StackPanel>
-            <local:UCPattern x:Name="ucPattern" Grid.Row="1" TextChanged="UcPattern_TextChanged"  />
-        </Grid>
-
-        <GridSplitter Grid.Row="1" IsTabStop="False" />
-
-        <Grid Grid.Row="2" Margin="0 4 0 1">
-
-            <Grid Grid.Row="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
-                    <TextBlock Text="Text" Style="{StaticResource Labels}"/>
-                    <TextBlock x:Name="lblTextInfo" Text="(Length)" Margin="16 0 0 0" >
-                        <TextBlock.LayoutTransform>
-                            <TransformGroup>
-                                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
-                                <SkewTransform/>
-                                <RotateTransform/>
-                                <TranslateTransform/>
-                            </TransformGroup>
-                        </TextBlock.LayoutTransform>
-                    </TextBlock>
                 </StackPanel>
-                <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" GotKeyboardFocus="ucText_GotKeyboardFocus" />
+                <local:UCPattern x:Name="ucPattern" Grid.Row="1" TextChanged="UcPattern_TextChanged"  />
             </Grid>
-        </Grid>
 
-        <GridSplitter Grid.Row="3" IsTabStop="False" />
+            <GridSplitter Grid.Row="1" IsTabStop="False" />
 
-        <Grid Grid.Row="4" Margin="0 4 0 0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="220"/>
-            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="2" Margin="0 4 0 1">
 
-            <Grid Grid.Column="0">
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="33"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
+                        <TextBlock Text="Text" Style="{StaticResource Labels}"/>
+                        <TextBlock x:Name="lblTextInfo" Text="(Length)" Margin="16 0 0 0" >
+                            <TextBlock.LayoutTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                    <SkewTransform/>
+                                    <RotateTransform/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </TextBlock.LayoutTransform>
+                        </TextBlock>
+                    </StackPanel>
+                    <local:UCText x:Name="ucText" Grid.Row="1" Margin="0,0,0,0" TextChanged="UcText_TextChanged" SelectionChanged="UcText_SelectionChanged" LostFocus="UcText_LostFocus" LocalUnderliningFinished="UcText_LocalUnderliningFinished" GotKeyboardFocus="ucText_GotKeyboardFocus" />
+                </Grid>
+            </Grid>
+
+            <GridSplitter Grid.Row="3" IsTabStop="False" />
+
+            <Grid Grid.Row="4" Margin="0 4 0 0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*" MinHeight="33"/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Style="{StaticResource StackPanelWithLabels}">
@@ -98,25 +99,59 @@
                 </StackPanel>
                 <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" LostFocus="UcMatches_LostFocus"/>
             </Grid>
+        </Grid>
 
-            <GridSplitter Grid.Column="1" IsTabStop="False" />
+        <GridSplitter Grid.Column="1" IsTabStop="False" />
 
-            <Grid Grid.Column="2">
+        <Grid Grid.Column="2">
 
-                <Grid Grid.Column="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="33"/>
+                </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
-                        <TextBlock Text="Options" Style="{StaticResource Labels}"/>
-                    </StackPanel>
+                <StackPanel Grid.Row="0" Style="{StaticResource StackPanelWithLabels}">
+                    <TextBlock Text="Options" Style="{StaticResource Labels}"/>
+                </StackPanel>
 
-                    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3">
-                        <ScrollViewer Margin="5 1 5 5" VerticalScrollBarVisibility="Auto">
-                            <StackPanel >
-                                <StackPanel Orientation="Horizontal" Margin="0 0 0 0">
+                <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3" Margin="0,4,0,0">
+                    <ScrollViewer Margin="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel >
+                            <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
+                                <StackPanel.LayoutTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </StackPanel.LayoutTransform>
+                                <Label Content="Engine: " VerticalAlignment="Center"/>
+                                <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
+                                    <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
+                                    <!-- (filled programmatically) -->
+                                </ComboBox>
+                            </StackPanel>
+                            <Separator/>
+                            <Grid x:Name="pnlRegexOptions" Margin="3 0 0 0">
+                                <!-- (filled programmatically based on current engine) -->
+                            </Grid>
+                            <Separator/>
+                            <StackPanel Margin="3 0 0 0">
+                                <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
+                                    <TextBlock>
+                                            Show whitespaces 
+                                            <Span x:Name="lblWarnings">
+                                                <Run x:Name="lblWhitespaceWarning1" Foreground="OrangeRed" ToolTip="There are imperceptible whitespaces. Click to show.">&#x26a0;</Run>
+                                                <Run x:Name="lblWhitespaceWarning2" Foreground="Silver" ToolTip="There are imperceptible whitespaces.">&#x26a0;</Run>
+                                            </Span>
+                                    </TextBlock>
+                                </CheckBox>
+                                <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
                                     <StackPanel.LayoutTransform>
                                         <TransformGroup>
                                             <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
@@ -125,53 +160,18 @@
                                             <TranslateTransform/>
                                         </TransformGroup>
                                     </StackPanel.LayoutTransform>
-                                    <Label Content="Engine: " VerticalAlignment="Center"/>
-                                    <ComboBox x:Name="cbxEngine" VerticalAlignment="Center" SelectionChanged="cbxEngine_SelectionChanged">
-                                        <!-- NOTE. The 'Tag' is the 'Id' of engine; see 'IRegexEngine.Id' -->
-                                        <!-- (filled programmatically) -->
+                                    <Label Content="Newline:" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
+                                        <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>
+                                        <ComboBoxItem Tag="&#x0D;">CR (‘\r’, 0D)</ComboBoxItem>
+                                        <ComboBoxItem Tag="&#x0A;">LF (‘\n’, 0A)</ComboBoxItem>
                                     </ComboBox>
                                 </StackPanel>
-                                <Grid x:Name="pnlRegexOptions">
-                                    <!-- (filled programmatically based on current engine) -->
-                                </Grid>
-                                <Separator/>
-                                <StackPanel>
-                                    <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                    <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                    <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                    <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
-                                        <TextBlock>
-                                            Show whitespaces 
-                                            <Span x:Name="lblWarnings">
-                                                <Run x:Name="lblWhitespaceWarning1" Foreground="OrangeRed" ToolTip="There are imperceptible whitespaces. Click to show.">&#x26a0;</Run>
-                                                <Run x:Name="lblWhitespaceWarning2" Foreground="Silver" ToolTip="There are imperceptible whitespaces.">&#x26a0;</Run>
-                                            </Span>
-                                        </TextBlock>
-                                    </CheckBox>
-                                    <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
-                                        <StackPanel.LayoutTransform>
-                                            <TransformGroup>
-                                                <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
-                                                <SkewTransform/>
-                                                <RotateTransform/>
-                                                <TranslateTransform/>
-                                            </TransformGroup>
-                                        </StackPanel.LayoutTransform>
-                                        <Label Content="Newline:" VerticalAlignment="Center"/>
-                                        <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
-                                            <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>
-                                            <ComboBoxItem Tag="&#x0D;">CR (‘\r’, 0D)</ComboBoxItem>
-                                            <ComboBoxItem Tag="&#x0A;">LF (‘\n’, 0A)</ComboBoxItem>
-                                        </ComboBox>
-                                    </StackPanel>
-                                </StackPanel>
                             </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
             </Grid>
         </Grid>
-
     </Grid>
 </UserControl>

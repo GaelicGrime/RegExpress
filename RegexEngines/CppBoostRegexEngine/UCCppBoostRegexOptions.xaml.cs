@@ -56,7 +56,7 @@ namespace CppBoostRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
+			var cbs = pnl1.Children.OfType<CheckBox>( );
 
 			return cbs
 					.Where( cb => cb.IsChecked == true )
@@ -77,7 +77,7 @@ namespace CppBoostRegexEngineNs
 				var g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
 				cbxGrammar.SelectedItem = g;
 
-				var cbs = pnl1.Children.OfType<CheckBox>( ).Concat( pnl2.Children.OfType<CheckBox>( ) );
+				var cbs = pnl1.Children.OfType<CheckBox>( );
 
 				foreach( var cb in cbs )
 				{

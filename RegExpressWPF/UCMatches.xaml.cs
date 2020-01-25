@@ -228,8 +228,6 @@ namespace RegExpressWPF
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
 
-			CancelInfo( );
-
 			lock( this )
 			{
 				if( LastMatches != null )
@@ -246,6 +244,8 @@ namespace RegExpressWPF
 						new_groups.SequenceEqual( old_groups ) &&
 						new_captures.SequenceEqual( old_captures ) )
 					{
+						CancelInfo( );
+
 						LastText = text;
 						LastMatches = matches;
 						LastExternalUnderliningSegments = null;
@@ -648,35 +648,35 @@ namespace RegExpressWPF
 				if( cnc.IsCancellationRequested ) break;
 
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-							{
-								if( previous_para == null )
-								{
-									var first_block = secMatches.Blocks.FirstBlock;
-									if( first_block == null )
-									{
-										secMatches.Blocks.Add( para );
-									}
-									else
-									{
-										secMatches.Blocks.InsertBefore( first_block, para );
-										secMatches.Blocks.Remove( first_block );
-									}
-								}
-								else
-								{
-									if( !previous_para.ContentStart.IsInSameDocument( rtbMatches.Document.ContentStart ) )
-									{
-										document_has_changed = true;
-									}
-									else
-									{
-										var next = previous_para.NextBlock;
-										if( next != null ) secMatches.Blocks.Remove( next );
+				{
+					if( previous_para == null )
+					{
+						var first_block = secMatches.Blocks.FirstBlock;
+						if( first_block == null )
+						{
+							secMatches.Blocks.Add( para );
+						}
+						else
+						{
+							secMatches.Blocks.InsertBefore( first_block, para );
+							secMatches.Blocks.Remove( first_block );
+						}
+					}
+					else
+					{
+						if( !previous_para.ContentStart.IsInSameDocument( rtbMatches.Document.ContentStart ) )
+						{
+							document_has_changed = true;
+						}
+						else
+						{
+							var next = previous_para.NextBlock;
+							if( next != null ) secMatches.Blocks.Remove( next );
 
-										secMatches.Blocks.InsertAfter( previous_para, para );
-									}
-								}
-							} );
+							secMatches.Blocks.InsertAfter( previous_para, para );
+						}
+					}
+				} );
 
 				if( document_has_changed ) break;
 
@@ -688,9 +688,9 @@ namespace RegExpressWPF
 			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-						{
-							pbProgress.Visibility = Visibility.Hidden;
-						} );
+			{
+				pbProgress.Visibility = Visibility.Hidden;
+			} );
 
 
 			ExternalUnderliningLoop.SendRestart( );

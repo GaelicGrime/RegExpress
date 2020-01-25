@@ -32,6 +32,8 @@ namespace DotNetRegexEngineNs
 
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
+		static readonly string[] RegexOptionsNames = Enum.GetNames( typeof( RegexOptions ) );
+
 
 
 		public UCDotNetRegexOptions( )
@@ -45,10 +47,8 @@ namespace DotNetRegexEngineNs
 			return pnl
 				.Children
 				.OfType<CheckBox>( )
-				.Where( cb => cb.IsChecked == true )
-				.Select( cb => cb.Tag as RegexOptions? )
-				.Where( v => v != null )
-				.Select( v => v.Value.ToString( ) )
+				.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
+				.Select( cb => cb.Tag )
 				.Concat( new[] { $"timeout:{CachedTimeout.ToString( "c", CultureInfo.InvariantCulture )}" } )
 				.ToArray( );
 		}
@@ -94,10 +94,8 @@ namespace DotNetRegexEngineNs
 				pnl
 					.Children
 					.OfType<CheckBox>( )
-					.Where( cb => cb.IsChecked == true )
-					.Select( cb => cb.Tag as RegexOptions? )
-					.Where( v => v != null )
-					.Select( v => v.Value )
+					.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
+					.Select( cb => (RegexOptions)Enum.Parse( typeof( RegexOptions ), cb.Tag.ToString( ) ) )
 					.Aggregate( RegexOptions.None, ( o, v ) => o | v );
 		}
 
@@ -108,17 +106,15 @@ namespace DotNetRegexEngineNs
 			{
 				++ChangeCounter;
 
-				EnsureCheckboxControls( );
-
 				var cbs =
 						pnl
 							.Children
 							.OfType<CheckBox>( )
-							.Where( cb => cb.Tag is RegexOptions? );
+							.Where( cb => RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) );
 
 				foreach( var cb in cbs )
 				{
-					cb.IsChecked = options.HasFlag( ( (RegexOptions?)cb.Tag ).Value );
+					cb.IsChecked = options.HasFlag( (RegexOptions)Enum.Parse( typeof( RegexOptions ), cb.Tag.ToString( ) ) );
 				}
 
 				CachedRegexOptions = options;
@@ -159,7 +155,6 @@ namespace DotNetRegexEngineNs
 		{
 			if( IsFullyLoaded ) return;
 
-			EnsureCheckboxControls( );
 			CachedRegexOptions = GetSelectedOptions( );
 			CachedTimeout = GetTimeout( );
 
@@ -189,39 +184,6 @@ namespace DotNetRegexEngineNs
 			}
 
 			Changed?.Invoke( sender, e );
-		}
-
-
-		void EnsureCheckboxControls( )
-		{
-			if( pnl.Children.Count == 0 )
-			{
-				MakeOptionCheckbox( RegexOptions.CultureInvariant );
-				MakeOptionCheckbox( RegexOptions.ECMAScript );
-				MakeOptionCheckbox( RegexOptions.ExplicitCapture );
-				MakeOptionCheckbox( RegexOptions.IgnoreCase );
-				MakeOptionCheckbox( RegexOptions.IgnorePatternWhitespace );
-				MakeOptionCheckbox( RegexOptions.Multiline, "('^', '$' at '\\n' too)" );
-				MakeOptionCheckbox( RegexOptions.RightToLeft );
-				MakeOptionCheckbox( RegexOptions.Singleline, "('.' matches '\\n' too)" );
-			}
-		}
-
-		void MakeOptionCheckbox( RegexOptions option, string note = null )
-		{
-			var text = option.ToString( );
-			if( note != null ) text += ' ' + note;
-
-			var cb = new CheckBox
-			{
-				Content = text,
-				Tag = (RegexOptions?)option
-			};
-
-			cb.Checked += CbOption_CheckedChanged;
-			cb.Unchecked += CbOption_CheckedChanged;
-
-			pnl.Children.Add( cb );
 		}
 	}
 }
