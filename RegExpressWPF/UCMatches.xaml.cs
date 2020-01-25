@@ -186,7 +186,6 @@ namespace RegExpressWPF
 
 		public void ShowError( Exception exc )
 		{
-			CancelInfo( );
 			StopAll( );
 
 			lock( this )
@@ -198,6 +197,7 @@ namespace RegExpressWPF
 
 			Dispatcher.BeginInvoke( new Action( ( ) =>
 			{
+				CancelInfo( );
 				ShowOne( rtbError );
 				runError.Text = exc.Message;
 				rtbError.ScrollToEnd( ); // (the interesting part is at the end)
@@ -207,7 +207,6 @@ namespace RegExpressWPF
 
 		public void ShowNoPattern( )
 		{
-			CancelInfo( );
 			StopAll( );
 
 			lock( this )
@@ -219,6 +218,7 @@ namespace RegExpressWPF
 
 			Dispatcher.BeginInvoke( new Action( ( ) =>
 			{
+				CancelInfo( );
 				ShowOne( rtbNoPattern );
 			} ) );
 		}
@@ -1139,20 +1139,20 @@ namespace RegExpressWPF
 			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-						{
-							var first = inlines_to_underline.FirstOrDefault( ).inline;
+			{
+				var first = inlines_to_underline.FirstOrDefault( ).inline;
 
-							first?.BringIntoView( );
+				first?.BringIntoView( );
 
-							if( set_selection && !rtbMatches.IsKeyboardFocused )
-							{
-								if( first != null )
-								{
-									var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
-									rtbMatches.Selection.Select( p, p );
-								}
-							}
-						} );
+				if( set_selection && !rtbMatches.IsKeyboardFocused )
+				{
+					if( first != null )
+					{
+						var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
+						rtbMatches.Selection.Select( p, p );
+					}
+				}
+			} );
 		}
 
 
