@@ -18,6 +18,7 @@ namespace CppStdRegexInterop
 	{
 	public:
 
+		CppGroup( CppMatch^ parent, int groupNumber );
 		CppGroup( CppMatch^ parent, int groupNumber, int index, const std::wcsub_match& submatch );
 
 
@@ -41,7 +42,7 @@ namespace CppStdRegexInterop
 
 		virtual property String^ Value
 		{
-			String^ get();
+			String^ get( );
 		}
 
 #pragma endregion ICapture
@@ -61,7 +62,7 @@ namespace CppStdRegexInterop
 		{
 			String^ get( )
 			{
-				return mGroupNumber.ToString(); // TODO: culture?
+				return mGroupNumber.ToString( ); // TODO: culture?
 			}
 		}
 

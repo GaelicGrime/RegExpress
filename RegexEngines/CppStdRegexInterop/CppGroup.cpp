@@ -7,6 +7,19 @@
 namespace CppStdRegexInterop
 {
 
+	CppGroup::CppGroup( CppMatch^ parent, int groupNumber )
+		:
+		mParent( parent ),
+		mGroupNumber( groupNumber ),
+		mSuccess( false ),
+		mIndex( 0 ),
+		mLength( 0 )
+	{
+		mCaptures = gcnew List<ICapture^>;
+
+	}
+
+
 	CppGroup::CppGroup( CppMatch^ parent, int groupNumber, int index, const std::wcsub_match& submatch )
 		:
 		mParent( parent ),

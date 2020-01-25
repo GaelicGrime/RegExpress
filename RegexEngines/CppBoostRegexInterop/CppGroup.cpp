@@ -8,6 +8,19 @@
 namespace CppBoostRegexInterop
 {
 
+	CppGroup::CppGroup( CppMatch^ parent, int groupNumber )
+		:
+		mParent( parent ),
+		mGroupNumber( groupNumber ),
+		mSuccess( false ),
+		mIndex( 0 ),
+		mLength( 0 )
+	{
+		mCaptures = gcnew List<ICapture^>;
+
+	}
+
+
 	CppGroup::CppGroup( CppMatch^ parent, int groupNumber, int index, const boost::wcsub_match& submatch )
 		:
 		mParent( parent ),

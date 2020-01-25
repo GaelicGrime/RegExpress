@@ -21,13 +21,20 @@ namespace CppStdRegexInterop
 		{
 			const std::wcsub_match& submatch = *i;
 
-			if( !submatch.matched ) continue;
+			if( !submatch.matched )
+			{
+				auto group = gcnew CppGroup( this, j );
 
-			int submatch_index = match.position( j );
+				mGroups->Add( group );
+			}
+			else
+			{
+				int submatch_index = match.position( j );
 
-			auto group = gcnew CppGroup( this, j, submatch_index, submatch );
+				auto group = gcnew CppGroup( this, j, submatch_index, submatch );
 
-			mGroups->Add( group );
+				mGroups->Add( group );
+			}
 		}
 	}
 

@@ -146,7 +146,9 @@ namespace CppBoostRegexInterop
 			and (BOOST_VERSION / 100000) is the major version.
 		*/
 
-		return String::Format( "{0}.{1}.{2}", BOOST_VERSION / 100000, ( BOOST_VERSION / 100 ) % 1000, BOOST_VERSION % 100 );
+		return String::Format( "{0}.{1}.{2}", BOOST_VERSION / 100000, ( BOOST_VERSION / 100 ) % 1000, ( BOOST_VERSION % 100 ).ToString( ) );
+		// 'ToString' -- to remove warning C4965 -- "Implicit box of integer 0; use nullptr or explicit cast"
+
 	}
 
 	RegexMatches^ CppMatcher::Matches( String^ text0 )
