@@ -16,6 +16,7 @@ namespace CppBoostRegexInterop
 	{
 	public:
 
+		CppGroup( CppMatch^ parent, int groupNumber );
 		CppGroup( CppMatch^ parent, int groupNumber, int index, const boost::wcsub_match& submatch );
 
 
@@ -39,7 +40,7 @@ namespace CppBoostRegexInterop
 
 		virtual property String^ Value
 		{
-			String^ get();
+			String^ get( );
 		}
 
 #pragma endregion ICapture
@@ -59,7 +60,7 @@ namespace CppBoostRegexInterop
 		{
 			String^ get( )
 			{
-				return mGroupNumber.ToString(); // TODO: culture?
+				return mGroupNumber.ToString( ); // TODO: culture?
 			}
 		}
 
