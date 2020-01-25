@@ -9,7 +9,30 @@
              Loaded="UserControl_Loaded">
     <Grid>
         <StackPanel>
-            <StackPanel x:Name="pnl"/>
+            <StackPanel x:Name="pnl">
+                <StackPanel.Resources>
+                    <Style TargetType="CheckBox">
+                        <EventSetter Event="Checked" Handler="CbOption_CheckedChanged"/>
+                        <EventSetter Event="Unchecked" Handler="CbOption_CheckedChanged"/>
+                    </Style>
+                </StackPanel.Resources>
+                <CheckBox Tag="CultureInvariant">CultureInvariant</CheckBox>
+                <CheckBox Tag="ECMAScript">ECMAScript</CheckBox>
+                <CheckBox Tag="ExplicitCapture">ExplicitCapture</CheckBox>
+                <CheckBox Tag="IgnoreCase">IgnoreCase</CheckBox>
+                <CheckBox Tag="IgnorePatternWhitespace">IgnorePatternWhitespace</CheckBox>
+                <CheckBox Tag="Multiline">
+                    <TextBlock>
+                        Multiline <Italic>(‘^’, ‘$’ at ‘\n’ too)</Italic>
+                    </TextBlock>
+                </CheckBox>
+                <CheckBox Tag="RightToLeft">RightToLeft</CheckBox>
+                <CheckBox Tag="Singleline">
+                    <TextBlock>
+                        Singleline <Italic>(‘.’ matches ‘\n’ too)</Italic>
+                    </TextBlock>
+                </CheckBox>
+            </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <StackPanel.LayoutTransform>
                     <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>

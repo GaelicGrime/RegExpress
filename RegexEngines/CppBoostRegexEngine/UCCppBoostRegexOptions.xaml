@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:CppBoostRegexEngineNs"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignHeight="450" d:DesignWidth="300"
              Loaded="UserControl_Loaded"
              >
 
@@ -47,54 +47,49 @@
                 </ComboBox>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <StackPanel x:Name="pnl1" Orientation="Vertical">
-                    <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}"/>
+            <StackPanel x:Name="pnl1" Orientation="Vertical" VerticalAlignment="Top" Margin="0">
+                <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}"/>
 
-                    <!--<CheckBox Tag="newline_alt" Style="{StaticResource MyCheckbox}"/>-->
-                    <CheckBox Tag="no_except" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="save_subexpression_location" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="no_mod_m" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="no_mod_s" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="mod_s" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="mod_x" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="no_empty_expressions" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="no_escape_in_lists" Style="{StaticResource MyCheckbox}"/>
-                    <!--<CheckBox Tag="no_bk_refs" Style="{StaticResource MyCheckbox}"/>-->
-                    <CheckBox Tag="no_char_classes" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="no_intervals" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="bk_plus_qm" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="bk_vbar" Style="{StaticResource MyCheckbox}"/>
+                <!--<CheckBox Tag="newline_alt" Style="{StaticResource MyCheckbox}"/>-->
+                <CheckBox Tag="no_except" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="save_subexpression_location" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="no_mod_m" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="no_mod_s" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="mod_s" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="mod_x" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="no_empty_expressions" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="no_escape_in_lists" Style="{StaticResource MyCheckbox}"/>
+                <!--<CheckBox Tag="no_bk_refs" Style="{StaticResource MyCheckbox}"/>-->
+                <CheckBox Tag="no_char_classes" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="no_intervals" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="bk_plus_qm" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="bk_vbar" Style="{StaticResource MyCheckbox}"/>
 
-                    <Separator/>
+                <Separator/>
 
-                    <CheckBox Tag="match_default" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_bob" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_eob" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_bol" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_eol" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_bow" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_eow" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_any" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_null" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_continuous" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_partial" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_single_line" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_dot_newline" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_dot_null" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_posix" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_perl" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_nosubs" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_extra" Style="{StaticResource MyCheckbox}"/>
-                </StackPanel>
-                <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="4 0 0 0">
-                </StackPanel>
+                <CheckBox Tag="match_default" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_bob" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_eob" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_bol" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_eol" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_bow" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_eow" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_any" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_null" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_continuous" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_partial" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_single_line" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_dot_newline" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_not_dot_null" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_posix" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_perl" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_nosubs" Style="{StaticResource MyCheckbox}"/>
+                <CheckBox Tag="match_extra" Style="{StaticResource MyCheckbox}"/>
             </StackPanel>
-
         </StackPanel>
     </Grid>
 </UserControl>

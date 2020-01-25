@@ -62,7 +62,7 @@ namespace RegExpressWPF
 				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
 			};
 
-			btnNewTab.Visibility = Visibility.Collapsed;
+			btnNewTab.Visibility = Visibility.Hidden;
 			lblTextInfo.Visibility = Visibility.Collapsed;
 			pnlShowAll.Visibility = Visibility.Collapsed;
 			pnlShowFirst.Visibility = Visibility.Collapsed;
@@ -144,7 +144,7 @@ namespace RegExpressWPF
 
 		public void ShowNewTabButton( bool yes )
 		{
-			btnNewTab.Visibility = yes ? Visibility.Visible : Visibility.Collapsed;
+			btnNewTab.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
 		}
 
 
