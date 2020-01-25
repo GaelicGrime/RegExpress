@@ -1,0 +1,68 @@
+
+----------------------------
+Integrating standard <regex>
+----------------------------
+
+Recalled steps:
+
+- Add '#include <regex>' to pch.h.
+
+- Use the classes.
+
+
+-----------------------
+Integrating Boost.Regex 
+-----------------------
+
+Recalled steps:
+
+- Download Boost, Version 1.72.0 (https://www.boost.org/), unarchive.
+
+- In project folder, create "boost_1_72_0_min" subfolder.
+
+- Copy "<downloaded Boost>\boost" into "boost_1_72_0_min\boost", without subfolders.
+
+- Copy "<downloaded Boost>\libs\regex\src" into "boost_1_72_0_min\libs\regex\src".
+
+- In Visual Studio, create a filter: "Boost", and add al of files from "boost_1_72_0_min\libs\regex\src".
+
+- In Properties for these files only, set: "Forced Include File: pch.h". Keep "Precompiled Header: Use".
+
+- In "pch.h", add this:
+
+	//#define BOOST_REGEX_DYN_LINK
+	#define BOOST_REGEX_NO_LIB
+	//#define BOOST_REGEX_NO_FASTCALL
+
+	#define BOOST_REGEX_WIDE_INSTANTIATE
+	#define BOOST_REGEX_NARROW_INSTANTIATE
+
+	#define BOOST_REGEX_MATCH_EXTRA // for captures
+
+	#include "boost/regex.hpp"
+
+- In Project Properties, for all configurations, in VC++ Directories, Include Directories, add this:
+
+	$(ProjectDir)boost_1_72_0_min 
+	
+Quotation marks were not needed.
+ 
+- Try compiling. A series of missing boost .h files are reported. Add the required ones. The following 
+minimal set of subfilders were copied from "<downloaded Boost>\boost" to "boost_1_72_0_min\boost":
+
+	config
+	container_hash
+	core
+	detail
+	exception
+	integer
+	mpl
+	predef
+	preprocessor
+	regex -- already there
+	smart_ptr
+	type_traits
+	utility
+
+- Use the classes.
+

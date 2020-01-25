@@ -45,6 +45,28 @@
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>RegExpressWPF.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>BasicDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -71,7 +93,6 @@
     <Compile Include="Adorners\WhitespaceAdorner.cs" />
     <Compile Include="Code\ResumableLoop.cs" />
     <Compile Include="Code\NaiveRanges.cs" />
-    <Compile Include="Code\Segment.cs" />
     <Compile Include="Code\StyleInfo.cs" />
     <Compile Include="Code\TabData.cs" />
     <Compile Include="Code\UITaskHelper.cs" />
@@ -150,6 +171,23 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\RegexEngines\CppBoostRegexEngine\CppBoostRegexEngine.csproj">
+      <Project>{773e3bd2-e5b0-49b5-af57-12d8ca5c8c8b}</Project>
+      <Name>CppBoostRegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\CppStdRegexEngine\CppStdRegexEngine.csproj">
+      <Project>{1bc5cc50-c0f6-4598-934f-e772938da825}</Project>
+      <Name>CppStdRegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj">
+      <Project>{024a9f29-ae01-4987-86e5-ca4c0cb69e7c}</Project>
+      <Name>DotNetRegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
+      <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
+      <Name>RegexEngineInfrastructure</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

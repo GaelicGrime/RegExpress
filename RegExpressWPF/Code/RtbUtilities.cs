@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -89,6 +90,9 @@ namespace RegExpressWPF.Code
 
 	public static class RtbUtilities
 	{
+		const int MAX_BLOCKING_TIME_MS = 222;
+		const int MAX_SEGMENT_LENGTH = 7000;
+
 		class TraversalData
 		{
 			internal string Eol;
@@ -649,9 +653,6 @@ namespace RegExpressWPF.Code
 		}
 
 
-		const int SEGMENT_LENGTH = 7000;
-
-
 		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles )
 		{
 			// split into smaller segments
@@ -667,7 +668,7 @@ namespace RegExpressWPF.Code
 				{
 					if( reh.IsCancellationRequested ) return false;
 
-					int len = Math.Min( SEGMENT_LENGTH, rem );
+					int len = Math.Min( MAX_SEGMENT_LENGTH, rem );
 
 					segments.Add( (j, len, segment_and_style.styleInfo) );
 
@@ -711,8 +712,8 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					var end = Environment.TickCount + 22;
-					int dbg_i = i;//...
+					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
+					//int dbg_i = i;//...
 					do
 					{
 						//if( reh.IsAnyRequested ) return false;
@@ -746,7 +747,7 @@ namespace RegExpressWPF.Code
 				{
 					if( reh.IsCancellationRequested ) return false;
 
-					int len = Math.Min( SEGMENT_LENGTH, rem );
+					int len = Math.Min( MAX_SEGMENT_LENGTH, rem );
 
 					segments.Add( new Segment( j, len ) );
 
@@ -790,8 +791,8 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					var end = Environment.TickCount + 22;
-					int dbg_i = i;//...
+					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
+					//int dbg_i = i;//...
 					do
 					{
 						var segment = segments[i];
@@ -825,7 +826,7 @@ namespace RegExpressWPF.Code
 				{
 					ct.ThrowIfCancellationRequested( );
 
-					int len = Math.Min( SEGMENT_LENGTH, rem );
+					int len = Math.Min( MAX_SEGMENT_LENGTH, rem );
 
 					segments.Add( (j, len) );
 
@@ -866,7 +867,7 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					var end = Environment.TickCount + 22;
+					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
 					do
 					{
 						ct.ThrowIfCancellationRequested( );
@@ -895,7 +896,7 @@ namespace RegExpressWPF.Code
 				{
 					ct.ThrowIfCancellationRequested( );
 
-					int len = Math.Min( SEGMENT_LENGTH, rem );
+					int len = Math.Min( MAX_SEGMENT_LENGTH, rem );
 
 					segments.Add( (j, len) );
 
@@ -914,7 +915,7 @@ namespace RegExpressWPF.Code
 
 				ceh.Invoke( ct, ( ) =>
 				{
-					var end = Environment.TickCount + 22;
+					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
 					do
 					{
 						ct.ThrowIfCancellationRequested( );

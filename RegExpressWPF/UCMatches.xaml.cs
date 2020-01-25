@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,6 +17,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.Matches;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -49,12 +50,15 @@ namespace RegExpressWPF
 		readonly StyleInfo GroupValueStyleInfo;
 		readonly StyleInfo GroupFailedStyleInfo;
 
+		readonly DispatcherTimer TimerShowInfo;
+		string InfoText;
+
 		readonly LengthConverter LengthConverter = new LengthConverter( );
 
 		bool AlreadyLoaded = false;
 
 		string LastText;
-		IReadOnlyList<Match> LastMatches;
+		RegexMatches LastMatches;
 		bool LastShowFirstOnly;
 		bool LastShowSucceededGroupsOnly;
 		bool LastShowCaptures;
@@ -111,6 +115,9 @@ namespace RegExpressWPF
 			LocalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 			ExternalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 
+			TimerShowInfo = new DispatcherTimer { Interval = TimeSpan.FromSeconds( 1 ), IsEnabled = false };
+			TimerShowInfo.Tick += TimerShowInfo_Tick;
+
 			ChangeEventHelper = new ChangeEventHelper( rtbMatches );
 
 			HighlightStyleInfos = new[]
@@ -150,6 +157,33 @@ namespace RegExpressWPF
 		}
 
 
+		public void ShowInfo( string text, bool delayed = false )
+		{
+			TimerShowInfo.Stop( ); //
+			InfoText = null;
+
+			if( delayed )
+			{
+				InfoText = text;
+				TimerShowInfo.Start( );
+			}
+			else
+			{
+				runInfo.Text = text;
+				rtbInfo.ScrollToHome( );
+				rtbInfo.Visibility = Visibility.Visible;
+			}
+		}
+
+
+		private void CancelInfo( )
+		{
+			TimerShowInfo.Stop( );
+			InfoText = null;
+			rtbInfo.Visibility = Visibility.Hidden;
+		}
+
+
 		public void ShowError( Exception exc )
 		{
 			StopAll( );
@@ -163,6 +197,7 @@ namespace RegExpressWPF
 
 			Dispatcher.BeginInvoke( new Action( ( ) =>
 			{
+				CancelInfo( );
 				ShowOne( rtbError );
 				runError.Text = exc.Message;
 				rtbError.ScrollToEnd( ); // (the interesting part is at the end)
@@ -183,24 +218,27 @@ namespace RegExpressWPF
 
 			Dispatcher.BeginInvoke( new Action( ( ) =>
 			{
+				CancelInfo( );
 				ShowOne( rtbNoPattern );
 			} ) );
 		}
 
 
-		public void SetMatches( string text, IReadOnlyList<Match> matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
+		public void SetMatches( string text, RegexMatches matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
+
+			CancelInfo( );
 
 			lock( this )
 			{
 				if( LastMatches != null )
 				{
-					var old_groups = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
-					var new_groups = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
+					var old_groups = LastMatches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
+					var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
 
-					var old_captures = LastMatches.SelectMany( m => m.Groups.Cast<Group>( ) ).SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => ( c.Value ) );
-					var new_captures = matches.SelectMany( m => m.Groups.Cast<Group>( ) ).SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => ( c.Value ) );
+					var old_captures = LastMatches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
+					var new_captures = matches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
 
 					if( showFirstOnly == LastShowFirstOnly &&
 						showSucceededGroupsOnly == LastShowSucceededGroupsOnly &&
@@ -255,7 +293,7 @@ namespace RegExpressWPF
 
 		public IReadOnlyList<Segment> GetUnderlinedSegments( )
 		{
-			IReadOnlyList<Match> matches;
+			RegexMatches matches;
 
 			lock( this )
 			{
@@ -266,7 +304,7 @@ namespace RegExpressWPF
 
 			if( !rtbMatches.IsFocused ||
 				matches == null ||
-				!matches.Any( ) )
+				matches.Count == 0 )
 			{
 				return segments;
 			}
@@ -367,6 +405,14 @@ namespace RegExpressWPF
 		}
 
 
+		private void TimerShowInfo_Tick( object sender, EventArgs e )
+		{
+			TimerShowInfo.Stop( );
+
+			ShowInfo( InfoText, delayed: false );
+		}
+
+
 		void ShowMatchesThreadProc( ICancellable cnc )
 		{
 			lock( MatchInfos )
@@ -376,7 +422,7 @@ namespace RegExpressWPF
 			}
 
 			string text;
-			IReadOnlyList<Match> matches;
+			RegexMatches matches;
 			bool show_captures;
 			bool show_succeeded_groups_only;
 			bool show_first_only;
@@ -395,6 +441,7 @@ namespace RegExpressWPF
 			{
 				Dispatcher.BeginInvoke( new Action( ( ) =>
 				{
+					CancelInfo( );
 					ShowOne( rtbNoMatches );
 				} ) );
 
@@ -414,6 +461,7 @@ namespace RegExpressWPF
 					r.Text = "";
 				}
 
+				CancelInfo( );
 				ShowOne( rtbMatches );
 			} );
 
@@ -425,7 +473,7 @@ namespace RegExpressWPF
 			int match_index = -1;
 			bool document_has_changed = false;
 
-			foreach( var match in matches )
+			foreach( IMatch match in matches.Matches )
 			{
 				Debug.Assert( match.Success );
 
@@ -434,7 +482,7 @@ namespace RegExpressWPF
 				if( cnc.IsCancellationRequested ) break;
 
 				var ordered_groups =
-									match.Groups.Cast<Group>( )
+									match.Groups
 										.Skip( 1 ) // skip match
 										.Where( g => g.Success || !show_succeeded_groups_only )
 										//OrderBy( g => g.Success ? g.Index : match.Index )
@@ -445,7 +493,7 @@ namespace RegExpressWPF
 				int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
 				if( show_captures )
 				{
-					min_index = ordered_groups.SelectMany( g => g.Captures.Cast<Capture>( ) ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
+					min_index = ordered_groups.SelectMany( g => g.Captures ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
 				}
 
 				if( cnc.IsCancellationRequested ) break;
@@ -651,11 +699,11 @@ namespace RegExpressWPF
 
 
 		void AppendCaptures( ICancellable cnc, GroupInfo groupInfo, Paragraph para, int leftWidthForMatch,
-			string text, Match match, Group group, StyleInfo highlightStyle,
+			string text, IMatch match, IGroup group, StyleInfo highlightStyle,
 			RunBuilder runBuilder, RunBuilder siblingRunBuilder )
 		{
 			int capture_index = -1;
-			foreach( Capture capture in group.Captures )
+			foreach( ICapture capture in group.Captures )
 			{
 				if( cnc.IsCancellationRequested ) break;
 
@@ -1091,20 +1139,20 @@ namespace RegExpressWPF
 			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
-						{
-							var first = inlines_to_underline.FirstOrDefault( ).inline;
+			{
+				var first = inlines_to_underline.FirstOrDefault( ).inline;
 
-							first?.BringIntoView( );
+				first?.BringIntoView( );
 
-							if( set_selection && !rtbMatches.IsKeyboardFocused )
-							{
-								if( first != null )
-								{
-									var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
-									rtbMatches.Selection.Select( p, p );
-								}
-							}
-						} );
+				if( set_selection && !rtbMatches.IsKeyboardFocused )
+				{
+					if( first != null )
+					{
+						var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
+						rtbMatches.Selection.Select( p, p );
+					}
+				}
+			} );
 		}
 
 

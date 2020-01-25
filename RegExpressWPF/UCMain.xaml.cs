@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -17,6 +18,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.Matches;
 using RegExpressWPF.Code;
 
 
@@ -33,37 +36,16 @@ namespace RegExpressWPF
 
 		readonly Regex RegexHasWhitespace = new Regex( "\t|([ ](\r|\n|$))|((\r|\n)$)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
+
+		readonly IRegexEngine DefaultRegexEngine = new DotNetRegexEngineNs.DotNetRegexEngine( );
+		readonly IRegexEngine[] RegexEngines;
+
+		IRegexEngine CurrentRegexEngine = null;
+
 		bool IsFullyLoaded = false;
 		bool IsInChange = false;
 		TabData InitialTabData = null;
 		bool ucTextHadFocus = false;
-
-
-		class RegexOptionInfo
-		{
-			internal RegexOptions Option;
-			internal string Note;
-
-			public RegexOptionInfo( RegexOptions option, string note = null )
-			{
-				Option = option;
-				Note = note;
-			}
-		}
-
-		static readonly RegexOptionInfo[] SupportedRegexOptions = new[]
-		{
-            //new RegexOptionInfo(RegexOptions.Compiled),
-            new RegexOptionInfo(RegexOptions.CultureInvariant),
-			new RegexOptionInfo(RegexOptions.ECMAScript),
-			new RegexOptionInfo(RegexOptions.ExplicitCapture),
-			new RegexOptionInfo(RegexOptions.IgnoreCase),
-			new RegexOptionInfo(RegexOptions.IgnorePatternWhitespace),
-			new RegexOptionInfo(RegexOptions.Multiline, "('^', '$' at '\\n' too)"),
-			new RegexOptionInfo(RegexOptions.RightToLeft),
-			new RegexOptionInfo(RegexOptions.Singleline, "('.' matches '\\n' too)"),
-		};
-
 
 		public event EventHandler Changed;
 		public event EventHandler NewTabClicked;
@@ -72,6 +54,13 @@ namespace RegExpressWPF
 		public UCMain( )
 		{
 			InitializeComponent( );
+
+			RegexEngines = new[]
+			{
+				DefaultRegexEngine,
+				new CppStdRegexEngineNs.CppStdRegexEngine( ),
+				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
+			};
 
 			btnNewTab.Visibility = Visibility.Collapsed;
 			lblTextInfo.Visibility = Visibility.Collapsed;
@@ -86,6 +75,20 @@ namespace RegExpressWPF
 
 			UpdateWhitespaceWarningLoop.Priority = ThreadPriority.Lowest;
 			ShowTextInfoLoop.Priority = ThreadPriority.Lowest;
+
+			foreach( var eng in RegexEngines )
+			{
+				eng.OptionsChanged += Engine_OptionsChanged;
+
+				var cbxi = new ComboBoxItem
+				{
+					Tag = eng.Id,
+					Content = eng.Name + " " + ( eng.EngineVersion ?? "" ),
+					IsSelected = eng.Id == DefaultRegexEngine.Id
+				};
+
+				cbxEngine.Items.Add( cbxi );
+			}
 		}
 
 
@@ -116,6 +119,7 @@ namespace RegExpressWPF
 
 				tabData.Pattern = InitialTabData.Pattern;
 				tabData.Text = InitialTabData.Text;
+				tabData.RegexEngineId = InitialTabData.RegexEngineId;
 				tabData.RegexOptions = InitialTabData.RegexOptions;
 				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
 				tabData.ShowSucceededGroupsOnly = InitialTabData.ShowSucceededGroupsOnly;
@@ -127,7 +131,8 @@ namespace RegExpressWPF
 			{
 				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
 				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
-				tabData.RegexOptions = GetRegexOptions( );
+				tabData.RegexEngineId = CurrentRegexEngine.Id;
+				tabData.RegexOptions = CurrentRegexEngine.SerializeOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
@@ -147,17 +152,8 @@ namespace RegExpressWPF
 		{
 			if( IsFullyLoaded ) return;
 
-			foreach( var o in SupportedRegexOptions )
-			{
-				var s = o.Option.ToString( );
-				if( o.Note != null ) s += ' ' + o.Note;
-				var cb = new CheckBox { Content = s, Tag = o.Option };
-
-				cb.Checked += CbOption_CheckedChanged;
-				cb.Unchecked += CbOption_CheckedChanged;
-
-				pnlRegexOptions.Children.Add( cb );
-			}
+			CurrentRegexEngine = RegexEngines.Single( n => n.Id == "DotNetRegex" ); // default
+			SetEngineOption( CurrentRegexEngine );
 
 			ucPattern.SetFocus( );
 
@@ -178,7 +174,10 @@ namespace RegExpressWPF
 				}
 				else
 				{
-					ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
+					ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
+
+					StopAll( );
+					RestartAll( );
 				}
 			}
 		}
@@ -302,14 +301,41 @@ namespace RegExpressWPF
 		}
 
 
+		private void cbxEngine_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			ucMatches.ShowInfo( "Matching…", delayed: false );
+
+			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
+
+			pnlRegexOptions.Children.Clear( );
+			pnlRegexOptions.Children.Add( CurrentRegexEngine.GetOptionsControl( ) );
+
+			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
+
+			FindMatchesLoop.SendRestart( );
+
+			Changed?.Invoke( this, null );
+		}
+
+
+		private void Engine_OptionsChanged( object sender, EventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			CbOption_CheckedChanged( null, null );
+		}
+
+
 		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			UpdateRegexOptionsControls( );
-
-			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
+			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 			FindMatchesLoop.SendRestart( );
 
 			Changed?.Invoke( this, null );
@@ -353,7 +379,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			ucPattern.SetRegexOptions( GetRegexOptions( ), GetEolOption( ) );
+			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 			FindMatchesLoop.SendRestart( );
 			ShowTextInfoLoop.SendRestart( );
 
@@ -371,16 +397,13 @@ namespace RegExpressWPF
 
 			try
 			{
-				foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
-				{
-					var opt = cb.Tag as RegexOptions?;
-					if( opt != null )
-					{
-						cb.IsChecked = ( tabData.RegexOptions & opt.Value ) != 0;
-					}
-				}
+				IRegexEngine engine = RegexEngines.SingleOrDefault( n => n.Id == tabData.RegexEngineId );
+				if( engine == null ) engine = DefaultRegexEngine;
 
-				UpdateRegexOptionsControls( );
+				CurrentRegexEngine = engine;
+				SetEngineOption( engine );
+
+				engine.DeserializeOptions( tabData.RegexOptions );
 
 				cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
 				cbShowSucceededGroupsOnly.IsChecked = tabData.ShowSucceededGroupsOnly;
@@ -398,8 +421,7 @@ namespace RegExpressWPF
 
 				ucPattern.SetFocus( );
 
-				ucPattern.SetRegexOptions( tabData.RegexOptions, tabData.Eol );
-
+				ucPattern.SetRegexOptions( CurrentRegexEngine, tabData.Eol );
 				ucPattern.SetText( tabData.Pattern );
 				ucText.SetText( tabData.Text );
 			}
@@ -407,62 +429,6 @@ namespace RegExpressWPF
 			{
 				IsInChange = false;
 			}
-		}
-
-
-		RegexOptions GetRegexOptions( bool excludeIncompatibility = false )
-		{
-			RegexOptions regex_options = RegexOptions.None;
-
-			foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
-			{
-				var opt = cb.Tag as RegexOptions?;
-				if( opt != null )
-				{
-					regex_options |= ( cb.IsChecked == true ? opt.Value : 0 );
-				}
-			}
-
-			Debug.Assert( !excludeIncompatibility );
-#if false // Feature disabled, since does not look usefull.
-
-            if( excludeIncompatibility )
-            {
-                if( regex_options.HasFlag( RegexOptions.ECMAScript ) )
-                {
-                    regex_options &= ~(
-                        RegexOptions.ExplicitCapture |
-                        RegexOptions.IgnorePatternWhitespace |
-                        RegexOptions.RightToLeft
-                        );
-                }
-            }
-#endif
-
-			return regex_options;
-		}
-
-
-		void UpdateRegexOptionsControls( )
-		{
-#if false // Feature disabled, since does not look usefull.
-
-            RegexOptions regex_options = GetRegexOptions( );
-            bool is_ecma = regex_options.HasFlag( RegexOptions.ECMAScript );
-            RegexOptions ecma_incompatible =
-                RegexOptions.ExplicitCapture |
-                RegexOptions.IgnorePatternWhitespace |
-                RegexOptions.RightToLeft;
-
-            foreach( var cb in pnlRegexOptions.Children.OfType<CheckBox>( ) )
-            {
-                var opt = cb.Tag as RegexOptions?;
-                if( opt != null )
-                {
-                    cb.IsEnabled = opt == RegexOptions.ECMAScript || !( is_ecma && ecma_incompatible.HasFlag( opt ) );
-                }
-            }
-#endif
 		}
 
 
@@ -498,7 +464,7 @@ namespace RegExpressWPF
 			string pattern = null;
 			string text = null;
 			bool first_only = false;
-			RegexOptions options = RegexOptions.None;
+			IRegexEngine engine = null;
 
 			UITaskHelper.Invoke( this,
 				( ) =>
@@ -509,7 +475,7 @@ namespace RegExpressWPF
 					text = ucText.GetSimpleTextData( eol ).Text;
 					if( cnc.IsCancellationRequested ) return;
 					first_only = cbShowFirstOnly.IsChecked == true;
-					options = GetRegexOptions( excludeIncompatibility: false );
+					engine = CurrentRegexEngine;
 				} );
 
 			if( cnc.IsCancellationRequested ) return;
@@ -519,7 +485,7 @@ namespace RegExpressWPF
 				UITaskHelper.BeginInvoke( this,
 					( ) =>
 					{
-						ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+						ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 						ucMatches.ShowNoPattern( );
 						lblMatches.Text = "Matches";
 						pnlShowAll.Visibility = Visibility.Collapsed;
@@ -528,36 +494,40 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				Regex re = null;
-				bool pattern_is_good = false;
+				IMatcher parsed_pattern = null;
+				RegexMatches matches = null;
+				bool is_good = false;
 
 				try
 				{
-					re = new Regex( pattern, options );
-					pattern_is_good = true;
+					parsed_pattern = engine.ParsePattern( pattern );
+					matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
+					is_good = true;
 				}
 				catch( Exception exc )
 				{
 					UITaskHelper.BeginInvoke( this, CancellationToken.None,
 						( ) =>
 						{
-							ucText.SetMatches( Enumerable.Empty<Match>( ).ToList( ), cbShowCaptures.IsChecked == true, GetEolOption( ) );
+							ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 							ucMatches.ShowError( exc );
 							lblMatches.Text = "Error";
 							pnlShowAll.Visibility = Visibility.Collapsed;
 							pnlShowFirst.Visibility = Visibility.Collapsed;
 						} );
 
-					Debug.Assert( !pattern_is_good );
+					Debug.Assert( !is_good );
 				}
 
-				if( pattern_is_good )
+				if( is_good )
 				{
-					MatchCollection matches0 = re.Matches( text ); // TODO: make it cancellable, or use timeout
+					int count = matches.Count;
 
 					if( cnc.IsCancellationRequested ) return;
 
-					var matches_to_show = first_only ? matches0.Cast<Match>( ).Take( 1 ).ToList( ) : matches0.Cast<Match>( ).ToList( );
+					var matches_to_show = first_only ?
+						new RegexMatches( Math.Min( 1, count ), matches.Matches.Take( 1 ) ) :
+						matches;
 
 					if( cnc.IsCancellationRequested ) return;
 
@@ -567,9 +537,9 @@ namespace RegExpressWPF
 										ucText.SetMatches( matches_to_show, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 										ucMatches.SetMatches( text, matches_to_show, first_only, cbShowSucceededGroupsOnly.IsChecked == true, cbShowCaptures.IsChecked == true );
 
-										lblMatches.Text = matches0.Count == 0 ? "Matches" : matches0.Count == 1 ? "1 match" : $"{matches0.Count:#,##0} matches";
-										pnlShowAll.Visibility = first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-										pnlShowFirst.Visibility = !first_only && matches0.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+										lblMatches.Text = count == 0 ? "Matches" : count == 1 ? "1 match" : $"{count:#,##0} matches";
+										pnlShowAll.Visibility = first_only && count > 1 ? Visibility.Visible : Visibility.Collapsed;
+										pnlShowFirst.Visibility = !first_only && count > 1 ? Visibility.Visible : Visibility.Collapsed;
 									} );
 				}
 			}
@@ -661,6 +631,16 @@ namespace RegExpressWPF
 					if( show2 && lblWhitespaceWarning2.Parent == null ) lblWarnings.Inlines.Add( lblWhitespaceWarning2 );
 					if( !show2 && lblWhitespaceWarning2.Parent != null ) lblWarnings.Inlines.Remove( lblWhitespaceWarning2 );
 				} );
+		}
+
+
+		void SetEngineOption( IRegexEngine engine )
+		{
+			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == engine.Id );
+			cbxEngine.SelectedItem = cbxitem;
+
+			pnlRegexOptions.Children.Clear( );
+			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
 		}
 
 

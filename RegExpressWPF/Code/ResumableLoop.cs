@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,12 +10,6 @@ using System.Threading.Tasks;
 
 namespace RegExpressWPF.Code
 {
-	public interface ICancellable
-	{
-		bool IsCancellationRequested { get; }
-	}
-
-
 	public sealed class ResumableLoop : ICancellable, IDisposable
 	{
 		enum Status

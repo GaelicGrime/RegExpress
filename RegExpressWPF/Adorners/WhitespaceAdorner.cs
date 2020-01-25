@@ -1,4 +1,5 @@
-﻿using RegExpressWPF.Code;
+﻿using RegexEngineInfrastructure;
+using RegExpressWPF.Code;
 using RegExpressWPF.Controls;
 using System;
 using System.Collections.Generic;
