@@ -128,10 +128,8 @@ namespace CppStdRegexEngineNs
 		}
 
 
-		public Highlights HighlightPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
+		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			Highlights highlights = new Highlights( );
-
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
 			int para_size = 1;
 
@@ -149,7 +147,7 @@ namespace CppStdRegexEngineNs
 			{
 				Debug.Assert( m.Success );
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// parantheses, '(' or ')'
 				{
@@ -170,7 +168,7 @@ namespace CppStdRegexEngineNs
 					}
 				}
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// character groups, '[...]'
 				{
@@ -195,7 +193,7 @@ namespace CppStdRegexEngineNs
 					}
 				}
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// range, '{...}'
 				{
@@ -225,10 +223,10 @@ namespace CppStdRegexEngineNs
 			}
 
 			var parentheses_at_left = parentheses.Where( g => ( g.Value == '(' && selectionStart > g.Index ) || ( g.Value == ')' && selectionStart > g.Index + ( para_size - 1 ) ) ).ToArray( );
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			var parentheses_at_right = parentheses.Where( g => ( g.Value == '(' && selectionStart <= g.Index ) || ( g.Value == ')' && selectionStart <= g.Index + ( para_size - 1 ) ) ).ToArray( );
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( parentheses_at_left.Any( ) )
 			{
@@ -256,7 +254,7 @@ namespace CppStdRegexEngineNs
 				}
 			}
 
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( parentheses_at_right.Any( ) )
 			{
@@ -283,10 +281,6 @@ namespace CppStdRegexEngineNs
 					if( visibleSegment.Intersects( s ) ) highlights.RightPara = s;
 				}
 			}
-
-			if( cnc.IsCancellationRequested ) return null;
-
-			return highlights;
 		}
 
 		#endregion IRegexEngine

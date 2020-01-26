@@ -60,6 +60,7 @@ namespace RegExpressWPF
 				DefaultRegexEngine,
 				new CppStdRegexEngineNs.CppStdRegexEngine( ),
 				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
+				new CppPcre2RegexEngineNs.CppPcre2RegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
