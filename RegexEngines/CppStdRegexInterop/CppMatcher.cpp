@@ -65,7 +65,7 @@ namespace CppStdRegexInterop
 
 		try
 		{
-			mData->mRegex.assign( pattern, regex_flags );
+			mData->mRegex.assign( std::move( pattern ), regex_flags );
 		}
 		catch( const regex_error & exc )
 		{

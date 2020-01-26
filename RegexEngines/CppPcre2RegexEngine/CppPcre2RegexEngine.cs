@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
+
 namespace CppPcre2RegexEngineNs
 {
 	public class CppPcre2RegexEngine : IRegexEngine

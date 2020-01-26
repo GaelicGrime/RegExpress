@@ -16,14 +16,9 @@
 // See "NON-AUTOTOOLS-BUILD" files from PCRE2
 
 // See also "pch-c.h"
+#include "pch-c.h"
 
-#define HAVE_CONFIG_H
-#define PCRE2_CODE_UNIT_WIDTH 16
-//#define SUPPORT_JIT 1
-#define PCRE2_EXP_DEFN
-
-#include "PCRE2.h"
-
-
+#include <msclr\marshal_cppstd.h>
+#include <exception>
 
 #endif //PCH_H

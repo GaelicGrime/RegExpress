@@ -45,7 +45,9 @@ namespace CppPcre2RegexEngineNs
 			//......
 		}
 
+		private void CheckBox_Changed( object sender, RoutedEventArgs e )
+		{
 
-
+		}
 	}
 }

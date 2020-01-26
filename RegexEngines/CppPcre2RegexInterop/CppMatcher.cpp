@@ -6,11 +6,10 @@
 
 using namespace System::Diagnostics;
 
-using namespace boost;
 using namespace msclr::interop;
 
 
-namespace CppBoostRegexInterop
+namespace CppPcre2RegexInterop
 {
 
 	CppMatcher::CppMatcher( String^ pattern0, cli::array<String^>^ options )
@@ -19,11 +18,12 @@ namespace CppBoostRegexInterop
 		try
 		{
 			marshal_context context{};
-			wregex::flag_type regex_flags{};
-			regex_constants::match_flag_type match_flags = regex_constants::match_flag_type::match_default;
 
 			std::wstring pattern = context.marshal_as<std::wstring>( pattern0 );
 
+
+			//..............
+			/*
 			for each( String ^ o in options )
 			{
 #define C(n) \
@@ -93,17 +93,32 @@ namespace CppBoostRegexInterop
 					;
 #undef C
 			}
+			*/
 
 			mData = new MatcherData{};
-			mData->mMatchFlags = match_flags;
 
-			mData->mRegex.assign( std::move( pattern ), regex_flags );
-		}
-		catch( const regex_error & exc )
-		{
-			//regex_constants::error_type code = exc.code( );
-			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( what );
+			int errornumber;
+			PCRE2_SIZE erroroffset;
+
+			pcre2_code * re = pcre2_compile(
+				reinterpret_cast<PCRE2_SPTR16>(pattern.c_str()),       /* the pattern */
+				PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
+				0,                     /* default options */
+				&errornumber,          /* for error number */
+				&erroroffset,          /* for error offset */
+				NULL );                 /* use default compile context */
+
+			if( re == nullptr )
+			{
+				PCRE2_UCHAR buffer[256];
+				pcre2_get_error_message( errornumber, buffer, sizeof( buffer ) );
+
+				String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer) );
+
+				throw gcnew Exception( String::Format( "PCRE Error at {0}: {1}.", errornumber, message ));
+			}
+
+			mData->mRe = re;
 		}
 		catch( const std::exception & exc )
 		{
@@ -112,7 +127,6 @@ namespace CppBoostRegexInterop
 		}
 		catch( ... )
 		{
-			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 	}
@@ -131,22 +145,11 @@ namespace CppBoostRegexInterop
 	}
 
 
-	String^ CppMatcher::GetBoostVersion( )
+	String^ CppMatcher::GetPcre2Version( )
 	{
-		/*
-		For Boost Documentation:
-			BOOST_VERSION
-			<boost/version.hpp>
-			Describes the boost version number in XYYYZZ format such that:
-			(BOOST_VERSION % 100) is the sub-minor version,
-			((BOOST_VERSION / 100) % 1000) is the minor version,
-			and (BOOST_VERSION / 100000) is the major version.
-		*/
-
-		return String::Format( "{0}.{1}.{2}", BOOST_VERSION / 100000, ( BOOST_VERSION / 100 ) % 1000, ( BOOST_VERSION % 100 ).ToString( ) );
-		// 'ToString' -- to remove warning C4965 -- "Implicit box of integer 0; use nullptr or explicit cast"
-
+		return String::Format( "{0}.{1}", PCRE2_MAJOR, PCRE2_MINOR );
 	}
+
 
 	RegexMatches^ CppMatcher::Matches( String^ text0 )
 	{
@@ -154,33 +157,45 @@ namespace CppBoostRegexInterop
 
 		try
 		{
+			auto matches = gcnew List<IMatch^>( );
+
 			marshal_context context{};
 
 			mData->mText = context.marshal_as<std::wstring>( text0 );
+			mData->mMatchData = pcre2_match_data_create_from_pattern( mData->mRe, NULL );
 
-			auto matches = gcnew List<IMatch^>( );
+			int rc = pcre2_match(
+				mData->mRe,           /* the compiled pattern */
+				reinterpret_cast<PCRE2_SPTR16>(mData->mText.c_str()),              /* the subject string */
+				mData->mText.length(),       /* the length of the subject */
+				0,                    /* start at offset 0 in the subject */
+				0,                    /* default options */
+				mData->mMatchData,    /* block for storing the result */
+				NULL );                /* use default match context */
 
-			auto* native_text = mData->mText.c_str( );
 
-			wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags );
-			wcregex_iterator results_end{};
-
-			for( auto i = results_begin; i != results_end; ++i )
+			if( rc < 0 )
 			{
-				const wcmatch& match = *i;
-
-				auto m = gcnew CppMatch( this, match );
-
-				matches->Add( m );
+				switch( rc )
+				{
+				case PCRE2_ERROR_NOMATCH:
+					// no matches
+					return gcnew RegexMatches( 0, nullptr );
+					return nullptr;
+				default:
+					// other errors
+					throw gcnew Exception( String::Format( "PCRE Error: {0}", rc ) );
+					break;
+				}
 			}
 
+			PCRE2_SIZE* ovector;
+
+			//............
+
+
+
 			return gcnew RegexMatches( matches->Count, matches );
-		}
-		catch( const regex_error & exc )
-		{
-			//regex_constants::error_type code = exc.code( );
-			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( what );
 		}
 		catch( const std::exception & exc )
 		{

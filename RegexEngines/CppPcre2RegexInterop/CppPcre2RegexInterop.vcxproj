@@ -134,6 +134,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CppCapture.h" />
+    <ClInclude Include="CppGroup.h" />
+    <ClInclude Include="CppMatch.h" />
+    <ClInclude Include="CppMatcher.h" />
     <ClInclude Include="CppPcre2RegexInterop.h" />
     <ClInclude Include="pch-c.h" />
     <ClInclude Include="pch.h" />
@@ -146,6 +150,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="CppCapture.cpp" />
+    <ClCompile Include="CppGroup.cpp" />
+    <ClCompile Include="CppMatch.cpp" />
+    <ClCompile Include="CppMatcher.cpp" />
     <ClCompile Include="CppPcre2RegexInterop.cpp" />
     <ClCompile Include="pch-c.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

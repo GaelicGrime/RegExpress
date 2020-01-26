@@ -45,6 +45,18 @@
     <ClInclude Include="pch-c.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CppCapture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CppGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CppMatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CppMatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CppPcre2RegexInterop.cpp">
@@ -138,6 +150,18 @@
       <Filter>PCRE2</Filter>
     </ClCompile>
     <ClCompile Include="pch-c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppCapture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppMatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CppMatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
