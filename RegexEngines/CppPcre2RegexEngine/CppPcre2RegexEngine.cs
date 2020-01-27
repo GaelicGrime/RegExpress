@@ -29,7 +29,7 @@ namespace CppPcre2RegexEngineNs
 
 		public string Name => "C++ PCRE2";
 
-		public string EngineVersion => "//..."; // CppBoostRegexInterop.CppMatcher.GetBoostVersion( );
+		public string EngineVersion => CppPcre2RegexInterop.CppMatcher.GetPcre2Version( );
 
 		public event EventHandler OptionsChanged;
 
@@ -54,26 +54,23 @@ namespace CppPcre2RegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			throw new NotImplementedException( );
+			string[] selected_options = OptionsControl.CachedOptions;
 
-			//.........
-			//var selected_options = OptionsControl.CachedOptions;
-
-			//return new CppBoostRegexInterop.CppMatcher( pattern, selected_options );
-
-			//return null;
+			return new CppPcre2RegexInterop.CppMatcher( pattern, selected_options );
 		}
 
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 			//...
+			// TODO: implement
 		}
 
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			//...
+			// TODO: implement
 		}
 
 		#endregion IRegexEngine

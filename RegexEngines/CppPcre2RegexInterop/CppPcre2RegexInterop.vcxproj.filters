@@ -164,6 +164,9 @@
     <ClCompile Include="CppMatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PCRE2\pcre2demo.c">
+      <Filter>PCRE2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc">

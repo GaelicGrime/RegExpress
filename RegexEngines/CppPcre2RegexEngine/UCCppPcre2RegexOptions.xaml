@@ -16,96 +16,108 @@
 
     <Grid>
         <StackPanel>
+            <ItemsControl ItemsSource="{Binding OptionInfos}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Tag="{Binding Tag}" Content="{Binding Text}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            
+            <Separator/>
+            
+            <StackPanel x:Name="pnl1">
 
-            <CheckBox Tag="PCRE2_ANCHORED">
-                <TextBlock>PCRE2_ANCHORED – Force pattern anchoring</TextBlock>
-            </CheckBox>
+                <CheckBox Tag="PCRE2_ANCHORED">
+                    <TextBlock>PCRE2_ANCHORED – Force pattern anchoring</TextBlock>
+                </CheckBox>
 
-            <CheckBox Tag="PCRE2_ALLOW_EMPTY_CLASS">
-                <TextBlock>PCRE2_ALLOW_EMPTY_CLASS – Allow empty classes</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_ALT_BSUX">
-                <TextBlock>PCRE2_ALT_BSUX – Alternative handling of \u, \U, and \x</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_ALT_CIRCUMFLEX">
-                <TextBlock>PCRE2_ALT_CIRCUMFLEX – Alternative handling of ^ in multiline mode</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_ALT_VERBNAMES">
-                <TextBlock>PCRE2_ALT_VERBNAMES – Process backslashes in verb names</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_AUTO_CALLOUT">
-                <TextBlock>PCRE2_AUTO_CALLOUT – Compile automatic callouts</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_CASELESS">
-                <TextBlock>PCRE2_CASELESS – Do caseless matching</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_DOLLAR_ENDONLY">
-                <TextBlock>PCRE2_DOLLAR_ENDONLY – $ not to match newline at end</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_DOTALL">
-                <TextBlock>PCRE2_DOTALL – . matches anything including NL</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_DUPNAMES">
-                <TextBlock>PCRE2_DUPNAMES – Allow duplicate names for subpatterns</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_ENDANCHORED">
-                <TextBlock>PCRE2_ENDANCHORED – Pattern can match only at end of subject</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_EXTENDED">
-                <TextBlock>PCRE2_EXTENDED – Ignore white space and # comments</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_FIRSTLINE">
-                <TextBlock>PCRE2_FIRSTLINE – Force matching to be before newline</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_LITERAL">
-                <TextBlock>PCRE2_LITERAL – Pattern characters are all literal</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_MATCH_INVALID_UTF">
-                <TextBlock>PCRE2_MATCH_INVALID_UTF – Enable support for matching invalid UTF</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_MATCH_UNSET_BACKREF">
-                <TextBlock>PCRE2_MATCH_UNSET_BACKREF – Match unset backreferences</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_MULTILINE">
-                <TextBlock>PCRE2_MULTILINE – ^ and $ match newlines within data</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NEVER_BACKSLASH_C">
-                <TextBlock>PCRE2_NEVER_BACKSLASH_C – Lock out the use of \C in patterns</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NEVER_UCP">
-                <TextBlock>PCRE2_NEVER_UCP – Lock out PCRE2_UCP, e.g. via (*UCP)</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NEVER_UTF">
-                <TextBlock>PCRE2_NEVER_UTF – Lock out PCRE2_UTF, e.g. via (*UTF)</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NO_AUTO_CAPTURE">
-                <TextBlock>PCRE2_NO_AUTO_CAPTURE – Disable numbered capturing parentheses (named ones available)</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NO_AUTO_POSSESS">
-                <TextBlock>PCRE2_NO_AUTO_POSSESS – Disable auto-possessification</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NO_DOTSTAR_ANCHOR">
-                <TextBlock>PCRE2_NO_DOTSTAR_ANCHOR – Disable automatic anchoring for .*</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NO_START_OPTIMIZE">
-                <TextBlock>PCRE2_NO_START_OPTIMIZE – Disable match-time start optimizations</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_NO_UTF_CHECK">
-                <TextBlock>PCRE2_NO_UTF_CHECK – Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_UCP">
-                <TextBlock>PCRE2_UCP – Use Unicode properties for \d, \w, etc.</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_UNGREEDY">
-                <TextBlock>PCRE2_UNGREEDY – Invert greediness of quantifiers</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_USE_OFFSET_LIMIT">
-                <TextBlock>PCRE2_USE_OFFSET_LIMIT – Enable offset limit for unanchored matching</TextBlock>
-            </CheckBox>
-            <CheckBox Tag="PCRE2_UTF">
-                <TextBlock>PCRE2_UTF – Treat pattern and subjects as UTF strings</TextBlock>
-            </CheckBox>
+                <CheckBox Tag="PCRE2_ALLOW_EMPTY_CLASS">
+                    <TextBlock>PCRE2_ALLOW_EMPTY_CLASS – Allow empty classes</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_ALT_BSUX">
+                    <TextBlock>PCRE2_ALT_BSUX – Alternative handling of \u, \U, and \x</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_ALT_CIRCUMFLEX">
+                    <TextBlock>PCRE2_ALT_CIRCUMFLEX – Alternative handling of ^ in multiline mode</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_ALT_VERBNAMES">
+                    <TextBlock>PCRE2_ALT_VERBNAMES – Process backslashes in verb names</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_AUTO_CALLOUT">
+                    <TextBlock>PCRE2_AUTO_CALLOUT – Compile automatic callouts</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_CASELESS">
+                    <TextBlock>PCRE2_CASELESS – Do caseless matching</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_DOLLAR_ENDONLY">
+                    <TextBlock>PCRE2_DOLLAR_ENDONLY – $ not to match newline at end</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_DOTALL">
+                    <TextBlock>PCRE2_DOTALL – . matches anything including NL</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_DUPNAMES">
+                    <TextBlock>PCRE2_DUPNAMES – Allow duplicate names for subpatterns</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_ENDANCHORED">
+                    <TextBlock>PCRE2_ENDANCHORED – Pattern can match only at end of subject</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_EXTENDED">
+                    <TextBlock>PCRE2_EXTENDED – Ignore white space and # comments</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_FIRSTLINE">
+                    <TextBlock>PCRE2_FIRSTLINE – Force matching to be before newline</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_LITERAL">
+                    <TextBlock>PCRE2_LITERAL – Pattern characters are all literal</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_MATCH_INVALID_UTF">
+                    <TextBlock>PCRE2_MATCH_INVALID_UTF – Enable support for matching invalid UTF</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_MATCH_UNSET_BACKREF">
+                    <TextBlock>PCRE2_MATCH_UNSET_BACKREF – Match unset backreferences</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_MULTILINE">
+                    <TextBlock>PCRE2_MULTILINE – ^ and $ match newlines within data</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NEVER_BACKSLASH_C">
+                    <TextBlock>PCRE2_NEVER_BACKSLASH_C – Lock out the use of \C in patterns</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NEVER_UCP">
+                    <TextBlock>PCRE2_NEVER_UCP – Lock out PCRE2_UCP, e.g. via (*UCP)</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NEVER_UTF">
+                    <TextBlock>PCRE2_NEVER_UTF – Lock out PCRE2_UTF, e.g. via (*UTF)</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NO_AUTO_CAPTURE">
+                    <TextBlock>PCRE2_NO_AUTO_CAPTURE – Disable numbered capturing parentheses (named ones available)</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NO_AUTO_POSSESS">
+                    <TextBlock>PCRE2_NO_AUTO_POSSESS – Disable auto-possessification</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NO_DOTSTAR_ANCHOR">
+                    <TextBlock>PCRE2_NO_DOTSTAR_ANCHOR – Disable automatic anchoring for .*</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NO_START_OPTIMIZE">
+                    <TextBlock>PCRE2_NO_START_OPTIMIZE – Disable match-time start optimizations</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_NO_UTF_CHECK">
+                    <TextBlock>PCRE2_NO_UTF_CHECK – Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_UCP">
+                    <TextBlock>PCRE2_UCP – Use Unicode properties for \d, \w, etc.</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_UNGREEDY">
+                    <TextBlock>PCRE2_UNGREEDY – Invert greediness of quantifiers</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_USE_OFFSET_LIMIT">
+                    <TextBlock>PCRE2_USE_OFFSET_LIMIT – Enable offset limit for unanchored matching</TextBlock>
+                </CheckBox>
+                <CheckBox Tag="PCRE2_UTF">
+                    <TextBlock>PCRE2_UTF – Treat pattern and subjects as UTF strings</TextBlock>
+                </CheckBox>
 
+            </StackPanel>
         </StackPanel>
     </Grid>
 </UserControl>

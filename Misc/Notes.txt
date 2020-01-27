@@ -80,7 +80,9 @@ Recalled steps:
 Use them for PCRE files.
 
 Note that some of source files, such as "pcre2_jit_match.c", "pcre2_jit_misc.c" should be copied, 
-but not included into build. (They are included using #include).
+but excluded from build. (They are included using #include).
+
+The file "pcre2demo.c" is a useful example, which should be excluded from build as well.
 
 - Follow the steps from "NON-AUTOTOOLS-BUILD" file of PCRE.
 
