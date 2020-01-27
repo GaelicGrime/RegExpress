@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CppPcre2RegexInterop;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -30,26 +31,40 @@ namespace CppPcre2RegexEngineNs
 
 
 
-		public class OptionInfo
-		{
-			public string Tag { get; set; }
-			public string Text { get; set; }
-		}
-
-
-		public List<OptionInfo> OptionInfos { get; } = new List<OptionInfo>
-		{
-			new OptionInfo{Tag = "Tag1", Text = "Text1"},
-			new OptionInfo{Tag = "Tag2", Text = "Text2"},
-		} ;
-
-
-
 		public UCCppPcre2RegexOptions( )
 		{
 			InitializeComponent( );
 
-			DataContext = this;
+			{
+				List<OptionInfo> compile_options = CppMatcher.GetCompileOptions( );
+
+				foreach( var o in compile_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+					};
+
+					pnlCompileOptions.Children.Add( cb );
+				}
+			}
+
+			{
+				List<OptionInfo> match_options = CppMatcher.GetMatchOptions( );
+
+				foreach( var o in match_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+					};
+
+					pnlMatchOptions.Children.Add( cb );
+				}
+
+			}
 		}
 
 
@@ -74,11 +89,14 @@ namespace CppPcre2RegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			var cbs = pnl1.Children.OfType<CheckBox>( );
-
-			return cbs
+			return pnlCompileOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
-					.Select( cb => cb.Tag.ToString( ) )
+					.Select( cb => "c:" + cb.Tag.ToString( ) )
+					.Concat(
+					pnlMatchOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => "m:" + cb.Tag.ToString( ) )
+					)
 					.ToArray( );
 		}
 
@@ -91,11 +109,14 @@ namespace CppPcre2RegexEngineNs
 
 				options = options ?? new string[] { };
 
-				var cbs = pnl1.Children.OfType<CheckBox>( );
-
-				foreach( var cb in cbs )
+				foreach( var cb in pnlCompileOptions.Children.OfType<CheckBox>( ) )
 				{
-					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+					cb.IsChecked = options.Contains( "c:" + cb.Tag );
+				}
+
+				foreach( var cb in pnlMatchOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( "m:" + cb.Tag );
 				}
 			}
 			finally
@@ -105,10 +126,24 @@ namespace CppPcre2RegexEngineNs
 		}
 
 
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( IsFullyLoaded ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			IsFullyLoaded = true;
+		}
+
 
 		private void CheckBox_Changed( object sender, RoutedEventArgs e )
 		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
 
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, null );
 		}
 	}
 }

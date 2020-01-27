@@ -39,9 +39,27 @@ namespace CppPcre2RegexInterop
 	};
 
 
+	public ref class OptionInfo
+	{
+	public:
+		property int	 Flag;
+		property String^ FlagName;
+		property String^ Note;
+
+		OptionInfo( int flag, String^ flagName, String^ note )
+		{
+			Flag = flag;
+			FlagName = flagName;
+			Note = note;
+		}
+	};
+
+
 	public ref class CppMatcher : IMatcher
 	{
 	public:
+
+		static CppMatcher( );
 
 		CppMatcher( String^ pattern, cli::array<String^>^ options );
 
@@ -50,6 +68,9 @@ namespace CppPcre2RegexInterop
 
 
 		static String^ GetPcre2Version( );
+
+		static List<OptionInfo^>^ GetCompileOptions( );
+		static List<OptionInfo^>^ GetMatchOptions( );
 
 
 #pragma region IMatcher
@@ -64,6 +85,12 @@ namespace CppPcre2RegexInterop
 	private:
 
 		MatcherData* mData;
+
+		static List<OptionInfo^>^ GetCompileOptions0( );
+		static List<OptionInfo^>^ GetMatchOptions0( );
+
+		static List<OptionInfo^>^ CompileOptions0;
+		static List<OptionInfo^>^ MatchOptions0;
 	};
 
 }
