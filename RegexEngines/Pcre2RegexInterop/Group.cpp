@@ -55,6 +55,10 @@ namespace Pcre2RegexInterop
 			//.............
 			//TODO: detect PCRE2 errors
 		}
+		catch( Exception^ )
+		{
+			throw;
+		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );

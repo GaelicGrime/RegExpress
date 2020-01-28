@@ -66,15 +66,19 @@ namespace Pcre2RegexInterop
 			if( re == nullptr )
 			{
 				PCRE2_UCHAR buffer[256];
-				pcre2_get_error_message( errornumber, buffer, sizeof( buffer ) );
+				pcre2_get_error_message( errornumber, buffer, _countof( buffer ) );
 
 				String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
 
-				throw gcnew Exception( String::Format( "PCRE2 Error at {0}: {1}.", errornumber, message ) );
+				throw gcnew Exception( String::Format( "PCRE2 Error {0} at {1}: {2}.", errornumber, erroroffset, message ) );
 			}
 
 			mData->mRe = re;
 			mData->mMatcherOptions = matcher_options;
+		}
+		catch( Exception^ )
+		{
+			throw;
 		}
 		catch( const std::exception & exc )
 		{
@@ -216,9 +220,14 @@ namespace Pcre2RegexInterop
 					// no matches
 					return gcnew RegexMatches( 0, EmptyEnumeration );
 				default:
-					// other errors
-					throw gcnew Exception( String::Format( "PCRE2 Error: {0}", rc ) );
-					break;
+				{
+					PCRE2_UCHAR buffer[256];
+					pcre2_get_error_message( rc, buffer, _countof( buffer ) );
+
+					String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
+
+					throw gcnew Exception( String::Format( "PCRE2 Error {0} : {1}.", rc, message ) );
+				}
 				}
 			}
 
@@ -352,7 +361,12 @@ namespace Pcre2RegexInterop
 
 					if( rc < 0 )
 					{
-						throw gcnew Exception( String::Format( "PCRE2 Error: Matching error '{0}'", rc ) );
+						PCRE2_UCHAR buffer[256];
+						pcre2_get_error_message( rc, buffer, _countof( buffer ) );
+
+						String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
+
+						throw gcnew Exception( String::Format( "PCRE2 Error {0} : {1}.", rc, message ) );
 					}
 
 					/* Match succeded */
@@ -374,6 +388,10 @@ namespace Pcre2RegexInterop
 
 
 			return gcnew RegexMatches( matches->Count, matches );
+		}
+		catch( Exception^ )
+		{
+			throw;
 		}
 		catch( const std::exception & exc )
 		{

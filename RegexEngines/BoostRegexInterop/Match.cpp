@@ -40,6 +40,10 @@ namespace BoostRegexInterop
 				}
 			}
 		}
+		catch( Exception^ )
+		{
+			throw;
+		}
 		catch( const boost::regex_error & exc )
 		{
 			//regex_constants::error_type code = exc.code( );
