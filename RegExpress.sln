@@ -19,17 +19,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexEngineInfrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetRegexEngine", "RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj", "{024A9F29-AE01-4987-86E5-CA4C0CB69E7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CppStdRegexEngine", "RegexEngines\CppStdRegexEngine\CppStdRegexEngine.csproj", "{1BC5CC50-C0F6-4598-934F-E772938DA825}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StdRegexEngine", "RegexEngines\StdRegexEngine\StdRegexEngine.csproj", "{1BC5CC50-C0F6-4598-934F-E772938DA825}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppStdRegexInterop", "RegexEngines\CppStdRegexInterop\CppStdRegexInterop.vcxproj", "{D6F5056E-FAB0-4C60-A02F-8E56FA9F42D1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StdRegexInterop", "RegexEngines\StdRegexInterop\StdRegexInterop.vcxproj", "{D6F5056E-FAB0-4C60-A02F-8E56FA9F42D1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppBoostRegexInterop", "RegexEngines\CppBoostRegexInterop\CppBoostRegexInterop.vcxproj", "{8CA0EEED-5B3E-4226-B936-EAF5DCC06680}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BoostRegexInterop", "RegexEngines\BoostRegexInterop\BoostRegexInterop.vcxproj", "{8CA0EEED-5B3E-4226-B936-EAF5DCC06680}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CppBoostRegexEngine", "RegexEngines\CppBoostRegexEngine\CppBoostRegexEngine.csproj", "{773E3BD2-E5B0-49B5-AF57-12D8CA5C8C8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostRegexEngine", "RegexEngines\BoostRegexEngine\BoostRegexEngine.csproj", "{773E3BD2-E5B0-49B5-AF57-12D8CA5C8C8B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppPcre2RegexInterop", "RegexEngines\CppPcre2RegexInterop\CppPcre2RegexInterop.vcxproj", "{B4A7EAE1-87FA-47C8-88E0-E668E8A104E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pcre2RegexInterop", "RegexEngines\Pcre2RegexInterop\Pcre2RegexInterop.vcxproj", "{B4A7EAE1-87FA-47C8-88E0-E668E8A104E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CppPcre2RegexEngine", "RegexEngines\CppPcre2RegexEngine\CppPcre2RegexEngine.csproj", "{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pcre2RegexEngine", "RegexEngines\Pcre2RegexEngine\Pcre2RegexEngine.csproj", "{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -133,14 +133,14 @@ Global
 		{B4A7EAE1-87FA-47C8-88E0-E668E8A104E1}.Release|x86.Build.0 = Release|Win32
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x64.Build.0 = Debug|Any CPU
+		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x64.ActiveCfg = Debug|x64
+		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x64.Build.0 = Debug|x64
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Debug|x86.Build.0 = Debug|Any CPU
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x64.ActiveCfg = Release|Any CPU
-		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x64.Build.0 = Release|Any CPU
+		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x64.ActiveCfg = Release|x64
+		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x64.Build.0 = Release|x64
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x86.ActiveCfg = Release|Any CPU
 		{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection

@@ -58,9 +58,9 @@ namespace RegExpressWPF
 			RegexEngines = new[]
 			{
 				DefaultRegexEngine,
-				new CppStdRegexEngineNs.CppStdRegexEngine( ),
-				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
-				new CppPcre2RegexEngineNs.CppPcre2RegexEngine(),
+				new StdRegexEngineNs.StdRegexEngine( ),
+				new BoostRegexEngineNs.BoostRegexEngine( ),
+				new Pcre2RegexEngineNs.Pcre2RegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
