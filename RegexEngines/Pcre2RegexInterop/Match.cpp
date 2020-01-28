@@ -5,18 +5,21 @@
 #include "Matcher.h"
 
 
+using namespace System::Diagnostics;
+
+
 namespace Pcre2RegexInterop
 {
 
-	Match::Match( Matcher^ parent, pcre2_match_data* matchData )
+	Match::Match( Matcher^ parent, pcre2_code* re, PCRE2_SIZE* ovector, int rc )
 		:
 		mParent( parent ),
 		mSuccess( true ) //.................
 	{
+		Debug::Assert( rc > 0 );
+
 		try
 		{
-			PCRE2_SIZE* ovector = ovector = pcre2_get_ovector_pointer( matchData );
-
 			if( ovector[0] > ovector[1] )
 			{
 				// TODO: show more details; see 'pcre2demo.c'
@@ -29,40 +32,53 @@ namespace Pcre2RegexInterop
 
 			mGroups = gcnew List<IGroup^>;
 
+			// add all groups; the names will be put later
 			// group [0] is the whole match
 
-			Group^ group0 = gcnew Group( this, "0", mIndex, mLength );
-			mGroups->Add( group0 );
-
-
-
-
-
-			//.......................
-
-			/*
-			int j = 0;
-
-			for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
+			for( int i = 0; i < rc; ++i )
 			{
-				const boost::wcsub_match& submatch = *i;
+				Group^ group = gcnew Group( this,
+					i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
+					ovector[2 * i], ovector[2 * i + 1] - ovector[2 * i] );
+				mGroups->Add( group );
+			}
 
-				if( !submatch.matched )
+			uint32_t namecount;
+
+			(void)pcre2_pattern_info(
+				re,                   /* the compiled pattern */
+				PCRE2_INFO_NAMECOUNT, /* get the number of named substrings */
+				&namecount );         /* where to put the answer */
+
+			if( namecount > 0 )
+			{
+				PCRE2_SPTR name_table;
+				uint32_t name_entry_size;
+				PCRE2_SPTR tabptr;
+
+				(void)pcre2_pattern_info(
+					re,                       /* the compiled pattern */
+					PCRE2_INFO_NAMETABLE,     /* address of the table */
+					&name_table );            /* where to put the answer */
+
+				(void)pcre2_pattern_info(
+					re,                       /* the compiled pattern */
+					PCRE2_INFO_NAMEENTRYSIZE, /* size of each entry in the table */
+					&name_entry_size );       /* where to put the answer */
+
+				tabptr = name_table;
+				for( int i = 0; i < namecount; i++ )
 				{
-					auto group = gcnew Group( this, j );
+					int n = *( (__int16*)tabptr );
 
-					mGroups->Add( group );
-				}
-				else
-				{
-					int submatch_index = match.position( j );
+					String^ name = gcnew String( reinterpret_cast<const wchar_t*>( ( (__int16*)tabptr ) + 1 ), 0, name_entry_size - 2 );
+					name = name->TrimEnd( '\0' );
 
-					auto group = gcnew Group( this, j, submatch_index, submatch );
+					( (Group^)mGroups[n] )->SetName( name );
 
-					mGroups->Add( group );
+					tabptr += name_entry_size;
 				}
 			}
-			*/
 		}
 		catch( const std::exception & exc )
 		{

@@ -15,7 +15,7 @@ namespace Pcre2RegexInterop
 
 	public:
 
-		Match( Matcher^ parent, pcre2_match_data* matchData );
+		Match( Matcher^ parent, pcre2_code* re, PCRE2_SIZE* ovector, int rc );
 
 
 #pragma region ICapture

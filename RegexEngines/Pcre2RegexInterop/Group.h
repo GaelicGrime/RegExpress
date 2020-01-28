@@ -82,6 +82,13 @@ namespace Pcre2RegexInterop
 			}
 		}
 
+	internal:
+
+		void SetName( String^ name )
+		{
+			mName = name;
+		}
+
 
 	private:
 

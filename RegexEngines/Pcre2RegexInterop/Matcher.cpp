@@ -227,12 +227,151 @@ namespace Pcre2RegexInterop
 				throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
 			}
 
-			Match^ match = gcnew Match( this, mData->mMatchData );
+			PCRE2_SIZE* ovector = pcre2_get_ovector_pointer( mData->mMatchData );
 
+			Match^ match = gcnew Match( this, mData->mRe, ovector, rc );
 			matches->Add( match );
 
-			//..............
-			// TODO: loop, find next matches; see 'pcre2demo.c'
+
+			// find next matches
+
+			{
+				const auto& re = mData->mRe;
+				const auto& match_data = mData->mMatchData;
+				const wchar_t* subject = mData->mText.c_str( );
+				auto subject_length = mData->mText.length( );
+
+
+				// their tricky stuffs; code and comments are from 'pcre2demo.c'
+
+				uint32_t option_bits;
+				uint32_t newline;
+				int crlf_is_newline;
+				int utf8;
+
+				/* Before running the loop, check for UTF-8 and whether CRLF is a valid newline
+				sequence. First, find the options with which the regex was compiled and extract
+				the UTF state. */
+
+				(void)pcre2_pattern_info( re, PCRE2_INFO_ALLOPTIONS, &option_bits );
+				utf8 = ( option_bits & PCRE2_UTF ) != 0;
+
+				/* Now find the newline convention and see whether CRLF is a valid newline
+				sequence. */
+
+				(void)pcre2_pattern_info( re, PCRE2_INFO_NEWLINE, &newline );
+				crlf_is_newline = newline == PCRE2_NEWLINE_ANY ||
+					newline == PCRE2_NEWLINE_CRLF ||
+					newline == PCRE2_NEWLINE_ANYCRLF;
+
+				/* Loop for second and subsequent matches */
+
+				for( ;;)
+				{
+					uint32_t options = 0;                   /* Normally no options */
+					PCRE2_SIZE start_offset = ovector[1];   /* Start at end of previous match */
+
+					/* If the previous match was for an empty string, we are finished if we are
+					at the end of the subject. Otherwise, arrange to run another match at the
+					same point to see if a non-empty match can be found. */
+
+					if( ovector[0] == ovector[1] )
+					{
+						if( ovector[0] == subject_length ) break;
+						options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
+					}
+
+					/* If the previous match was not an empty string, there is one tricky case to
+					consider. If a pattern contains \K within a lookbehind assertion at the
+					start, the end of the matched string can be at the offset where the match
+					started. Without special action, this leads to a loop that keeps on matching
+					the same substring. We must detect this case and arrange to move the start on
+					by one character. The pcre2_get_startchar() function returns the starting
+					offset that was passed to pcre2_match(). */
+
+					else
+					{
+						PCRE2_SIZE startchar = pcre2_get_startchar( match_data );
+						if( start_offset <= startchar )
+						{
+							if( startchar >= subject_length ) break;   /* Reached end of subject.   */
+							start_offset = startchar + 1;             /* Advance by one character. */
+							if( utf8 )                                 /* If UTF-8, it may be more  */
+							{                                       /*   than one code unit.     */
+								for( ; start_offset < subject_length; start_offset++ )
+									if( ( subject[start_offset] & 0xc0 ) != 0x80 ) break;
+							}
+						}
+					}
+
+					/* Run the next matching operation */
+
+					rc = pcre2_match(
+						re,                   /* the compiled pattern */
+						reinterpret_cast<PCRE2_SPTR16>( subject ),              /* the subject string */
+						subject_length,       /* the length of the subject */
+						start_offset,         /* starting offset in the subject */
+						options,              /* options */
+						match_data,           /* block for storing the result */
+						NULL );                /* use default match context */
+
+					  /* This time, a result of NOMATCH isn't an error. If the value in "options"
+					  is zero, it just means we have found all possible matches, so the loop ends.
+					  Otherwise, it means we have failed to find a non-empty-string match at a
+					  point where there was a previous empty-string match. In this case, we do what
+					  Perl does: advance the matching position by one character, and continue. We
+					  do this by setting the "end of previous match" offset, because that is picked
+					  up at the top of the loop as the point at which to start again.
+
+					  There are two complications: (a) When CRLF is a valid newline sequence, and
+					  the current position is just before it, advance by an extra byte. (b)
+					  Otherwise we must ensure that we skip an entire UTF character if we are in
+					  UTF mode. */
+
+					if( rc == PCRE2_ERROR_NOMATCH )
+					{
+						if( options == 0 ) break;                    /* All matches found */
+						ovector[1] = start_offset + 1;              /* Advance one code unit */
+						if( crlf_is_newline &&                      /* If CRLF is a newline & */
+							start_offset < subject_length - 1 &&    /* we are at CRLF, */
+							subject[start_offset] == '\r' &&
+							subject[start_offset + 1] == '\n' )
+							ovector[1] += 1;                          /* Advance by one more. */
+						else if( utf8 )                              /* Otherwise, ensure we */
+						{                                         /* advance a whole UTF-8 */
+							while( ovector[1] < subject_length )       /* character. */
+							{
+								if( ( subject[ovector[1]] & 0xc0 ) != 0x80 ) break;
+								ovector[1] += 1;
+							}
+						}
+						continue;    /* Go round the loop again */
+					}
+
+					/* Other matching errors are not recoverable. */
+
+					if( rc < 0 )
+					{
+						throw gcnew Exception( String::Format( "PCRE2 Error: Matching error '{0}'", rc ) );
+					}
+
+					/* Match succeded */
+
+
+					/* The match succeeded, but the output vector wasn't big enough. This
+					should not happen. */
+
+					if( rc == 0 )
+					{
+						throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
+					}
+
+					Match^ match = gcnew Match( this, mData->mRe, ovector, rc );
+					matches->Add( match );
+
+				}      /* End of loop to find second and subsequent matches */
+			}
+
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}

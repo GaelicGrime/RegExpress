@@ -30,6 +30,8 @@ namespace BoostRegexInterop
 		mIndex( index ), // TODO: deals with overflows
 		mLength( submatch.length( ) ) // TODO: deals with overflows
 	{
+		// TODO: extract group name
+
 		try
 		{
 			mCaptures = gcnew List<ICapture^>;
