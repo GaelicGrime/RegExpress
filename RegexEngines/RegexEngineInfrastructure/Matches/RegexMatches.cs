@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace RegexEngineInfrastructure.Matches
 
 		public RegexMatches( int count, IEnumerable<IMatch> matches )
 		{
+			Debug.Assert( matches != null );
+
 			Count = count;
 			Matches = matches;
 		}

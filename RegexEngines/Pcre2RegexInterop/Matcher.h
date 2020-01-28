@@ -10,11 +10,13 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace Pcre2RegexInterop
 {
+
 	struct MatcherData
 	{
 		std::wstring mText;
 		pcre2_code* mRe;
 		pcre2_match_data* mMatchData;
+		int mMatcherOptions;
 
 		MatcherData( )
 		{
@@ -91,6 +93,8 @@ namespace Pcre2RegexInterop
 
 		static List<OptionInfo^>^ CompileOptions0;
 		static List<OptionInfo^>^ MatchOptions0;
+
+		static IEnumerable<IMatch^>^ EmptyEnumeration;
 	};
 
 }

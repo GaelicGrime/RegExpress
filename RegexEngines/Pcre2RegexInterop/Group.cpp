@@ -9,26 +9,26 @@
 namespace Pcre2RegexInterop
 {
 
-	Group::Group( Match^ parent, int groupNumber )
+	//Group::Group( Match^ parent, int groupNumber )
+	//	:
+	//	mParent( parent ),
+	//	mGroupNumber( groupNumber ),
+	//	mSuccess( false ),
+	//	mIndex( 0 ),
+	//	mLength( 0 )
+	//{
+	//	mCaptures = gcnew List<ICapture^>;
+
+	//}
+
+
+	Group::Group( Match^ parent, String^ name, int index, int length )
 		:
 		mParent( parent ),
-		mGroupNumber( groupNumber ),
-		mSuccess( false ),
-		mIndex( 0 ),
-		mLength( 0 )
-	{
-		mCaptures = gcnew List<ICapture^>;
-
-	}
-
-
-	Group::Group( Match^ parent, int groupNumber, int index, const pcre2_match_data* submatch )
-		:
-		mParent( parent ),
-		mGroupNumber( groupNumber ),
-		mSuccess( false ), //..............................
+		mName( name ),
+		mSuccess( true ), //..............................
 		mIndex( index ), // TODO: deals with overflows
-		mLength( 0 ) // .....................
+		mLength( length ) // .....................
 	{
 		try
 		{

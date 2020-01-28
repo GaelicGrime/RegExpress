@@ -15,8 +15,8 @@ namespace Pcre2RegexInterop
 	{
 	public:
 
-		Group( Match^ parent, int groupNumber );
-		Group( Match^ parent, int groupNumber, int index, const pcre2_match_data * submatch );
+		//?Group( Match^ parent, int groupNumber );
+		Group( Match^ parent, String^ name, int index, int length );
 
 
 #pragma region ICapture
@@ -59,7 +59,7 @@ namespace Pcre2RegexInterop
 		{
 			String^ get( )
 			{
-				return mGroupNumber.ToString( ); // TODO: culture?
+				return mName;
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace Pcre2RegexInterop
 		bool const mSuccess;
 		int const mIndex;
 		int const mLength;
-		int const mGroupNumber;
+		String^ mName;
 
 		IList<ICapture^>^ mCaptures;
 	};

@@ -14,6 +14,8 @@ namespace Pcre2RegexInterop
 
 	static Matcher::Matcher( )
 	{
+		EmptyEnumeration = gcnew List<IMatch^>( 0 );
+
 		CompileOptions0 = GetCompileOptions0( );
 		MatchOptions0 = GetMatchOptions0( );
 	}
@@ -26,15 +28,25 @@ namespace Pcre2RegexInterop
 		{
 			marshal_context context{};
 
-			std::wstring pattern = context.marshal_as<std::wstring>( pattern0 );
+			const wchar_t* pattern = context.marshal_as<const wchar_t*>( pattern0 );
 
-			int regex_flags = 0;
+			int compiler_options = 0;
 
 			for each( OptionInfo ^ o in CompileOptions0 )
 			{
 				if( Array::IndexOf( options, "c:" + o->FlagName ) >= 0 )
 				{
-					regex_flags |= o->Flag;
+					compiler_options |= o->Flag;
+				}
+			}
+
+			int matcher_options = 0;
+
+			for each( OptionInfo ^ o in CompileOptions0 )
+			{
+				if( Array::IndexOf( options, "m:" + o->FlagName ) >= 0 )
+				{
+					matcher_options |= o->Flag;
 				}
 			}
 
@@ -44,12 +56,12 @@ namespace Pcre2RegexInterop
 			PCRE2_SIZE erroroffset;
 
 			pcre2_code* re = pcre2_compile(
-				reinterpret_cast<PCRE2_SPTR16>( pattern.c_str( ) ),       /* the pattern */
+				reinterpret_cast<PCRE2_SPTR16>( pattern ), /* the pattern */
 				PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
-				0,                     /* default options */
+				compiler_options,      /* options */
 				&errornumber,          /* for error number */
 				&erroroffset,          /* for error offset */
-				NULL );                 /* use default compile context */
+				NULL );                /* use default compile context */
 
 			if( re == nullptr )
 			{
@@ -58,10 +70,11 @@ namespace Pcre2RegexInterop
 
 				String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
 
-				throw gcnew Exception( String::Format( "PCRE Error at {0}: {1}.", errornumber, message ) );
+				throw gcnew Exception( String::Format( "PCRE2 Error at {0}: {1}.", errornumber, message ) );
 			}
 
 			mData->mRe = re;
+			mData->mMatcherOptions = matcher_options;
 		}
 		catch( const std::exception & exc )
 		{
@@ -185,18 +198,14 @@ namespace Pcre2RegexInterop
 			mData->mText = context.marshal_as<std::wstring>( text0 );
 			mData->mMatchData = pcre2_match_data_create_from_pattern( mData->mRe, NULL );
 
-
-			int options = 0; //............
-
-
 			int rc = pcre2_match(
 				mData->mRe,           /* the compiled pattern */
-				reinterpret_cast<PCRE2_SPTR16>( mData->mText.c_str( ) ),              /* the subject string */
-				mData->mText.length( ),       /* the length of the subject */
-				0,                    /* start at offset 0 in the subject */
-				options,                    /* default options */
-				mData->mMatchData,    /* block for storing the result */
-				NULL );                /* use default match context */
+				reinterpret_cast<PCRE2_SPTR16>( mData->mText.c_str( ) ),  /* the subject string */
+				mData->mText.length( ),  /* the length of the subject */
+				0,                       /* start at offset 0 in the subject */
+				mData->mMatcherOptions,  /* options */
+				mData->mMatchData,       /* block for storing the result */
+				NULL );                  /* use default match context */
 
 
 			if( rc < 0 )
@@ -205,20 +214,25 @@ namespace Pcre2RegexInterop
 				{
 				case PCRE2_ERROR_NOMATCH:
 					// no matches
-					return gcnew RegexMatches( 0, nullptr );
-					return nullptr;
+					return gcnew RegexMatches( 0, EmptyEnumeration );
 				default:
 					// other errors
-					throw gcnew Exception( String::Format( "PCRE Error: {0}", rc ) );
+					throw gcnew Exception( String::Format( "PCRE2 Error: {0}", rc ) );
 					break;
 				}
 			}
 
-			PCRE2_SIZE* ovector;
+			if( rc == 0 )
+			{
+				throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
+			}
 
-			//............
+			Match^ match = gcnew Match( this, mData->mMatchData );
 
+			matches->Add( match );
 
+			//..............
+			// TODO: loop, find next matches; see 'pcre2demo.c'
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}

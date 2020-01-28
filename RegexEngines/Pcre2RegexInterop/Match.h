@@ -15,7 +15,7 @@ namespace Pcre2RegexInterop
 
 	public:
 
-		Match( Matcher^ parent, const pcre2_match_data * match );
+		Match( Matcher^ parent, pcre2_match_data* matchData );
 
 
 #pragma region ICapture
@@ -102,8 +102,8 @@ namespace Pcre2RegexInterop
 
 		Matcher^ const mParent;
 		bool const mSuccess;
-		int const mIndex;
-		int const mLength;
+		int mIndex;
+		int mLength;
 
 		List<IGroup^>^ mGroups;
 	};

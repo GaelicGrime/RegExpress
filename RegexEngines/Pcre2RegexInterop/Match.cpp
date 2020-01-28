@@ -8,16 +8,37 @@
 namespace Pcre2RegexInterop
 {
 
-	Match::Match( Matcher^ parent, const pcre2_match_data * match )
+	Match::Match( Matcher^ parent, pcre2_match_data* matchData )
 		:
 		mParent( parent ),
-		mSuccess( false ), //.................
-		mIndex( 0 ), // TODO: deals with overflows
-		mLength( 0 ) // TODO: deals with overflows
+		mSuccess( true ) //.................
 	{
 		try
 		{
+			PCRE2_SIZE* ovector = ovector = pcre2_get_ovector_pointer( matchData );
+
+			if( ovector[0] > ovector[1] )
+			{
+				// TODO: show more details; see 'pcre2demo.c'
+				throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
+					"\\K was used in an assertion to set the match start after its end." ) );
+			}
+
+			mIndex = ovector[0]; // TODO: deals with overflows
+			mLength = ovector[1] - ovector[0]; // TODO: deals with overflows
+
 			mGroups = gcnew List<IGroup^>;
+
+			// group [0] is the whole match
+
+			Group^ group0 = gcnew Group( this, "0", mIndex, mLength );
+			mGroups->Add( group0 );
+
+
+
+
+
+			//.......................
 
 			/*
 			int j = 0;
