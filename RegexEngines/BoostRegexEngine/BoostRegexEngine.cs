@@ -38,7 +38,7 @@ namespace BoostRegexEngineNs
 
 		public string Id => "CppBoostRegex";
 
-		public string Name => "C++ Boost.Regex";
+		public string Name => "Boost.Regex";
 
 		public string EngineVersion => BoostRegexInterop.Matcher.GetBoostVersion( );
 

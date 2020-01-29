@@ -41,6 +41,25 @@ namespace Pcre2RegexInterop
 				mGroups->Add( group );
 			}
 
+			// add failed groups not included in 'rc'
+			{
+				uint32_t capturecount;
+
+				if( pcre2_pattern_info(
+					re,
+					PCRE2_INFO_CAPTURECOUNT,
+					&capturecount ) == 0 )
+				{
+					for( int i = rc; i <= capturecount; ++i )
+					{
+						Group^ group = gcnew Group( this,
+							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
+							-1, 0 );
+						mGroups->Add( group );
+					}
+				}
+			}
+
 			uint32_t namecount;
 
 			(void)pcre2_pattern_info(

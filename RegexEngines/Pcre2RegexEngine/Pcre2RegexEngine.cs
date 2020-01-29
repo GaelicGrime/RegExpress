@@ -27,7 +27,7 @@ namespace Pcre2RegexEngineNs
 
 		public string Id => "CppPcre2Regex";
 
-		public string Name => "C++ PCRE2";
+		public string Name => "PCRE2";
 
 		public string EngineVersion => Pcre2RegexInterop.Matcher.GetPcre2Version( );
 

@@ -32,7 +32,7 @@ namespace StdRegexEngineNs
 
 		public string Id => "CppStdRegex";
 
-		public string Name => "C++ <regex>";
+		public string Name => "<regex>";
 
 		public string EngineVersion => StdRegexInterop.Matcher.GetCRTVersion( );
 
