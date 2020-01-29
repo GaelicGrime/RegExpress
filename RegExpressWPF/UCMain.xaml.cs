@@ -311,8 +311,7 @@ namespace RegExpressWPF
 
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 
-			pnlRegexOptions.Children.Clear( );
-			pnlRegexOptions.Children.Add( CurrentRegexEngine.GetOptionsControl( ) );
+			UpdateOptions( CurrentRegexEngine );
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 
@@ -640,10 +639,19 @@ namespace RegExpressWPF
 			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == engine.Id );
 			cbxEngine.SelectedItem = cbxitem;
 
-			pnlRegexOptions.Children.Clear( );
-			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
+			UpdateOptions( engine );
 		}
 
+
+		void UpdateOptions( IRegexEngine engine )
+		{
+			pnlRegexOptions.Children.Clear( );
+			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
+
+			RegexEngineCapabilityEnum caps = engine.Capabilities;
+
+			cbShowCaptures.IsEnabled = !caps.HasFlag( RegexEngineCapabilityEnum.NoCaptures );
+		}
 
 		#region IDisposable Support
 

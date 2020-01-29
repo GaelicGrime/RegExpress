@@ -22,6 +22,8 @@ namespace BoostRegexInterop
 	{
 	public:
 
+		static Matcher( );
+
 		Matcher( String^ pattern, cli::array<String^>^ options );
 
 		~Matcher( );
@@ -37,12 +39,24 @@ namespace BoostRegexInterop
 
 #pragma endregion IMatcher
 
+	internal:
 
 		const MatcherData* GetData( ) { return mData; }
+
+		property System::Collections::Specialized::StringCollection^ GroupNames
+		{
+			System::Collections::Specialized::StringCollection^ get( )
+			{
+				return mGroupNames;
+			}
+		}
 
 	private:
 
 		MatcherData* mData;
+		System::Collections::Specialized::StringCollection^ mGroupNames;
+
+		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
 	};
 
 }

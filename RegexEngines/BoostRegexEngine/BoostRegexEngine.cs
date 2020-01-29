@@ -42,6 +42,9 @@ namespace BoostRegexEngineNs
 
 		public string EngineVersion => BoostRegexInterop.Matcher.GetBoostVersion( );
 
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+
+
 		public event EventHandler OptionsChanged;
 
 

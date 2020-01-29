@@ -36,6 +36,8 @@ namespace StdRegexEngineNs
 
 		public string EngineVersion => StdRegexInterop.Matcher.GetCRTVersion( );
 
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
+
 		public event EventHandler OptionsChanged;
 
 

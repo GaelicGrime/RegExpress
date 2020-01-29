@@ -76,6 +76,7 @@
     <Compile Include="Matches\RegexMatches.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IRegexEngine.cs" />
+    <Compile Include="RegexEngineCapabilityEnum.cs" />
     <Compile Include="Segment.cs" />
     <Compile Include="SyntaxColouring\ColouredSegments.cs" />
     <Compile Include="SyntaxColouring\Highlights.cs" />

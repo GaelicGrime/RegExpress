@@ -67,10 +67,6 @@ namespace StdRegexInterop
 		{
 			mData->mRegex.assign( std::move( pattern ), regex_flags );
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const regex_error & exc )
 		{
 			//regex_constants::error_type code = exc.code( );
@@ -81,6 +77,10 @@ namespace StdRegexInterop
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{
@@ -139,10 +139,6 @@ namespace StdRegexInterop
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const regex_error & exc )
 		{
 			//regex_constants::error_type code = exc.code( );
@@ -153,6 +149,10 @@ namespace StdRegexInterop
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{

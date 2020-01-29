@@ -18,6 +18,8 @@ namespace RegexEngineInfrastructure
 
 		string EngineVersion { get; }
 
+		RegexEngineCapabilityEnum Capabilities { get; }
+
 		event EventHandler OptionsChanged;
 
 		Control GetOptionsControl( );

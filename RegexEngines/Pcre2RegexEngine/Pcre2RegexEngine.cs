@@ -31,6 +31,8 @@ namespace Pcre2RegexEngineNs
 
 		public string EngineVersion => Pcre2RegexInterop.Matcher.GetPcre2Version( );
 
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
+
 		public event EventHandler OptionsChanged;
 
 

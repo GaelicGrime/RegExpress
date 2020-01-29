@@ -16,8 +16,8 @@ namespace BoostRegexInterop
 	{
 	public:
 
-		Group( Match^ parent, int groupNumber );
-		Group( Match^ parent, int groupNumber, int index, const boost::wcsub_match& submatch );
+		Group( Match^ parent, String^ name );
+		Group( Match^ parent, String^ name, int index, const boost::wcsub_match& submatch );
 
 
 #pragma region ICapture
@@ -60,7 +60,7 @@ namespace BoostRegexInterop
 		{
 			String^ get( )
 			{
-				return mGroupNumber.ToString( ); // TODO: culture?
+				return mName;
 			}
 		}
 
@@ -91,8 +91,8 @@ namespace BoostRegexInterop
 		bool const mSuccess;
 		int const mIndex;
 		int const mLength;
-		int const mGroupNumber;
+		String^ const mName;
 
-		IList<ICapture^>^ mCaptures;
+		IList<ICapture^>^ const mCaptures;
 	};
 }

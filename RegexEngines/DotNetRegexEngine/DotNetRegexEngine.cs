@@ -70,6 +70,10 @@ namespace DotNetRegexEngineNs
 			}
 		}
 
+
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+
+
 		public event EventHandler OptionsChanged;
 
 

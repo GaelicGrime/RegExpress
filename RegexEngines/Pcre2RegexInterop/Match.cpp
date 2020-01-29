@@ -78,14 +78,14 @@ namespace Pcre2RegexInterop
 				}
 			}
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{

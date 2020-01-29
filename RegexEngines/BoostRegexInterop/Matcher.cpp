@@ -5,6 +5,9 @@
 
 
 using namespace System::Diagnostics;
+using namespace System::Text::RegularExpressions;
+using namespace System::Collections::Specialized;
+
 
 using namespace boost;
 using namespace msclr::interop;
@@ -12,6 +15,16 @@ using namespace msclr::interop;
 
 namespace BoostRegexInterop
 {
+
+	static Matcher::Matcher( )
+	{
+		mRegexGroupNames = gcnew Regex(
+			//R"REGEX( \(\? ((?'a'')|<) (?'n'\p{L}\w*?) (?(a)'|>) )REGEX",
+			R"REGEX( \(\? ((?'a'')|<) (?'n'.*?) (?(a)'|>) )REGEX",
+			RegexOptions::Compiled | RegexOptions::ExplicitCapture | RegexOptions::IgnorePatternWhitespace
+		);
+	}
+
 
 	Matcher::Matcher( String^ pattern0, cli::array<String^>^ options )
 		: mData( nullptr )
@@ -98,10 +111,27 @@ namespace BoostRegexInterop
 			mData->mMatchFlags = match_flags;
 
 			mData->mRegex.assign( std::move( pattern ), regex_flags );
-		}
-		catch( Exception^ )
-		{
-			throw;
+
+			//?auto nsubs = mData->mRegex.get_named_subs( );
+
+			// try identifying group names
+
+			mGroupNames = nullptr;
+
+			auto matches = mRegexGroupNames->Matches( pattern0 );
+			if( matches->Count > 0 )
+			{
+				mGroupNames = gcnew StringCollection;
+
+				for( int i = 0; i < matches->Count; ++i )
+				{
+					auto n = matches[i]->Groups["n"];
+					if( n->Success )
+					{
+						mGroupNames->Add( n->Value );
+					}
+				}
+			}
 		}
 		catch( const regex_error & exc )
 		{
@@ -113,6 +143,10 @@ namespace BoostRegexInterop
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{
@@ -180,10 +214,6 @@ namespace BoostRegexInterop
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const regex_error & exc )
 		{
 			//regex_constants::error_type code = exc.code( );
@@ -194,6 +224,10 @@ namespace BoostRegexInterop
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{

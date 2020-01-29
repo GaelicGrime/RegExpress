@@ -75,14 +75,14 @@ namespace Pcre2RegexInterop
 			mData->mRe = re;
 			mData->mMatcherOptions = matcher_options;
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{
@@ -310,14 +310,14 @@ namespace Pcre2RegexInterop
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{

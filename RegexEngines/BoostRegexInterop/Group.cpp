@@ -9,33 +9,32 @@
 namespace BoostRegexInterop
 {
 
-	Group::Group( Match^ parent, int groupNumber )
+	Group::Group( Match^ parent, String^ name )
 		:
 		mParent( parent ),
-		mGroupNumber( groupNumber ),
+		mName( name ),
 		mSuccess( false ),
 		mIndex( 0 ),
-		mLength( 0 )
+		mLength( 0 ),
+		mCaptures( gcnew List<ICapture^> )
 	{
-		mCaptures = gcnew List<ICapture^>;
 
 	}
 
 
-	Group::Group( Match^ parent, int groupNumber, int index, const boost::wcsub_match& submatch )
+	Group::Group( Match^ parent, String^ name, int index, const boost::wcsub_match& submatch )
 		:
 		mParent( parent ),
-		mGroupNumber( groupNumber ),
+		mName( name ),
 		mSuccess( submatch.matched ),
 		mIndex( index ), // TODO: deals with overflows
-		mLength( submatch.length( ) ) // TODO: deals with overflows
+		mLength( submatch.length( ) ), // TODO: deals with overflows
+		mCaptures( gcnew List<ICapture^> )
 	{
 		// TODO: extract group name
 
 		try
 		{
-			mCaptures = gcnew List<ICapture^>;
-
 			const MatcherData* d = parent->Parent->GetData( );
 
 			for( const boost::wcsub_match& c : submatch.captures( ) )
@@ -49,10 +48,6 @@ namespace BoostRegexInterop
 				mCaptures->Add( capture );
 			}
 		}
-		catch( Exception^ )
-		{
-			throw;
-		}
 		catch( const boost::regex_error & exc )
 		{
 			//regex_constants::error_type code = exc.code( );
@@ -63,6 +58,10 @@ namespace BoostRegexInterop
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw exc;
 		}
 		catch( ... )
 		{

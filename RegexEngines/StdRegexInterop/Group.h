@@ -85,6 +85,6 @@ namespace StdRegexInterop
 		int const mLength;
 		int const mGroupNumber;
 
-		IEnumerable<ICapture^>^ mCaptures;
+		IEnumerable<ICapture^>^ const mCaptures;
 	};
 }
