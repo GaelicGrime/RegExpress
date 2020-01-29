@@ -11,6 +11,23 @@ using namespace RegexEngineInfrastructure::Matches;
 namespace Pcre2RegexInterop
 {
 
+	public ref class OptionInfo
+	{
+	public:
+		int const Flag;
+		String^ const FlagName;
+		String^ const Note;
+
+		OptionInfo( int flag, String^ flagName, String^ note )
+			:
+			Flag( flag ),
+			FlagName( flagName ),
+			Note( note )
+		{
+		}
+	};
+
+
 	struct MatcherData
 	{
 		std::wstring mText;
@@ -37,22 +54,6 @@ namespace Pcre2RegexInterop
 				pcre2_code_free( mRe );
 				mRe = nullptr;
 			}
-		}
-	};
-
-
-	public ref class OptionInfo
-	{
-	public:
-		property int	 Flag;
-		property String^ FlagName;
-		property String^ Note;
-
-		OptionInfo( int flag, String^ flagName, String^ note )
-		{
-			Flag = flag;
-			FlagName = flagName;
-			Note = note;
 		}
 	};
 

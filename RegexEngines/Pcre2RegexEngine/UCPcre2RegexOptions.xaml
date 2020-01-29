@@ -21,9 +21,7 @@
             </Label>
             <StackPanel x:Name="pnlCompileOptions"/>
 
-            <Separator/>
-
-            <Label Margin="0" Padding="0">
+            <Label Margin="0 2 0 0" Padding="0">
                 <Italic>Matcher Options</Italic>
             </Label>
             <StackPanel x:Name="pnlMatchOptions"/>

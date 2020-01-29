@@ -10,8 +10,7 @@
              >
 
     <UserControl.Resources>
-        <Style x:Key="MyCheckbox" TargetType="CheckBox">
-            <Setter Property="Content" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={local:NoUnderline}}"/>
+        <Style TargetType="CheckBox">
             <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
             <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
         </Style>
@@ -47,49 +46,16 @@
                 </ComboBox>
             </StackPanel>
 
-            <StackPanel x:Name="pnl1" Orientation="Vertical" VerticalAlignment="Top" Margin="0">
-                <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}"/>
+            <Label Margin="0" Padding="0">
+                <Italic>Compiler Options</Italic>
+            </Label>
+            <StackPanel x:Name="pnlCompileOptions"/>
 
-                <!--<CheckBox Tag="newline_alt" Style="{StaticResource MyCheckbox}"/>-->
-                <CheckBox Tag="no_except" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="save_subexpression_location" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="no_mod_m" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="no_mod_s" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="mod_s" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="mod_x" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="no_empty_expressions" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="no_escape_in_lists" Style="{StaticResource MyCheckbox}"/>
-                <!--<CheckBox Tag="no_bk_refs" Style="{StaticResource MyCheckbox}"/>-->
-                <CheckBox Tag="no_char_classes" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="no_intervals" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="bk_plus_qm" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="bk_vbar" Style="{StaticResource MyCheckbox}"/>
+            <Label Margin="0 2 0 0" Padding="0">
+                <Italic>Matcher Options</Italic>
+            </Label>
+            <StackPanel x:Name="pnlMatchOptions"/>
 
-                <Separator/>
-
-                <CheckBox Tag="match_default" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_bob" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_eob" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_bol" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_eol" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_bow" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_eow" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_any" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_null" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_continuous" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_partial" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_single_line" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_dot_newline" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_not_dot_null" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_posix" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_perl" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_nosubs" Style="{StaticResource MyCheckbox}"/>
-                <CheckBox Tag="match_extra" Style="{StaticResource MyCheckbox}"/>
-            </StackPanel>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -32,6 +32,44 @@ namespace BoostRegexEngineNs
 		public UCBoostRegexOptions( )
 		{
 			InitializeComponent( );
+
+			// insert checkboxes
+
+			{
+				List<BoostRegexInterop.OptionInfo> compile_options = BoostRegexInterop.Matcher.GetCompileOptions( );
+
+				foreach( var o in compile_options )
+				{
+					var tb = new TextBlock( );
+					new Run( o.FlagName, tb.ContentEnd );
+					new Run( " – " + o.Note, tb.ContentEnd );
+
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						//Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+						Content = tb
+					};
+
+					pnlCompileOptions.Children.Add( cb );
+				}
+			}
+
+			{
+				List<BoostRegexInterop.OptionInfo> match_options = BoostRegexInterop.Matcher.GetMatchOptions( );
+
+				foreach( var o in match_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+					};
+
+					pnlMatchOptions.Children.Add( cb );
+				}
+
+			}
 		}
 
 
@@ -56,13 +94,19 @@ namespace BoostRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			var cbs = pnl1.Children.OfType<CheckBox>( );
-
-			return cbs
+			return
+				( new[] { ( (ComboBoxItem)cbxGrammar.SelectedItem )?.Tag.ToString( ) ?? "ECMAScript" } )
+				.Concat(
+				pnlCompileOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) )
-					.Concat( new[] { ( (ComboBoxItem)cbxGrammar.SelectedItem ).Tag.ToString( ) } )
-					.ToArray( );
+				)
+				.Concat(
+				pnlMatchOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) )
+				)
+				.ToArray( );
 		}
 
 
@@ -75,13 +119,17 @@ namespace BoostRegexEngineNs
 				options = options ?? new string[] { };
 
 				var g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
+				if( g == null ) g = cbxGrammar.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => i.Tag.ToString( ) == "ECMAScript" );
 				cbxGrammar.SelectedItem = g;
 
-				var cbs = pnl1.Children.OfType<CheckBox>( );
-
-				foreach( var cb in cbs )
+				foreach( var cb in pnlCompileOptions.Children.OfType<CheckBox>( ) )
 				{
-					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+					cb.IsChecked = options.Contains( cb.Tag );
+				}
+
+				foreach( var cb in pnlMatchOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag );
 				}
 			}
 			finally

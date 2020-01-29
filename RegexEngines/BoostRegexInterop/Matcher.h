@@ -10,6 +10,23 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace BoostRegexInterop
 {
+	public ref class OptionInfo
+	{
+	public:
+		int const Flag;
+		String^ const FlagName;
+		String^ const Note;
+
+		OptionInfo( int flag, String^ flagName, String^ note )
+			:
+			Flag( flag ),
+			FlagName( flagName ),
+			Note( note )
+		{
+		}
+	};
+
+
 	struct MatcherData
 	{
 		std::wstring mText;
@@ -32,6 +49,8 @@ namespace BoostRegexInterop
 
 		static String^ GetBoostVersion( );
 
+		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
+		static List<OptionInfo^>^ GetMatchOptions( ) { return mMatchOptions; }
 
 #pragma region IMatcher
 
@@ -56,7 +75,11 @@ namespace BoostRegexInterop
 		MatcherData* mData;
 		System::Collections::Specialized::StringCollection^ mGroupNames;
 
+		static List<OptionInfo^>^ mCompileOptions;
+		static List<OptionInfo^>^ mMatchOptions;
 		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
+
+		static void BuildOptions( );
 	};
 
 }

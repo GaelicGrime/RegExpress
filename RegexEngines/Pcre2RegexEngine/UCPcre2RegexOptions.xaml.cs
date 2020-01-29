@@ -34,6 +34,8 @@ namespace Pcre2RegexEngineNs
 		{
 			InitializeComponent( );
 
+			// insert checkboxes
+
 			{
 				List<Pcre2RegexInterop.OptionInfo> compile_options = Pcre2RegexInterop.Matcher.GetCompileOptions( );
 

@@ -23,6 +23,8 @@ namespace BoostRegexInterop
 			R"REGEX( \(\? ((?'a'')|<) (?'n'.*?) (?(a)'|>) )REGEX",
 			RegexOptions::Compiled | RegexOptions::ExplicitCapture | RegexOptions::IgnorePatternWhitespace
 		);
+
+		BuildOptions( );
 	}
 
 
@@ -236,4 +238,55 @@ namespace BoostRegexInterop
 		}
 	}
 
+
+	void Matcher::BuildOptions( )
+	{
+#define C(f, n) \
+	list->Add(gcnew OptionInfo( regex_constants::##f, gcnew String(#f), gcnew String(n)));
+
+		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
+
+		C( icase, "without regard to case" );
+		C( nosubs, "no sub-expression matches are to be stored" );
+		C( optimize, "currently has no effect for Boost.Regex" );
+		C( collate, "character ranges of the form [a-b] should be locale sensitive" );
+		//?C( newline_alt, "the \\n character has the same effect as the alternation operator |" );
+		C( no_except, "prevents from throwing an exception when an invalid expression is encountered" );
+		C( no_mod_m, "disable m modifier" );
+		C( no_mod_s, "force s modifier off" );
+		C( mod_s, "match \".\" against a newline character" );
+		C( mod_x, "causes unescaped whitespace in the expression to be ignored" );
+		C( no_empty_expressions, "empty expressions/alternatives are prohibited" );
+		//save_subexpression_location, When set then the locations of individual sub-expressions within the original regular expression string can be accessed via the subexpression() member function of basic_regex. 
+
+		// TODO: define extra-options too
+
+		mCompileOptions = list;
+
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( match_not_bob, "\"\\A\" and \"\\`\" should not match against the sub-sequence [first,first)" );
+		C( match_not_eob, "\"\\'\", \"\\z\" and \"\\Z\" should not match against the sub-sequence [last,last)" );
+		C( match_not_bol, "\"^\" should not be matched against the sub-sequence [first,first)" );
+		C( match_not_eol, "\"$\" should not be matched against the sub-sequence [last,last)" );
+		C( match_not_bow, "\"\\<\" and \"\\b\" should not be matched against the sub-sequence [first,first)" );
+		C( match_not_eow, "\"\\>\" and \"\\b\" should not be matched against the sub-sequence [last,last)" );
+		C( match_any, "any match is an acceptable result" );
+		C( match_not_null, "the expression can not be matched against an empty sequence" );
+		C( match_continuous, "the expression must match a sub-sequence that begins at first" );
+		C( match_partial, "find partial matches" );
+		C( match_extra, "retain all available capture information" );
+		C( match_single_line, "^ only matches at the start of the text, $ only matches at the end of the text" );
+		C( match_prev_avail, "valid expression assumed before the start of text" );
+		C( match_not_dot_newline, "\"\.\" does not match a newline character" );
+		C( match_not_dot_null, "\"\.\" does not match a character null '\\0'" );
+		C( match_posix, "expression should be matched according to the POSIX leftmost-longest rule" );
+		C( match_perl, "the expression should be matched according to the Perl matching rules" );
+		C( match_nosubs, "don't trap marked subs" );
+
+		mMatchOptions = list;
+
+#undef C
+	}
 }
