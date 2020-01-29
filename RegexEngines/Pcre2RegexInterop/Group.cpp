@@ -9,30 +9,17 @@
 namespace Pcre2RegexInterop
 {
 
-	//Group::Group( Match^ parent, int groupNumber )
-	//	:
-	//	mParent( parent ),
-	//	mGroupNumber( groupNumber ),
-	//	mSuccess( false ),
-	//	mIndex( 0 ),
-	//	mLength( 0 )
-	//{
-	//	mCaptures = gcnew List<ICapture^>;
-
-	//}
-
-
 	Group::Group( Match^ parent, String^ name, int index, int length )
 		:
 		mParent( parent ),
 		mName( name ),
-		mSuccess( true ), //..............................
+		mSuccess( index >= 0 ),
 		mIndex( index ), // TODO: deals with overflows
-		mLength( length ) // .....................
+		mLength( length ),
+		mCaptures( gcnew List<ICapture^>( ) )
 	{
 		try
 		{
-			mCaptures = gcnew List<ICapture^>;
 
 			//...............
 			/*
@@ -73,6 +60,8 @@ namespace Pcre2RegexInterop
 
 	String^ Group::Value::get( )
 	{
+		if( !mSuccess ) return String::Empty;
+
 		const MatcherData* data = mParent->Parent->GetData( );
 
 		return gcnew String( data->mText.c_str( ), mIndex, mLength );

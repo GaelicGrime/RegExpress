@@ -14,7 +14,10 @@ namespace Pcre2RegexInterop
 	Match::Match( Matcher^ parent, pcre2_code* re, PCRE2_SIZE* ovector, int rc )
 		:
 		mParent( parent ),
-		mSuccess( true ) //.................
+		mSuccess( ovector[0] >= 0 ),
+		mIndex( ovector[0] ), // TODO: deals with overflows
+		mLength( ovector[1] - ovector[0] ), // TODO: deals with overflows
+		mGroups( gcnew List<IGroup^> )
 	{
 		Debug::Assert( rc > 0 );
 
@@ -26,11 +29,6 @@ namespace Pcre2RegexInterop
 				throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
 					"\\K was used in an assertion to set the match start after its end." ) );
 			}
-
-			mIndex = ovector[0]; // TODO: deals with overflows
-			mLength = ovector[1] - ovector[0]; // TODO: deals with overflows
-
-			mGroups = gcnew List<IGroup^>;
 
 			// add all groups; the names will be put later
 			// group [0] is the whole match

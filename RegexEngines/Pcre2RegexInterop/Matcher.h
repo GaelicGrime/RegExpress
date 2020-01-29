@@ -71,8 +71,8 @@ namespace Pcre2RegexInterop
 
 		static String^ GetPcre2Version( );
 
-		static List<OptionInfo^>^ GetCompileOptions( );
-		static List<OptionInfo^>^ GetMatchOptions( );
+		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
+		static List<OptionInfo^>^ GetMatchOptions( ) { return mMatchOptions; }
 
 
 #pragma region IMatcher
@@ -88,13 +88,12 @@ namespace Pcre2RegexInterop
 
 		MatcherData* mData;
 
-		static List<OptionInfo^>^ GetCompileOptions0( );
-		static List<OptionInfo^>^ GetMatchOptions0( );
+		static List<OptionInfo^>^ mCompileOptions;
+		static List<OptionInfo^>^ mMatchOptions;
 
-		static List<OptionInfo^>^ CompileOptions0;
-		static List<OptionInfo^>^ MatchOptions0;
+		static IEnumerable<IMatch^>^ mEmptyEnumeration;
 
-		static IEnumerable<IMatch^>^ EmptyEnumeration;
+		static void BuildOptions( );
 	};
 
 }

@@ -15,7 +15,6 @@ namespace Pcre2RegexInterop
 	{
 	public:
 
-		//?Group( Match^ parent, int groupNumber );
 		Group( Match^ parent, String^ name, int index, int length );
 
 
@@ -99,6 +98,6 @@ namespace Pcre2RegexInterop
 		int const mLength;
 		String^ mName;
 
-		IList<ICapture^>^ mCaptures;
+		IList<ICapture^>^ const mCaptures;
 	};
 }

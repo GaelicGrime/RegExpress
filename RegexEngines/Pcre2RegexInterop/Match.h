@@ -102,10 +102,10 @@ namespace Pcre2RegexInterop
 
 		Matcher^ const mParent;
 		bool const mSuccess;
-		int mIndex;
-		int mLength;
+		int const mIndex;
+		int const mLength;
 
-		List<IGroup^>^ mGroups;
+		List<IGroup^>^ const mGroups;
 	};
 
 }

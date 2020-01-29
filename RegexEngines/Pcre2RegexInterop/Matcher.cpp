@@ -14,10 +14,9 @@ namespace Pcre2RegexInterop
 
 	static Matcher::Matcher( )
 	{
-		EmptyEnumeration = gcnew List<IMatch^>( 0 );
+		mEmptyEnumeration = gcnew List<IMatch^>( 0 );
 
-		CompileOptions0 = GetCompileOptions0( );
-		MatchOptions0 = GetMatchOptions0( );
+		BuildOptions( );
 	}
 
 
@@ -32,7 +31,7 @@ namespace Pcre2RegexInterop
 
 			int compiler_options = 0;
 
-			for each( OptionInfo ^ o in CompileOptions0 )
+			for each( OptionInfo ^ o in mCompileOptions )
 			{
 				if( Array::IndexOf( options, "c:" + o->FlagName ) >= 0 )
 				{
@@ -42,7 +41,7 @@ namespace Pcre2RegexInterop
 
 			int matcher_options = 0;
 
-			for each( OptionInfo ^ o in CompileOptions0 )
+			for each( OptionInfo ^ o in mMatchOptions )
 			{
 				if( Array::IndexOf( options, "m:" + o->FlagName ) >= 0 )
 				{
@@ -111,84 +110,6 @@ namespace Pcre2RegexInterop
 	}
 
 
-#define C(f, n) \
-	list->Add(gcnew OptionInfo( f, gcnew String(#f), gcnew String(n)));
-
-
-	List<OptionInfo^>^ Matcher::GetCompileOptions( )
-	{
-		return CompileOptions0;
-	}
-
-
-	List<OptionInfo^>^ Matcher::GetCompileOptions0( )
-	{
-		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
-
-		C( PCRE2_ANCHORED, "Force pattern anchoring" );
-		C( PCRE2_ALLOW_EMPTY_CLASS, "Allow empty classes" );
-		C( PCRE2_ALT_BSUX, "Alternative handling of \\u, \\U, and \\x" );
-		C( PCRE2_ALT_CIRCUMFLEX, "Alternative handling of ^ in multiline mode" );
-		C( PCRE2_ALT_VERBNAMES, "Process backslashes in verb names" );
-		C( PCRE2_AUTO_CALLOUT, "Compile automatic callouts" );
-		C( PCRE2_CASELESS, "Do caseless matching" );
-		C( PCRE2_DOLLAR_ENDONLY, "$ not to match newline at end" );
-		C( PCRE2_DOTALL, ". matches anything including NL" );
-		C( PCRE2_DUPNAMES, "Allow duplicate names for subpatterns" );
-		C( PCRE2_ENDANCHORED, "Pattern can match only at end of subject" );
-		C( PCRE2_EXTENDED, "Ignore white space and # comments" );
-		C( PCRE2_FIRSTLINE, "Force matching to be before newline" );
-		C( PCRE2_LITERAL, "Pattern characters are all literal" );
-		C( PCRE2_MATCH_INVALID_UTF, "Enable support for matching invalid UTF" );
-		C( PCRE2_MATCH_UNSET_BACKREF, "Match unset backreferences" );
-		C( PCRE2_MULTILINE, "^ and $ match newlines within data" );
-		C( PCRE2_NEVER_BACKSLASH_C, "Lock out the use of \\C in patterns" );
-		C( PCRE2_NEVER_UCP, "Lock out PCRE2_UCP, e.g. via (*UCP)" );
-		C( PCRE2_NEVER_UTF, "Lock out PCRE2_UTF, e.g. via (*UTF)" );
-		C( PCRE2_NO_AUTO_CAPTURE, "Disable numbered capturing parentheses (named ones available)" );
-		C( PCRE2_NO_AUTO_POSSESS, "Disable auto-possessification" );
-		C( PCRE2_NO_DOTSTAR_ANCHOR, "Disable automatic anchoring for .*" );
-		C( PCRE2_NO_START_OPTIMIZE, "Disable match-time start optimizations" );
-		C( PCRE2_NO_UTF_CHECK, "Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)" );
-		C( PCRE2_UCP, "Use Unicode properties for \\d, \\w, etc." );
-		C( PCRE2_UNGREEDY, "Invert greediness of quantifiers" );
-		C( PCRE2_USE_OFFSET_LIMIT, "Enable offset limit for unanchored matching" );
-		C( PCRE2_UTF, "Treat pattern and subjects as UTF strings" );
-
-		// TODO: define extra-options too
-
-		return list;
-	}
-
-
-	List<OptionInfo^>^ Matcher::GetMatchOptions( )
-	{
-		return MatchOptions0;
-	}
-
-
-	List<OptionInfo^>^ Matcher::GetMatchOptions0( )
-	{
-		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
-
-		C( PCRE2_ANCHORED, "Match only at the first position" );
-		C( PCRE2_COPY_MATCHED_SUBJECT, "On success, make a private subject copy" );
-		C( PCRE2_ENDANCHORED, "Pattern can match only at end of subject" );
-		C( PCRE2_NOTBOL, "Subject string is not the beginning of a line" );
-		C( PCRE2_NOTEOL, "Subject string is not the end of a line" );
-		C( PCRE2_NOTEMPTY, "An empty string is not a valid match" );
-		C( PCRE2_NOTEMPTY_ATSTART, "An empty string at the start of the subject is not a valid match" );
-		C( PCRE2_NO_JIT, "Do not use JIT matching" );
-		C( PCRE2_NO_UTF_CHECK, "Do not check the subject for UTF validity (only relevant if PCRE2_UTF was set at compile time)" );
-		C( PCRE2_PARTIAL_HARD, "Return PCRE2_ERROR_PARTIAL for a partial match even if there is a full match" );
-		C( PCRE2_PARTIAL_SOFT, "Return PCRE2_ERROR_PARTIAL for a partial match if no full matches are found" );
-
-		return list;
-	}
-
-#undef C
-
-
 	RegexMatches^ Matcher::Matches( String^ text0 )
 	{
 		// TODO: re-implement as lazy enumerator?
@@ -218,7 +139,7 @@ namespace Pcre2RegexInterop
 				{
 				case PCRE2_ERROR_NOMATCH:
 					// no matches
-					return gcnew RegexMatches( 0, EmptyEnumeration );
+					return gcnew RegexMatches( 0, mEmptyEnumeration );
 				default:
 				{
 					PCRE2_UCHAR buffer[256];
@@ -405,4 +326,64 @@ namespace Pcre2RegexInterop
 		}
 	}
 
+
+	void Matcher::BuildOptions( )
+	{
+#define C(f, n) \
+	list->Add(gcnew OptionInfo( f, gcnew String(#f), gcnew String(n)));
+
+		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
+
+		C( PCRE2_ANCHORED, "Force pattern anchoring" );
+		C( PCRE2_ALLOW_EMPTY_CLASS, "Allow empty classes" );
+		C( PCRE2_ALT_BSUX, "Alternative handling of \\u, \\U, and \\x" );
+		C( PCRE2_ALT_CIRCUMFLEX, "Alternative handling of ^ in multiline mode" );
+		C( PCRE2_ALT_VERBNAMES, "Process backslashes in verb names" );
+		C( PCRE2_AUTO_CALLOUT, "Compile automatic callouts" );
+		C( PCRE2_CASELESS, "Do caseless matching" );
+		C( PCRE2_DOLLAR_ENDONLY, "$ not to match newline at end" );
+		C( PCRE2_DOTALL, ". matches anything including NL" );
+		C( PCRE2_DUPNAMES, "Allow duplicate names for subpatterns" );
+		C( PCRE2_ENDANCHORED, "Pattern can match only at end of subject" );
+		C( PCRE2_EXTENDED, "Ignore white space and # comments" );
+		C( PCRE2_FIRSTLINE, "Force matching to be before newline" );
+		C( PCRE2_LITERAL, "Pattern characters are all literal" );
+		C( PCRE2_MATCH_INVALID_UTF, "Enable support for matching invalid UTF" );
+		C( PCRE2_MATCH_UNSET_BACKREF, "Match unset backreferences" );
+		C( PCRE2_MULTILINE, "^ and $ match newlines within data" );
+		C( PCRE2_NEVER_BACKSLASH_C, "Lock out the use of \\C in patterns" );
+		C( PCRE2_NEVER_UCP, "Lock out PCRE2_UCP, e.g. via (*UCP)" );
+		C( PCRE2_NEVER_UTF, "Lock out PCRE2_UTF, e.g. via (*UTF)" );
+		C( PCRE2_NO_AUTO_CAPTURE, "Disable numbered capturing parentheses (named ones available)" );
+		C( PCRE2_NO_AUTO_POSSESS, "Disable auto-possessification" );
+		C( PCRE2_NO_DOTSTAR_ANCHOR, "Disable automatic anchoring for .*" );
+		C( PCRE2_NO_START_OPTIMIZE, "Disable match-time start optimizations" );
+		C( PCRE2_NO_UTF_CHECK, "Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)" );
+		C( PCRE2_UCP, "Use Unicode properties for \\d, \\w, etc." );
+		C( PCRE2_UNGREEDY, "Invert greediness of quantifiers" );
+		C( PCRE2_USE_OFFSET_LIMIT, "Enable offset limit for unanchored matching" );
+		C( PCRE2_UTF, "Treat pattern and subjects as UTF strings" );
+
+		// TODO: define extra-options too
+
+		mCompileOptions = list;
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( PCRE2_ANCHORED, "Match only at the first position" );
+		C( PCRE2_COPY_MATCHED_SUBJECT, "On success, make a private subject copy" );
+		C( PCRE2_ENDANCHORED, "Pattern can match only at end of subject" );
+		C( PCRE2_NOTBOL, "Subject string is not the beginning of a line" );
+		C( PCRE2_NOTEOL, "Subject string is not the end of a line" );
+		C( PCRE2_NOTEMPTY, "An empty string is not a valid match" );
+		C( PCRE2_NOTEMPTY_ATSTART, "An empty string at the start of the subject is not a valid match" );
+		C( PCRE2_NO_JIT, "Do not use JIT matching" );
+		C( PCRE2_NO_UTF_CHECK, "Do not check the subject for UTF validity (only relevant if PCRE2_UTF was set at compile time)" );
+		C( PCRE2_PARTIAL_HARD, "Return PCRE2_ERROR_PARTIAL for a partial match even if there is a full match" );
+		C( PCRE2_PARTIAL_SOFT, "Return PCRE2_ERROR_PARTIAL for a partial match if no full matches are found" );
+
+		mMatchOptions = list;
+
+#undef C
+	}
 }

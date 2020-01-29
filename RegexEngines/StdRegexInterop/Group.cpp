@@ -37,6 +37,8 @@ namespace StdRegexInterop
 
 	String^ Group::Value::get( )
 	{
+		if( !mSuccess ) return String::Empty;
+
 		const MatcherData* data = mParent->Parent->GetData( );
 
 		return gcnew String( data->mText.c_str( ), mIndex, mLength );
