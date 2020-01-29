@@ -649,8 +649,12 @@ namespace RegExpressWPF
 			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
 
 			RegexEngineCapabilityEnum caps = engine.Capabilities;
+			bool captures_supported = !caps.HasFlag( RegexEngineCapabilityEnum.NoCaptures );
 
-			cbShowCaptures.IsEnabled = !caps.HasFlag( RegexEngineCapabilityEnum.NoCaptures );
+			// showing unchecked checkbox when disabled
+			cbShowCaptures.IsEnabled = captures_supported;
+			cbShowCaptures.Visibility = captures_supported ? Visibility.Visible : Visibility.Collapsed;
+			cbShowCapturesDisabledUnchecked.Visibility = !captures_supported ? Visibility.Visible : Visibility.Collapsed;
 		}
 
 		#region IDisposable Support

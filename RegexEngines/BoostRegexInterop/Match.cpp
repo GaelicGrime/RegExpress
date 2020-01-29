@@ -48,7 +48,7 @@ namespace BoostRegexInterop
 				const boost::wcsub_match& submatch = *i;
 
 				String^ name = nullptr;
-				if( names && !names->TryGetValue( j, name ) ) name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
+				if( !names || !names->TryGetValue( j, name ) ) name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
 
 				if( !submatch.matched )
 				{

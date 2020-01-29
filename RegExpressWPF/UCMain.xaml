@@ -142,6 +142,7 @@
                                 <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                 <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                 <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                <CheckBox x:Name="cbShowCapturesDisabledUnchecked" Content="{Binding Content, ElementName=cbShowCaptures}" IsEnabled="False" Visibility="Collapsed"/>
                                 <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
                                     <TextBlock>
                                             Show whitespaces 
