@@ -42,6 +42,9 @@
     <ClInclude Include="Matcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pch-boost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">

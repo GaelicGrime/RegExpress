@@ -26,9 +26,7 @@ Recalled steps:
 
 - In Visual Studio, create a filter: "Boost", and add all files from "boost_1_72_0_min\libs\regex\src".
 
-- In Properties for these files only, set: "Forced Include File: pch.h". Keep "Precompiled Header: Use".
-
-- In "pch.h", add this:
+- Create "pch-boost.h", add this:
 
 	//#define BOOST_REGEX_DYN_LINK
 	#define BOOST_REGEX_NO_LIB
@@ -39,7 +37,15 @@ Recalled steps:
 
 	#define BOOST_REGEX_MATCH_EXTRA // for captures
 
+- In "pch.h", add:
+
+	#include "pch-boost.h"
 	#include "boost/regex.hpp"
+
+- In Properties for these files only, all configurations, set: 
+
+	"Forced Include File: $(ProjectDir)pch-boost.h",
+	"Precompiled Header: Not Using...".
 
 - In Project Properties, for all configurations, in VC++ Directories, Include Directories, add this:
 
@@ -91,12 +97,16 @@ The file "pcre2demo.c" is a useful example, which should be excluded from build 
 		https://stackoverflow.com/questions/32580066/using-pcre2-in-a-c-project
 		https://github.com/ltrzesniewski/pcre-net
 
-- Add to "pch.h" (instead of defining in Project Properties):
+- Create "pch-pcre2.h":
 
 	#define HAVE_CONFIG_H
+	#define PCRE2_CODE_UNIT_WIDTH 16
+	//#define SUPPORT_JIT 1
+	#define PCRE2_EXP_DEFN
+	#define SUPPORT_UNICODE
 
-Also add:
 	#include "PCRE2.h"
+
 
 To support JIT:
 
@@ -105,15 +115,22 @@ To support JIT:
 But also use the files from "src\sljit".
 
 
+- Add to "pch.h" (instead of defining in Project Properties):
+
+	#include "pch-pcre2.h"
+
+
 - In Project Properties, for all configurations, in VC++ Directories, Include Directories, add this:
 
 	$(ProjectDir)PCRE2 
 
 Quotation marks were not needed.
 
-- Create "pch-c.h" and "pch-c.c" and arrange creating the second Precompiled Header (with separate output name).
-Make sure "pch-c.c" is compiled as C without "/clr".
  
-- In Properties for PCRE2 .c files only, set: "Forced Include File: pch-c.h". Keep "Precompiled Header: Use".
+- In Properties for PCRE2 .c files only, set: 
+
+	"Forced Include File: pch-pcre2.h",
+	"Precompiled Header: Not Using...".
+
 Also set "Compile as C++ (/TP)". Also remove "/clr" option.
 

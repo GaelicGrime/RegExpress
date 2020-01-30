@@ -279,8 +279,8 @@ namespace BoostRegexInterop
 		C( match_extra, "retain all available capture information" );
 		C( match_single_line, "^ only matches at the start of the text, $ only matches at the end of the text" );
 		C( match_prev_avail, "valid expression assumed before the start of text" );
-		C( match_not_dot_newline, "\"\.\" does not match a newline character" );
-		C( match_not_dot_null, "\"\.\" does not match a character null '\\0'" );
+		C( match_not_dot_newline, "\".\" does not match a newline character" );
+		C( match_not_dot_null, "\".\" does not match a character null '\\0'" );
 		C( match_posix, "expression should be matched according to the POSIX leftmost-longest rule" );
 		C( match_perl, "the expression should be matched according to the Perl matching rules" );
 		C( match_nosubs, "don't trap marked subs" );

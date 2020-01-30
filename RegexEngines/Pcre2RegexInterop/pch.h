@@ -15,8 +15,9 @@
 
 // See "NON-AUTOTOOLS-BUILD" files from PCRE2
 
-// See also "pch-c.h"
-#include "pch-c.h"
+// See also "pch-pcre2.h"
+#include "pch-pcre2.h"
+#include "PCRE2.h"
 
 #include <msclr\marshal_cppstd.h>
 #include <exception>
