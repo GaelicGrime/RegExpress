@@ -24,7 +24,7 @@ Recalled steps:
 
 - Copy "<downloaded Boost>\libs\regex\src" into "boost_1_72_0_min\libs\regex\src".
 
-- In Visual Studio, create a filter: "Boost", and add al of files from "boost_1_72_0_min\libs\regex\src".
+- In Visual Studio, create a filter: "Boost", and add all files from "boost_1_72_0_min\libs\regex\src".
 
 - In Properties for these files only, set: "Forced Include File: pch.h". Keep "Precompiled Header: Use".
 
@@ -65,4 +65,55 @@ minimal set of subfilders were copied from "<downloaded Boost>\boost" to "boost_
 	utility
 
 - Use the classes.
+
+
+-----------------------
+Integrating PCRE2
+-----------------------
+
+Recalled steps:
+
+
+- Download from http://www.pcre.org/ ("pcre2-10.34.tar.gz" from https://ftp.pcre.org/pub/pcre/).
+
+- Create a project's subfolder on disk: "PCRE2". In Visual Studio, create new filter: "PCRE2".
+Use them for PCRE files.
+
+Note that some of source files, such as "pcre2_jit_match.c", "pcre2_jit_misc.c" should be copied, 
+but excluded from build. (They are included using #include).
+
+The file "pcre2demo.c" is a useful example, which should be excluded from build as well.
+
+- Follow the steps from "NON-AUTOTOOLS-BUILD" file of PCRE.
+
+	See also: 
+		https://github.com/kiyolee/pcre2-win-build
+		https://stackoverflow.com/questions/32580066/using-pcre2-in-a-c-project
+		https://github.com/ltrzesniewski/pcre-net
+
+- Add to "pch.h" (instead of defining in Project Properties):
+
+	#define HAVE_CONFIG_H
+
+Also add:
+	#include "PCRE2.h"
+
+To support JIT:
+
+	#define SUPPORT_JIT 1
+
+But also use the files from "src\sljit".
+
+
+- In Project Properties, for all configurations, in VC++ Directories, Include Directories, add this:
+
+	$(ProjectDir)PCRE2 
+
+Quotation marks were not needed.
+
+- Create "pch-c.h" and "pch-c.c" and arrange creating the second Precompiled Header (with separate output name).
+Make sure "pch-c.c" is compiled as C without "/clr".
+ 
+- In Properties for PCRE2 .c files only, set: "Forced Include File: pch-c.h". Keep "Precompiled Header: Use".
+Also set "Compile as C++ (/TP)". Also remove "/clr" option.
 

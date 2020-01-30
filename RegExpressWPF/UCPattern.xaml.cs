@@ -447,7 +447,9 @@ namespace RegExpressWPF
 			{
 				var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
 
-				highlights = regex_engine.HighlightPattern( cnc, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
+				highlights = new Highlights( );
+
+				regex_engine.HighlightPattern( cnc, highlights, td.Text, td.SelectionStart, td.SelectionEnd, visible_segment );
 			}
 
 			if( cnc.IsCancellationRequested ) return;

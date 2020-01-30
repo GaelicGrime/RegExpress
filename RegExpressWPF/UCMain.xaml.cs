@@ -58,8 +58,9 @@ namespace RegExpressWPF
 			RegexEngines = new[]
 			{
 				DefaultRegexEngine,
-				new CppStdRegexEngineNs.CppStdRegexEngine( ),
-				new CppBoostRegexEngineNs.CppBoostRegexEngine( ),
+				new StdRegexEngineNs.StdRegexEngine( ),
+				new BoostRegexEngineNs.BoostRegexEngine( ),
+				new Pcre2RegexEngineNs.Pcre2RegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
@@ -310,8 +311,7 @@ namespace RegExpressWPF
 
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 
-			pnlRegexOptions.Children.Clear( );
-			pnlRegexOptions.Children.Add( CurrentRegexEngine.GetOptionsControl( ) );
+			UpdateOptions( CurrentRegexEngine );
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 
@@ -639,10 +639,26 @@ namespace RegExpressWPF
 			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == engine.Id );
 			cbxEngine.SelectedItem = cbxitem;
 
-			pnlRegexOptions.Children.Clear( );
-			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
+			UpdateOptions( engine );
 		}
 
+
+		void UpdateOptions( IRegexEngine engine )
+		{
+			pnlRegexOptions.Children.Clear( );
+			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
+
+			RegexEngineCapabilityEnum caps = engine.Capabilities;
+			bool captures_supported = !caps.HasFlag( RegexEngineCapabilityEnum.NoCaptures );
+
+			// showing unchecked checkbox when disabled
+			cbShowCaptures.IsEnabled = captures_supported;
+			cbShowCaptures.Visibility = captures_supported ? Visibility.Visible : Visibility.Collapsed;
+			cbShowCapturesDisabledUnchecked.Visibility = !captures_supported ? Visibility.Visible : Visibility.Collapsed;
+
+			// inelegant, but works
+			runShowCapturesNote.Text = engine is BoostRegexEngineNs.BoostRegexEngine ? "(requires ‘match_extra’)" : string.Empty;
+		}
 
 		#region IDisposable Support
 

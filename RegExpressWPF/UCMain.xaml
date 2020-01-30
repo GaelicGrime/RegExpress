@@ -116,7 +116,7 @@
                 </StackPanel>
 
                 <Border Grid.Row="1" BorderThickness="1" BorderBrush="#FFABADB3" Margin="0,4,0,0">
-                    <ScrollViewer Margin="0" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Margin="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <StackPanel >
                             <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
                                 <StackPanel.LayoutTransform>
@@ -141,7 +141,13 @@
                             <StackPanel Margin="3 0 0 0">
                                 <CheckBox x:Name="cbShowFirstOnly" Content="Show first match only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                 <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
-                                <CheckBox x:Name="cbShowCaptures" Content="Show captures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
+                                <CheckBox x:Name="cbShowCaptures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged">
+                                    <TextBlock>
+                                        <Run>Show captures </Run>
+                                        <Run x:Name="runShowCapturesNote">(requires ‘match_extra’)</Run>
+                                    </TextBlock>
+                                </CheckBox>
+                                <CheckBox x:Name="cbShowCapturesDisabledUnchecked" Content="Show captures" IsEnabled="False" Visibility="Collapsed"/>
                                 <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
                                     <TextBlock>
                                             Show whitespaces 

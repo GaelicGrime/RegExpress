@@ -838,6 +838,12 @@ namespace RegExpressWPF
 						continue;
 					}
 
+					if( c >= 0x21 && c <= 0x7E )
+					{
+						AppendNormal( c );
+						continue;
+					}
+
 					switch( char.GetUnicodeCategory( c ) )
 					{
 					case UnicodeCategory.UppercaseLetter:
@@ -960,7 +966,7 @@ namespace RegExpressWPF
 
 			private void AppendCode( char c )
 			{
-				AppendSpecial( $@"\u{(int)c:D4}" );
+				AppendSpecial( $@"\u{(int)c:X4}" );
 			}
 
 

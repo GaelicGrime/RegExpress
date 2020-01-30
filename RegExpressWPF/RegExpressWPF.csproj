@@ -172,13 +172,17 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RegexEngines\CppBoostRegexEngine\CppBoostRegexEngine.csproj">
+    <ProjectReference Include="..\RegexEngines\BoostRegexEngine\BoostRegexEngine.csproj">
       <Project>{773e3bd2-e5b0-49b5-af57-12d8ca5c8c8b}</Project>
-      <Name>CppBoostRegexEngine</Name>
+      <Name>BoostRegexEngine</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RegexEngines\CppStdRegexEngine\CppStdRegexEngine.csproj">
+    <ProjectReference Include="..\RegexEngines\Pcre2RegexEngine\Pcre2RegexEngine.csproj">
+      <Project>{b7beb394-9f76-4f5f-b7fb-d88369d98c54}</Project>
+      <Name>Pcre2RegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\StdRegexEngine\StdRegexEngine.csproj">
       <Project>{1bc5cc50-c0f6-4598-934f-e772938da825}</Project>
-      <Name>CppStdRegexEngine</Name>
+      <Name>StdRegexEngine</Name>
     </ProjectReference>
     <ProjectReference Include="..\RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj">
       <Project>{024a9f29-ae01-4987-86e5-ca4c0cb69e7c}</Project>

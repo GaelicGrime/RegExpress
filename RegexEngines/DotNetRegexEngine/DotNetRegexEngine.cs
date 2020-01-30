@@ -70,6 +70,10 @@ namespace DotNetRegexEngineNs
 			}
 		}
 
+
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+
+
 		public event EventHandler OptionsChanged;
 
 
@@ -214,10 +218,8 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public Highlights HighlightPattern( ICancellable cnc, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
+		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			Highlights highlights = new Highlights( );
-
 			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
 
 			var parentheses = new List<(int Index, char Value)>( );
@@ -226,7 +228,7 @@ namespace DotNetRegexEngineNs
 			{
 				Debug.Assert( m.Success );
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// parantheses, '(' or ')'
 				{
@@ -247,7 +249,7 @@ namespace DotNetRegexEngineNs
 					}
 				}
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// character groups, '[...]'
 				{
@@ -272,7 +274,7 @@ namespace DotNetRegexEngineNs
 					}
 				}
 
-				if( cnc.IsCancellationRequested ) return null;
+				if( cnc.IsCancellationRequested ) return;
 
 				// range, '{...}'
 				{
@@ -299,10 +301,10 @@ namespace DotNetRegexEngineNs
 			}
 
 			var parentheses_at_left = parentheses.Where( g => g.Index < selectionStart ).ToArray( );
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			var parentheses_at_right = parentheses.Where( g => g.Index >= selectionStart ).ToArray( );
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( parentheses_at_left.Any( ) )
 			{
@@ -329,7 +331,7 @@ namespace DotNetRegexEngineNs
 				}
 			}
 
-			if( cnc.IsCancellationRequested ) return null;
+			if( cnc.IsCancellationRequested ) return;
 
 			if( parentheses_at_right.Any( ) )
 			{
@@ -355,10 +357,6 @@ namespace DotNetRegexEngineNs
 					if( visibleSegment.Contains( g.Index ) ) highlights.RightPara = new Segment( g.Index, 1 );
 				}
 			}
-
-			if( cnc.IsCancellationRequested ) return null;
-
-			return highlights;
 		}
 
 		#endregion IRegexEngine
