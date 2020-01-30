@@ -29,13 +29,23 @@ namespace Pcre2RegexInterop
 
 			const wchar_t* pattern = context.marshal_as<const wchar_t*>( pattern0 );
 
-			int compiler_options = 0;
+			int compile_options = 0;
 
 			for each( OptionInfo ^ o in mCompileOptions )
 			{
 				if( Array::IndexOf( options, "c:" + o->FlagName ) >= 0 )
 				{
-					compiler_options |= o->Flag;
+					compile_options |= o->Flag;
+				}
+			}
+
+			int extra_compile_options = 0;
+
+			for each( OptionInfo ^ o in mExtraCompileOptions )
+			{
+				if( Array::IndexOf( options, "x:" + o->FlagName ) >= 0 )
+				{
+					extra_compile_options |= o->Flag;
 				}
 			}
 
@@ -51,8 +61,16 @@ namespace Pcre2RegexInterop
 
 			mData = new MatcherData{};
 
-			mData->mAlgorithm = Array::IndexOf( options, "DFA" ) >= 0 ? MatcherData::Algorithm::DFA : MatcherData::Algorithm::Standard;
+			mData->mAlgorithm = Array::IndexOf( options, "DFA" ) >= 0 ? Algorithm::DFA : Algorithm::Standard;
 			mData->mMatcherOptions = matcher_options;
+
+			mData->mCompileContext = pcre2_compile_context_create( NULL );
+			if( mData->mCompileContext == nullptr )
+			{
+				throw gcnew Exception( "PCRE2 Error : Failed to create compile context." );
+			}
+
+			pcre2_set_compile_extra_options( mData->mCompileContext, extra_compile_options );
 
 			int errornumber;
 			PCRE2_SIZE erroroffset;
@@ -60,10 +78,10 @@ namespace Pcre2RegexInterop
 			pcre2_code* re = pcre2_compile(
 				reinterpret_cast<PCRE2_SPTR16>( pattern ), /* the pattern */
 				PCRE2_ZERO_TERMINATED, /* indicates pattern is zero-terminated */
-				compiler_options,      /* options */
+				compile_options,       /* options */
 				&errornumber,          /* for error number */
 				&erroroffset,          /* for error offset */
-				NULL );                /* use default compile context */
+				mData->mCompileContext ); /* compile context */
 
 			if( re == nullptr )
 			{
@@ -124,11 +142,17 @@ namespace Pcre2RegexInterop
 
 			mData->mText = context.marshal_as<std::wstring>( text0 );
 
+			mData->mMatchContext = pcre2_match_context_create( NULL );
+			if( mData->mMatchContext == nullptr )
+			{
+				throw gcnew Exception( "PCRE2 Error : Failed to create match context" );
+			}
+
 			int rc;
 
 			switch( mData->mAlgorithm )
 			{
-			case MatcherData::Algorithm::DFA:
+			case Algorithm::DFA:
 			{
 				mData->mDfaWorkspace.resize( 1000 ); // (see 'pcre2test.c')
 				mData->mMatchData = pcre2_match_data_create( 1000, NULL );
@@ -140,14 +164,14 @@ namespace Pcre2RegexInterop
 					0,                       /* start at offset 0 in the subject */
 					mData->mMatcherOptions,  /* options */
 					mData->mMatchData,       /* block for storing the result */
-					NULL,                    /* use default match context */
+					mData->mMatchContext,    /* match context */
 					mData->mDfaWorkspace.data( ),
 					mData->mDfaWorkspace.size( )
 				);
 			}
 			break;
 
-			case MatcherData::Algorithm::Standard:
+			case Algorithm::Standard:
 			default:
 			{
 				mData->mMatchData = pcre2_match_data_create_from_pattern( mData->mRe, NULL );
@@ -158,7 +182,8 @@ namespace Pcre2RegexInterop
 					0,                       /* start at offset 0 in the subject */
 					mData->mMatcherOptions,  /* options */
 					mData->mMatchData,       /* block for storing the result */
-					NULL );                  /* use default match context */
+					mData->mMatchContext     /* match context */
+				);
 			}
 			break;
 			}
@@ -394,9 +419,18 @@ namespace Pcre2RegexInterop
 		C( PCRE2_USE_OFFSET_LIMIT, "Enable offset limit for unanchored matching" );
 		C( PCRE2_UTF, "Treat pattern and subjects as UTF strings" );
 
-		// TODO: define extra-options too
-
 		mCompileOptions = list;
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( PCRE2_EXTRA_ALLOW_SURROGATE_ESCAPES, "Allow \\x{df800} to \\x{dfff} in UTF-8 and UTF-32 modes" );
+		C( PCRE2_EXTRA_ALT_BSUX, "Extended alternate \\u, \\U, and \\x handling" );
+		C( PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, "Treat all invalid escapes as a literal following character" );
+		C( PCRE2_EXTRA_ESCAPED_CR_IS_LF, "Interpret \\r as \\n" );
+		C( PCRE2_EXTRA_MATCH_LINE, "Pattern matches whole lines" );
+		C( PCRE2_EXTRA_MATCH_WORD, "Pattern matches \"words\"" );
+																		   
+		mExtraCompileOptions = list;
 
 		list = gcnew List<OptionInfo^>( );
 

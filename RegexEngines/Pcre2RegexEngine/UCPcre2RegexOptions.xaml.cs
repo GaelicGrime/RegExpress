@@ -52,6 +52,21 @@ namespace Pcre2RegexEngineNs
 			}
 
 			{
+				List<Pcre2RegexInterop.OptionInfo> extra_compile_options = Pcre2RegexInterop.Matcher.GetExtraCompileOptions( );
+
+				foreach( var o in extra_compile_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+					};
+
+					pnlExtraCompileOptions.Children.Add( cb );
+				}
+			}
+
+			{
 				List<Pcre2RegexInterop.OptionInfo> match_options = Pcre2RegexInterop.Matcher.GetMatchOptions( );
 
 				foreach( var o in match_options )
@@ -90,17 +105,25 @@ namespace Pcre2RegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
+			// TODO: add support for 'pcre2_set_bsr'?
+			// TODO: add support for 'pcre2_set_newline'?
+
 			return
 				( new[] { ( (ComboBoxItem)cbxAlgorithm.SelectedItem )?.Tag.ToString( ) ?? "Standard" } )
 				.Concat(
 				pnlCompileOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
-					.Select( cb => "c:" + cb.Tag.ToString( ) )
+					.Select( cb => "c:" + cb.Tag )
+				)
+				.Concat(
+				pnlExtraCompileOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => "x:" + cb.Tag )
 				)
 				.Concat(
 				pnlMatchOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
-					.Select( cb => "m:" + cb.Tag.ToString( ) )
+					.Select( cb => "m:" + cb.Tag )
 				)
 				.ToArray( );
 		}
@@ -123,6 +146,11 @@ namespace Pcre2RegexEngineNs
 					cb.IsChecked = options.Contains( "c:" + cb.Tag );
 				}
 
+				foreach( var cb in pnlExtraCompileOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( "x:" + cb.Tag );
+				}
+
 				foreach( var cb in pnlMatchOptions.Children.OfType<CheckBox>( ) )
 				{
 					cb.IsChecked = options.Contains( "m:" + cb.Tag );
@@ -133,6 +161,19 @@ namespace Pcre2RegexEngineNs
 				--ChangeCounter;
 			}
 		}
+
+
+		internal bool IsCompileOptionSelected( string tag )
+		{
+			return CachedOptions.Contains( "c:" + tag );
+		}
+
+
+		internal bool IsExtraCompileOptionSelected( string tag )
+		{
+			return CachedOptions.Contains( "x:" + tag );
+		}
+
 
 
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )

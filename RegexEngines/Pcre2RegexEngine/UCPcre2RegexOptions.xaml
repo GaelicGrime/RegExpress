@@ -28,7 +28,7 @@
                     </TransformGroup>
                 </StackPanel.LayoutTransform>
 
-                <Label Content="Algorithm: " Target="{Binding ElementName=cbxAlgorithm}" Padding="0"/>
+                <Label Content="Algorithm: " Target="{Binding ElementName=cbxAlgorithm}" Padding="0 2 0 0"/>
                 <ComboBox x:Name="cbxAlgorithm" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxAlgorithm_SelectionChanged" >
                     <ComboBoxItem Tag ="Standard" Content="Perl-compatible" IsSelected="True" />
                     <ComboBoxItem Tag ="DFA" Content="DFA" />
@@ -36,9 +36,14 @@
             </StackPanel>
 
             <Label Margin="0 2 0 0"  Padding="0">
-                <Italic>Compiler Options</Italic>
+                <Italic>Compile Options</Italic>
             </Label>
             <StackPanel x:Name="pnlCompileOptions"/>
+
+            <Label Margin="0 2 0 0"  Padding="0">
+                <Italic>Extra Compile Options</Italic>
+            </Label>
+            <StackPanel x:Name="pnlExtraCompileOptions"/>
 
             <Label Margin="0 2 0 0" Padding="0">
                 <Italic>Matcher Options</Italic>

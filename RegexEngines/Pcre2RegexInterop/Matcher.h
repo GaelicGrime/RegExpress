@@ -28,17 +28,21 @@ namespace Pcre2RegexInterop
 	};
 
 
+	enum class Algorithm
+	{
+		Standard,
+		DFA,
+	};
+
+
 	struct MatcherData
 	{
-		enum class Algorithm
-		{
-			Standard,
-			DFA,
-		};
-
 		Algorithm mAlgorithm;
 		std::wstring mText;
+
+		pcre2_compile_context* mCompileContext;
 		pcre2_code* mRe;
+		pcre2_match_context* mMatchContext;
 		pcre2_match_data* mMatchData;
 		int mMatcherOptions;
 		std::vector<int> mDfaWorkspace;
@@ -46,13 +50,21 @@ namespace Pcre2RegexInterop
 		MatcherData( )
 		{
 			mAlgorithm = Algorithm::Standard;
+			mCompileContext = nullptr;
 			mRe = nullptr;
+			mMatchContext = nullptr;
 			mMatchData = nullptr;
 			mMatcherOptions = 0;
 		}
 
 		~MatcherData( )
 		{
+			if( mMatchContext )
+			{
+				pcre2_match_context_free( mMatchContext );
+				mMatchContext = nullptr;
+			}
+
 			if( mMatchData )
 			{
 				pcre2_match_data_free( mMatchData );
@@ -63,6 +75,12 @@ namespace Pcre2RegexInterop
 			{
 				pcre2_code_free( mRe );
 				mRe = nullptr;
+			}
+
+			if( mCompileContext )
+			{
+				pcre2_compile_context_free( mCompileContext );
+				mCompileContext = nullptr;
 			}
 		}
 	};
@@ -83,6 +101,7 @@ namespace Pcre2RegexInterop
 		static String^ GetPcre2Version( );
 
 		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
+		static List<OptionInfo^>^ GetExtraCompileOptions( ) { return mExtraCompileOptions; }
 		static List<OptionInfo^>^ GetMatchOptions( ) { return mMatchOptions; }
 
 
@@ -100,6 +119,7 @@ namespace Pcre2RegexInterop
 		MatcherData* mData;
 
 		static List<OptionInfo^>^ mCompileOptions;
+		static List<OptionInfo^>^ mExtraCompileOptions;
 		static List<OptionInfo^>^ mMatchOptions;
 
 		static IEnumerable<IMatch^>^ mEmptyEnumeration;

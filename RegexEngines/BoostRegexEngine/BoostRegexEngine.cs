@@ -359,7 +359,6 @@ namespace BoostRegexEngineNs
 		}
 
 
-
 		static Regex GetCachedColouringRegex( GrammarEnum grammar, bool modX )
 		{
 			var key = new Key { Grammar = grammar, ModX = modX };
