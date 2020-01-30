@@ -16,6 +16,9 @@
     <Filter Include="PCRE2">
       <UniqueIdentifier>{63c23567-0639-4ef0-adb4-a132922b6172}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PCRE2\h">
+      <UniqueIdentifier>{61ff19da-0346-4095-a8dc-42ff9106a778}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -23,21 +26,6 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PCRE2\config.h">
-      <Filter>PCRE2</Filter>
-    </ClInclude>
-    <ClInclude Include="PCRE2\pcre2.h">
-      <Filter>PCRE2</Filter>
-    </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_internal.h">
-      <Filter>PCRE2</Filter>
-    </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_intmodedep.h">
-      <Filter>PCRE2</Filter>
-    </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_ucp.h">
-      <Filter>PCRE2</Filter>
     </ClInclude>
     <ClInclude Include="Capture.h">
       <Filter>Header Files</Filter>
@@ -56,6 +44,21 @@
     </ClInclude>
     <ClInclude Include="pch-pcre2.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PCRE2\config.h">
+      <Filter>PCRE2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="PCRE2\pcre2.h">
+      <Filter>PCRE2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="PCRE2\pcre2_internal.h">
+      <Filter>PCRE2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="PCRE2\pcre2_intmodedep.h">
+      <Filter>PCRE2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="PCRE2\pcre2_ucp.h">
+      <Filter>PCRE2\h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -174,5 +177,13 @@
     <Image Include="app.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PCRE2\AUTHORS">
+      <Filter>PCRE2</Filter>
+    </None>
+    <None Include="PCRE2\LICENCE">
+      <Filter>PCRE2</Filter>
+    </None>
   </ItemGroup>
 </Project>

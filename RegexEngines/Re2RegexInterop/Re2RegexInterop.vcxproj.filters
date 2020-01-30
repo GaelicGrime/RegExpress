@@ -1,0 +1,244 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="re2_min">
+      <UniqueIdentifier>{5379b5e1-0ac0-4bb5-b00c-07152238a70e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="re2_min\re2">
+      <UniqueIdentifier>{94bc0690-1a76-4aa5-b1e5-fd57abb0e47a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="re2_min\util">
+      <UniqueIdentifier>{2c74f0b4-b4ea-45a4-9b3b-856306211d39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="re2_min\util\h">
+      <UniqueIdentifier>{67397baf-c82e-42fe-af32-66530779e5ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="re2_min\re2\h">
+      <UniqueIdentifier>{9378ba1b-cc93-4b2a-a441-abc8c482d67d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Re2RegexInterop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch-re2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\flags.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\logging.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\malloc_counter.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\mix.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\mutex.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\strutil.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\utf.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\util\util.h">
+      <Filter>re2_min\util\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\bitmap256.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\filtered_re2.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\pod_array.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\prefilter.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\prefilter_tree.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\prog.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\re2.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\regexp.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\walker-inl.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\unicode_groups.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\unicode_casefold.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\stringpiece.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\sparse_set.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\sparse_array.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="re2-min\re2\set.h">
+      <Filter>re2_min\re2\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Capture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Group.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Match.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Matcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Re2RegexInterop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\bitstate.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\compile.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\dfa.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\filtered_re2.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\mimics_pcre.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\nfa.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\onepass.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\parse.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\perl_groups.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\prefilter.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\prefilter_tree.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\prog.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\re2.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\regexp.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\set.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\simplify.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\stringpiece.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\tostring.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\unicode_casefold.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\re2\unicode_groups.cc">
+      <Filter>re2_min\re2</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\util\rune.cc">
+      <Filter>re2_min\util</Filter>
+    </ClCompile>
+    <ClCompile Include="re2-min\util\strutil.cc">
+      <Filter>re2_min\util</Filter>
+    </ClCompile>
+    <ClCompile Include="Capture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Group.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Match.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Matcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="app.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="app.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Re2RegexEngine.snk" />
+    <None Include="re2-min\AUTHORS">
+      <Filter>re2_min</Filter>
+    </None>
+    <None Include="re2-min\BUILD">
+      <Filter>re2_min</Filter>
+    </None>
+    <None Include="re2-min\CONTRIBUTORS">
+      <Filter>re2_min</Filter>
+    </None>
+    <None Include="re2-min\LICENSE">
+      <Filter>re2_min</Filter>
+    </None>
+    <None Include="re2-min\README">
+      <Filter>re2_min</Filter>
+    </None>
+  </ItemGroup>
+</Project>
