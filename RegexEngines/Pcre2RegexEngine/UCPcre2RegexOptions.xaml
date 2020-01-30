@@ -15,8 +15,27 @@
     </UserControl.Resources>
 
     <Grid>
+
         <StackPanel>
-            <Label Margin="0" Padding="0">
+
+            <StackPanel Orientation="Horizontal" >
+                <StackPanel.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.LayoutTransform>
+
+                <Label Content="Algorithm: " Target="{Binding ElementName=cbxAlgorithm}" Padding="0"/>
+                <ComboBox x:Name="cbxAlgorithm" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxAlgorithm_SelectionChanged" >
+                    <ComboBoxItem Tag ="Standard" Content="Perl-compatible" IsSelected="True" />
+                    <ComboBoxItem Tag ="DFA" Content="DFA" />
+                </ComboBox>
+            </StackPanel>
+
+            <Label Margin="0 2 0 0"  Padding="0">
                 <Italic>Compiler Options</Italic>
             </Label>
             <StackPanel x:Name="pnlCompileOptions"/>

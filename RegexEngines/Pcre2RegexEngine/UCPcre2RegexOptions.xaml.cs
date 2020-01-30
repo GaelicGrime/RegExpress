@@ -90,15 +90,19 @@ namespace Pcre2RegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			return pnlCompileOptions.Children.OfType<CheckBox>( )
+			return
+				( new[] { ( (ComboBoxItem)cbxAlgorithm.SelectedItem )?.Tag.ToString( ) ?? "Standard" } )
+				.Concat(
+				pnlCompileOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => "c:" + cb.Tag.ToString( ) )
-					.Concat(
-					pnlMatchOptions.Children.OfType<CheckBox>( )
+				)
+				.Concat(
+				pnlMatchOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => "m:" + cb.Tag.ToString( ) )
-					)
-					.ToArray( );
+				)
+				.ToArray( );
 		}
 
 
@@ -109,6 +113,10 @@ namespace Pcre2RegexEngineNs
 				++ChangeCounter;
 
 				options = options ?? new string[] { };
+
+				var a = cbxAlgorithm.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
+				if( a == null ) a = cbxAlgorithm.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => i.Tag.ToString( ) == "Standard" );
+				cbxAlgorithm.SelectedItem = a;
 
 				foreach( var cb in pnlCompileOptions.Children.OfType<CheckBox>( ) )
 				{
@@ -134,6 +142,18 @@ namespace Pcre2RegexEngineNs
 			CachedOptions = GetSelectedOptions( );
 
 			IsFullyLoaded = true;
+		}
+
+
+
+		private void cbxAlgorithm_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, null );
 		}
 
 

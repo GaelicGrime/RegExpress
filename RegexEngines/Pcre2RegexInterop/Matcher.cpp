@@ -51,6 +51,9 @@ namespace Pcre2RegexInterop
 
 			mData = new MatcherData{};
 
+			mData->mAlgorithm = Array::IndexOf( options, "DFA" ) >= 0 ? MatcherData::Algorithm::DFA : MatcherData::Algorithm::Standard;
+			mData->mMatcherOptions = matcher_options;
+
 			int errornumber;
 			PCRE2_SIZE erroroffset;
 
@@ -73,7 +76,6 @@ namespace Pcre2RegexInterop
 			}
 
 			mData->mRe = re;
-			mData->mMatcherOptions = matcher_options;
 		}
 		catch( const std::exception & exc )
 		{
@@ -121,17 +123,45 @@ namespace Pcre2RegexInterop
 			marshal_context context{};
 
 			mData->mText = context.marshal_as<std::wstring>( text0 );
-			mData->mMatchData = pcre2_match_data_create_from_pattern( mData->mRe, NULL );
 
-			int rc = pcre2_match(
-				mData->mRe,           /* the compiled pattern */
-				reinterpret_cast<PCRE2_SPTR16>( mData->mText.c_str( ) ),  /* the subject string */
-				mData->mText.length( ),  /* the length of the subject */
-				0,                       /* start at offset 0 in the subject */
-				mData->mMatcherOptions,  /* options */
-				mData->mMatchData,       /* block for storing the result */
-				NULL );                  /* use default match context */
+			int rc;
 
+			switch( mData->mAlgorithm )
+			{
+			case MatcherData::Algorithm::DFA:
+			{
+				mData->mDfaWorkspace.resize( 1000 ); // (see 'pcre2test.c')
+				mData->mMatchData = pcre2_match_data_create( 1000, NULL );
+
+				rc = pcre2_dfa_match(
+					mData->mRe,           /* the compiled pattern */
+					reinterpret_cast<PCRE2_SPTR16>( mData->mText.c_str( ) ),  /* the subject string */
+					PCRE2_ZERO_TERMINATED,  /* the length of the subject */
+					0,                       /* start at offset 0 in the subject */
+					mData->mMatcherOptions,  /* options */
+					mData->mMatchData,       /* block for storing the result */
+					NULL,                    /* use default match context */
+					mData->mDfaWorkspace.data( ),
+					mData->mDfaWorkspace.size( )
+				);
+			}
+			break;
+
+			case MatcherData::Algorithm::Standard:
+			default:
+			{
+				mData->mMatchData = pcre2_match_data_create_from_pattern( mData->mRe, NULL );
+				rc = pcre2_match(
+					mData->mRe,           /* the compiled pattern */
+					reinterpret_cast<PCRE2_SPTR16>( mData->mText.c_str( ) ),  /* the subject string */
+					PCRE2_ZERO_TERMINATED,  /* the length of the subject */
+					0,                       /* start at offset 0 in the subject */
+					mData->mMatcherOptions,  /* options */
+					mData->mMatchData,       /* block for storing the result */
+					NULL );                  /* use default match context */
+			}
+			break;
+			}
 
 			if( rc < 0 )
 			{
@@ -381,6 +411,7 @@ namespace Pcre2RegexInterop
 		C( PCRE2_NO_UTF_CHECK, "Do not check the subject for UTF validity (only relevant if PCRE2_UTF was set at compile time)" );
 		C( PCRE2_PARTIAL_HARD, "Return PCRE2_ERROR_PARTIAL for a partial match even if there is a full match" );
 		C( PCRE2_PARTIAL_SOFT, "Return PCRE2_ERROR_PARTIAL for a partial match if no full matches are found" );
+		C( PCRE2_DFA_SHORTEST, "Return only the shortest match" );
 
 		mMatchOptions = list;
 

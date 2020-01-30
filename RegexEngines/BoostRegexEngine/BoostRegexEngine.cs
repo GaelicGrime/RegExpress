@@ -159,6 +159,31 @@ namespace BoostRegexEngineNs
 						continue;
 					}
 				}
+
+				if( cnc.IsCancellationRequested ) return;
+
+				// named group, '(?<name>...)' or '(?'name'...)'
+				{
+					var g = m.Groups["name"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.GroupNames.Add( intersection );
+							}
+						}
+
+						continue;
+					}
+				}
 			}
 		}
 

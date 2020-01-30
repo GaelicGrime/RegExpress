@@ -30,15 +30,25 @@ namespace Pcre2RegexInterop
 
 	struct MatcherData
 	{
+		enum class Algorithm
+		{
+			Standard,
+			DFA,
+		};
+
+		Algorithm mAlgorithm;
 		std::wstring mText;
 		pcre2_code* mRe;
 		pcre2_match_data* mMatchData;
 		int mMatcherOptions;
+		std::vector<int> mDfaWorkspace;
 
 		MatcherData( )
 		{
+			mAlgorithm = Algorithm::Standard;
 			mRe = nullptr;
 			mMatchData = nullptr;
+			mMatcherOptions = 0;
 		}
 
 		~MatcherData( )
