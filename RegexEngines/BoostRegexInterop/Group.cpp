@@ -31,8 +31,6 @@ namespace BoostRegexInterop
 		mLength( submatch.length( ) ), // TODO: deals with overflows
 		mCaptures( gcnew List<ICapture^> )
 	{
-		// TODO: extract group name
-
 		try
 		{
 			const MatcherData* d = parent->Parent->GetData( );

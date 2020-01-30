@@ -62,7 +62,7 @@ namespace StdRegexInterop
 		{
 			String^ get( )
 			{
-				return mGroupNumber.ToString( ); // TODO: culture?
+				return mGroupNumber.ToString( System::Globalization::CultureInfo::InvariantCulture );
 			}
 		}
 
