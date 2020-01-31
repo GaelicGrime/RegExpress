@@ -56,8 +56,11 @@ namespace Re2RegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			throw new NotImplementedException( );
+			string[] selected_options = OptionsControl.CachedOptions;
+
+			return new Re2RegexInterop.Matcher( pattern, selected_options );
 		}
+
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
