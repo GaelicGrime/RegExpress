@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "Matcher.h"
+#include "Group.h"
 #include "Match.h"
 
 
@@ -20,64 +21,106 @@ namespace Re2RegexInterop
 	}
 
 
-	struct SpecialConversion
+	static std::vector<char> ToUtf8( String^ s )
 	{
-		std::vector<char> mUtf8;
-		std::vector<int> mUtf8IndexToOriginal;
+		const char* old_locale = setlocale( LC_ALL, NULL );
+		const char* new_locale = setlocale( LC_CTYPE, ".utf8" );
 
-		void ConvertFrom( String^ s )
+		if( new_locale == nullptr )
 		{
-			const char* old_locale = setlocale( LC_ALL, NULL );
-			const char* new_locale = setlocale( LC_CTYPE, ".utf8" );
-
-			if( new_locale == nullptr )
-			{
-				throw gcnew Exception( "Failed to set locale." );
-			}
-
-
-			mUtf8.reserve( s->Length );
-			mUtf8IndexToOriginal.reserve( s->Length );
-
-			pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
-			const wchar_t* start = pinned;
-
-			auto mb_cur_max = MB_CUR_MAX;
-			mbstate_t mbstate = { 0 };
-
-			size_t bytes_written = 0;
-
-			for( const wchar_t* p = start; *p; ++p ) // (we assume that the array is zero-terminated)
-			{
-				size_t size_converted;
-				errno_t error;
-
-				mUtf8IndexToOriginal.resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
-				mUtf8IndexToOriginal[bytes_written] = p - start;
-
-				mUtf8.resize( bytes_written + mb_cur_max );
-
-				error = wcrtomb_s( &size_converted, mUtf8.data( ) + bytes_written, mb_cur_max, *p, &mbstate );
-
-				if( error )
-				{
-					setlocale( LC_ALL, old_locale );
-
-					String^ err = gcnew String( strerror( error ) );
-
-					throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
-				}
-
-				bytes_written += size_converted;
-
-				++p;
-			}
-
-			mUtf8.resize( bytes_written );
-
-			setlocale( LC_ALL, old_locale ); // restore
+			throw gcnew Exception( "Failed to set locale." );
 		}
-	};
+
+		std::vector<char> utf8( s->Length );
+
+		pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
+		const wchar_t* start = pinned;
+
+		auto mb_cur_max = MB_CUR_MAX;
+		mbstate_t mbstate = { 0 };
+
+		size_t bytes_written = 0;
+
+		for( const wchar_t* p = start; *p; ++p ) // (we assume that the array is zero-terminated)
+		{
+			size_t size_converted;
+			errno_t error;
+
+			utf8.resize( bytes_written + mb_cur_max );
+
+			error = wcrtomb_s( &size_converted, utf8.data( ) + bytes_written, mb_cur_max, *p, &mbstate );
+
+			if( error )
+			{
+				setlocale( LC_ALL, old_locale ); // restore
+
+				String^ err = gcnew String( strerror( error ) );
+
+				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
+			}
+
+			bytes_written += size_converted;
+		}
+
+		utf8.resize( bytes_written ); // (not zero-terminated)
+
+		setlocale( LC_ALL, old_locale ); // restore
+
+		return utf8;
+	}
+
+
+	void ToUtf8( std::vector<char>* dest, std::vector<int>* indices, String^ s )
+	{
+		const char* old_locale = setlocale( LC_ALL, NULL );
+		const char* new_locale = setlocale( LC_CTYPE, ".utf8" );
+
+		if( new_locale == nullptr )
+		{
+			throw gcnew Exception( "Failed to set locale." );
+		}
+
+
+		dest->reserve( s->Length );
+		indices->reserve( s->Length );
+
+		pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
+		const wchar_t* start = pinned;
+
+		auto mb_cur_max = MB_CUR_MAX;
+		mbstate_t mbstate = { 0 };
+
+		size_t bytes_written = 0;
+
+		for( const wchar_t* p = start; *p; ++p ) // (we assume that the array is zero-terminated)
+		{
+			size_t size_converted;
+			errno_t error;
+
+			indices->resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
+			( *indices )[bytes_written] = p - start;
+
+			dest->resize( bytes_written + mb_cur_max );
+
+			error = wcrtomb_s( &size_converted, dest->data( ) + bytes_written, mb_cur_max, *p, &mbstate );
+
+			if( error )
+			{
+				setlocale( LC_ALL, old_locale ); // restore
+
+				String^ err = gcnew String( strerror( error ) );
+
+				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
+			}
+
+			bytes_written += size_converted;
+		}
+
+		dest->resize( bytes_written ); // (not zero-terminated)
+		indices->resize( bytes_written );
+
+		setlocale( LC_ALL, old_locale ); // restore
+	}
 
 
 	Matcher::Matcher( String^ pattern0, cli::array<String^>^ options )
@@ -85,55 +128,35 @@ namespace Re2RegexInterop
 	{
 		try
 		{
-			SpecialConversion sc;
-			sc.ConvertFrom( pattern0 );
-
 			RE2::Options options{}; // TODO: implement
 
+			std::vector<char> utf8 = ToUtf8( pattern0 );
 
+			re2::StringPiece pattern( utf8.data( ), utf8.size( ) );
 
-			re2::StringPiece utf8_pattern( sc.mUtf8.data(), sc.mUtf8.size());
+			std::unique_ptr<RE2> re( new RE2( pattern, options ) );
 
-
-
-
-
-			//....................
-
-#if 0
-			marshal_context context{};
-
-			cli::array<Byte>^ utf8_bytes = System::Text::Encoding::UTF8->GetBytes( pattern0 );
-			pin_ptr<Byte> utf8_pinned = &utf8_bytes[0];
-			const unsigned char* utf8_uchars = utf8_pinned;
-			const char* utf8_chars = reinterpret_cast<const char*>( utf8_uchars );
-
-			//std::string utf8_string( utf8_chars, utf8_bytes->Length );
-
-			//const wchar_t* pattern = context.marshal_as<const wchar_t*>( pattern0 );
-
-			RE2::Options options{}; // TODO: implement
-
-			re2::StringPiece utf8_pattern( utf8_chars, utf8_bytes->Length );
-
-
-			RE2 re( utf8_pattern, options );
-
-			if( re.error_code( ) != RE2::NoError )
+			if( !re->ok( ) )
 			{
-				throw gcnew Exception( String::Format( L"RE2 Error {0}: {1}", (int)re.error_code( ), gcnew String( re.error( ).c_str( ) ) ) );
+				throw gcnew Exception( String::Format( L"RE2 Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
 			}
 
+			re.reset( );
+			utf8.insert( utf8.begin( ), '(' );
+			utf8.push_back( ')' );
 
-			int number_of_groups = re.NumberOfCapturingGroups( );
+			pattern.set( utf8.data( ), utf8.size( ) );
+			re.reset( new RE2( pattern, options ) );
 
-			//std::string 
+			if( !re->ok( ) )
+			{
+				throw gcnew Exception( String::Format( L"RE2 Error 2/{0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
+			}
 
 
 			mData = new MatcherData{};
 
-#endif
-
+			mData->mRe = std::move( re );
 		}
 		catch( const std::exception & exc )
 		{
@@ -176,13 +199,72 @@ namespace Re2RegexInterop
 
 		try
 		{
+			OriginalText = text0;
+
 			auto matches = gcnew List<IMatch^>( );
 
-			marshal_context context{};
+			ToUtf8( &mData->mText, &mData->mIndices, text0 );
+			re2::StringPiece text( mData->mText.data( ), mData->mText.size( ) );
 
-			mData->mText = context.marshal_as<std::wstring>( text0 );
+			int number_of_capturing_groups = mData->mRe->NumberOfCapturingGroups( );
 
-			//.......
+			mData->mDefinedGroups.resize( number_of_capturing_groups );
+
+			std::vector<RE2::Arg> args;
+			for( int i = 0; i < mData->mDefinedGroups.size( ); ++i ) args.push_back( &mData->mDefinedGroups[i] );
+
+			std::vector<const RE2::Arg*> argsp;
+			for( int i = 0; i < args.size( ); ++i ) argsp.push_back( &args[i] );
+
+			//....................
+			// EMPTY MATCHES
+
+			auto prev_data = text.data( );
+
+			while( RE2::FindAndConsumeN( &text, *mData->mRe, argsp.data( ), number_of_capturing_groups ) )
+			{
+				Match^ match = nullptr;
+				for( int i = 0; i < mData->mDefinedGroups.size( ); ++i )
+				{
+					// TODO: use group names
+
+					const auto& g = mData->mDefinedGroups[i];
+					if( g.data( ) == nullptr )
+					{
+						match->AddGroup( gcnew Group( match,
+							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
+							-1, 0 ) );
+					}
+					else
+					{
+						int utf8index = g.data( ) - mData->mText.data( );
+						int index = mData->mIndices.at( utf8index );
+						if( index < 0 )
+						{
+							throw gcnew Exception( "Index error." );
+						}
+
+						if( i == 0 ) match = gcnew Match( this, index, g.size( ) );
+
+						match->AddGroup( gcnew Group( match,
+							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
+							index, g.size( ) ) ); // main group when 'i==0'
+					}
+				}
+
+				matches->Add( match );
+
+				if( prev_data == text.data( ) )
+				{
+					// it was an empty match;
+					// advance?
+					//...
+
+					text.remove_prefix( 1 ); //.................
+				}
+
+				prev_data = text.data( );
+			}
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}

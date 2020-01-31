@@ -11,12 +11,12 @@ using namespace System::Diagnostics;
 namespace Re2RegexInterop
 {
 
-	Match::Match( Matcher^ parent )
+	Match::Match( Matcher^ parent, int index, int length )
 		:
 		mParent( parent ),
-		mSuccess( false ),
-		mIndex( 0 ), // TODO: deals with overflows
-		mLength( 0 ), // TODO: deals with overflows
+		mSuccess( true ),
+		mIndex( index ), // TODO: deals with overflows
+		mLength( length ), // TODO: deals with overflows
 		mGroups( gcnew List<IGroup^> )
 	{
 		try
@@ -41,10 +41,19 @@ namespace Re2RegexInterop
 	}
 
 
+	void Match::AddGroup( Group^ g )
+	{
+		Debug::Assert( !mGroups->Contains( g ) );
+
+		mGroups->Add( g );
+	}
+
+
+
 	String^ Match::Value::get( )
 	{
-		const MatcherData* data = mParent->GetData( );
+		//const MatcherData* data = mParent->GetData( );
 
-		return gcnew String( data->mText.c_str( ), mIndex, mLength );
+		return mParent->OriginalText->Substring( mIndex, mLength );
 	}
 }

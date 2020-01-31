@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include "Capture.h"
 #include "Group.h"
 #include "Match.h"
 #include "Matcher.h"
@@ -44,8 +43,6 @@ namespace Re2RegexInterop
 	{
 		if( !mSuccess ) return String::Empty;
 
-		const MatcherData* data = mParent->Parent->GetData( );
-
-		return gcnew String( data->mText.c_str( ), mIndex, mLength );
+		return mParent->Parent->OriginalText->Substring( mIndex, mLength );
 	}
 }

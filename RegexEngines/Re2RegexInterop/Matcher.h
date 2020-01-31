@@ -30,8 +30,12 @@ namespace Re2RegexInterop
 
 	struct MatcherData
 	{
-		std::wstring mText;
+		std::unique_ptr<RE2> mRe;
 
+		std::vector<char> mText; // (utf-8)
+		std::vector<int> mIndices; // 
+
+		std::vector<re2::StringPiece> mDefinedGroups;
 
 		MatcherData( )
 		{
@@ -66,6 +70,8 @@ namespace Re2RegexInterop
 
 
 		const MatcherData* GetData( ) { return mData; }
+
+		String ^ OriginalText; // TODO: make it read-only
 
 	private:
 

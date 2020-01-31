@@ -8,6 +8,7 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace Re2RegexInterop
 {
+	ref class Group;
 	ref class Matcher;
 
 	ref class Match : IMatch
@@ -15,7 +16,9 @@ namespace Re2RegexInterop
 
 	public:
 
-		Match( Matcher^ parent );
+		Match( Matcher^ parent, int index, int length );
+
+		void AddGroup( Group^ g );
 
 
 #pragma region ICapture
