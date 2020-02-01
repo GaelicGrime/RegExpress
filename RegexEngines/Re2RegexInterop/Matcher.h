@@ -14,15 +14,15 @@ namespace Re2RegexInterop
 	public ref class OptionInfo
 	{
 	public:
-		int const Flag;
 		String^ const FlagName;
 		String^ const Note;
+		bool const DefaultValue;
 
-		OptionInfo( int flag, String^ flagName, String^ note )
+		OptionInfo( String^ flagName, String^ note, bool defaultValue )
 			:
-			Flag( flag ),
 			FlagName( flagName ),
-			Note( note )
+			Note( note ),
+			DefaultValue( defaultValue )
 		{
 		}
 	};
@@ -56,6 +56,8 @@ namespace Re2RegexInterop
 
 		static String^ GetRe2Version( );
 
+		static List<OptionInfo^>^ GetOptions( ) { return mOptions; }
+
 
 #pragma region IMatcher
 
@@ -66,11 +68,13 @@ namespace Re2RegexInterop
 
 		const MatcherData* GetData( ) { return mData; }
 
-		String ^ OriginalText; // TODO: make it read-only
+		String^ OriginalText; // TODO: make it read-only
 
 	private:
 
 		MatcherData* mData;
+
+		static List<OptionInfo^>^ mOptions;
 
 		static IEnumerable<IMatch^>^ mEmptyEnumeration;
 

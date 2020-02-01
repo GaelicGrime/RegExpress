@@ -501,7 +501,7 @@ namespace BoostRegexEngineNs
 				{
 					pattern += @"(?'left_para'\() | "; // '('
 					pattern += @"(?'right_para'\)) | "; // ')'
-					pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
+					pattern += @"(?'range'\{\s*\d+(\s*,(\s*\d+)?)?(\s*\}(?'end')|$)) | "; // '{...}' (spaces are allowed)
 				}
 
 				if( is_POSIX_basic )

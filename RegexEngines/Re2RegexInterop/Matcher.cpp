@@ -13,6 +13,9 @@ using namespace msclr::interop;
 namespace Re2RegexInterop
 {
 
+	static std::map<const wchar_t*, void( RE2::Options::* )( bool ) > mOptionSetters;
+
+
 	static Matcher::Matcher( )
 	{
 		mEmptyEnumeration = gcnew List<IMatch^>( 0 );
@@ -128,7 +131,16 @@ namespace Re2RegexInterop
 	{
 		try
 		{
-			RE2::Options options{}; // TODO: implement
+			// TODO: optimise
+
+			RE2::Options re2_options{};
+
+			for( auto i = mOptionSetters.cbegin( ); i != mOptionSetters.cend( ); ++i )
+			{
+				String^ o = gcnew String( i->first );
+				auto f = i->second;
+				( re2_options.*f )( Array::IndexOf( options, o ) >= 0 );
+			}
 
 			std::vector<char> utf8 = ToUtf8( pattern0 );
 
@@ -136,7 +148,7 @@ namespace Re2RegexInterop
 
 			re2::StringPiece pattern( utf8.data( ), utf8.size( ) - 1 ); // (zero-terminator excluded)
 
-			std::unique_ptr<RE2> re( new RE2( pattern, options ) );
+			std::unique_ptr<RE2> re( new RE2( pattern, re2_options ) );
 
 			if( !re->ok( ) )
 			{
@@ -222,13 +234,20 @@ namespace Re2RegexInterop
 				int index = indices.at( utf8index );
 				if( index < 0 )
 				{
-					throw gcnew Exception( "Index error." );
+					throw gcnew Exception( "Index error (A)." );
 				}
 
-				Match^ match = gcnew Match( this, index, main_group.size( ) );
+				int next_index = indices.at( utf8index + main_group.size( ) );
+				if( next_index < 0 )
+				{
+					throw gcnew Exception( "Index error (B)." );
+				}
 
+				int length = next_index - index;
+
+				Match^ match = gcnew Match( this, index, length );
 				// default group
-				match->AddGroup( gcnew Group( match, "0", true, index, main_group.size( ) ) );
+				match->AddGroup( gcnew Group( match, "0", true, index, length ) );
 
 				// groups
 				for( int i = 1; i < found_groups.size( ); ++i )
@@ -258,10 +277,16 @@ namespace Re2RegexInterop
 						int index = indices.at( utf8index );
 						if( index < 0 )
 						{
-							throw gcnew Exception( "Index error." );
+							throw gcnew Exception( "Index error (C)." );
 						}
 
-						group = gcnew Group( match, group_name, true, index, g.size( ) );
+						int next_index = indices.at( utf8index + g.size( ) );
+						if( next_index < 0 )
+						{
+							throw gcnew Exception( "Index error (D)." );
+						}
+
+						group = gcnew Group( match, group_name, true, index, next_index - index );
 					}
 
 					match->AddGroup( group );
@@ -279,7 +304,7 @@ namespace Re2RegexInterop
 
 					// advance by the size of current utf-8 element
 
-					do { ++start_pos; } while( start_pos < indices.size() && indices.at( start_pos ) < 0 );
+					do { ++start_pos; } while( start_pos < indices.size( ) && indices.at( start_pos ) < 0 );
 				}
 
 				if( start_pos > full_text.size( ) ) break; // end of matches
@@ -308,15 +333,25 @@ namespace Re2RegexInterop
 
 	void Matcher::BuildOptions( )
 	{
-#define C(f, n) \
-	list->Add(gcnew OptionInfo( f, gcnew String(#f), gcnew String(n)));
+
+#define C(f, v, n) \
+	list->Add(gcnew OptionInfo( gcnew String(#f), gcnew String(n), v)); \
+	mOptionSetters[L#f] = &RE2::Options::set_##f;
 
 		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
 
-		//C( PCRE2_ANCHORED, "Force pattern anchoring" );
+		C( posix_syntax, false, "restrict regexps to POSIX egrep syntax" );
+		C( longest_match, false, "search for longest match, not first match" );
+		C( literal, false, "interpret string as literal, not regexp" );
+		C( never_nl, false, "never match \\n, even if it is in regexp" );
+		C( dot_nl, false, "dot matches everything including new line" );
+		C( never_capture, false, "parse all parens as non-capturing" );
+		C( case_sensitive, true, "match is case-sensitive (regexp can override with (?i) unless in posix_syntax mode)" );
+		C( perl_classes, false, "allow Perl's \\d \\s \\w \\D \\S \\W" );
+		C( word_boundary, false, "allow Perl's \\b \\B (word boundary and not)" );
+		C( one_line, false, "^ and $ only match beginning and end of text" );
 
-		//mCompileOptions = list;
-
+		mOptions = list;
 
 #undef C
 	}

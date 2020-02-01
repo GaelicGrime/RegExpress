@@ -32,6 +32,24 @@ namespace Re2RegexEngineNs
 		public UCRe2RegexOptions( )
 		{
 			InitializeComponent( );
+
+			// insert checkboxes
+
+			List<Re2RegexInterop.OptionInfo> compile_options = Re2RegexInterop.Matcher.GetOptions( );
+
+			foreach( var o in compile_options )
+			{
+				var cb = new CheckBox
+				{
+					Tag = o.FlagName,
+					Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" ),
+
+					// Does not seem useful:
+					//IsChecked = o.DefaultValue
+				};
+
+				pnlOptions.Children.Add( cb );
+			}
 		}
 
 
@@ -57,8 +75,12 @@ namespace Re2RegexEngineNs
 		internal string[] GetSelectedOptions( )
 		{
 			return
-				new string[] { };
+				pnlOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) )
+					.ToArray( );
 		}
+
 
 		internal void SetSelectedOptions( string[] options )
 		{
@@ -68,11 +90,21 @@ namespace Re2RegexEngineNs
 
 				options = options ?? new string[] { };
 
+				foreach( var cb in pnlOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				}
 			}
 			finally
 			{
 				--ChangeCounter;
 			}
+		}
+
+
+		internal bool IsOptionSelected( string tag )
+		{
+			return CachedOptions.Contains( tag );
 		}
 
 

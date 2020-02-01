@@ -363,6 +363,7 @@ namespace Pcre2RegexEngineNs
 				escape += @"\\u[0-9a-fA-F]{1,4} | "; // hexa, four digits, error if no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
 				escape += @"\\u\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty or no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
 				escape += @"\\[pP]\{.*?(\}|$) | "; // property
+				escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
 
 				// backreferences
 				escape += @"\\[0-9]+ | "; // unbiguous
@@ -372,6 +373,8 @@ namespace Pcre2RegexEngineNs
 				escape += @"\\[gk]'.*?('|$) | ";
 				escape += @"\\[gk]\{.*?(\}|$) | ";
 				escape += @"\(\?P=.*?(\)|$) | "; //
+
+				escape += @"\\. | "; 
 
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";
@@ -453,7 +456,7 @@ namespace Pcre2RegexEngineNs
 
 				pattern += @"(?'left_para'\() | "; // '('
 				pattern += @"(?'right_para'\)) | "; // ')'
-				pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
+				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
 
 				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
 				pattern += @"\\. | . | ";

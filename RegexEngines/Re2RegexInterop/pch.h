@@ -12,10 +12,11 @@
 
 #include "pch-re2.h"
 #include "re2/re2.h"
-//#include "re2/regexp.h"
 
 #include <msclr\marshal_cppstd.h>
 #include <exception>
+#include <map>
+#include <functional>
 
 
 #endif //PCH_H
