@@ -8,11 +8,11 @@
 namespace Re2RegexInterop
 {
 
-	Group::Group( Match^ parent, String^ name, int index, int length )
+	Group::Group( Match^ parent, String^ name, bool success, int index, int length )
 		:
 		mParent( parent ),
 		mName( name ),
-		mSuccess( index >= 0 ),
+		mSuccess( success ),
 		mIndex( index ), // TODO: deals with overflows
 		mLength( length ),
 		mCaptures( gcnew List<ICapture^>( ) )

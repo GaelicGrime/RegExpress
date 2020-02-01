@@ -62,7 +62,7 @@ namespace Re2RegexInterop
 			bytes_written += size_converted;
 		}
 
-		utf8.resize( bytes_written ); // (not zero-terminated)
+		utf8.resize( bytes_written + 1, 0 ); // (zero-terminated)
 
 		setlocale( LC_ALL, old_locale ); // restore
 
@@ -80,9 +80,8 @@ namespace Re2RegexInterop
 			throw gcnew Exception( "Failed to set locale." );
 		}
 
-
-		dest->reserve( s->Length );
-		indices->reserve( s->Length );
+		dest->reserve( s->Length + 1 );
+		indices->reserve( s->Length + 1 );
 
 		pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
 		const wchar_t* start = pinned;
@@ -92,15 +91,15 @@ namespace Re2RegexInterop
 
 		size_t bytes_written = 0;
 
-		for( const wchar_t* p = start; *p; ++p ) // (we assume that the array is zero-terminated)
+		for( const wchar_t* p = start; *p; ++p ) // (we assume that the pinned array is zero-terminated)
 		{
-			size_t size_converted;
-			errno_t error;
-
 			indices->resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
 			( *indices )[bytes_written] = p - start;
 
 			dest->resize( bytes_written + mb_cur_max );
+
+			size_t size_converted;
+			errno_t error;
 
 			error = wcrtomb_s( &size_converted, dest->data( ) + bytes_written, mb_cur_max, *p, &mbstate );
 
@@ -116,8 +115,9 @@ namespace Re2RegexInterop
 			bytes_written += size_converted;
 		}
 
-		dest->resize( bytes_written ); // (not zero-terminated)
+		dest->resize( bytes_written + 1, 0 ); // (zero-terminated)
 		indices->resize( bytes_written );
+		indices->push_back( s->Length );
 
 		setlocale( LC_ALL, old_locale ); // restore
 	}
@@ -132,7 +132,9 @@ namespace Re2RegexInterop
 
 			std::vector<char> utf8 = ToUtf8( pattern0 );
 
-			re2::StringPiece pattern( utf8.data( ), utf8.size( ) );
+			Debug::Assert( utf8.size( ) > 0 );
+
+			re2::StringPiece pattern( utf8.data( ), utf8.size( ) - 1 ); // (zero-terminator excluded)
 
 			std::unique_ptr<RE2> re( new RE2( pattern, options ) );
 
@@ -140,19 +142,6 @@ namespace Re2RegexInterop
 			{
 				throw gcnew Exception( String::Format( L"RE2 Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
 			}
-
-			re.reset( );
-			utf8.insert( utf8.begin( ), '(' );
-			utf8.push_back( ')' );
-
-			pattern.set( utf8.data( ), utf8.size( ) );
-			re.reset( new RE2( pattern, options ) );
-
-			if( !re->ok( ) )
-			{
-				throw gcnew Exception( String::Format( L"RE2 Error 2/{0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
-			}
-
 
 			mData = new MatcherData{};
 
@@ -189,81 +178,113 @@ namespace Re2RegexInterop
 
 	String^ Matcher::GetRe2Version( )
 	{
-		return L"2020-01-01";
+		return L"2020-01-01"; // TODO: use something from sources
 	}
 
 
 	RegexMatches^ Matcher::Matches( String^ text0 )
 	{
-		// TODO: re-implement as lazy enumerator?
-
 		try
 		{
 			OriginalText = text0;
 
 			auto matches = gcnew List<IMatch^>( );
 
-			ToUtf8( &mData->mText, &mData->mIndices, text0 );
-			re2::StringPiece text( mData->mText.data( ), mData->mText.size( ) );
+			std::vector<char> text; // (utf-8)
+			std::vector<int> indices; // 
+
+			ToUtf8( &text, &indices, text0 );
+
+			re2::StringPiece const full_text( text.data( ), text.size( ) );
 
 			int number_of_capturing_groups = mData->mRe->NumberOfCapturingGroups( );
 
-			mData->mDefinedGroups.resize( number_of_capturing_groups );
+			std::vector<re2::StringPiece> found_groups;
+			found_groups.resize( number_of_capturing_groups + 1 ); // include main match
 
-			std::vector<RE2::Arg> args;
-			for( int i = 0; i < mData->mDefinedGroups.size( ); ++i ) args.push_back( &mData->mDefinedGroups[i] );
+			const auto& group_names = mData->mRe->CapturingGroupNames( ); // a 'map<int, string>'
 
-			std::vector<const RE2::Arg*> argsp;
-			for( int i = 0; i < args.size( ); ++i ) argsp.push_back( &args[i] );
+			int start_pos = 0;
+			int previous_start_pos = 0;
 
-			//....................
-			// EMPTY MATCHES
-
-			auto prev_data = text.data( );
-
-			while( RE2::FindAndConsumeN( &text, *mData->mRe, argsp.data( ), number_of_capturing_groups ) )
+			while( mData->mRe->Match(
+				full_text,
+				start_pos,
+				full_text.size( ) - 1,
+				RE2::Anchor::UNANCHORED,
+				found_groups.data( ),
+				found_groups.size( ) )
+				)
 			{
-				Match^ match = nullptr;
-				for( int i = 0; i < mData->mDefinedGroups.size( ); ++i )
-				{
-					// TODO: use group names
+				const re2::StringPiece& main_group = found_groups.front( );
 
-					const auto& g = mData->mDefinedGroups[i];
-					if( g.data( ) == nullptr )
+				int utf8index = main_group.data( ) - text.data( );
+				int index = indices.at( utf8index );
+				if( index < 0 )
+				{
+					throw gcnew Exception( "Index error." );
+				}
+
+				Match^ match = gcnew Match( this, index, main_group.size( ) );
+
+				// default group
+				match->AddGroup( gcnew Group( match, "0", true, index, main_group.size( ) ) );
+
+				// groups
+				for( int i = 1; i < found_groups.size( ); ++i )
+				{
+					const re2::StringPiece& g = found_groups[i];
+
+					String^ group_name;
+					auto f = group_names.find( i );
+					if( f != group_names.cend( ) )
 					{
-						match->AddGroup( gcnew Group( match,
-							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
-							-1, 0 ) );
+						group_name = gcnew String( f->second.c_str( ) );
 					}
 					else
 					{
-						int utf8index = g.data( ) - mData->mText.data( );
-						int index = mData->mIndices.at( utf8index );
+						group_name = i.ToString( System::Globalization::CultureInfo::InvariantCulture );
+					}
+
+					Group^ group;
+
+					if( g.data( ) == nullptr ) // failed group
+					{
+						group = gcnew Group( match, group_name, false, 0, 0 );
+					}
+					else
+					{
+						int utf8index = g.data( ) - text.data( );
+						int index = indices.at( utf8index );
 						if( index < 0 )
 						{
 							throw gcnew Exception( "Index error." );
 						}
 
-						if( i == 0 ) match = gcnew Match( this, index, g.size( ) );
-
-						match->AddGroup( gcnew Group( match,
-							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
-							index, g.size( ) ) ); // main group when 'i==0'
+						group = gcnew Group( match, group_name, true, index, g.size( ) );
 					}
+
+					match->AddGroup( group );
 				}
 
 				matches->Add( match );
 
-				if( prev_data == text.data( ) )
-				{
-					// it was an empty match;
-					// advance?
-					//...
+				// advance to the end of found match
 
-					text.remove_prefix( 1 ); //.................
+				start_pos = main_group.data( ) + main_group.size( ) - full_text.data( );
+
+				if( start_pos == previous_start_pos ) // was empty match
+				{
+					Debug::Assert( main_group.size( ) == 0 );
+
+					// advance by the size of current utf-8 element
+
+					do { ++start_pos; } while( start_pos < indices.size() && indices.at( start_pos ) < 0 );
 				}
 
-				prev_data = text.data( );
+				if( start_pos > full_text.size( ) ) break; // end of matches
+
+				previous_start_pos = start_pos;
 			}
 
 			return gcnew RegexMatches( matches->Count, matches );

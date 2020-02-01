@@ -32,11 +32,6 @@ namespace Re2RegexInterop
 	{
 		std::unique_ptr<RE2> mRe;
 
-		std::vector<char> mText; // (utf-8)
-		std::vector<int> mIndices; // 
-
-		std::vector<re2::StringPiece> mDefinedGroups;
-
 		MatcherData( )
 		{
 		}

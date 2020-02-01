@@ -29,9 +29,9 @@ namespace Re2RegexEngineNs
 
 		public string Name => "RE2";
 
-		public string EngineVersion => Re2RegexInterop.Matcher.GetRe2Version();
+		public string EngineVersion => Re2RegexInterop.Matcher.GetRe2Version( );
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
 		public event EventHandler OptionsChanged;
 

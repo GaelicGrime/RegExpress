@@ -15,7 +15,7 @@ namespace Re2RegexInterop
 	{
 	public:
 
-		Group( Match^ parent, String^ name, int index, int length );
+		Group( Match^ parent, String^ name, bool success, int index, int length );
 
 
 #pragma region ICapture
