@@ -119,7 +119,7 @@ namespace Re2RegexInterop
 		}
 
 		dest->resize( bytes_written + 1, 0 ); // (zero-terminated)
-		indices->resize( bytes_written );
+		indices->resize( bytes_written, -1 );
 		indices->push_back( s->Length );
 
 		setlocale( LC_ALL, old_locale ); // restore
@@ -240,6 +240,8 @@ namespace Re2RegexInterop
 				int next_index = indices.at( utf8index + main_group.size( ) );
 				if( next_index < 0 )
 				{
+					// for example, '\C' in pattern -- match one byte
+					// TODO: find a more appropriate error text
 					throw gcnew Exception( "Index error (B)." );
 				}
 
@@ -277,6 +279,8 @@ namespace Re2RegexInterop
 						int index = indices.at( utf8index );
 						if( index < 0 )
 						{
+							// for example, '\C' in pattern -- match one byte
+							// TODO: find a more appropriate error text
 							throw gcnew Exception( "Index error (C)." );
 						}
 
