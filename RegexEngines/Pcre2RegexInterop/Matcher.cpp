@@ -394,7 +394,7 @@ namespace Pcre2RegexInterop
 		C( PCRE2_ALT_BSUX, "Alternative handling of \\u, \\U, and \\x" );
 		C( PCRE2_ALT_CIRCUMFLEX, "Alternative handling of ^ in multiline mode" );
 		C( PCRE2_ALT_VERBNAMES, "Process backslashes in verb names" );
-		C( PCRE2_AUTO_CALLOUT, "Compile automatic callouts" );
+		//C( PCRE2_AUTO_CALLOUT, "Compile automatic callouts" );
 		C( PCRE2_CASELESS, "Do caseless matching" );
 		C( PCRE2_DOLLAR_ENDONLY, "$ not to match newline at end" );
 		C( PCRE2_DOTALL, ". matches anything including NL" );
@@ -403,7 +403,7 @@ namespace Pcre2RegexInterop
 		C( PCRE2_EXTENDED, "Ignore white space and # comments" );
 		C( PCRE2_FIRSTLINE, "Force matching to be before newline" );
 		C( PCRE2_LITERAL, "Pattern characters are all literal" );
-		C( PCRE2_MATCH_INVALID_UTF, "Enable support for matching invalid UTF" );
+		//C( PCRE2_MATCH_INVALID_UTF, "Enable support for matching invalid UTF" );
 		C( PCRE2_MATCH_UNSET_BACKREF, "Match unset backreferences" );
 		C( PCRE2_MULTILINE, "^ and $ match newlines within data" );
 		C( PCRE2_NEVER_BACKSLASH_C, "Lock out the use of \\C in patterns" );
@@ -413,11 +413,11 @@ namespace Pcre2RegexInterop
 		C( PCRE2_NO_AUTO_POSSESS, "Disable auto-possessification" );
 		C( PCRE2_NO_DOTSTAR_ANCHOR, "Disable automatic anchoring for .*" );
 		C( PCRE2_NO_START_OPTIMIZE, "Disable match-time start optimizations" );
-		C( PCRE2_NO_UTF_CHECK, "Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)" );
+		//C( PCRE2_NO_UTF_CHECK, "Do not check the pattern for UTF validity (only relevant if PCRE2_UTF is set)" );
 		C( PCRE2_UCP, "Use Unicode properties for \\d, \\w, etc." );
 		C( PCRE2_UNGREEDY, "Invert greediness of quantifiers" );
 		C( PCRE2_USE_OFFSET_LIMIT, "Enable offset limit for unanchored matching" );
-		C( PCRE2_UTF, "Treat pattern and subjects as UTF strings" );
+		//C( PCRE2_UTF, "Treat pattern and subjects as UTF strings" );
 
 		mCompileOptions = list;
 
@@ -442,7 +442,7 @@ namespace Pcre2RegexInterop
 		C( PCRE2_NOTEMPTY, "An empty string is not a valid match" );
 		C( PCRE2_NOTEMPTY_ATSTART, "An empty string at the start of the subject is not a valid match" );
 		C( PCRE2_NO_JIT, "Do not use JIT matching" );
-		C( PCRE2_NO_UTF_CHECK, "Do not check the subject for UTF validity (only relevant if PCRE2_UTF was set at compile time)" );
+		//C( PCRE2_NO_UTF_CHECK, "Do not check the subject for UTF validity (only relevant if PCRE2_UTF was set at compile time)" );
 		C( PCRE2_PARTIAL_HARD, "Return PCRE2_ERROR_PARTIAL for a partial match even if there is a full match" );
 		C( PCRE2_PARTIAL_SOFT, "Return PCRE2_ERROR_PARTIAL for a partial match if no full matches are found" );
 		C( PCRE2_DFA_SHORTEST, "Return only the shortest match" );
