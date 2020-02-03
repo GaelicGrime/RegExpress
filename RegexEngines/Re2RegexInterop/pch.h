@@ -9,18 +9,14 @@
 
 // add headers that you want to pre-compile here
 
-#include <crtversion.h>
 
-#include <string>
-#include <codecvt>
-
-// Some useful constants and their default values in 64-bit mode:
-//#define _REGEX_MAX_COMPLEXITY_COUNT 10000000L // set to 0 to disable
-//#define _REGEX_MAX_STACK_COUNT 600L // set to 0 to disable
-
-#include <regex>
+#include "pch-re2.h"
+#include "re2/re2.h"
 
 #include <msclr\marshal_cppstd.h>
+#include <exception>
+#include <map>
+#include <functional>
 
 
 #endif //PCH_H

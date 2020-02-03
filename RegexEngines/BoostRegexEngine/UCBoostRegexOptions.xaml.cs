@@ -40,15 +40,10 @@ namespace BoostRegexEngineNs
 
 				foreach( var o in compile_options )
 				{
-					var tb = new TextBlock( );
-					new Run( o.FlagName, tb.ContentEnd );
-					new Run( " – " + o.Note, tb.ContentEnd );
-
 					var cb = new CheckBox
 					{
 						Tag = o.FlagName,
-						//Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
-						Content = tb
+						Content = CreateTextBlock( o.FlagName, o.Note )
 					};
 
 					pnlCompileOptions.Children.Add( cb );
@@ -63,12 +58,11 @@ namespace BoostRegexEngineNs
 					var cb = new CheckBox
 					{
 						Tag = o.FlagName,
-						Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" )
+						Content = CreateTextBlock( o.FlagName, o.Note )
 					};
 
 					pnlMatchOptions.Children.Add( cb );
 				}
-
 			}
 		}
 
@@ -185,5 +179,18 @@ namespace BoostRegexEngineNs
 			Changed?.Invoke( null, null );
 		}
 
+
+		TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
+		}
 	}
 }

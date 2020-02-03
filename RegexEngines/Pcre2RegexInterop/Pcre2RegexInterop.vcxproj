@@ -887,6 +887,10 @@
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="PCRE2\AUTHORS" />
+    <None Include="PCRE2\LICENCE" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

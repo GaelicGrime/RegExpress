@@ -10,40 +10,34 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
-
-namespace BoostRegexEngineNs
+namespace Re2RegexEngineNs
 {
-	public class BoostRegexEngine : IRegexEngine
+	public class Re2RegexEngine : IRegexEngine
 	{
-		readonly UCBoostRegexOptions OptionsControl;
+		readonly UCRe2RegexOptions OptionsControl;
 
-		struct Key
+		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
+		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
+		static readonly Regex EmptyRegex = new Regex( "(?!)" );
+
+
+		public Re2RegexEngine( )
 		{
-			internal GrammarEnum Grammar;
-			internal bool ModX;
-		}
-
-		static readonly Dictionary<Key, Regex> CachedColouringRegexes = new Dictionary<Key, Regex>( );
-		static readonly Dictionary<Key, Regex> CachedHighlightingRegexes = new Dictionary<Key, Regex>( );
-
-
-		public BoostRegexEngine( )
-		{
-			OptionsControl = new UCBoostRegexOptions( );
+			OptionsControl = new UCRe2RegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
+
 		}
 
 
 		#region IRegexEngine
 
-		public string Id => "CppBoostRegex";
+		public string Id => "CppRe2Regex";
 
-		public string Name => "Boost.Regex";
+		public string Name => "RE2";
 
-		public string EngineVersion => BoostRegexInterop.Matcher.GetBoostVersion( );
+		public string EngineVersion => Re2RegexInterop.Matcher.GetRe2Version( );
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
-
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
 		public event EventHandler OptionsChanged;
 
@@ -68,18 +62,15 @@ namespace BoostRegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			var selected_options = OptionsControl.CachedOptions;
+			string[] selected_options = OptionsControl.CachedOptions;
 
-			return new BoostRegexInterop.Matcher( pattern, selected_options );
+			return new Re2RegexInterop.Matcher( pattern, selected_options );
 		}
 
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
-			GrammarEnum grammar = OptionsControl.GetGrammar( );
-			bool mod_x = OptionsControl.GetModX( );
-
-			Regex regex = GetCachedColouringRegex( grammar, mod_x );
+			Regex regex = GetCachedColouringRegex( );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -112,32 +103,7 @@ namespace BoostRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// comments, '(?#...)', '#...'
-				{
-					var g = m.Groups["comment"];
-					if( g.Success )
-					{
-						if( cnc.IsCancellationRequested ) return;
-
-						foreach( Capture c in g.Captures )
-						{
-							if( cnc.IsCancellationRequested ) return;
-
-							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
-
-							if( !intersection.IsEmpty )
-							{
-								colouredSegments.Comments.Add( intersection );
-							}
-						}
-
-						continue;
-					}
-				}
-
-				if( cnc.IsCancellationRequested ) return;
-
-				// class (within [...] groups), '[:...:]', '[=...=]', '[. ... .]'
+				// class (within [...] groups), '[:...:]'
 				{
 					var g = m.Groups["class"];
 					if( g.Success )
@@ -162,7 +128,7 @@ namespace BoostRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// named group, '(?<name>...)' or '(?'name'...)'
+				// named group, '(?P<name>...)'
 				{
 					var g = m.Groups["name"];
 					if( g.Success )
@@ -190,23 +156,9 @@ namespace BoostRegexEngineNs
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			GrammarEnum grammar = OptionsControl.GetGrammar( );
-			bool mod_x = OptionsControl.GetModX( );
-
 			int para_size = 1;
 
-			bool is_POSIX_basic =
-				grammar == GrammarEnum.basic ||
-				grammar == GrammarEnum.sed ||
-				grammar == GrammarEnum.grep ||
-				grammar == GrammarEnum.emacs;
-
-			if( is_POSIX_basic )
-			{
-				para_size = 2;
-			}
-
-			var regex = GetCachedHighlightingRegex( grammar, mod_x );
+			var regex = GetCachedHighlightingRegex( );
 
 			var parentheses = new List<(int Index, char Value)>( );
 
@@ -350,7 +302,7 @@ namespace BoostRegexEngineNs
 			}
 		}
 
-		#endregion IRegexEngine
+		#endregion
 
 
 		private void OptionsControl_Changed( object sender, EventArgs e )
@@ -359,72 +311,43 @@ namespace BoostRegexEngineNs
 		}
 
 
-		static Regex GetCachedColouringRegex( GrammarEnum grammar, bool modX )
+
+		Regex GetCachedColouringRegex( )
 		{
-			var key = new Key { Grammar = grammar, ModX = modX };
+			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
+
+			if( is_literal ) return EmptyRegex;
+
+			string key = string.Join( "\u001F", new object[] { "" } ); // (no variants yet)
 
 			lock( CachedColouringRegexes )
 			{
 				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				bool is_perl =
-					grammar == GrammarEnum.perl ||
-					grammar == GrammarEnum.ECMAScript ||
-					grammar == GrammarEnum.normal ||
-					grammar == GrammarEnum.JavaScript ||
-					grammar == GrammarEnum.JScript;
-
-				bool is_POSIX_extended =
-					grammar == GrammarEnum.extended ||
-					grammar == GrammarEnum.egrep ||
-					grammar == GrammarEnum.awk;
-
-				bool is_POSIX_basic =
-					grammar == GrammarEnum.basic ||
-					grammar == GrammarEnum.sed ||
-					grammar == GrammarEnum.grep ||
-					grammar == GrammarEnum.emacs;
-
-				bool is_emacs =
-					grammar == GrammarEnum.emacs;
-
 				string escape = @"(?'escape'";
 
-				if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\[1-9] | "; // back reference
-				if( is_perl ) escape += @"\\g-?[1-9] | \\g\{.*?\} | "; // back reference
-				if( is_perl ) escape += @"\\k<.*?(>|$) | "; // back reference
+				escape += @"\\[pP][A-Za-z] | "; // Unicode character class (one-letter name)
+				escape += @"\\[pP]\{.*?(\}|$) | "; // Unicode character class
 
-				if( is_perl || is_POSIX_extended ) escape += @"\\c[A-Za-z] | "; // ASCII escape
-				if( is_perl || is_POSIX_extended ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // hex, two digits
-				if( is_perl || is_POSIX_extended ) escape += @"\\x\{[0-9A-Fa-f]+(\}|$) | "; // hex, four digits
-				if( is_perl || is_POSIX_extended ) escape += @"\\0[0-7]{1,3} | "; // octal, three digits
-				if( is_perl || is_POSIX_extended ) escape += @"\\N\{.*?(\}|$) | "; // symbolic name
-				if( is_perl || is_POSIX_extended ) escape += @"\\[pP]\{.*?(\}|$) | "; // property
-				if( is_perl || is_POSIX_extended ) escape += @"\\[pP]. | "; // property, short name
-				if( is_perl || is_POSIX_extended ) escape += @"\\Q.*?(\\E|$) | "; // quoted sequence
-				if( is_emacs ) escape += @"\\[sS]. | "; // syntax group
+				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
+				escape += @"\\[0-7]{1,3} | "; // octal, three digits
 
-				if( is_perl || is_POSIX_extended ) escape += @"\\. | "; // various
-				if( is_POSIX_basic ) escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\. | "; // various
+				escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
+				escape += @"\\x\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty
+
+				escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+
+				escape += @"\\. | ";
 
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";
 
-				// 
-
-				string comment = @"(?'comment'";
-
-				if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
-				if( is_perl && modX ) comment += @"\#.*?(\n|$) | "; // line-comment*/
-
-				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
-				comment += ")";
 
 				// 
 
 				string @class = @"(?'class'";
 
-				if( is_perl || is_POSIX_extended || is_POSIX_basic ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
+				@class += @"\[(?'c'[:]) .*? (\k<c>\] | $) | "; // only [: :], no [= =], no [. .]
 
 				@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
 				@class += ")";
@@ -433,26 +356,35 @@ namespace BoostRegexEngineNs
 
 				string char_group = @"(";
 
-				if( is_perl || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+				char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | "; // TODO: check 'escape' part
 
 				char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
 				char_group += ")";
 
+				// 
+
+				/*
+				string comment = @"(?'comment'";
+
+				comment += @"\(\?\#.*?(\)|$) | "; // comment
+				if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment
+
+				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
+				comment += ")";
+				*/
 				//
 
 				string named_group = @"(?'named_group'";
 
-				if( is_perl ) named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>))";
+				named_group += @"\(\?P(?'name'<.*?>) | ";
 
 				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
 				named_group += ")";
 
 
-				// 
-
 				string pattern = @"(?nsx)(" + Environment.NewLine +
 					escape + " | " + Environment.NewLine +
-					comment + " | " + Environment.NewLine +
+					//comment + " | " + Environment.NewLine +
 					char_group + " | " + Environment.NewLine +
 					named_group + " | " + Environment.NewLine +
 					"(.(?!)) )";
@@ -466,56 +398,27 @@ namespace BoostRegexEngineNs
 		}
 
 
-		static Regex GetCachedHighlightingRegex( GrammarEnum grammar, bool modX )
+
+		Regex GetCachedHighlightingRegex( )
 		{
-			var key = new Key { Grammar = grammar, ModX = modX };
+			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
+
+			if( is_literal ) return EmptyRegex;
+
+			string key = string.Join( "\u001F", new object[] { "" } ); // (no variants yet)
 
 			lock( CachedHighlightingRegexes )
 			{
 				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				bool is_perl =
-					grammar == GrammarEnum.perl ||
-					grammar == GrammarEnum.ECMAScript ||
-					grammar == GrammarEnum.normal ||
-					grammar == GrammarEnum.JavaScript ||
-					grammar == GrammarEnum.JScript;
-
-				bool is_POSIX_extended =
-					grammar == GrammarEnum.extended ||
-					grammar == GrammarEnum.egrep ||
-					grammar == GrammarEnum.awk;
-
-				bool is_POSIX_basic =
-					grammar == GrammarEnum.basic ||
-					grammar == GrammarEnum.sed ||
-					grammar == GrammarEnum.grep ||
-					grammar == GrammarEnum.emacs;
-
-				bool is_emacs =
-					grammar == GrammarEnum.emacs;
-
 				string pattern = @"(?nsx)(";
 
-				if( is_perl || is_POSIX_extended )
-				{
-					pattern += @"(?'left_para'\() | "; // '('
-					pattern += @"(?'right_para'\)) | "; // ')'
-					pattern += @"(?'range'\{\s*\d+(\s*,(\s*\d+)?)?(\s*\}(?'end')|$)) | "; // '{...}' (spaces are allowed)
-				}
+				pattern += @"(?'left_para'\() | "; // '('
+				pattern += @"(?'right_para'\)) | "; // ')'
+				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
 
-				if( is_POSIX_basic )
-				{
-					pattern += @"(?'left_para'\\\() | "; // '\('
-					pattern += @"(?'right_para'\\\)) | "; // '\)'
-					pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
-				}
-
-				if( is_perl || is_POSIX_extended || is_POSIX_basic )
-				{
-					pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-					pattern += @"\\. | . | ";
-				}
+				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+				pattern += @"\\. | . | ";
 
 				pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
 				pattern += @")";
