@@ -42,7 +42,7 @@ namespace Re2RegexEngineNs
 				var cb = new CheckBox
 				{
 					Tag = o.FlagName,
-					Content = ( o.FlagName + " – " + o.Note ).Replace( "_", "__" ),
+					Content = CreateTextBlock( o.FlagName, o.Note )
 
 					// Does not seem useful:
 					//IsChecked = o.DefaultValue
@@ -126,6 +126,20 @@ namespace Re2RegexEngineNs
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, null );
+		}
+
+
+		TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
 		}
 	}
 }
