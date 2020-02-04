@@ -14,7 +14,7 @@
     </UserControl.Resources>
 
     <Grid>
-        <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top" Style="{StaticResource ProgressBar1}" />
+        <ProgressBar x:Name="pbProgress" Panel.ZIndex="2" VerticalAlignment="Top" Style="{StaticResource ProgressBar1}" Visibility="Hidden" />
 
         <AdornerDecorator>
             <local_controls:MyRichTextBox x:Name="rtb" 

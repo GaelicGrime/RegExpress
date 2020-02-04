@@ -309,6 +309,7 @@ namespace RegExpressWPF
 			if( IsInChange ) return;
 
 			ucMatches.ShowInfo( "Matching…", delayed: false );
+			lblMatches.Text = "Matches";
 
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 
