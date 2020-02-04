@@ -16,7 +16,7 @@ Sample:
 <br/>
 
 
-![Screenshot of RegExpress](Misc/Screenshot1.png)
+![Screenshot of RegExpress](Misc/Screenshot2.png)
 
 <br/>
 
