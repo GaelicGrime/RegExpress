@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -48,6 +49,19 @@ namespace RegExpressWPF
 			if( interval < MIN_INTERVAL ) interval = MIN_INTERVAL;
 
 			AutoSaveLoop = new ResumableLoop( AutoSaveThreadProc, (int)interval.TotalMilliseconds );
+		}
+
+
+		private void Window_Initialized( object sender, EventArgs e )
+		{
+
+		}
+
+
+		private void Window_SourceInitialized( object sender, EventArgs e )
+		{
+			TryRestoreWindowPlacement( );
+			RestoreMaximisedState( );
 		}
 
 
@@ -97,6 +111,8 @@ namespace RegExpressWPF
 
 				// ignore
 			}
+
+			SaveWindowPlacement( );
 		}
 
 
@@ -388,6 +404,114 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void SaveWindowPlacement( )
+		{
+			try
+			{
+				Properties.Settings.Default.IsMaximised = WindowState == WindowState.Maximized;
+				if( Properties.Settings.Default.IsMaximised )
+				{
+					Properties.Settings.Default.RestoreBounds = RestoreBounds;
+				}
+				else
+				{
+					Properties.Settings.Default.RestoreBounds = new Rect( Left, Top, ActualWidth, ActualHeight );
+				}
+
+				Properties.Settings.Default.Save( );
+			}
+			catch( Exception exc )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
+				else Debug.Fail( exc.Message, exc.ToString( ) );
+
+				// ignore
+			}
+		}
+
+
+
+
+		[StructLayout( LayoutKind.Sequential )]
+		struct POINT
+		{
+			public Int32 X;
+			public Int32 Y;
+		}
+
+
+		[DllImport( "user32", SetLastError = true )]
+		static extern IntPtr MonitorFromPoint( POINT pt, Int32 dwFlags );
+
+		const Int32 MONITOR_DEFAULTTONULL = 0;
+
+
+		static bool IsVisibleOnAnyMonitor( Point px )
+		{
+			POINT p = new POINT { X = (int)px.X, Y = (int)px.Y };
+
+			return MonitorFromPoint( p, MONITOR_DEFAULTTONULL ) != IntPtr.Zero;
+		}
+
+
+		Point ToPixels( Point p )
+		{
+			Matrix transform = PresentationSource.FromVisual( this ).CompositionTarget.TransformFromDevice;
+
+			Point r = transform.Transform( p );
+
+			return r;
+		}
+
+
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void TryRestoreWindowPlacement( )
+		{
+			try
+			{
+				var r = Properties.Settings.Default.RestoreBounds;
+				if( !r.IsEmpty && r.Width > 0 && r.Height > 0 )
+				{
+					// check if the window is in working area
+					// TODO: check if it works with different DPIs
+
+					Point p1, p2;
+					p1 = r.TopLeft;
+					p1.Offset( 10, 10 );
+					p2 = r.TopRight;
+					p2.Offset( -10, 10 );
+
+					if( IsVisibleOnAnyMonitor( ToPixels( p1 ) ) || IsVisibleOnAnyMonitor( ToPixels( p2 ) ) )
+					{
+						Left = r.Left;
+						Top = r.Top;
+						Width = Math.Max( 50, r.Width );
+						Height = Math.Max( 40, r.Height );
+					}
+				}
+				// Note. To work on secondary monitor, the 'Maximised' state is restored in 'Window_SourceInitialized'.
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				// ignore
+			}
+		}
+
+
+		void RestoreMaximisedState( )
+		{
+			// restore the Maximised state; this works for secondary monitors as well;
+			// to avoid undesirable effects, call it from 'SourceInitialised'
+			if( Properties.Settings.Default.IsMaximised )
+			{
+				WindowState = WindowState.Maximized;
+			}
+		}
+
 		#region IDisposable Support
 
 		private bool disposedValue = false; // To detect redundant calls
@@ -427,5 +551,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }
