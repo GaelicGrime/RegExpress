@@ -39,6 +39,7 @@ namespace RegExpressWPF
 		public static readonly RoutedUICommand CloseTabCommand = new RoutedUICommand( );
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		public MainWindow( )
 		{
 			InitializeComponent( );
@@ -48,6 +49,42 @@ namespace RegExpressWPF
 			if( interval < MIN_INTERVAL ) interval = MIN_INTERVAL;
 
 			AutoSaveLoop = new ResumableLoop( AutoSaveThreadProc, (int)interval.TotalMilliseconds );
+
+			// try restoring window placement
+			try
+			{
+				var r = Properties.Settings.Default.RestoreBounds;
+				if( !r.IsEmpty )
+				{
+					// TODO: check if the window is in working area
+					Left = Math.Max( 0, r.Left );
+					Top = Math.Max( 0, r.Top );
+				}
+				// Note. To work on secondary monitor, the 'Maximised' state is restored in 'Window_Load'.
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				// ignore
+			}
+		}
+
+
+		private void Window_Initialized( object sender, EventArgs e )
+		{
+
+		}
+
+
+		private void Window_SourceInitialized( object sender, EventArgs e )
+		{
+			// restore the Maximised state; this works for secondary monitors as well
+			if( Properties.Settings.Default.IsMaximised )
+			{
+				WindowState = WindowState.Maximized;
+			}
 		}
 
 
@@ -97,6 +134,22 @@ namespace RegExpressWPF
 
 				// ignore
 			}
+
+			try
+			{
+				Properties.Settings.Default.IsMaximised = WindowState == WindowState.Maximized;
+				Properties.Settings.Default.RestoreBounds = RestoreBounds;
+
+				Properties.Settings.Default.Save( );
+			}
+			catch( Exception exc )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
+				else Debug.Fail( exc.Message, exc.ToString( ) );
+
+				// ignore
+			}
+
 		}
 
 
@@ -427,5 +480,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
 	}
 }
