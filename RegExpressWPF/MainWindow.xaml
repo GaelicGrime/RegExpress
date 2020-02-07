@@ -34,9 +34,25 @@
             <TabControl.Resources>
 
                 <DataTemplate x:Key="TabTemplate" DataType="TabItem">
+                    
+                    <DataTemplate.Triggers>
+                        <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation 
+                                        Storyboard.TargetName="TabCaption" 
+                                        Storyboard.TargetProperty="Opacity" 
+                                        From="0" 
+                                        To="1"  
+                                        Duration="00:00:01.33" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </DataTemplate.Triggers>
+                    
                     <StackPanel Orientation="Horizontal">
                         <Label x:Name="TabCaption" 
-                               Content="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header}"
+                               Content="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header, NotifyOnTargetUpdated=True}"
                                />
                         <!--<TextBox x:Name="TabNameEditor" Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header, Mode=OneWay}"/>-->
 

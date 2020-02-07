@@ -369,6 +369,15 @@ namespace RegExpressWPF
 
 			tabControlMain.SelectedIndex = index;
 
+			// rename tabs
+			var main_tabs = tabControlMain.Items.OfType<TabItem>( ).Where( t => t.Content is UCMain );
+			int i = 0;
+			foreach( var tab in main_tabs )
+			{
+				var name = "Tab " + ( ++i );
+				if( !name.Equals( tab.Header ) ) tab.Header = name;
+			}
+
 			TrySwitchToSingleMode( );
 		}
 
