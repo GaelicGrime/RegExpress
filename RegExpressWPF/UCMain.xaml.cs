@@ -317,7 +317,7 @@ namespace RegExpressWPF
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 
-			FindMatchesLoop.SendRestart( );
+			FindMatchesLoop.SendRedoAsap( );
 
 			Changed?.Invoke( this, null );
 		}

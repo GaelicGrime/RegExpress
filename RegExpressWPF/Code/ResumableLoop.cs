@@ -17,14 +17,17 @@ namespace RegExpressWPF.Code
 			None,
 			Stop,
 			Restart,
+			RedoAsap,
 		}
 
 		readonly AutoResetEvent StopEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent RestartEvent = new AutoResetEvent( initialState: false );
+		readonly AutoResetEvent RedoAsapEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent[] Events;
 
 		bool IsStopRequestDetected;
 		bool IsRestartRequestDetected;
+		bool IsRedoAsapRequestDetected;
 
 		Thread TheThread = null;
 
@@ -36,7 +39,7 @@ namespace RegExpressWPF.Code
 			if( timeout2 <= 0 ) timeout2 = timeout1;
 			if( timeout3 <= 0 ) timeout3 = timeout2;
 
-			Events = new[] { StopEvent, RestartEvent };
+			Events = new[] { StopEvent, RestartEvent, RedoAsapEvent };
 
 			StartWorker( action, timeout1, timeout2, timeout3 );
 		}
@@ -52,6 +55,12 @@ namespace RegExpressWPF.Code
 		public void SendRestart( )
 		{
 			RestartEvent.Set( );
+		}
+
+
+		public void SendRedoAsap( )
+		{
+			RedoAsapEvent.Set( );
 		}
 
 
@@ -82,16 +91,19 @@ namespace RegExpressWPF.Code
 		{
 			if( IsStopRequestDetected ) return Status.Stop;
 
-			if( IsRestartRequestDetected )
+			if( IsRestartRequestDetected || IsRedoAsapRequestDetected )
 			{
-				if( StopEvent.WaitOne( 0 ) ) // since it has priority
+				if( StopEvent.WaitOne( 0 ) ) // since 'stop' has priority over 'restart'
 				{
 					IsStopRequestDetected = true;
+
+					IsRestartRequestDetected = false;
+					IsRedoAsapRequestDetected = false;
 
 					return Status.Stop;
 				}
 
-				return Status.Restart;
+				return IsRedoAsapRequestDetected ? Status.RedoAsap : Status.Restart;
 			}
 
 			int n = WaitHandle.WaitAny( Events, timeoutMs );
@@ -104,6 +116,9 @@ namespace RegExpressWPF.Code
 			case 1:
 				IsRestartRequestDetected = true;
 				return Status.Restart;
+			case 2:
+				IsRedoAsapRequestDetected = true;
+				return Status.RedoAsap;
 			case WaitHandle.WaitTimeout:
 				return Status.None;
 			default:
@@ -125,6 +140,7 @@ namespace RegExpressWPF.Code
 			int[] timeouts = new[] { timeout1, timeout2, timeout3 };
 
 			IsRestartRequestDetected = false;
+			IsRedoAsapRequestDetected = false;
 
 			try
 			{
@@ -135,31 +151,38 @@ namespace RegExpressWPF.Code
 					var status = GetStatus( -1 );
 
 					if( status == Status.Stop ) continue;
-					if( status != Status.Restart ) { Debug.Assert( false ); continue; }
+					if( status != Status.Restart && status != Status.RedoAsap ) { Debug.Assert( false ); continue; }
 
-					Debug.Assert( status == Status.Restart );
+					Debug.Assert( status == Status.Restart || status == Status.RedoAsap );
 					Debug.Assert( !IsStopRequestDetected );
-					Debug.Assert( IsRestartRequestDetected );
+					Debug.Assert( IsRestartRequestDetected || IsRedoAsapRequestDetected );
 
-					// wait for "silience"
-
-					for( var i = 0; ; i = Math.Min( i + 1, timeouts.Length - 1 ) )
+					if( !IsRedoAsapRequestDetected )
 					{
-						IsRestartRequestDetected = false;
+						// wait for "silience"
 
-						status = GetStatus( timeouts[i] );
+						for( var i = 0; ; i = Math.Min( i + 1, timeouts.Length - 1 ) )
+						{
+							IsRestartRequestDetected = false;
 
-						if( status == Status.Stop ) break;
-						if( status == Status.Restart ) continue;
-						if( status == Status.None ) break; // (i.e. timeout, "silence")
-						Debug.Assert( false );
+							status = GetStatus( timeouts[i] );
+
+							if( status == Status.Stop ) { Debug.Assert( IsStopRequestDetected ); break; }
+							if( status == Status.Restart ) continue;
+							if( status == Status.RedoAsap ) { Debug.Assert( IsRedoAsapRequestDetected ); break; }
+							if( status == Status.None ) break; // (i.e. timeout, "silence")
+							Debug.Assert( false );
+						}
 					}
+
+					IsRedoAsapRequestDetected = false;
 
 					Debug.Assert( !IsRestartRequestDetected );
 
 					if( status == Status.Stop ) continue;
 
-					Debug.Assert( status == Status.None );
+					Debug.Assert( status == Status.None || status == Status.RedoAsap );
+
 
 					try
 					{

@@ -37,6 +37,7 @@ namespace RegExpressWPF
 		readonly ResumableLoop RecolouringLoop;
 		readonly ResumableLoop LocalUnderliningLoop;
 		readonly ResumableLoop ExternalUnderliningLoop;
+		readonly ManualResetEvent MatchesUpdatedEvent = new ManualResetEvent( initialState: false );
 
 		readonly ChangeEventHelper ChangeEventHelper;
 		readonly UndoRedoHelper UndoRedoHelper;
@@ -150,6 +151,8 @@ namespace RegExpressWPF
 						LastExternalUnderliningSegments = null;
 					}
 
+					MatchesUpdatedEvent.Set( );
+
 					return;
 				}
 			}
@@ -166,6 +169,8 @@ namespace RegExpressWPF
 				LastEol = eol;
 				LastExternalUnderliningSegments = null;
 			}
+
+			MatchesUpdatedEvent.Set( );
 
 			RecolouringLoop.SendRestart( );
 			LocalUnderliningLoop.SendRestart( );
@@ -275,6 +280,8 @@ namespace RegExpressWPF
 			//	LastShowCaptures = false;
 			//	LastEol = null;
 			//}
+
+			MatchesUpdatedEvent.Reset( );
 
 			TextChanged?.Invoke( this, null );
 		}
@@ -570,6 +577,9 @@ namespace RegExpressWPF
 
 		void LocalUnderliningThreadProc( ICancellable cnc )
 		{
+			// if matches are outdated, then wait a while
+			MatchesUpdatedEvent.WaitOne( 444 );
+
 			bool is_focussed = false;
 			RegexMatches matches;
 			string eol;
