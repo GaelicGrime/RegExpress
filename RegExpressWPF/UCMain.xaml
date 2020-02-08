@@ -166,7 +166,7 @@
                                             <TranslateTransform/>
                                         </TransformGroup>
                                     </StackPanel.LayoutTransform>
-                                    <Label Content="Newline:" VerticalAlignment="Center"/>
+                                    <Label Content="Newline:" VerticalAlignment="Center" Target="{Binding ElementName=cbxEol}"/>
                                     <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
                                         <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>
                                         <ComboBoxItem Tag="&#x0D;">CR (‘\r’, 0D)</ComboBoxItem>

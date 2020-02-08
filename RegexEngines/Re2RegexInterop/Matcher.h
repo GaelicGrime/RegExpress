@@ -31,9 +31,11 @@ namespace Re2RegexInterop
 	struct MatcherData
 	{
 		std::unique_ptr<RE2> mRe;
+		RE2::Anchor mAnchor;
 
 		MatcherData( )
 		{
+			mAnchor = RE2::Anchor::UNANCHORED;
 		}
 
 		~MatcherData( )

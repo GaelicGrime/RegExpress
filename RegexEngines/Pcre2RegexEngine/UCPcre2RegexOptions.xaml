@@ -28,8 +28,8 @@
                     </TransformGroup>
                 </StackPanel.LayoutTransform>
 
-                <Label Content="Algorithm: " Target="{Binding ElementName=cbxAlgorithm}" Padding="0 2 0 0"/>
-                <ComboBox x:Name="cbxAlgorithm" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="cbxAlgorithm_SelectionChanged" >
+                <Label Content="Algorithm:" Target="{Binding ElementName=cbxAlgorithm}" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cbxAlgorithm" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxAlgorithm_SelectionChanged">
                     <ComboBoxItem Tag ="Standard" Content="Perl-compatible" IsSelected="True" />
                     <ComboBoxItem Tag ="DFA" Content="DFA" />
                 </ComboBox>

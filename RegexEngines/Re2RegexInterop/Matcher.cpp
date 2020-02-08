@@ -65,7 +65,8 @@ namespace Re2RegexInterop
 			bytes_written += size_converted;
 		}
 
-		utf8.resize( bytes_written + 1, 0 ); // (zero-terminated)
+		utf8.resize( bytes_written + 1, 0 );
+		utf8.back( ) = 0; // (zero-terminated)
 
 		setlocale( LC_ALL, old_locale ); // restore
 
@@ -118,7 +119,8 @@ namespace Re2RegexInterop
 			bytes_written += size_converted;
 		}
 
-		dest->resize( bytes_written + 1, 0 ); // (zero-terminated)
+		dest->resize( bytes_written + 1, 0 );
+		dest->back( ) = 0; // (zero-terminated)
 		indices->resize( bytes_written, -1 );
 		indices->push_back( s->Length );
 
@@ -152,12 +154,23 @@ namespace Re2RegexInterop
 
 			if( !re->ok( ) )
 			{
-				throw gcnew Exception( String::Format( L"RE2 Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
+				throw gcnew Exception( String::Format( "RE2 Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
 			}
 
 			mData = new MatcherData{};
 
 			mData->mRe = std::move( re );
+
+			mData->mAnchor = RE2::Anchor::UNANCHORED;
+
+			if( Array::IndexOf( options, "ANCHOR_START" ) >= 0 )
+			{
+				mData->mAnchor = RE2::Anchor::ANCHOR_START;
+			}
+			else if( Array::IndexOf( options, "ANCHOR_BOTH" ) >= 0 )
+			{
+				mData->mAnchor = RE2::Anchor::ANCHOR_BOTH;
+			}
 		}
 		catch( const std::exception & exc )
 		{
@@ -170,7 +183,7 @@ namespace Re2RegexInterop
 		}
 		catch( ... )
 		{
-			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
+			throw gcnew Exception( L"Unknown error.\r\n" __FILE__ );
 		}
 	}
 
@@ -223,7 +236,7 @@ namespace Re2RegexInterop
 				full_text,
 				start_pos,
 				full_text.size( ) - 1,
-				RE2::Anchor::UNANCHORED,
+				mData->mAnchor,
 				found_groups.data( ),
 				found_groups.size( ) )
 				)

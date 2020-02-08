@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7
 		Misc\ComplexSamples.rtf = Misc\ComplexSamples.rtf
 		Misc\Sample Regex - RFC822.txt = Misc\Sample Regex - RFC822.txt
 		Misc\Screenshot1.png = Misc\Screenshot1.png
+		Misc\Screenshot2.png = Misc\Screenshot2.png
 		Misc\UnicodeData8.xlsx = Misc\UnicodeData8.xlsx
 	EndProjectSection
 EndProject
