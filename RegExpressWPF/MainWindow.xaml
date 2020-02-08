@@ -20,11 +20,13 @@
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static local:MainWindow.NewTabCommand}" CanExecute="NewTabCommand_CanExecute" Executed="NewTabCommand_Execute"/>
         <CommandBinding Command="{x:Static local:MainWindow.CloseTabCommand}" CanExecute="CloseTabCommand_CanExecute" Executed="CloseTabCommand_Execute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.DuplicateTabCommand}" CanExecute="DuplicateTabCommand_CanExecute" Executed="DuplicateTabCommand_Execute"/>
     </Window.CommandBindings>
 
     <Window.InputBindings>
-        <KeyBinding Command="{x:Static local:MainWindow.NewTabCommand}" Key="N" Modifiers="Ctrl"/>
-        <KeyBinding Command="{x:Static local:MainWindow.CloseTabCommand}" Key="F4" Modifiers="Ctrl"/>
+        <KeyBinding Command="{x:Static local:MainWindow.NewTabCommand}" Modifiers="Ctrl" Key="N"/>
+        <KeyBinding Command="{x:Static local:MainWindow.CloseTabCommand}" Modifiers="Ctrl" Key="F4"/>
+        <KeyBinding Command="{x:Static local:MainWindow.DuplicateTabCommand}" Modifiers="Ctrl" Key="D" />
     </Window.InputBindings>
 
 
@@ -35,7 +37,7 @@
             <TabControl.Resources>
 
                 <DataTemplate x:Key="TabTemplate" DataType="TabItem">
-                    
+
                     <DataTemplate.Triggers>
                         <EventTrigger RoutedEvent="Binding.TargetUpdated">
                             <BeginStoryboard>
@@ -50,7 +52,7 @@
                             </BeginStoryboard>
                         </EventTrigger>
                     </DataTemplate.Triggers>
-                    
+
                     <StackPanel Orientation="Horizontal">
                         <Label x:Name="TabCaption" 
                                Content="{Binding RelativeSource={RelativeSource AncestorType={x:Type TabItem}}, Path=Header, NotifyOnTargetUpdated=True}"
@@ -146,8 +148,9 @@
                                     Background="Transparent"
                                     BorderThickness="0"
                                     BorderBrush="Transparent"
-                                    Command="{x:Static local:MainWindow.NewTabCommand}"
-                                    IsTabStop="False" HorizontalContentAlignment="Left"
+                                    IsTabStop="False" 
+                                    HorizontalContentAlignment="Left"
+                                    Click="btnNewTab_Click"
                                     >
                             </Button>
                         </Border>
