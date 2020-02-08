@@ -38,6 +38,7 @@ namespace RegExpressWPF
 
 		public static readonly RoutedUICommand NewTabCommand = new RoutedUICommand( );
 		public static readonly RoutedUICommand CloseTabCommand = new RoutedUICommand( );
+		public static readonly RoutedUICommand DuplicateTabCommand = new RoutedUICommand( );
 
 
 		public MainWindow( )
@@ -124,9 +125,15 @@ namespace RegExpressWPF
 		}
 
 
+		private void btnNewTab_Click( object sender, RoutedEventArgs e )
+		{
+			NewOrDuplicateTab( );
+		}
+
+
 		private void UCMain_NewTabClicked( object sender, EventArgs e )
 		{
-			NewTab( );
+			NewOrDuplicateTab( );
 		}
 
 
@@ -138,7 +145,7 @@ namespace RegExpressWPF
 
 		private void NewTabCommand_Execute( object sender, ExecutedRoutedEventArgs e )
 		{
-			NewTab( );
+			NewTab( null );
 		}
 
 
@@ -163,9 +170,19 @@ namespace RegExpressWPF
 		}
 
 
+		private void DuplicateTabCommand_CanExecute( object sender, CanExecuteRoutedEventArgs e )
+		{
+			e.CanExecute = true;
+		}
+
+
+		private void DuplicateTabCommand_Execute( object sender, ExecutedRoutedEventArgs e )
+		{
+			DuplicateTab( );
+		}
+
 
 		// --------------------
-
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
@@ -292,10 +309,10 @@ namespace RegExpressWPF
 					.Max( );
 
 
-			var newTabItem = new TabItem( );
-			//newTabItem.Header = string.IsNullOrWhiteSpace( tab_data?.Name ) ? $"Tab {max + 1}" : tab_data.Name;
-			newTabItem.Header = $"Tab {max + 1}";
-			newTabItem.HeaderTemplate = (DataTemplate)tabControlMain.Resources["TabTemplate"];
+			var new_tab_item = new TabItem( );
+			//new_tab_item.Header = string.IsNullOrWhiteSpace( tab_data?.Name ) ? $"Tab {max + 1}" : tab_data.Name;
+			new_tab_item.Header = $"Tab {max + 1}";
+			new_tab_item.HeaderTemplate = (DataTemplate)tabControlMain.Resources["TabTemplate"];
 
 			var uc_main = new UCMain
 			{
@@ -303,17 +320,17 @@ namespace RegExpressWPF
 				Height = double.NaN
 			};
 
-			newTabItem.Content = uc_main;
+			new_tab_item.Content = uc_main;
 
-			tabControlMain.Items.Insert( tabControlMain.Items.IndexOf( tabNew ), newTabItem );
+			tabControlMain.Items.Insert( tabControlMain.Items.IndexOf( tabNew ), new_tab_item );
 
 			if( tabData != null ) uc_main.ApplyTabData( tabData );
 
 			uc_main.Changed += UCMain_Changed;
 
-			tabControlMain.SelectedItem = newTabItem; //?
+			tabControlMain.SelectedItem = new_tab_item; //?
 
-			return newTabItem;
+			return new_tab_item;
 		}
 
 
@@ -344,7 +361,7 @@ namespace RegExpressWPF
 		}
 
 
-		void NewTab( )
+		TabItem NewTab( TabData tabData )
 		{
 			var uc_main = GetSingleModeControl( );
 
@@ -357,7 +374,7 @@ namespace RegExpressWPF
 				uc_main.ShowNewTabButton( false );
 			}
 
-			CreateTab( null );
+			return CreateTab( tabData );
 		}
 
 
@@ -385,16 +402,66 @@ namespace RegExpressWPF
 
 			tabControlMain.SelectedIndex = index;
 
-			// rename tabs
-			var main_tabs = tabControlMain.Items.OfType<TabItem>( ).Where( t => t.Content is UCMain );
-			int i = 0;
-			foreach( var tab in main_tabs )
-			{
-				var name = "Tab " + ( ++i );
-				if( !name.Equals( tab.Header ) ) tab.Header = name;
-			}
+			RenumberTabs( );
 
 			TrySwitchToSingleMode( );
+		}
+
+
+		void DuplicateTab( )
+		{
+			TabItem new_tab_item = null;
+			var tab_data = new TabData( );
+
+			var uc_main = GetSingleModeControl( );
+			if( uc_main != null )
+			{
+				uc_main.ExportTabData( tab_data );
+				new_tab_item = NewTab( tab_data );
+			}
+			else
+			{
+				TabItem selected_tab_item = tabControlMain.IsVisible ? tabControlMain.SelectedItem as TabItem : null;
+
+				if( selected_tab_item != null && selected_tab_item.Content is UCMain )
+				{
+					uc_main = (UCMain)selected_tab_item.Content;
+					uc_main.ExportTabData( tab_data );
+					new_tab_item = NewTab( tab_data );
+
+					if( tabControlMain.Items.IndexOf( new_tab_item ) != tabControlMain.Items.IndexOf( selected_tab_item ) + 1 )
+					{
+						tabControlMain.Items.Remove( new_tab_item );
+						int i = tabControlMain.Items.IndexOf( selected_tab_item );
+						tabControlMain.Items.Insert( i + 1, new_tab_item );
+					}
+				}
+			}
+
+			if( new_tab_item == null )
+			{
+				SystemSounds.Beep.Play( );
+			}
+			else
+			{
+				tabControlMain.SelectedItem = new_tab_item;
+
+				RenumberTabs( );
+			}
+		}
+
+
+		void NewOrDuplicateTab( )
+		{
+			// NOTE. It seems that 'Keyboard.Modifiers' correctly reflects the non-async state
+			if( Keyboard.Modifiers.HasFlag( ModifierKeys.Control ) )
+			{
+				DuplicateTab( );
+			}
+			else
+			{
+				NewTab( null );
+			}
 		}
 
 
@@ -509,6 +576,18 @@ namespace RegExpressWPF
 			if( Properties.Settings.Default.IsMaximised )
 			{
 				WindowState = WindowState.Maximized;
+			}
+		}
+
+
+		void RenumberTabs( )
+		{
+			var main_tabs = tabControlMain.Items.OfType<TabItem>( ).Where( t => t.Content is UCMain );
+			int i = 0;
+			foreach( var tab in main_tabs )
+			{
+				var name = "Tab " + ( ++i );
+				if( !name.Equals( tab.Header ) ) tab.Header = name;
 			}
 		}
 
