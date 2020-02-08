@@ -74,7 +74,7 @@ namespace DotNetRegexEngineNs
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
 
-		public event EventHandler OptionsChanged;
+		public event RegexEngineOptionsChanged OptionsChanged;
 
 
 		public Control GetOptionsControl( )
@@ -364,7 +364,7 @@ namespace DotNetRegexEngineNs
 
 		private void OptionsControl_Changed( object sender, EventArgs e )
 		{
-			OptionsChanged?.Invoke( this, null );
+			OptionsChanged?.Invoke( this );
 		}
 
 

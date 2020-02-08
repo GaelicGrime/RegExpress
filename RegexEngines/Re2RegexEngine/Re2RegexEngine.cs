@@ -39,7 +39,7 @@ namespace Re2RegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
-		public event EventHandler OptionsChanged;
+		public event RegexEngineOptionsChanged OptionsChanged;
 
 
 		public Control GetOptionsControl( )
@@ -307,7 +307,7 @@ namespace Re2RegexEngineNs
 
 		private void OptionsControl_Changed( object sender, EventArgs e )
 		{
-			OptionsChanged?.Invoke( this, null );
+			OptionsChanged?.Invoke( this );
 		}
 
 
