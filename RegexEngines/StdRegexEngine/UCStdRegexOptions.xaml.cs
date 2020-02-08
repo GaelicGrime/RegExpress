@@ -35,22 +35,15 @@ namespace StdRegexEngineNs
 		}
 
 
-		internal object ToSerialisableObject( )
+		internal string[] ExportOptions( )
 		{
 			return GetSelectedOptions( );
 		}
 
 
-		internal void FromSerializableObject( object obj )
+		internal void ImportOptions( string[] options )
 		{
-			string[] arr = obj as string[];
-
-			if( arr == null )
-			{
-				if( obj is object[] ) arr = ( (object[])obj ).OfType<string>( ).ToArray( );
-			}
-
-			SetSelectedOptions( arr );
+			SetSelectedOptions( options );
 		}
 
 

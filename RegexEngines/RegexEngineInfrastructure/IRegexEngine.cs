@@ -24,9 +24,9 @@ namespace RegexEngineInfrastructure
 
 		Control GetOptionsControl( );
 
-		object SerializeOptions( );
+		string[] ExportOptions( );
 
-		void DeserializeOptions( object obj );
+		void ImportOptions( string[] options );
 
 		IMatcher ParsePattern( string pattern );
 

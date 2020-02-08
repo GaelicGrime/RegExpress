@@ -134,7 +134,7 @@ namespace RegExpressWPF
 				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
 				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
 				tabData.RegexEngineId = CurrentRegexEngine.Id;
-				tabData.RegexOptions = CurrentRegexEngine.SerializeOptions( );
+				tabData.RegexOptions = CurrentRegexEngine.ExportOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
@@ -405,7 +405,7 @@ namespace RegExpressWPF
 				CurrentRegexEngine = engine;
 				SetEngineOption( engine );
 
-				engine.DeserializeOptions( tabData.RegexOptions );
+				engine.ImportOptions( tabData.RegexOptions );
 
 				cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
 				cbShowSucceededGroupsOnly.IsChecked = tabData.ShowSucceededGroupsOnly;

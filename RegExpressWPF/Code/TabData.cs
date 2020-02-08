@@ -10,10 +10,6 @@ using System.Threading.Tasks;
 
 namespace RegExpressWPF.Code
 {
-	// TODO: In future, remove 'KnownType', use 'string[] RegeOptions' member.
-	[KnownType( typeof( int ) )]
-	[KnownType( typeof( RegexOptions ) )]
-	[KnownType( typeof( string[] ) )]
 	public sealed class TabData
 	{
 #pragma warning disable CA1051 // Do not declare visible instance fields
@@ -22,7 +18,7 @@ namespace RegExpressWPF.Code
 		public string Pattern;
 		public string Text;
 		public string RegexEngineId;
-		public object RegexOptions;
+		public string[] RegexOptions;
 		public bool ShowFirstMatchOnly;
 		public bool ShowSucceededGroupsOnly;
 		public bool ShowCaptures;

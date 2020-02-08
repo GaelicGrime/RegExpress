@@ -49,15 +49,15 @@ namespace Pcre2RegexEngineNs
 		}
 
 
-		public object SerializeOptions( )
+		public string[] ExportOptions( )
 		{
-			return OptionsControl.ToSerialisableObject( );
+			return OptionsControl.ExportOptions( );
 		}
 
 
-		public void DeserializeOptions( object obj )
+		public void ImportOptions( string[] options )
 		{
-			OptionsControl.FromSerializableObject( obj );
+			OptionsControl.ImportOptions( options );
 		}
 
 
@@ -374,7 +374,7 @@ namespace Pcre2RegexEngineNs
 				escape += @"\\[gk]\{.*?(\}|$) | ";
 				escape += @"\(\?P=.*?(\)|$) | "; //
 
-				escape += @"\\. | "; 
+				escape += @"\\. | ";
 
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";

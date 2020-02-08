@@ -42,46 +42,35 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		internal object ToSerialisableObject( )
+		internal string[] ExportOptions( )
 		{
 			return pnl
 				.Children
 				.OfType<CheckBox>( )
 				.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
-				.Select( cb => cb.Tag )
+				.Select( cb => cb.Tag.ToString( ) )
 				.Concat( new[] { $"timeout:{CachedTimeout.ToString( "c", CultureInfo.InvariantCulture )}" } )
 				.ToArray( );
 		}
 
 
-		internal void FromSerializableObject( object obj )
+		internal void ImportOptions( string[] options0 )
 		{
 			RegexOptions options = RegexOptions.None;
 			TimeSpan timeout = TimeSpan.FromSeconds( 10 );
 
-			switch( obj )
-			{
-			case int i: // previous version
-				options = (RegexOptions)( i &
-					(int)Enum.GetValues( typeof( RegexOptions ) )
-						.Cast<RegexOptions>( )
-						.Aggregate( RegexOptions.None, ( a, v ) => a | v ) );
-				break;
-			case object[] arr:
-				options = Enum.GetNames( typeof( RegexOptions ) )
-					.Intersect( arr.OfType<string>( ), StringComparer.InvariantCultureIgnoreCase )
-					.Select( s => (RegexOptions)Enum.Parse( typeof( RegexOptions ), s, ignoreCase: true ) )
-					.Aggregate( RegexOptions.None, ( a, o ) => a | o );
+			options = Enum.GetNames( typeof( RegexOptions ) )
+				.Intersect( options0, StringComparer.InvariantCultureIgnoreCase )
+				.Select( s => (RegexOptions)Enum.Parse( typeof( RegexOptions ), s, ignoreCase: true ) )
+				.Aggregate( RegexOptions.None, ( a, o ) => a | o );
 
-				string timeout_s =
-					arr
-					.OfType<string>( )
-					.FirstOrDefault( s => s.StartsWith( "timeout:" ) )
-					?.Substring( "timeout:".Length );
+			string timeout_s =
+				options0
+				.FirstOrDefault( s => s.StartsWith( "timeout:" ) )
+				?.Substring( "timeout:".Length );
 
-				if( TimeSpan.TryParse( timeout_s, CultureInfo.InvariantCulture, out TimeSpan t ) ) timeout = t;
-				break;
-			}
+			if( TimeSpan.TryParse( timeout_s, CultureInfo.InvariantCulture, out TimeSpan t ) ) timeout = t;
+
 
 			SetSelectedOptions( options );
 			SetTimeout( timeout );

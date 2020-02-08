@@ -47,15 +47,15 @@ namespace StdRegexEngineNs
 		}
 
 
-		public object SerializeOptions( )
+		public string[] ExportOptions( )
 		{
-			return OptionsControl.ToSerialisableObject( );
+			return OptionsControl.ExportOptions( );
 		}
 
 
-		public void DeserializeOptions( object obj )
+		public void ImportOptions( string[] options )
 		{
-			OptionsControl.FromSerializableObject( obj );
+			OptionsControl.ImportOptions( options );
 		}
 
 
