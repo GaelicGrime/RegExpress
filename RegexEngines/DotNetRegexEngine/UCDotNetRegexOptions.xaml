@@ -38,7 +38,7 @@
                     <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                 </StackPanel.LayoutTransform>
                 <Label Content="Timeout:" Target="{Binding ElementName=cbxTimeout}"/>
-                <ComboBox x:Name="cbxTimeout" SelectionChanged="cbxTimeout_SelectionChanged">
+                <ComboBox x:Name="cbxTimeout" VerticalAlignment="Center" SelectionChanged="cbxTimeout_SelectionChanged" MinWidth="44" Margin="3 0 0 0">
                     <ComboBoxItem Tag="00:00:01" Content="1 s"/>
                     <ComboBoxItem Tag="00:00:02" Content="2 s"/>
                     <ComboBoxItem Tag="00:00:05" Content="5 s"/>

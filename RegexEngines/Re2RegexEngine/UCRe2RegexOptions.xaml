@@ -15,7 +15,27 @@
     </UserControl.Resources>
 
     <Grid>
-        <StackPanel x:Name="pnlOptions"/>
+        <StackPanel>
+            <StackPanel x:Name="pnlOptions"/>
+            
+            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                <StackPanel.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.LayoutTransform>
 
+                <Label Content="Anchor:" Target="{Binding ElementName=cbxAnchor}" VerticalAlignment="Center"/>
+
+                <ComboBox x:Name="cbxAnchor" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxAnchor_SelectionChanged" >
+                    <ComboBoxItem Tag="UNANCHORED" Content="{Binding Tag, RelativeSource={RelativeSource Self}}" IsSelected="True"/>
+                    <ComboBoxItem Tag="ANCHOR_START" Content="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                    <ComboBoxItem Tag="ANCHOR_BOTH" Content="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                </ComboBox>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

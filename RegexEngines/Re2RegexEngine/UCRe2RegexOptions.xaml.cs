@@ -71,6 +71,7 @@ namespace Re2RegexEngineNs
 				pnlOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) )
+					.Concat( new[] { ( (ComboBoxItem)cbxAnchor.SelectedItem ).Tag.ToString( ) } )
 					.ToArray( );
 		}
 
@@ -87,6 +88,9 @@ namespace Re2RegexEngineNs
 				{
 					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
 				}
+
+				cbxAnchor.Items.Cast<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) ).IsSelected = true;
+				if( cbxAnchor.SelectedItem == null ) cbxAnchor.SelectedItem = cbxAnchor.Items[0];
 			}
 			finally
 			{
@@ -133,6 +137,17 @@ namespace Re2RegexEngineNs
 			}
 
 			return tb;
+		}
+
+
+		private void cbxAnchor_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, null );
 		}
 	}
 }
