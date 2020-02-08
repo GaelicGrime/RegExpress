@@ -123,6 +123,7 @@ namespace RegExpressWPF
 				tabData.Text = InitialTabData.Text;
 				tabData.RegexEngineId = InitialTabData.RegexEngineId;
 				tabData.RegexOptions = InitialTabData.RegexOptions;
+				tabData.InactiveRegexOptions = InitialTabData.InactiveRegexOptions;
 				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
 				tabData.ShowSucceededGroupsOnly = InitialTabData.ShowSucceededGroupsOnly;
 				tabData.ShowCaptures = InitialTabData.ShowCaptures;
@@ -140,6 +141,17 @@ namespace RegExpressWPF
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
 				tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 				tabData.Eol = GetEolOption( );
+
+				// also save options of inactive engines
+
+				tabData.InactiveRegexOptions = new Dictionary<string, string[]>( );
+
+				foreach( var engine in RegexEngines )
+				{
+					if( object.ReferenceEquals( engine, CurrentRegexEngine ) ) continue;
+
+					tabData.InactiveRegexOptions[engine.Id] = engine.ExportOptions( );
+				}
 			}
 		}
 
@@ -323,12 +335,19 @@ namespace RegExpressWPF
 		}
 
 
-		private void Engine_OptionsChanged( object sender, EventArgs e )
+		private void Engine_OptionsChanged( IRegexEngine sender )
 		{
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			CbOption_CheckedChanged( null, null );
+			if( object.ReferenceEquals( sender, CurrentRegexEngine ) )
+			{
+				CbOption_CheckedChanged( null, null );
+			}
+			else
+			{
+				// inactive engine; ignore
+			}
 		}
 
 
@@ -406,6 +425,17 @@ namespace RegExpressWPF
 				SetEngineOption( engine );
 
 				engine.ImportOptions( tabData.RegexOptions );
+
+				// also set options of inactive engines
+				foreach( var eng in RegexEngines )
+				{
+					if( object.ReferenceEquals( eng, engine ) ) continue;
+					string[] inactive_options = null;
+					if( tabData.InactiveRegexOptions?.TryGetValue( eng.Id, out inactive_options ) == true )
+					{
+						eng.ImportOptions( inactive_options );
+					}
+				}
 
 				cbShowFirstOnly.IsChecked = tabData.ShowFirstMatchOnly;
 				cbShowSucceededGroupsOnly.IsChecked = tabData.ShowSucceededGroupsOnly;

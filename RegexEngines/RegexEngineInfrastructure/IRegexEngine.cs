@@ -10,6 +10,10 @@ using System.Windows.Controls;
 
 namespace RegexEngineInfrastructure
 {
+
+	public delegate void RegexEngineOptionsChanged( IRegexEngine sender );
+
+
 	public interface IRegexEngine
 	{
 		string Id { get; }
@@ -20,7 +24,7 @@ namespace RegexEngineInfrastructure
 
 		RegexEngineCapabilityEnum Capabilities { get; }
 
-		event EventHandler OptionsChanged;
+		event RegexEngineOptionsChanged OptionsChanged;
 
 		Control GetOptionsControl( );
 

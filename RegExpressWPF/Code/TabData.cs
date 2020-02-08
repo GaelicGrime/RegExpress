@@ -18,7 +18,8 @@ namespace RegExpressWPF.Code
 		public string Pattern;
 		public string Text;
 		public string RegexEngineId;
-		public string[] RegexOptions;
+		public string[] RegexOptions; // TODO: consider a single Dictionary for active and inactive engines
+		public Dictionary<string, string[]> InactiveRegexOptions;
 		public bool ShowFirstMatchOnly;
 		public bool ShowSucceededGroupsOnly;
 		public bool ShowCaptures;
