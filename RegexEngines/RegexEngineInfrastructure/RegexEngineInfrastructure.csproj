@@ -80,6 +80,7 @@
     <Compile Include="Segment.cs" />
     <Compile Include="SyntaxColouring\ColouredSegments.cs" />
     <Compile Include="SyntaxColouring\Highlights.cs" />
+    <Compile Include="SyntaxColouring\HighlightHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RegexEngineInfrastructure.snk" />
