@@ -498,7 +498,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
+    <ProjectReference Include="..\..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
     </ProjectReference>
   </ItemGroup>

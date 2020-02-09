@@ -82,7 +82,7 @@
       <Project>{b4a7eae1-87fa-47c8-88e0-e668e8a104e1}</Project>
       <Name>Pcre2RegexInterop</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
+    <ProjectReference Include="..\..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
       <Name>RegexEngineInfrastructure</Name>
     </ProjectReference>

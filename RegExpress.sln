@@ -18,19 +18,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RegexEngines", "RegexEngine
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexEngineInfrastructure", "RegexEngines\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj", "{862F8D21-C7D3-4AEC-A802-5431063C9F49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetRegexEngine", "RegexEngines\DotNetRegexEngine\DotNetRegexEngine.csproj", "{024A9F29-AE01-4987-86E5-CA4C0CB69E7C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetRegexEngine", "RegexEngines\DotNet\DotNetRegexEngine\DotNetRegexEngine.csproj", "{024A9F29-AE01-4987-86E5-CA4C0CB69E7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StdRegexEngine", "RegexEngines\StdRegexEngine\StdRegexEngine.csproj", "{1BC5CC50-C0F6-4598-934F-E772938DA825}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StdRegexEngine", "RegexEngines\Std\StdRegexEngine\StdRegexEngine.csproj", "{1BC5CC50-C0F6-4598-934F-E772938DA825}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StdRegexInterop", "RegexEngines\StdRegexInterop\StdRegexInterop.vcxproj", "{D6F5056E-FAB0-4C60-A02F-8E56FA9F42D1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StdRegexInterop", "RegexEngines\Std\StdRegexInterop\StdRegexInterop.vcxproj", "{D6F5056E-FAB0-4C60-A02F-8E56FA9F42D1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BoostRegexInterop", "RegexEngines\BoostRegexInterop\BoostRegexInterop.vcxproj", "{8CA0EEED-5B3E-4226-B936-EAF5DCC06680}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BoostRegexInterop", "RegexEngines\Boost\BoostRegexInterop\BoostRegexInterop.vcxproj", "{8CA0EEED-5B3E-4226-B936-EAF5DCC06680}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostRegexEngine", "RegexEngines\BoostRegexEngine\BoostRegexEngine.csproj", "{773E3BD2-E5B0-49B5-AF57-12D8CA5C8C8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoostRegexEngine", "RegexEngines\Boost\BoostRegexEngine\BoostRegexEngine.csproj", "{773E3BD2-E5B0-49B5-AF57-12D8CA5C8C8B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pcre2RegexInterop", "RegexEngines\Pcre2RegexInterop\Pcre2RegexInterop.vcxproj", "{B4A7EAE1-87FA-47C8-88E0-E668E8A104E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pcre2RegexInterop", "RegexEngines\Pcre2\Pcre2RegexInterop\Pcre2RegexInterop.vcxproj", "{B4A7EAE1-87FA-47C8-88E0-E668E8A104E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pcre2RegexEngine", "RegexEngines\Pcre2RegexEngine\Pcre2RegexEngine.csproj", "{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pcre2RegexEngine", "RegexEngines\Pcre2\Pcre2RegexEngine\Pcre2RegexEngine.csproj", "{B7BEB394-9F76-4F5F-B7FB-D88369D98C54}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Boost", "Boost", "{6D9AD262-FE59-40CE-A5BD-8F01239AA5F7}"
 EndProject
@@ -42,9 +42,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DotNet", "DotNet", "{9E61CB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RE2", "RE2", "{C2A2CC2E-3131-4AAE-B10A-9D7BC88BBAD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Re2RegexEngine", "RegexEngines\Re2RegexEngine\Re2RegexEngine.csproj", "{573AAF62-0E02-46B1-9879-C5A8DBC4A266}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Re2RegexEngine", "RegexEngines\Re2\Re2RegexEngine\Re2RegexEngine.csproj", "{573AAF62-0E02-46B1-9879-C5A8DBC4A266}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Re2RegexInterop", "RegexEngines\Re2RegexInterop\Re2RegexInterop.vcxproj", "{0DD269BF-259F-46D0-A119-C5E266753567}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Re2RegexInterop", "RegexEngines\Re2\Re2RegexInterop\Re2RegexInterop.vcxproj", "{0DD269BF-259F-46D0-A119-C5E266753567}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
