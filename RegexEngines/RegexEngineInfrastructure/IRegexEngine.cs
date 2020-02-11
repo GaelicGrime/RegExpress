@@ -24,6 +24,8 @@ namespace RegexEngineInfrastructure
 
 		RegexEngineCapabilityEnum Capabilities { get; }
 
+		string NoteForCaptures { get; }
+
 		event RegexEngineOptionsChanged OptionsChanged;
 
 		Control GetOptionsControl( );

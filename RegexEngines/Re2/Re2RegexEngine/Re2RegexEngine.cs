@@ -39,6 +39,8 @@ namespace Re2RegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
+		public string NoteForCaptures => null;
+
 		public event RegexEngineOptionsChanged OptionsChanged;
 
 

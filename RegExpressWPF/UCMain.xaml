@@ -143,8 +143,13 @@
                                 <CheckBox x:Name="cbShowSucceededGroupsOnly" Content="Show succeeded groups only" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged"/>
                                 <CheckBox x:Name="cbShowCaptures" Checked="CbOption_CheckedChanged" Unchecked="CbOption_CheckedChanged">
                                     <TextBlock>
-                                        <Run>Show captures </Run>
-                                        <Run x:Name="runShowCapturesNote">(requires ‘match_extra’)</Run>
+                                        <Run>Show captures</Run>
+                                        <Run x:Name="runShowCapturesNote">
+                                            <Run.Foreground>
+                                                <SolidColorBrush Opacity="0.7" Color="{DynamicResource {x:Static SystemColors.ControlTextColorKey}}"/>
+                                            </Run.Foreground>
+                                            (note)
+                                        </Run>
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="cbShowCapturesDisabledUnchecked" Content="Show captures" IsEnabled="False" Visibility="Collapsed"/>

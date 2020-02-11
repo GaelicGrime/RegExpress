@@ -81,6 +81,21 @@ namespace OnigurumaRegexEngineNs
 					pnlSearchOptions.Children.Add( cb );
 				}
 			}
+			{
+				List<OnigurumaRegexInterop.OptionInfo> configuration_options = OnigurumaRegexInterop.Matcher.GetConfigurationOptions( );
+
+				foreach( var o in configuration_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = CreateTextBlock( o.FlagName, o.Note )
+					};
+
+					pnlConfigurationOptions.Children.Add( cb );
+				}
+			}
+
 		}
 
 
@@ -115,8 +130,13 @@ namespace OnigurumaRegexEngineNs
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) );
 
+			var configuration_options =
+				pnlConfigurationOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) );
+
 			return
-				new[] { syntax }.Concat( compile_options ).Concat( search_options ).ToArray( );
+				new[] { syntax }.Concat( compile_options ).Concat( search_options ).Concat( configuration_options ).ToArray( );
 		}
 
 
@@ -142,6 +162,11 @@ namespace OnigurumaRegexEngineNs
 				}
 
 				foreach( var cb in pnlSearchOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				}
+
+				foreach( var cb in pnlConfigurationOptions.Children.OfType<CheckBox>( ) )
 				{
 					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
 				}

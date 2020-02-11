@@ -42,7 +42,7 @@ namespace OnigurumaRegexInterop
 		OnigErrorInfo einfo;
 		int r;
 
-		auto syntax = ONIG_SYNTAX_ONIGURUMA;
+		auto selected_syntax = ONIG_SYNTAX_ONIGURUMA;
 		auto compile_options = ONIG_OPTION_NONE;
 		auto search_options = ONIG_OPTION_NONE;
 
@@ -57,7 +57,7 @@ namespace OnigurumaRegexInterop
 
 					if( mTagToOption->TryGetValue( o->FlagName, p ) )
 					{
-						syntax = static_cast<decltype( syntax )>( p.ToPointer( ) );
+						selected_syntax = static_cast<decltype( selected_syntax )>( p.ToPointer( ) );
 					}
 					else
 					{
@@ -103,6 +103,36 @@ namespace OnigurumaRegexInterop
 			}
 		}
 
+		// in some case, create custom syntax
+
+		OnigSyntaxType adjusted_syntax{};
+
+		onig_copy_syntax( &adjusted_syntax, selected_syntax );
+
+		for each( auto o in mConfigurationOptions )
+		{
+			if( Array::IndexOf( options, o->FlagName ) >= 0 )
+			{
+				IntPtr p;
+
+				if( mTagToOption->TryGetValue( o->FlagName, p ) )
+				{
+					if( o->FlagName->Contains( "_OP_" ) )
+					{
+						adjusted_syntax.op |= p.ToInt32( );
+					}
+					else if( o->FlagName->Contains( "_OP2_" ) )
+					{
+						adjusted_syntax.op2 |= p.ToInt32( );
+					}
+					else
+					{
+						adjusted_syntax.behavior |= p.ToInt32( );
+					}
+				}
+			}
+		}
+
 		pin_ptr<const wchar_t> pinned_pattern = PtrToStringChars( pattern );
 		const wchar_t* native_pattern = pinned_pattern;
 
@@ -112,7 +142,7 @@ namespace OnigurumaRegexInterop
 			(UChar*)( native_pattern + pattern->Length ),
 			compile_options,
 			ONIG_ENCODING_UTF16_LE,
-			syntax,
+			&adjusted_syntax,
 			&einfo );
 
 		if( r )
@@ -123,6 +153,7 @@ namespace OnigurumaRegexInterop
 		mData = new MatcherData{};
 		mData->mRegex = reg;
 		mData->mSearchOptions = search_options;
+		onig_copy_syntax( &mData->mSyntax, &adjusted_syntax );
 	}
 
 
@@ -175,6 +206,7 @@ namespace OnigurumaRegexInterop
 		try
 		{
 			OriginalText = text;
+
 
 			// extract group names
 
@@ -459,6 +491,16 @@ namespace OnigurumaRegexInterop
 		//C( ONIG_OPTION_POSIX_REGION, "region argument is regmatch_t[] of POSIX API" );
 
 		mSearchOptions = list;
+
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( ONIG_SYN_OP_ESC_ASTERISK_ZERO_INF, "enable \\*" );
+		C( ONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY, "enable (?@…) and (?@<name>…)" );
+		C( ONIG_SYN_STRICT_CHECK_BACKREF, "error on invalid backrefs" ); //?
+
+		mConfigurationOptions = list;
+
 
 #undef C
 

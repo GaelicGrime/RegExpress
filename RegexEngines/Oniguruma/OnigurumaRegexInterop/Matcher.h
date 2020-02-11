@@ -29,11 +29,13 @@ namespace OnigurumaRegexInterop
 	{
 		regex_t* mRegex;
 		decltype( ONIG_OPTION_NONE ) mSearchOptions;
+		OnigSyntaxType mSyntax;
 
 		MatcherData( )
 			:
 			mRegex( nullptr ),
-			mSearchOptions( ONIG_OPTION_NONE )
+			mSearchOptions( ONIG_OPTION_NONE ),
+			mSyntax{}
 		{
 
 		}
@@ -61,6 +63,7 @@ namespace OnigurumaRegexInterop
 		static List<OptionInfo^>^ GetSyntaxOptions( ) { return mSyntaxOptions; }
 		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
 		static List<OptionInfo^>^ GetSearchOptions( ) { return mSearchOptions; }
+		static List<OptionInfo^>^ GetConfigurationOptions( ) { return mConfigurationOptions; }
 
 #pragma region IMatcher
 
@@ -77,6 +80,7 @@ namespace OnigurumaRegexInterop
 		static List<OptionInfo^>^ mSyntaxOptions;
 		static List<OptionInfo^>^ mCompileOptions;
 		static List<OptionInfo^>^ mSearchOptions;
+		static List<OptionInfo^>^ mConfigurationOptions;
 		static Dictionary<String^, IntPtr>^ mTagToOption;
 
 		static void BuildOptions( );

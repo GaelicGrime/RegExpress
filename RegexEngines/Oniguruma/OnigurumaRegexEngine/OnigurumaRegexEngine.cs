@@ -29,7 +29,10 @@ namespace OnigurumaRegexEngineNs
 
 		public string EngineVersion => OnigurumaRegexInterop.Matcher.GetVersion( );
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default; //............
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+
+		public string NoteForCaptures => "requires ‘ONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY’";
+
 
 		public event RegexEngineOptionsChanged OptionsChanged;
 

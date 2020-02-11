@@ -44,6 +44,7 @@ namespace BoostRegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
+		public string NoteForCaptures => "requires ‘match_extra’";
 
 		public event RegexEngineOptionsChanged OptionsChanged;
 

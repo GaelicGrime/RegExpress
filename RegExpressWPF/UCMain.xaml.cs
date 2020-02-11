@@ -690,7 +690,9 @@ namespace RegExpressWPF
 			cbShowCapturesDisabledUnchecked.Visibility = !captures_supported ? Visibility.Visible : Visibility.Collapsed;
 
 			// inelegant, but works
-			runShowCapturesNote.Text = engine is BoostRegexEngineNs.BoostRegexEngine ? "(requires ‘match_extra’)" : string.Empty;
+			string capture_note = engine.NoteForCaptures;
+
+			runShowCapturesNote.Text = !string.IsNullOrWhiteSpace( capture_note ) ? " (" + capture_note + ")" : string.Empty;
 		}
 
 		#region IDisposable Support

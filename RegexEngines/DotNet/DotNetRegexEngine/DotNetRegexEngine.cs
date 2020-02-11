@@ -73,6 +73,7 @@ namespace DotNetRegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
+		public string NoteForCaptures => null;
 
 		public event RegexEngineOptionsChanged OptionsChanged;
 

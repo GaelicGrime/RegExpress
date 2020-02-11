@@ -42,6 +42,11 @@
             </Label>
             <StackPanel x:Name="pnlSearchOptions"/>
 
+            <Label Margin="0 2 0 0"  Padding="0">
+                <Italic>Configuration</Italic>
+            </Label>
+            <StackPanel x:Name="pnlConfigurationOptions"/>
+
         </StackPanel>
     </Grid>
 </UserControl>
