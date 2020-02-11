@@ -10,12 +10,30 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace OnigurumaRegexInterop
 {
+	public ref class OptionInfo
+	{
+	public:
+		String^ const FlagName;
+		String^ const Note;
+
+		OptionInfo( String^ flagName, String^ note )
+			:
+			FlagName( flagName ),
+			Note( note )
+		{
+		}
+	};
+
+
 	struct MatcherData
 	{
 		regex_t* mRegex;
+		decltype( ONIG_OPTION_NONE ) mSearchOptions;
 
 		MatcherData( )
-			:mRegex( nullptr )
+			:
+			mRegex( nullptr ),
+			mSearchOptions( ONIG_OPTION_NONE )
 		{
 
 		}
@@ -32,7 +50,6 @@ namespace OnigurumaRegexInterop
 	{
 	public:
 
-
 		static Matcher( );
 
 		Matcher( String^ pattern, cli::array<String^>^ options );
@@ -41,6 +58,9 @@ namespace OnigurumaRegexInterop
 		!Matcher( );
 
 		static String^ GetVersion( );
+		static List<OptionInfo^>^ GetSyntaxOptions( ) { return mSyntaxOptions; }
+		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
+		static List<OptionInfo^>^ GetSearchOptions( ) { return mSearchOptions; }
 
 #pragma region IMatcher
 
@@ -54,6 +74,12 @@ namespace OnigurumaRegexInterop
 
 		MatcherData* mData;
 
+		static List<OptionInfo^>^ mSyntaxOptions;
+		static List<OptionInfo^>^ mCompileOptions;
+		static List<OptionInfo^>^ mSearchOptions;
+		static Dictionary<String^, IntPtr>^ mTagToOption;
+
+		static void BuildOptions( );
 	};
 
 }

@@ -6,7 +6,42 @@
              xmlns:local="clr-namespace:OnigurumaRegexEngineNs"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <Style TargetType="CheckBox">
+            <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
+            <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
-            
+        <StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <StackPanel.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.LayoutTransform>
+
+                <Label Content="Syntax:" Target="{Binding ElementName=cbxSyntax}" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cbxSyntax" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxSyntax_SelectionChanged">
+                </ComboBox>
+            </StackPanel>
+
+            <Label Margin="0 2 0 0"  Padding="0">
+                <Italic>Compile-Time Options</Italic>
+            </Label>
+            <StackPanel x:Name="pnlCompileOptions"/>
+
+            <Label Margin="0 2 0 0"  Padding="0">
+                <Italic>Search-Time Options</Italic>
+            </Label>
+            <StackPanel x:Name="pnlSearchOptions"/>
+
+        </StackPanel>
     </Grid>
 </UserControl>

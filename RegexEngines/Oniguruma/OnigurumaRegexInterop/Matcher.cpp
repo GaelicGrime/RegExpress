@@ -16,6 +16,9 @@ namespace OnigurumaRegexInterop
 
 	static Matcher::Matcher( )
 	{
+		mTagToOption = gcnew Dictionary<String^, IntPtr>;
+		BuildOptions( );
+
 		OnigEncoding use_encs[1];
 		use_encs[0] = ONIG_ENCODING_UTF16_LE;
 
@@ -38,13 +41,79 @@ namespace OnigurumaRegexInterop
 		OnigErrorInfo einfo;
 		int r;
 
+		auto syntax = ONIG_SYNTAX_ONIGURUMA;
+		auto compile_options = ONIG_OPTION_NONE;
+		auto search_options = ONIG_OPTION_NONE;
+
+		{
+			// get options
+
+			for each( auto o in mSyntaxOptions )
+			{
+				if( Array::IndexOf( options, o->FlagName ) >= 0 )
+				{
+					IntPtr p;
+
+					if( mTagToOption->TryGetValue( o->FlagName, p ) )
+					{
+						syntax = static_cast<decltype( syntax )>( p.ToPointer( ) );
+					}
+					else
+					{
+						Debug::Assert( false );
+					}
+
+					break;
+				}
+			}
+
+			for each( auto o in mCompileOptions )
+			{
+				if( Array::IndexOf( options, o->FlagName ) >= 0 )
+				{
+					IntPtr p;
+
+					if( mTagToOption->TryGetValue( o->FlagName, p ) )
+					{
+						compile_options |= p.ToInt64( );
+					}
+					else
+					{
+						Debug::Assert( false );
+					}
+				}
+			}
+
+			for each( auto o in mSearchOptions )
+			{
+				if( Array::IndexOf( options, o->FlagName ) >= 0 )
+				{
+					IntPtr p;
+
+					if( mTagToOption->TryGetValue( o->FlagName, p ) )
+					{
+						search_options |= p.ToInt64( );
+					}
+					else
+					{
+						Debug::Assert( false );
+					}
+				}
+			}
+		}
+
 		pin_ptr<const wchar_t> pinned_pattern = PtrToStringChars( pattern );
 		const wchar_t* native_pattern = pinned_pattern;
 
-		r = onig_new( &reg,
+		r = onig_new(
+			&reg,
 			(UChar*)native_pattern,
 			(UChar*)( native_pattern + pattern->Length ),
-			ONIG_OPTION_DEFAULT, ONIG_ENCODING_UTF16_LE, ONIG_SYNTAX_DEFAULT, &einfo );
+			compile_options,
+			ONIG_ENCODING_UTF16_LE,
+			syntax,
+			&einfo );
+
 		if( r )
 		{
 			throw gcnew Exception( FormatError( r, &einfo ) );
@@ -52,6 +121,7 @@ namespace OnigurumaRegexInterop
 
 		mData = new MatcherData{};
 		mData->mRegex = reg;
+		mData->mSearchOptions = search_options;
 	}
 
 
@@ -86,10 +156,12 @@ namespace OnigurumaRegexInterop
 			int r;
 			OnigRegion* region = onig_region_new( );
 
-			r = onig_search( mData->mRegex,
+			r = onig_search(
+				mData->mRegex,
 				(UChar*)native_text, (UChar*)( native_text + text->Length ),
 				(UChar*)native_text, (UChar*)( native_text + text->Length ),
-				region, ONIG_OPTION_NONE );
+				region,
+				mData->mSearchOptions );
 
 			if( r == ONIG_MISMATCH )
 			{
@@ -258,11 +330,74 @@ namespace OnigurumaRegexInterop
 
 		if( symbol != nullptr )
 		{
-			return String::Format( "{0} ({1}):\r\n{2}", symbol, code, text );
+			return String::Format( "{0}\r\n({1}, {2})", text, symbol, code );
 		}
 		else
 		{
-			return String::Format( "Error {0}:\r\n{1}", code, text );
+			return String::Format( "{0}\r\n({1})", text, code );
 		}
+	}
+
+
+	static IntPtr ToIntPtr( unsigned int i ) { return IntPtr( (int)i ); }
+	static IntPtr ToIntPtr( void* p ) { return IntPtr( p ); }
+
+
+	void Matcher::BuildOptions( )
+	{
+
+#define C(f, n) \
+	list->Add(gcnew OptionInfo( gcnew String(#f), gcnew String(n))); \
+	mTagToOption[gcnew String(#f)] = ToIntPtr(f);
+
+		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
+
+
+		C( ONIG_SYNTAX_ONIGURUMA, "Oniguruma" );
+		C( ONIG_SYNTAX_ASIS, "plain text" );
+		C( ONIG_SYNTAX_POSIX_BASIC, "POSIX Basic RE" );
+		C( ONIG_SYNTAX_POSIX_EXTENDED, "POSIX Extended RE" );
+		C( ONIG_SYNTAX_EMACS, "Emacs" );
+		C( ONIG_SYNTAX_GREP, "grep" );
+		C( ONIG_SYNTAX_GNU_REGEX, "GNU regex" );
+		C( ONIG_SYNTAX_JAVA, "Java( Sun java.util.regex )" );
+		C( ONIG_SYNTAX_PERL, "Perl" );
+		C( ONIG_SYNTAX_PERL_NG, "Perl + named group" );
+		C( ONIG_SYNTAX_RUBY, "Ruby" );
+
+		mSyntaxOptions = list;
+
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( ONIG_OPTION_SINGLELINE, "'^' -> '\\A', '$' -> '\\Z'" );
+		C( ONIG_OPTION_MULTILINE, "'.' match with newline" );
+		C( ONIG_OPTION_IGNORECASE, "ambiguity match on" );
+		C( ONIG_OPTION_EXTEND, "extended pattern form" );
+		C( ONIG_OPTION_FIND_LONGEST, "find longest match" );
+		C( ONIG_OPTION_FIND_NOT_EMPTY, "ignore empty match" );
+		C( ONIG_OPTION_NEGATE_SINGLELINE, "clear ONIG_OPTION_SINGLELINE" );
+		C( ONIG_OPTION_DONT_CAPTURE_GROUP, "only named group captured" );
+		C( ONIG_OPTION_CAPTURE_GROUP, "named and no-named group captured" );
+		C( ONIG_OPTION_WORD_IS_ASCII, "ASCII only word (\\w, \\p{Word}, [[:word:]]), ASCII only word bound (\\b)" );
+		C( ONIG_OPTION_DIGIT_IS_ASCII, "ASCII only digit (\\d, \\p{Digit}, [[:digit:]])" );
+		C( ONIG_OPTION_SPACE_IS_ASCII, "ASCII only space (\\s, \\p{Space}, [[:space:]])" );
+		C( ONIG_OPTION_POSIX_IS_ASCII, "ASCII only POSIX properties" );
+		C( ONIG_OPTION_TEXT_SEGMENT_EXTENDED_GRAPHEME_CLUSTER, "Extended Grapheme Cluster mode" );
+		C( ONIG_OPTION_TEXT_SEGMENT_WORD, "Word mode" );
+
+		mCompileOptions = list;
+
+
+		list = gcnew List<OptionInfo^>( );
+
+		C( ONIG_OPTION_NOTBOL, "string head( str ) isn't considered as begin of line" );
+		C( ONIG_OPTION_NOTEOL, "string end( end ) isn't considered as end of line" );
+		//C( ONIG_OPTION_POSIX_REGION, "region argument is regmatch_t[] of POSIX API" );
+
+		mSearchOptions = list;
+
+#undef C
+
 	}
 }

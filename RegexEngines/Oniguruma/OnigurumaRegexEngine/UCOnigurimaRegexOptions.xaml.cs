@@ -31,6 +31,56 @@ namespace OnigurumaRegexEngineNs
 		public UCOnigurimaRegexOptions( )
 		{
 			InitializeComponent( );
+
+
+			// insert syntaxes
+
+			{
+				List<OnigurumaRegexInterop.OptionInfo> syntax_options = OnigurumaRegexInterop.Matcher.GetSyntaxOptions( );
+
+				foreach( var o in syntax_options )
+				{
+					var cbi = new ComboBoxItem
+					{
+						Tag = o.FlagName,
+						Content = CreateTextBlock( o.FlagName, o.Note )
+					};
+
+					cbxSyntax.Items.Add( cbi );
+				}
+			}
+
+			// insert checkboxes
+
+			{
+				List<OnigurumaRegexInterop.OptionInfo> compile_options = OnigurumaRegexInterop.Matcher.GetCompileOptions( );
+
+				foreach( var o in compile_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = CreateTextBlock( o.FlagName, o.Note )
+					};
+
+					pnlCompileOptions.Children.Add( cb );
+				}
+			}
+
+			{
+				List<OnigurumaRegexInterop.OptionInfo> compile_options = OnigurumaRegexInterop.Matcher.GetSearchOptions( );
+
+				foreach( var o in compile_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = CreateTextBlock( o.FlagName, o.Note )
+					};
+
+					pnlSearchOptions.Children.Add( cb );
+				}
+			}
 		}
 
 
@@ -48,8 +98,25 @@ namespace OnigurumaRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
+			var syntax = ( cbxSyntax.SelectedItem as ComboBoxItem )?.Tag?.ToString( );
+			if( syntax == null )
+			{
+				// get first (default)
+				syntax = cbxSyntax.Items.OfType<ComboBoxItem>( ).FirstOrDefault( )?.Tag?.ToString( );
+			}
+
+			var compile_options =
+				pnlCompileOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) );
+
+			var search_options =
+				pnlSearchOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) );
+
 			return
-				new string[] { };
+				new[] { syntax }.Concat( compile_options ).Concat( search_options ).ToArray( );
 		}
 
 
@@ -61,8 +128,23 @@ namespace OnigurumaRegexEngineNs
 
 				options = options ?? new string[] { };
 
-				//......
+				var syntax_item = cbxSyntax.Items.OfType<ComboBoxItem>( ).FirstOrDefault( i => options.Contains( i.Tag.ToString( ) ) );
+				if( syntax_item == null )
+				{
+					// get first (default)
+					syntax_item = cbxSyntax.Items.OfType<ComboBoxItem>( ).FirstOrDefault( );
+				}
+				cbxSyntax.SelectedItem = syntax_item;
 
+				foreach( var cb in pnlCompileOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				}
+
+				foreach( var cb in pnlSearchOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
+				}
 			}
 			finally
 			{
@@ -89,6 +171,26 @@ namespace OnigurumaRegexEngineNs
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, null );
+		}
+
+		private void cbxSyntax_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			// same stuff
+			CheckBox_Changed( null, null );
+		}
+
+
+		TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
 		}
 
 	}
