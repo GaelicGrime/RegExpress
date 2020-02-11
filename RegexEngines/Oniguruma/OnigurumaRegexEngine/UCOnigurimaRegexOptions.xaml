@@ -33,12 +33,12 @@
             </StackPanel>
 
             <Label Margin="0 2 0 0"  Padding="0">
-                <Italic>Compile-Time Options</Italic>
+                <Italic>Compile-time options</Italic>
             </Label>
             <StackPanel x:Name="pnlCompileOptions"/>
 
             <Label Margin="0 2 0 0"  Padding="0">
-                <Italic>Search-Time Options</Italic>
+                <Italic>Search-time options</Italic>
             </Label>
             <StackPanel x:Name="pnlSearchOptions"/>
 

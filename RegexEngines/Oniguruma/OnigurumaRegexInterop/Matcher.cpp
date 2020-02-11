@@ -5,6 +5,7 @@
 
 
 using namespace System::Diagnostics;
+using namespace System::Runtime::InteropServices;
 using namespace msclr::interop;
 
 
@@ -144,65 +145,127 @@ namespace OnigurumaRegexInterop
 	}
 
 
+	static int ForEachNameCallback( const OnigUChar* name, const OnigUChar* nameEnd,
+		int numberOfGroups, int* groupNumberList, OnigRegex regex, void* lparam )
+	{
+		const IntPtr* intptr_names = (IntPtr*)lparam;
+		GCHandle gch_names = GCHandle::FromIntPtr( *intptr_names );
+		List<String^>^ names = ( List<String^>^ )gch_names.Target;
+
+		String^ group_name = gcnew String( (wchar_t*)name, 0, ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) );
+
+		int* nums;
+		int r = onig_name_to_group_numbers( regex, name, nameEnd, &nums );
+
+		for( int i = 0; i < r; ++i )
+		{
+			int group_number = nums[i];
+
+			while( names->Count <= group_number ) names->Add( nullptr );
+
+			names[group_number] = group_name;
+		}
+
+		return 0;
+	}
+
+
 	RegexMatches^ Matcher::Matches( String^ text )
 	{
 		try
 		{
 			OriginalText = text;
 
+			// extract group names
+
+			List<String^>^ group_names = gcnew List<String^>( );
+			{
+				GCHandle gch_names = GCHandle::Alloc( group_names );
+				try
+				{
+					IntPtr intptr_names = GCHandle::ToIntPtr( gch_names );
+
+					onig_foreach_name( mData->mRegex, &ForEachNameCallback, &intptr_names );
+				}
+				finally
+				{
+					gch_names.Free( );
+				}
+			}
+
 			pin_ptr<const wchar_t> pinned_text = PtrToStringChars( text );
 			const wchar_t* native_text = pinned_text;
+
+			auto matches = gcnew List<IMatch^>;
 
 			int r;
 			OnigRegion* region = onig_region_new( );
 
-			r = onig_search(
-				mData->mRegex,
-				(UChar*)native_text, (UChar*)( native_text + text->Length ),
-				(UChar*)native_text, (UChar*)( native_text + text->Length ),
-				region,
-				mData->mSearchOptions );
+			const wchar_t* start = native_text;
+			const wchar_t* previous_start = start;
 
-			if( r == ONIG_MISMATCH )
+			try
 			{
-				onig_region_free( region, 1 );
-
-				return gcnew RegexMatches( 0, gcnew List<IMatch^> );
-			}
-
-			if( r < 0 )
-			{
-				onig_region_free( region, 1 );
-
-				throw gcnew Exception( FormatError( r, nullptr ) );
-			}
-
-			auto matches = gcnew List<IMatch^>;
-
-			Match^ match0 = nullptr;
-
-			for( int i = 0; i < region->num_regs; ++i )
-			{
-				Debug::Assert( ( region->beg[i] % sizeof( wchar_t ) ) == 0 ); // even positions expected
-				Debug::Assert( ( region->end[i] % sizeof( wchar_t ) ) == 0 );
-
-				int begin = region->beg[i] / sizeof( wchar_t );
-				int end = region->end[i] / sizeof( wchar_t );
-
-				if( i == 0 )
+				for( ;;)
 				{
-					match0 = gcnew Match( this, begin, end - begin );
-					match0->AddGroup( gcnew Group( match0, "0", true, begin, end - begin ) ); // default group
+					r = onig_search(
+						mData->mRegex,
+						(UChar*)native_text, (UChar*)( native_text + text->Length ),
+						(UChar*)start, (UChar*)( native_text + text->Length ),
+						region,
+						mData->mSearchOptions );
 
-					matches->Add( match0 );
+					if( r == ONIG_MISMATCH ) break;
+
+					if( r < 0 )
+					{
+						onig_region_free( region, 1 );
+
+						throw gcnew Exception( FormatError( r, nullptr ) );
+					}
+
+
+					Match^ match0 = nullptr;
+
+					for( int i = 0; i < region->num_regs; ++i )
+					{
+						Debug::Assert( ( region->beg[i] % sizeof( wchar_t ) ) == 0 ); // even positions expected
+						Debug::Assert( ( region->end[i] % sizeof( wchar_t ) ) == 0 );
+
+						int begin = region->beg[i] / sizeof( wchar_t );
+						int end = region->end[i] / sizeof( wchar_t );
+
+						if( i == 0 )
+						{
+							match0 = gcnew Match( this, begin, end - begin );
+
+							matches->Add( match0 );
+						}
+
+						int group_number = i;
+						String^ group_name = nullptr;
+						if( group_number < group_names->Count ) group_name = group_names[group_number];
+						if( group_name == nullptr ) group_name = group_number.ToString( System::Globalization::CultureInfo::InvariantCulture );
+
+						match0->AddGroup( gcnew Group( match0, group_name, true, begin, end - begin ) ); // (including default group)
+					}
+
+					// TODO: check if it should be much more complicated -- see PCRE2
+
+					start = native_text + match0->Index + match0->Length;
+
+					if( start == previous_start )
+					{
+						++start;
+					}
+
+					previous_start = start;
 				}
-
-				//...................
 			}
-
-			// TODO: find next matches
-
-			onig_region_free( region, 1 ); // TODO: free even in case of exceptions
+			finally
+			{
+				onig_region_free( region, 1 );
+			}
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
