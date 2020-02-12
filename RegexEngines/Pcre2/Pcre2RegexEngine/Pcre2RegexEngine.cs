@@ -218,19 +218,19 @@ namespace Pcre2RegexEngineNs
 				escape += @"\\c[A-Za-z] | "; // ASCII escape
 				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
 				escape += @"\\[0-7]{1,3} | "; // octal, three digits
-				escape += @"\\o\{[0-9]+(\}|$) | "; // octal; bad values give error
-				escape += @"\\N\{U\+[0-9a-fA-F]+(\}|$) | "; // hexa, error if no 'PCRE2_UTF'
+				escape += @"\\o\{[0-9]+(\} | $) | "; // octal; bad values give error
+				escape += @"\\N\{U\+[0-9a-fA-F]+(\} | $) | "; // hexa, error if no 'PCRE2_UTF'
 				escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
-				escape += @"\\x\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty
+				escape += @"\\x\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty
 				escape += @"\\u[0-9a-fA-F]{1,4} | "; // hexa, four digits, error if no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
-				escape += @"\\u\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty or no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
-				escape += @"\\[pP]\{.*?(\}|$) | "; // property
+				escape += @"\\u\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty or no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
+				escape += @"\\[pP]\{.*?(\} | $) | "; // property
 				escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
 
 				// backreferences
 				escape += @"\\[0-9]+ | "; // unbiguous
 				escape += @"\\g[+]?[0-9]+ | ";
-				escape += @"\\g\{[+]?[0-9]*(\}|$) | ";
+				escape += @"\\g\{[+]?[0-9]*(\} | $) | ";
 				escape += @"\\[gk]<.*?(>|$) | ";
 				escape += @"\\[gk]'.*?('|$) | ";
 				escape += @"\\[gk]\{.*?(\}|$) | ";

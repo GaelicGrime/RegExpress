@@ -425,7 +425,28 @@ namespace RegExpressWPF
 				CurrentRegexEngine = engine;
 				SetEngineOption( engine );
 
-				engine.ImportOptions( tabData.RegexOptions );
+				// some backward-compatibility stuff, when 'tabData.RegexOptions' was a number
+
+				string[] options = tabData.RegexOptions as string[];
+
+				if( options == null )
+				{
+					if( tabData.RegexOptions is int )
+					{
+						options = new string[] { $"OldRegexOptionsEnum:{tabData.RegexOptions}" };
+					}
+					else
+					{
+						if( tabData.RegexOptions is object[] )
+						{
+							options = ( (object[])tabData.RegexOptions ).Select( o => o.ToString( ) ).ToArray( );
+						}
+					}
+				}
+
+				if( options == null ) options = new string[] { };
+
+				engine.ImportOptions( options );
 
 				// also set options of inactive engines
 				foreach( var eng in RegexEngines )

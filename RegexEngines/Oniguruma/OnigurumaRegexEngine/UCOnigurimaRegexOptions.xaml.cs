@@ -48,6 +48,9 @@ namespace OnigurumaRegexEngineNs
 
 					cbxSyntax.Items.Add( cbi );
 				}
+
+				// select first (default)
+				cbxSyntax.SelectedItem = cbxSyntax.Items.OfType<ComboBoxItem>( ).FirstOrDefault( );
 			}
 
 			// insert checkboxes
@@ -175,6 +178,20 @@ namespace OnigurumaRegexEngineNs
 			{
 				--ChangeCounter;
 			}
+		}
+
+
+		internal string GetSyntax( )
+		{
+			List<OnigurumaRegexInterop.OptionInfo> syntax_options = OnigurumaRegexInterop.Matcher.GetSyntaxOptions( );
+
+			return CachedOptions.FirstOrDefault( o => syntax_options.Any( i => i.FlagName == o ) );
+		}
+
+
+		internal bool IsOptionSelected( string tag )
+		{
+			return CachedOptions.Contains( tag );
 		}
 
 

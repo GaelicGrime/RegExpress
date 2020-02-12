@@ -56,6 +56,19 @@ namespace DotNetRegexEngineNs
 
 		internal void ImportOptions( string[] options0 )
 		{
+			if( options0.Length == 1 && options0[0].StartsWith("old:"))
+			{
+				// special backward-compatibility case; convert a number (treated as 'RegexOptions') to array of names
+
+				string number_s = options0[0].Substring( "OldRegexOptionsEnum:".Length );
+				if( int.TryParse(number_s, out int number))
+				{
+					RegexOptions opt = (RegexOptions)number;
+
+					options0 = Enum.Format( typeof( RegexOptions ), opt, "G" ).Split( ',' ).Select( s => s.Trim( ) ).ToArray( );
+				}
+			}
+
 			RegexOptions options = RegexOptions.None;
 			TimeSpan timeout = TimeSpan.FromSeconds( 10 );
 

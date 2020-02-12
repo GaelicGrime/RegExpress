@@ -260,7 +260,6 @@ namespace Re2RegexEngineNs
 		}
 
 
-
 		Regex GetCachedHighlightingRegex( )
 		{
 			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
