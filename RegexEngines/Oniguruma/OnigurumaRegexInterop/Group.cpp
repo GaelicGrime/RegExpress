@@ -1,8 +1,12 @@
 #include "pch.h"
 
+#include "Capture.h"
 #include "Group.h"
 #include "Match.h"
 #include "Matcher.h"
+
+
+using namespace System::Diagnostics;
 
 
 namespace OnigurumaRegexInterop
@@ -17,23 +21,14 @@ namespace OnigurumaRegexInterop
 		mLength( length ),
 		mCaptures( gcnew List<ICapture^>( ) )
 	{
-		try
-		{
-			//
-		}
-		//catch( const std::exception & exc )
-		//{
-		//	String^ what = gcnew String( exc.what( ) );
-		//	throw gcnew Exception( "Error: " + what );
-		//}
-		catch( Exception ^ exc )
-		{
-			throw exc;
-		}
-		catch( ... )
-		{
-			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
-		}
+	}
+
+
+	void Group::AddCapture( Capture^ capture )
+	{
+		Debug::Assert( !mCaptures->Contains( capture ) );
+
+		mCaptures->Add( capture );
 	}
 
 

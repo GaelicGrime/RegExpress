@@ -134,6 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Capture.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="Match.h" />
     <ClInclude Include="Matcher.h" />
@@ -151,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="Capture.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="Match.cpp" />
     <ClCompile Include="Matcher.cpp" />

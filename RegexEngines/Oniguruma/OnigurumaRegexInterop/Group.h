@@ -8,6 +8,7 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace OnigurumaRegexInterop
 {
+	ref class Capture;
 	ref class Match;
 
 
@@ -18,6 +19,7 @@ namespace OnigurumaRegexInterop
 
 		Group( Match^ parent, String^ name, bool success, int index, int length );
 
+		void AddCapture( Capture^ capture );
 
 #pragma region ICapture
 
@@ -88,7 +90,6 @@ namespace OnigurumaRegexInterop
 		{
 			mName = name;
 		}
-
 
 	private:
 

@@ -1,7 +1,9 @@
 #include "pch.h"
-#include "Matcher.h"
+
+#include "Capture.h"
 #include "Group.h"
 #include "Match.h"
+#include "Matcher.h"
 
 
 using namespace System::Diagnostics;
@@ -176,12 +178,16 @@ namespace OnigurumaRegexInterop
 	}
 
 
+	private value struct ForEachNameData
+	{
+		List<String^>^ names;
+	};
+
+
 	static int ForEachNameCallback( const OnigUChar* name, const OnigUChar* nameEnd,
 		int numberOfGroups, int* groupNumberList, OnigRegex regex, void* lparam )
 	{
-		const IntPtr* intptr_names = (IntPtr*)lparam;
-		GCHandle gch_names = GCHandle::FromIntPtr( *intptr_names );
-		List<String^>^ names = ( List<String^>^ )gch_names.Target;
+		ForEachNameData* data = (ForEachNameData*)lparam;
 
 		String^ group_name = gcnew String( (wchar_t*)name, 0, ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) );
 
@@ -192,9 +198,40 @@ namespace OnigurumaRegexInterop
 		{
 			int group_number = nums[i];
 
-			while( names->Count <= group_number ) names->Add( nullptr );
+			while( data->names->Count <= group_number ) data->names->Add( nullptr );
 
-			names[group_number] = group_name;
+			data->names[group_number] = group_name;
+		}
+
+		return 0;
+	}
+
+
+	private value struct TraverseTreeData
+	{
+		int groupNumber;
+		Group^ group;
+	};
+
+
+	static int TraverseTreeCallback( int group, int beg, int end, int level, int at, void* arg )
+	{
+		TraverseTreeData* data = (TraverseTreeData*)arg;
+
+		if( group == 0 )
+		{
+			// skip, not needed
+		}
+		else
+		{
+			if( group == data->groupNumber )
+			{
+				Debug::Assert( ( beg % 2 ) == 0 ); // event positions expected
+				Debug::Assert( ( end % 2 ) == 0 );
+
+				auto capture = gcnew Capture( data->group, beg / 2, ( end - beg ) / 2 );
+				data->group->AddCapture( capture );
+			}
 		}
 
 		return 0;
@@ -212,18 +249,12 @@ namespace OnigurumaRegexInterop
 
 			List<String^>^ group_names = gcnew List<String^>( );
 			{
-				GCHandle gch_names = GCHandle::Alloc( group_names );
-				try
-				{
-					IntPtr intptr_names = GCHandle::ToIntPtr( gch_names );
+				ForEachNameData data{};
+				data.names = group_names;
 
-					onig_foreach_name( mData->mRegex, &ForEachNameCallback, &intptr_names );
-				}
-				finally
-				{
-					gch_names.Free( );
-				}
+				onig_foreach_name( mData->mRegex, &ForEachNameCallback, &data );
 			}
+
 
 			pin_ptr<const wchar_t> pinned_text = PtrToStringChars( text );
 			const wchar_t* native_text = pinned_text;
@@ -261,25 +292,59 @@ namespace OnigurumaRegexInterop
 
 					for( int i = 0; i < region->num_regs; ++i )
 					{
-						Debug::Assert( ( region->beg[i] % sizeof( wchar_t ) ) == 0 ); // even positions expected
-						Debug::Assert( ( region->end[i] % sizeof( wchar_t ) ) == 0 );
-
-						int begin = region->beg[i] / sizeof( wchar_t );
-						int end = region->end[i] / sizeof( wchar_t );
-
-						if( i == 0 )
-						{
-							match0 = gcnew Match( this, begin, end - begin );
-
-							matches->Add( match0 );
-						}
-
 						int group_number = i;
 						String^ group_name = nullptr;
 						if( group_number < group_names->Count ) group_name = group_names[group_number];
 						if( group_name == nullptr ) group_name = group_number.ToString( System::Globalization::CultureInfo::InvariantCulture );
 
-						match0->AddGroup( gcnew Group( match0, group_name, true, begin, end - begin ) ); // (including default group)
+						if( region->beg[i] < 0 )
+						{
+							// failed group
+
+							if( i == 0 )
+							{
+								Debug::Assert( false );
+							}
+							else
+							{
+								Group^ group = gcnew Group( match0, group_name, false, 0, 0 );
+								match0->AddGroup( group );
+							}
+						}
+						else
+						{
+							// succeeded group
+
+							Debug::Assert( ( region->beg[i] % sizeof( wchar_t ) ) == 0 ); // even positions expected
+							Debug::Assert( ( region->end[i] % sizeof( wchar_t ) ) == 0 );
+
+							int begin = region->beg[i] / sizeof( wchar_t );
+							int end = region->end[i] / sizeof( wchar_t );
+
+							if( i == 0 )
+							{
+								match0 = gcnew Match( this, begin, end - begin );
+
+								matches->Add( match0 );
+							}
+
+							Group^ group = gcnew Group( match0, group_name, true, begin, end - begin );
+							match0->AddGroup( group ); // (including default group)
+
+							// captures
+
+							int number_of_captures = onig_number_of_captures( mData->mRegex );
+							int number_of_capture_histories = onig_number_of_capture_histories( mData->mRegex );
+							OnigCaptureTreeNode* capture_tree = onig_get_capture_tree( region );
+
+							{
+								TraverseTreeData data{};
+								data.groupNumber = group_number;
+								data.group = group;
+
+								onig_capture_tree_traverse( region, ONIG_TRAVERSE_CALLBACK_AT_FIRST, &TraverseTreeCallback, &data );
+							}
+						}
 					}
 
 					// TODO: check if it should be much more complicated -- see PCRE2

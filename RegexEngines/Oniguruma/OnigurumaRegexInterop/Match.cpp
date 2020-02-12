@@ -19,25 +19,6 @@ namespace OnigurumaRegexInterop
 		mLength( length ), // TODO: deals with overflows
 		mGroups( gcnew List<IGroup^> )
 	{
-		try
-		{
-
-			//
-
-		}
-		catch( const std::exception & exc )
-		{
-			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
-		}
-		catch( Exception ^ exc )
-		{
-			throw exc;
-		}
-		catch( ... )
-		{
-			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
-		}
 	}
 
 
@@ -47,7 +28,6 @@ namespace OnigurumaRegexInterop
 
 		mGroups->Add( g );
 	}
-
 
 
 	String^ Match::Value::get( )
