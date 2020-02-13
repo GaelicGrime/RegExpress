@@ -181,7 +181,13 @@ namespace OnigurumaRegexEngineNs
 		}
 
 
-		internal string GetSyntax( )
+		internal OnigurumaRegexInterop.OnigurumaHelper CreateOnigurumaHelper()
+		{
+			return OnigurumaRegexInterop.Matcher.CreateOnigurumaHelper( CachedOptions );
+		}
+
+
+		internal string GetSyntax( ) //................
 		{
 			List<OnigurumaRegexInterop.OptionInfo> syntax_options = OnigurumaRegexInterop.Matcher.GetSyntaxOptions( );
 
@@ -189,7 +195,7 @@ namespace OnigurumaRegexEngineNs
 		}
 
 
-		internal bool IsOptionSelected( string tag )
+		internal bool IsOptionSelected( string tag ) //................
 		{
 			return CachedOptions.Contains( tag );
 		}

@@ -4,6 +4,7 @@
 #include "Group.h"
 #include "Match.h"
 #include "Matcher.h"
+#include "OnigurumaHelper.h"
 
 
 using namespace System::Diagnostics;
@@ -44,68 +45,110 @@ namespace OnigurumaRegexInterop
 		OnigErrorInfo einfo;
 		int r;
 
-		auto selected_syntax = ONIG_SYNTAX_ONIGURUMA;
-		auto compile_options = ONIG_OPTION_NONE;
+		msclr::auto_handle< OnigurumaHelper> helper( CreateOnigurumaHelper( options ) );
+
 		auto search_options = ONIG_OPTION_NONE;
 
+		for each( auto o in mSearchOptions )
 		{
-			// get options
-
-			for each( auto o in mSyntaxOptions )
+			if( Array::IndexOf( options, o->FlagName ) >= 0 )
 			{
-				if( Array::IndexOf( options, o->FlagName ) >= 0 )
+				IntPtr p;
+
+				if( mTagToOption->TryGetValue( o->FlagName, p ) )
 				{
-					IntPtr p;
-
-					if( mTagToOption->TryGetValue( o->FlagName, p ) )
-					{
-						selected_syntax = static_cast<decltype( selected_syntax )>( p.ToPointer( ) );
-					}
-					else
-					{
-						Debug::Assert( false );
-					}
-
-					break;
+					search_options |= p.ToInt64( );
 				}
-			}
-
-			for each( auto o in mCompileOptions )
-			{
-				if( Array::IndexOf( options, o->FlagName ) >= 0 )
+				else
 				{
-					IntPtr p;
-
-					if( mTagToOption->TryGetValue( o->FlagName, p ) )
-					{
-						compile_options |= p.ToInt64( );
-					}
-					else
-					{
-						Debug::Assert( false );
-					}
-				}
-			}
-
-			for each( auto o in mSearchOptions )
-			{
-				if( Array::IndexOf( options, o->FlagName ) >= 0 )
-				{
-					IntPtr p;
-
-					if( mTagToOption->TryGetValue( o->FlagName, p ) )
-					{
-						search_options |= p.ToInt64( );
-					}
-					else
-					{
-						Debug::Assert( false );
-					}
+					Debug::Assert( false );
 				}
 			}
 		}
 
-		// in some case, create custom syntax
+		pin_ptr<const wchar_t> pinned_pattern = PtrToStringChars( pattern );
+		const wchar_t* native_pattern = pinned_pattern;
+
+		r = onig_new(
+			&reg,
+			(UChar*)native_pattern,
+			(UChar*)( native_pattern + pattern->Length ),
+			helper->GetCompileOptions( ),
+			ONIG_ENCODING_UTF16_LE,
+			helper->GetSyntax( ),
+			&einfo );
+
+		if( r )
+		{
+			throw gcnew Exception( FormatError( r, &einfo ) );
+		}
+
+		mData = new MatcherData{};
+		mData->mRegex = reg;
+		mData->mSearchOptions = search_options;
+	}
+
+
+	Matcher::~Matcher( )
+	{
+		this->!Matcher( );
+	}
+
+
+	Matcher::!Matcher( )
+	{
+		delete mData;
+		mData = nullptr;
+	}
+
+
+	OnigurumaHelper^ Matcher::CreateOnigurumaHelper( cli::array<String^>^ options )
+	{
+		regex_t* reg;
+		OnigErrorInfo einfo;
+		int r;
+
+		String^ selected_syntax_name = L"ONIG_SYNTAX_ONIGURUMA";
+		auto selected_syntax = ONIG_SYNTAX_ONIGURUMA;
+
+		for each( auto o in mSyntaxOptions )
+		{
+			if( Array::IndexOf( options, o->FlagName ) >= 0 )
+			{
+				IntPtr p;
+
+				if( mTagToOption->TryGetValue( o->FlagName, p ) )
+				{
+					selected_syntax_name = o->FlagName;
+					selected_syntax = static_cast<decltype( selected_syntax )>( p.ToPointer( ) );
+				}
+				else
+				{
+					Debug::Assert( false );
+				}
+
+				break;
+			}
+		}
+
+		OnigOptionType compile_options = ONIG_OPTION_NONE;
+
+		for each( auto o in mCompileOptions )
+		{
+			if( Array::IndexOf( options, o->FlagName ) >= 0 )
+			{
+				IntPtr p;
+
+				if( mTagToOption->TryGetValue( o->FlagName, p ) )
+				{
+					compile_options |= p.ToInt64( );
+				}
+				else
+				{
+					Debug::Assert( false );
+				}
+			}
+		}
 
 		OnigSyntaxType adjusted_syntax{};
 
@@ -135,40 +178,7 @@ namespace OnigurumaRegexInterop
 			}
 		}
 
-		pin_ptr<const wchar_t> pinned_pattern = PtrToStringChars( pattern );
-		const wchar_t* native_pattern = pinned_pattern;
-
-		r = onig_new(
-			&reg,
-			(UChar*)native_pattern,
-			(UChar*)( native_pattern + pattern->Length ),
-			compile_options,
-			ONIG_ENCODING_UTF16_LE,
-			&adjusted_syntax,
-			&einfo );
-
-		if( r )
-		{
-			throw gcnew Exception( FormatError( r, &einfo ) );
-		}
-
-		mData = new MatcherData{};
-		mData->mRegex = reg;
-		mData->mSearchOptions = search_options;
-		onig_copy_syntax( &mData->mSyntax, &adjusted_syntax );
-	}
-
-
-	Matcher::~Matcher( )
-	{
-		this->!Matcher( );
-	}
-
-
-	Matcher::!Matcher( )
-	{
-		delete mData;
-		mData = nullptr;
+		return gcnew OnigurumaHelper( selected_syntax_name, adjusted_syntax, compile_options );
 	}
 
 

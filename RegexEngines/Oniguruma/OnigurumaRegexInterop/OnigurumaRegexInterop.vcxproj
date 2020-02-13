@@ -146,6 +146,7 @@
     <ClInclude Include="Oniguruma-min\src\regint.h" />
     <ClInclude Include="Oniguruma-min\src\regparse.h" />
     <ClInclude Include="Oniguruma-min\src\st.h" />
+    <ClInclude Include="OnigurumaHelper.h" />
     <ClInclude Include="OnigurumaRegexInterop.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
@@ -666,6 +667,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="OnigurumaHelper.cpp" />
     <ClCompile Include="OnigurumaRegexInterop.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

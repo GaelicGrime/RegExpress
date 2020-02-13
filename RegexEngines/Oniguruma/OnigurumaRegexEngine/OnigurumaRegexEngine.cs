@@ -200,14 +200,8 @@ namespace OnigurumaRegexEngineNs
 
 		Regex GetCachedColouringRegex( )
 		{
-			string syntax = OptionsControl.GetSyntax( );
-			bool is_plain_text = syntax == "ONIG_SYNTAX_ASIS";
-
-			if( is_plain_text ) return EmptyRegex;
-
-			bool is_extended = OptionsControl.IsOptionSelected( "ONIG_OPTION_EXTEND" );
-
-			string key = string.Join( "\u001F", new object[] { syntax, is_extended } );
+			var helper = OptionsControl.CreateOnigurumaHelper( );
+			string key = helper.GetKey( );
 
 			lock( CachedColouringRegexes )
 			{
@@ -215,25 +209,29 @@ namespace OnigurumaRegexEngineNs
 
 				string escape = @"(?'escape'";
 
-				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
-				escape += @"\\[0-7]{1,3} | "; // octal, three digits
+				if( !helper.IsONIG_SYNTAX_ASIS )
+				{
+					escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
+					escape += @"\\[0-7]{1,3} | "; // octal, three digits
 
-				escape += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
+					escape += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
 
-				escape += @"\\u[0-9a-fA-F]+ | "; // \uHHHH wide hexadecimal char
-				escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
-				escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
+					escape += @"\\u[0-9a-fA-F]+ | "; // \uHHHH wide hexadecimal char
+					escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
+					escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
 
-				escape += @"\\c[A-Za-z] | "; // \cx control char
-				escape += @"\\C-([A-Za-z])? | "; // \C-x control char
+					escape += @"\\c[A-Za-z] | "; // \cx control char
+					escape += @"\\C-([A-Za-z])? | "; // \C-x control char
 
-				escape += @"\\M-([A-Za-z])? | "; // \M-x meta  (x|0x80)
-				escape += @"\\M-(\\C-([A-Za-z])?)? | "; // \M-x meta control char
+					escape += @"\\M-([A-Za-z])? | "; // \M-x meta  (x|0x80)
+					escape += @"\\M-(\\C-([A-Za-z])?)? | "; // \M-x meta control char
 
-				escape += @"\\[pP]\{.*?(\} | $) | "; // property
+					escape += @"\\[pP]\{.*?(\} | $) | "; // property
 
-				escape += @"\\. | ";
+					escape += @"\\. | ";
+				}
 
+				escape += @"(?!) | ";
 				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
 				escape += ")";
 
@@ -264,13 +262,17 @@ namespace OnigurumaRegexEngineNs
 
 				string comment = @"(?'comment'";
 
-				if( Any( syntax, "ONIG_SYNTAX_JAVA", "ONIG_SYNTAX_PERL", "ONIG_SYNTAX_PERL_NG", "ONIG_SYNTAX_RUBY", "ONIG_SYNTAX_ONIGURUMA" ) )
+				if( !helper.IsONIG_SYNTAX_ASIS )
 				{
-					comment += @"\(\?\#.*?(\)|$) | "; // comment
+					if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT )
+					{
+						comment += @"\(\?\#.*?(\)|$) | "; // comment
+					}
 				}
 
-				if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment
+				if( helper.IsONIG_OPTION_EXTEND ) comment += @"\#.*?(\n|$) | "; // line-comment
 
+				comment += @"(?!) | ";
 				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
 				comment += ")";
 

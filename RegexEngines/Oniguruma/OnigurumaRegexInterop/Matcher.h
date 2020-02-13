@@ -10,6 +10,8 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace OnigurumaRegexInterop
 {
+	ref class OnigurumaHelper;
+
 	public ref class OptionInfo
 	{
 	public:
@@ -29,13 +31,11 @@ namespace OnigurumaRegexInterop
 	{
 		regex_t* mRegex;
 		decltype( ONIG_OPTION_NONE ) mSearchOptions;
-		OnigSyntaxType mSyntax;
 
 		MatcherData( )
 			:
 			mRegex( nullptr ),
-			mSearchOptions( ONIG_OPTION_NONE ),
-			mSyntax{}
+			mSearchOptions( ONIG_OPTION_NONE )
 		{
 
 		}
@@ -64,6 +64,8 @@ namespace OnigurumaRegexInterop
 		static List<OptionInfo^>^ GetCompileOptions( ) { return mCompileOptions; }
 		static List<OptionInfo^>^ GetSearchOptions( ) { return mSearchOptions; }
 		static List<OptionInfo^>^ GetConfigurationOptions( ) { return mConfigurationOptions; }
+
+		static OnigurumaHelper^ CreateOnigurumaHelper( cli::array<String^>^ options );
 
 #pragma region IMatcher
 

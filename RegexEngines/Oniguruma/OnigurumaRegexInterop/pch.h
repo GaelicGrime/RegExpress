@@ -16,5 +16,6 @@
 #pragma managed
 
 #include <msclr/marshal.h>
+#include <msclr/auto_handle.h>
 
 #endif //PCH_H
