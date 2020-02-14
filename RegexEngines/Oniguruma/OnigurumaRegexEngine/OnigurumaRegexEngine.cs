@@ -128,10 +128,10 @@ namespace OnigurumaRegexEngineNs
 					}
 				}
 
-				if( cnc.IsCancellationRequested ) return;
-
 				//......
 #if false
+				if( cnc.IsCancellationRequested ) return;
+
 				// class (within [...] groups), '[:...:]', '[=...=]', '[. ... .]'
 				{
 					var g = m.Groups["class"];
@@ -155,9 +155,10 @@ namespace OnigurumaRegexEngineNs
 					}
 				}
 
+#endif
 				if( cnc.IsCancellationRequested ) return;
 
-				// named group, '(?<name>...)' or '(?'name'...)'
+				// named groups and back references
 				{
 					var g = m.Groups["name"];
 					if( g.Success )
@@ -179,7 +180,6 @@ namespace OnigurumaRegexEngineNs
 						continue;
 					}
 				}
-#endif
 			}
 		}
 
@@ -214,21 +214,51 @@ namespace OnigurumaRegexEngineNs
 					escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
 					escape += @"\\[0-7]{1,3} | "; // octal, three digits
 
-					escape += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
+					if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) escape += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
 
 					escape += @"\\u[0-9a-fA-F]+ | "; // \uHHHH wide hexadecimal char
-					escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
-					escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
+					if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
+					if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
 
-					escape += @"\\c[A-Za-z] | "; // \cx control char
-					escape += @"\\C-([A-Za-z])? | "; // \C-x control char
+					if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
+					{
+						escape += @"\\c[A-Za-z] | "; // \cx control char
+						escape += @"\\C-([A-Za-z])? | "; // \C-x control char
+					}
 
 					escape += @"\\M-([A-Za-z])? | "; // \M-x meta  (x|0x80)
 					escape += @"\\M-(\\C-([A-Za-z])?)? | "; // \M-x meta control char
 
 					escape += @"\\[pP]\{.*?(\} | $) | "; // property
 
+					if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE ) escape += @"\\Q.*?(\\E|$) | "; // quoted part
+
+					/*
+					Probably not useful
+
+					if( helper.IsONIG_SYN_OP_ESC_ASTERISK_ZERO_INF )
+					{
+						escape += @"(?!\\\*)";
+					}
+
+					if( helper.IsONIG_SYN_OP_ESC_PLUS_ONE_INF )
+					{
+						escape += @"(?!\\\+)";
+					}
+
+					if( helper.IsONIG_SYN_OP_ESC_QMARK_ZERO_ONE )
+					{
+						escape += @"(?!\\\?)";
+					}
+
+					if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
+					{
+						escape += @"(?!\\[{}])";
+					}
+					*/
+
 					escape += @"\\. | ";
+
 				}
 
 				escape += @"(?!) | ";
@@ -264,10 +294,7 @@ namespace OnigurumaRegexEngineNs
 
 				if( !helper.IsONIG_SYNTAX_ASIS )
 				{
-					if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT )
-					{
-						comment += @"\(\?\#.*?(\)|$) | "; // comment
-					}
+					if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) comment += @"\(\?\#.*?(\)|$) | "; // comment
 				}
 
 				if( helper.IsONIG_OPTION_EXTEND ) comment += @"\#.*?(\n|$) | "; // line-comment
@@ -276,22 +303,40 @@ namespace OnigurumaRegexEngineNs
 				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
 				comment += ")";
 
-#if false
 				//
 
 				string named_group = @"(?'named_group'";
 
-				named_group += @"\(\?P(?'name'<.*?>) | ";
+				if( helper.IsONIG_SYN_OP2_QMARK_LT_NAMED_GROUP )
+				{
+					named_group += @"\(\?(?'name'<.*?(>|$)) | ";
+					named_group += @"\(\?(?'name''.*?('|$)) | ";
+				}
+				if( helper.IsONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY )
+				{
+					named_group += @"\(\?@(?'name'<.*?(>|$)) | ";
+					named_group += @"\(\?@(?'name''.*?('|$)) | ";
+				}
+				if( helper.IsONIG_SYN_OP2_ESC_K_NAMED_BACKREF )
+				{
+					named_group += @"(?'name'\\k<.*?(>|$)) | ";
+					named_group += @"(?'name'\\k'.*?('|$)) | ";
+				}
+				if( helper.IsONIG_SYN_OP2_ESC_G_SUBEXP_CALL )
+				{
+					named_group += @"(?'name'\\g<.*?(>|$)) | ";
+					named_group += @"(?'name'\\g'.*?('|$)) | ";
+				}
 
 				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
 				named_group += ")";
 
-#endif
+
 				string pattern = @"(?nsx)(" + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
 					comment + " | " + Environment.NewLine +
+					named_group + " | " + Environment.NewLine +
+					escape + " | " + Environment.NewLine +
 					//........char_group + " | " + Environment.NewLine +
-					//.........named_group + " | " + Environment.NewLine +
 					"(.(?!)) )";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );

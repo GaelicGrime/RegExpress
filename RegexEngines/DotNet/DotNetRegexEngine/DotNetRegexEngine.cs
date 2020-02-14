@@ -256,7 +256,14 @@ namespace DotNetRegexEngineNs
 \\k<([A-Za-z]+>)? |
 \\.
 )"; // including incomplete '\x', '\u', '\p', '\k'
-				const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
+
+				//const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
+
+				const string NamedGroupPattern =
+					@"\(\?(?'name'<.*?>) | " + // (balancing groups covered too)
+					@"\(\?(?'name''.*?') | " +
+					@"(?'name'\\k<.*?>) | " +
+					@"(?'name'\\k'.*?')";
 
 				string pattern;
 
@@ -267,8 +274,8 @@ namespace DotNetRegexEngineNs
 							CommentPattern + " |" + Environment.NewLine +
 							EolCommentPattern + " |" + Environment.NewLine +
 							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-							EscapesPattern + " |" + Environment.NewLine +
 							NamedGroupPattern + " |" + Environment.NewLine +
+							EscapesPattern + " |" + Environment.NewLine +
 							".(?!)" + Environment.NewLine +
 						")";
 				}
@@ -279,8 +286,8 @@ namespace DotNetRegexEngineNs
 							CommentPattern + " |" + Environment.NewLine +
 							//EolCommentPattern + " |" + Environment.NewLine +
 							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-							EscapesPattern + " |" + Environment.NewLine +
 							NamedGroupPattern + " |" + Environment.NewLine +
+							EscapesPattern + " |" + Environment.NewLine +
 							".(?!)" + Environment.NewLine +
 						")";
 				}

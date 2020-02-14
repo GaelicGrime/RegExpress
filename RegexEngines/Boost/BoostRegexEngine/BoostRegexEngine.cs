@@ -253,8 +253,6 @@ namespace BoostRegexEngineNs
 				string escape = @"(?'escape'";
 
 				if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\[1-9] | "; // back reference
-				if( is_perl ) escape += @"\\g-?[1-9] | \\g\{.*?\} | "; // back reference
-				if( is_perl ) escape += @"\\k<.*?(>|$) | "; // back reference
 
 				if( is_perl || is_POSIX_extended ) escape += @"\\c[A-Za-z] | "; // ASCII escape
 				if( is_perl || is_POSIX_extended ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // hex, two digits
@@ -304,7 +302,9 @@ namespace BoostRegexEngineNs
 
 				string named_group = @"(?'named_group'";
 
-				if( is_perl ) named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>))";
+				if( is_perl ) named_group += @"\(\?(?'name'<.*?(>|$)) | \(\?(?'name''.*?('|$)) | ";
+				if( is_perl ) named_group += @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$)) | "; // back reference
+				if( is_perl ) named_group += @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$)) | "; // back reference
 
 				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
 				named_group += ")";
@@ -313,10 +313,10 @@ namespace BoostRegexEngineNs
 				// 
 
 				string pattern = @"(?nsx)(" + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
 					comment + " | " + Environment.NewLine +
-					char_group + " | " + Environment.NewLine +
 					named_group + " | " + Environment.NewLine +
+					escape + " | " + Environment.NewLine +
+					char_group + " | " + Environment.NewLine +
 					"(.(?!)) )";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );
@@ -358,6 +358,11 @@ namespace BoostRegexEngineNs
 					grammar == GrammarEnum.emacs;
 
 				string pattern = @"(?nsx)(";
+
+				if( is_perl || is_POSIX_extended )
+				{
+					pattern += @"\\Q.*?(\\E|$) | "; // skip \Q...\E
+				}
 
 				if( is_perl || is_POSIX_extended )
 				{

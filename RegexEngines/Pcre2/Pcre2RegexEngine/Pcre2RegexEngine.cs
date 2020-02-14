@@ -229,12 +229,7 @@ namespace Pcre2RegexEngineNs
 
 				// backreferences
 				escape += @"\\[0-9]+ | "; // unbiguous
-				escape += @"\\g[+]?[0-9]+ | ";
-				escape += @"\\g\{[+]?[0-9]*(\} | $) | ";
-				escape += @"\\[gk]<.*?(>|$) | ";
-				escape += @"\\[gk]'.*?('|$) | ";
-				escape += @"\\[gk]\{.*?(\}|$) | ";
-				escape += @"\(\?P=.*?(\)|$) | "; //
+				// see also named groups
 
 				escape += @"\\. | ";
 
@@ -275,6 +270,12 @@ namespace Pcre2RegexEngineNs
 
 				named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>)) | ";
 				named_group += @"\(\?P(?'name'<.*?>) | ";
+				named_group += @"(?'name'\\g[+]?[0-9]+) | ";
+				named_group += @"(?'name'\\g\{[+]?[0-9]*(\} | $)) | ";
+				named_group += @"(?'name'\\[gk]<.*?(>|$)) | ";
+				named_group += @"(?'name'\\[gk]'.*?('|$)) | ";
+				named_group += @"(?'name'\\[gk]\{.*?(\}|$)) | ";
+				named_group += @"(?'name'\(\?P=.*?(\)|$)) | "; //
 
 				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
 				named_group += ")";
@@ -285,10 +286,10 @@ namespace Pcre2RegexEngineNs
 				// 
 
 				string pattern = @"(?nsx)(" + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
 					comment + " | " + Environment.NewLine +
-					char_group + " | " + Environment.NewLine +
 					named_group + " | " + Environment.NewLine +
+					escape + " | " + Environment.NewLine +
+					char_group + " | " + Environment.NewLine +
 					"(.(?!)) )";
 
 				regex = new Regex( pattern, RegexOptions.Compiled );

@@ -570,7 +570,20 @@ namespace OnigurumaRegexInterop
 
 		list = gcnew List<OptionInfo^>( );
 
-		C( ONIG_SYN_OP_ESC_ASTERISK_ZERO_INF, "enable \\*" );
+		//C( ONIG_SYN_OP_ESC_ASTERISK_ZERO_INF, "enable \\*" );
+		//C( ONIG_SYN_OP_ESC_PLUS_ONE_INF, "enable \\+" );
+		//C( ONIG_SYN_OP_ESC_QMARK_ZERO_ONE, "enable \\?" );
+		//C( ONIG_SYN_OP_ESC_BRACE_INTERVAL, "enable \\{ and \\}" );
+		//C( ONIG_SYN_OP_ESC_VBAR_ALT, "enable \\|" );
+		//C( ONIG_SYN_OP_ESC_LPAREN_SUBEXP, "enable \\( and \\)" );
+		//C( ONIG_SYN_OP_ESC_LTGT_WORD_BEGIN_END, "enable \\< and \\>" );
+		//C( ONIG_SYN_OP_ESC_C_CONTROL, "enable \\cx" );
+		//C( ONIG_SYN_OP_ESC_OCTAL3, "enable \\000" );
+		//C( ONIG_SYN_OP_ESC_X_HEX2, "enable \\xHH" );
+		//C( ONIG_SYN_OP_ESC_X_BRACE_HEX8, "enable \\x{HHH…}" );
+		//C( ONIG_SYN_OP_ESC_O_BRACE_OCTAL, "enable \\o{OOO…}" );
+
+		C( ONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE, "enable \\Q...\\E" );
 		C( ONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY, "enable (?@…) and (?@<name>…)" );
 		C( ONIG_SYN_STRICT_CHECK_BACKREF, "error on invalid backrefs" ); //?
 
