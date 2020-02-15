@@ -79,14 +79,14 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 						{
 							var s = new Segment( g.Index, paraSize );
 
-							if( visibleSegment.Intersects( s ) ) highlights.LeftCurlyBracket = s;
+							if( visibleSegment.Intersects( s ) ) highlights.LeftCurlyBrace = s;
 
 							if( normal_end )
 							{
 								var right = g.Index + g.Length - paraSize;
 								s = new Segment( right, paraSize );
 
-								if( visibleSegment.Intersects( s ) ) highlights.RightCurlyBracket = s;
+								if( visibleSegment.Intersects( s ) ) highlights.RightCurlyBrace = s;
 							}
 						}
 
@@ -240,29 +240,33 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// range, '{...}'
+				// range, '{...}' or '\{...\}'
 				{
-					var g = m.Groups["range"];
-					if( g.Success )
+					var left_brace = m.Groups["left_brace"];
+					var right_brace = m.Groups["right_brace"];
+
+					if( left_brace.Success )
 					{
-						var normal_end = m.Groups["end"].Success;
-
-						if( g.Index < selectionStart && ( normal_end ? selectionStart < g.Index + g.Length : selectionStart <= g.Index + g.Length ) )
+						if( left_brace.Index < selectionStart &&
+							( !right_brace.Success || selectionStart < right_brace.Index + right_brace.Length ) )
 						{
-							var s = new Segment( g.Index, paraSize );
+							var s = new Segment( left_brace.Index, left_brace.Length );
 
-							if( visibleSegment.Intersects( s ) ) highlights.LeftCurlyBracket = s;
-
-							if( normal_end )
-							{
-								var right = g.Index + g.Length - paraSize;
-								s = new Segment( right, paraSize );
-
-								if( visibleSegment.Intersects( s ) ) highlights.RightCurlyBracket = s;
-							}
+							if( visibleSegment.Intersects( s ) ) highlights.LeftCurlyBrace = s;
 						}
+					}
 
-						continue;
+					if( cnc.IsCancellationRequested ) return;
+
+					if( right_brace.Success )
+					{
+						if( ( !left_brace.Success || left_brace.Index < selectionStart ) &&
+							selectionStart < right_brace.Index + right_brace.Length )
+						{
+							var s = new Segment( right_brace.Index, right_brace.Length );
+
+							if( visibleSegment.Intersects( s ) ) highlights.RightCurlyBrace = s;
+						}
 					}
 				}
 			}
