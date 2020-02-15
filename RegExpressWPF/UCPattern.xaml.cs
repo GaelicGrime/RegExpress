@@ -458,10 +458,10 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
 					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? Segment.Empty, td, PatternCharGroupBracketHighlightStyleInfo );

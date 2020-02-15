@@ -158,10 +158,10 @@ namespace Re2RegexEngineNs
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			int para_size = 1;
+			int par_size = 1;
 			Regex regex = GetCachedHighlightingRegex( );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, para_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
 		}
 
 		#endregion
@@ -186,72 +186,7 @@ namespace Re2RegexEngineNs
 			{
 				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				string escape = @"(?'escape'";
-
-				escape += @"\\[pP][A-Za-z] | "; // Unicode character class (one-letter name)
-				escape += @"\\[pP]\{.*?(\}|$) | "; // Unicode character class
-
-				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
-				escape += @"\\[0-7]{1,3} | "; // octal, three digits
-
-				escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
-				escape += @"\\x\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty
-
-				escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
-
-				escape += @"\\. | ";
-
-				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
-				escape += ")";
-
-
-				// 
-
-				string @class = @"(?'class'";
-
-				@class += @"\[(?'c'[:]) .*? (\k<c>\] | $) | "; // only [: :], no [= =], no [. .]
-
-				@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
-				@class += ")";
-
-				//
-
-				string char_group = @"(";
-
-				char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | "; // TODO: check 'escape' part
-
-				char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
-				char_group += ")";
-
-				// 
-
-				/*
-				string comment = @"(?'comment'";
-
-				comment += @"\(\?\#.*?(\)|$) | "; // comment
-				if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment
-
-				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
-				comment += ")";
-				*/
-				//
-
-				string named_group = @"(?'named_group'";
-
-				named_group += @"\(\?P(?'name'<.*?>) | ";
-
-				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
-				named_group += ")";
-
-
-				string pattern = @"(?nsx)(" + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
-					//comment + " | " + Environment.NewLine +
-					char_group + " | " + Environment.NewLine +
-					named_group + " | " + Environment.NewLine +
-					"(.(?!)) )";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateColouringRegex( );
 
 				CachedColouringRegexes.Add( key, regex );
 
@@ -272,24 +207,113 @@ namespace Re2RegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				string pattern = @"(?nsx)(";
-
-				pattern += @"(?'left_para'\() | "; // '('
-				pattern += @"(?'right_para'\)) | "; // ')'
-				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
-
-				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-				pattern += @"\\. | . | ";
-
-				pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
-				pattern += @")";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateHighlightingRegex( );
 
 				CachedHighlightingRegexes.Add( key, regex );
 
 				return regex;
 			}
+		}
+
+
+		Regex CreateColouringRegex( )
+		{
+			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
+
+			if( is_literal ) return EmptyRegex;
+
+			string escape = @"(?'escape'";
+
+			escape += @"\\[pP][A-Za-z] | "; // Unicode character class (one-letter name)
+			escape += @"\\[pP]\{.*?(\}|$) | "; // Unicode character class
+
+			escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
+			escape += @"\\[0-7]{1,3} | "; // octal, three digits
+
+			escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
+			escape += @"\\x\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty
+
+			escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+
+			escape += @"\\. | ";
+
+			escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
+			escape += ")";
+
+
+			// 
+
+			string @class = @"(?'class'";
+
+			@class += @"\[(?'c'[:]) .*? (\k<c>\] | $) | "; // only [: :], no [= =], no [. .]
+
+			@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
+			@class += ")";
+
+			//
+
+			string char_group = @"(";
+
+			char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | "; // TODO: check 'escape' part
+
+			char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
+			char_group += ")";
+
+			// 
+
+			/*
+			string comment = @"(?'comment'";
+
+			comment += @"\(\?\#.*?(\)|$) | "; // comment
+			if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment
+
+			comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
+			comment += ")";
+			*/
+			//
+
+			string named_group = @"(?'named_group'";
+
+			named_group += @"\(\?P(?'name'<.*?>) | ";
+
+			named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
+			named_group += ")";
+
+
+			string pattern = @"(?nsx)(" + Environment.NewLine +
+				escape + " | " + Environment.NewLine +
+				//comment + " | " + Environment.NewLine +
+				char_group + " | " + Environment.NewLine +
+				named_group + " | " + Environment.NewLine +
+				"(.(?!)) )";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
+		}
+
+
+		Regex CreateHighlightingRegex( )
+		{
+			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
+
+			if( is_literal ) return EmptyRegex;
+
+			string pattern = @"(?nsx)(";
+
+			pattern += @"(?'left_par'\() | "; // '('
+			pattern += @"(?'right_par'\)) | "; // ')'
+			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
+
+			pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+			pattern += @"\\. | . | ";
+
+			pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
+			pattern += @")";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
 		}
 	}
 }

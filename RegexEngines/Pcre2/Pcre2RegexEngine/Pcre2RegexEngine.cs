@@ -184,10 +184,10 @@ namespace Pcre2RegexEngineNs
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			int para_size = 1;
+			int par_size = 1;
 			Regex regex = GetCachedHighlightingRegex( );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, para_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
 		}
 
 		#endregion IRegexEngine
@@ -213,86 +213,7 @@ namespace Pcre2RegexEngineNs
 			{
 				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				string escape = @"(?'escape'";
-
-				escape += @"\\c[A-Za-z] | "; // ASCII escape
-				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
-				escape += @"\\[0-7]{1,3} | "; // octal, three digits
-				escape += @"\\o\{[0-9]+(\} | $) | "; // octal; bad values give error
-				escape += @"\\N\{U\+[0-9a-fA-F]+(\} | $) | "; // hexa, error if no 'PCRE2_UTF'
-				escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
-				escape += @"\\x\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty
-				escape += @"\\u[0-9a-fA-F]{1,4} | "; // hexa, four digits, error if no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
-				escape += @"\\u\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty or no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
-				escape += @"\\[pP]\{.*?(\} | $) | "; // property
-				escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
-
-				// backreferences
-				escape += @"\\[0-9]+ | "; // unbiguous
-				// see also named groups
-
-				escape += @"\\. | ";
-
-				escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
-				escape += ")";
-
-				// 
-
-				string @class = @"(?'class'";
-
-				@class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
-
-				@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
-				@class += ")";
-
-				//
-
-				string char_group = @"(";
-
-				char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
-
-				char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
-				char_group += ")";
-
-				// 
-
-				string comment = @"(?'comment'";
-
-				comment += @"\(\?\#.*?(\)|$) | "; // comment
-				if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment*/
-
-				comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
-				comment += ")";
-
-				//
-
-				string named_group = @"(?'named_group'";
-
-				named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>)) | ";
-				named_group += @"\(\?P(?'name'<.*?>) | ";
-				named_group += @"(?'name'\\g[+]?[0-9]+) | ";
-				named_group += @"(?'name'\\g\{[+]?[0-9]*(\} | $)) | ";
-				named_group += @"(?'name'\\[gk]<.*?(>|$)) | ";
-				named_group += @"(?'name'\\[gk]'.*?('|$)) | ";
-				named_group += @"(?'name'\\[gk]\{.*?(\}|$)) | ";
-				named_group += @"(?'name'\(\?P=.*?(\)|$)) | "; //
-
-				named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
-				named_group += ")";
-
-				// TODO: add support for '(*...)' constructs
-
-
-				// 
-
-				string pattern = @"(?nsx)(" + Environment.NewLine +
-					comment + " | " + Environment.NewLine +
-					named_group + " | " + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
-					char_group + " | " + Environment.NewLine +
-					"(.(?!)) )";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateColouringRegex( );
 
 				CachedColouringRegexes.Add( key, regex );
 
@@ -315,24 +236,130 @@ namespace Pcre2RegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				string pattern = @"(?nsx)(";
-
-				pattern += @"(?'left_para'\() | "; // '('
-				pattern += @"(?'right_para'\)) | "; // ')'
-				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
-
-				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-				pattern += @"\\. | . | ";
-
-				pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
-				pattern += @")";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateHighlightingRegex( );
 
 				CachedHighlightingRegexes.Add( key, regex );
 
 				return regex;
 			}
+		}
+
+
+		Regex CreateColouringRegex( )
+		{
+			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
+
+			if( is_literal ) return EmptyRegex;
+
+			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+
+			string escape = @"(?'escape'";
+
+			escape += @"\\c[A-Za-z] | "; // ASCII escape
+			escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
+			escape += @"\\[0-7]{1,3} | "; // octal, three digits
+			escape += @"\\o\{[0-9]+(\} | $) | "; // octal; bad values give error
+			escape += @"\\N\{U\+[0-9a-fA-F]+(\} | $) | "; // hexa, error if no 'PCRE2_UTF'
+			escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
+			escape += @"\\x\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty
+			escape += @"\\u[0-9a-fA-F]{1,4} | "; // hexa, four digits, error if no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
+			escape += @"\\u\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty or no 'PCRE2_ALT_BSUX', 'PCRE2_EXTRA_ALT_BSUX'
+			escape += @"\\[pP]\{.*?(\} | $) | "; // property
+			escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+
+			// backreferences
+			escape += @"\\[0-9]+ | "; // unbiguous
+									  // see also named groups
+
+			escape += @"\\. | ";
+
+			escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
+			escape += ")";
+
+			// 
+
+			string @class = @"(?'class'";
+
+			@class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
+
+			@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
+			@class += ")";
+
+			//
+
+			string char_group = @"(";
+
+			char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+
+			char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
+			char_group += ")";
+
+			// 
+
+			string comment = @"(?'comment'";
+
+			comment += @"\(\?\#.*?(\)|$) | "; // comment
+			if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment*/
+
+			comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
+			comment += ")";
+
+			//
+
+			string named_group = @"(?'named_group'";
+
+			named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>)) | ";
+			named_group += @"\(\?P(?'name'<.*?>) | ";
+			named_group += @"(?'name'\\g[+]?[0-9]+) | ";
+			named_group += @"(?'name'\\g\{[+]?[0-9]*(\} | $)) | ";
+			named_group += @"(?'name'\\[gk]<.*?(>|$)) | ";
+			named_group += @"(?'name'\\[gk]'.*?('|$)) | ";
+			named_group += @"(?'name'\\[gk]\{.*?(\}|$)) | ";
+			named_group += @"(?'name'\(\?P=.*?(\)|$)) | "; //
+
+			named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
+			named_group += ")";
+
+			// TODO: add support for '(*...)' constructs
+
+
+			// 
+
+			string pattern = @"(?nsx)(" + Environment.NewLine +
+				comment + " | " + Environment.NewLine +
+				named_group + " | " + Environment.NewLine +
+				escape + " | " + Environment.NewLine +
+				char_group + " | " + Environment.NewLine +
+				"(.(?!)) )";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
+
+		}
+
+
+		Regex CreateHighlightingRegex( )
+		{
+			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
+
+			if( is_literal ) return EmptyRegex;
+
+			string pattern = @"(?nsx)(";
+
+			pattern += @"(?'left_par'\() | "; // '('
+			pattern += @"(?'right_par'\)) | "; // ')'
+			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
+
+			pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+			pattern += @"\\. | . | ";
+
+			pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
+			pattern += @")";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
 		}
 	}
 }
