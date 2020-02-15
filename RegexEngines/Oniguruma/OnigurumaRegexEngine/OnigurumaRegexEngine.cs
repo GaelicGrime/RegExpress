@@ -426,6 +426,14 @@ namespace OnigurumaRegexEngineNs
 					pattern += @"(?'right_par'\\\)) | "; // '\)'
 				}
 
+				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pattern += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
+				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pattern += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
+
+				if( helper.IsONIG_SYN_OP2_ESC_P_BRACE_CHAR_PROPERTY || helper.IsONIG_SYN_OP2_ESC_P_BRACE_CIRCUMFLEX_NOT )
+				{
+					pattern += @"\\[pP]\{.*?(\} | $) | "; // property
+				}
+
 				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
 				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
 
