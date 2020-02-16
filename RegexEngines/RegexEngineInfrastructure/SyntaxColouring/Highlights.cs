@@ -11,13 +11,13 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 	{
 		// (Positions in the text; empty if no highlights)
 
-		public Segment LeftPara = Segment.Empty;
-		public Segment RightPara = Segment.Empty;
+		public Segment LeftPar = Segment.Empty;
+		public Segment RightPar = Segment.Empty;
 
 		public Segment LeftBracket = Segment.Empty;
 		public Segment RightBracket = Segment.Empty;
 
-		public Segment LeftCurlyBracket = Segment.Empty;
-		public Segment RightCurlyBracket = Segment.Empty;
+		public Segment LeftCurlyBrace = Segment.Empty;
+		public Segment RightCurlyBrace = Segment.Empty;
 	}
 }

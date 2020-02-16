@@ -47,14 +47,14 @@ namespace RegExpressWPF
 
 		readonly StyleInfo PatternParaHighlightStyleInfo;
 		readonly StyleInfo PatternCharGroupBracketHighlightStyleInfo;
-		readonly StyleInfo PatternRangeCurlyBracketHighlightStyleInfo;
+		readonly StyleInfo PatternRangeCurlyBraceHighlightStyleInfo;
 
 		Segment LeftHighlightedParantesis = Segment.Empty;
 		Segment RightHighlightedParantesis = Segment.Empty;
 		Segment LeftHighlightedBracket = Segment.Empty;
 		Segment RightHighlightedBracket = Segment.Empty;
-		Segment LeftHighlightedCurlyBracket = Segment.Empty;
-		Segment RightHighlightedCurlyBracket = Segment.Empty;
+		Segment LeftHighlightedCurlyBrace = Segment.Empty;
+		Segment RightHighlightedCurlyBrace = Segment.Empty;
 
 		IRegexEngine mRegexEngine;
 		string mEol;
@@ -76,7 +76,7 @@ namespace RegExpressWPF
 			PatternGroupNameStyleInfo = new StyleInfo( "PatternGroupName" );
 			PatternEscapeStyleInfo = new StyleInfo( "PatternEscape" );
 			PatternCharGroupBracketHighlightStyleInfo = new StyleInfo( "PatternCharGroupHighlight" );
-			PatternRangeCurlyBracketHighlightStyleInfo = PatternCharGroupBracketHighlightStyleInfo;
+			PatternRangeCurlyBraceHighlightStyleInfo = PatternCharGroupBracketHighlightStyleInfo;
 			PatternCommentStyleInfo = new StyleInfo( "PatternComment" );
 
 			RecolouringLoop = new ResumableLoop( RecolouringThreadProc, 222, 444 );
@@ -166,8 +166,8 @@ namespace RegExpressWPF
 			RightHighlightedParantesis = Segment.Empty;
 			LeftHighlightedBracket = Segment.Empty;
 			RightHighlightedBracket = Segment.Empty;
-			LeftHighlightedCurlyBracket = Segment.Empty;
-			RightHighlightedCurlyBracket = Segment.Empty;
+			LeftHighlightedCurlyBrace = Segment.Empty;
+			RightHighlightedCurlyBrace = Segment.Empty;
 
 			RecolouringLoop.SendRestart( );
 			HighlightingLoop.SendRestart( );
@@ -353,8 +353,8 @@ namespace RegExpressWPF
 			Segment.Except( uncovered_segments, RightHighlightedParantesis );
 			Segment.Except( uncovered_segments, LeftHighlightedBracket );
 			Segment.Except( uncovered_segments, RightHighlightedBracket );
-			Segment.Except( uncovered_segments, LeftHighlightedCurlyBracket );
-			Segment.Except( uncovered_segments, RightHighlightedCurlyBracket );
+			Segment.Except( uncovered_segments, LeftHighlightedCurlyBrace );
+			Segment.Except( uncovered_segments, RightHighlightedCurlyBrace );
 
 			var segments_to_uncolour =
 				uncovered_segments
@@ -458,10 +458,10 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPara ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
 					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? Segment.Empty, td, PatternCharGroupBracketHighlightStyleInfo );
@@ -470,10 +470,10 @@ namespace RegExpressWPF
 					TryHighlight( ref RightHighlightedBracket, highlights?.RightBracket ?? Segment.Empty, td, PatternCharGroupBracketHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref LeftHighlightedCurlyBracket, highlights?.LeftCurlyBracket ?? Segment.Empty, td, PatternRangeCurlyBracketHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedCurlyBrace, highlights?.LeftCurlyBrace ?? Segment.Empty, td, PatternRangeCurlyBraceHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedCurlyBracket, highlights?.RightCurlyBracket ?? Segment.Empty, td, PatternRangeCurlyBracketHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedCurlyBrace, highlights?.RightCurlyBrace ?? Segment.Empty, td, PatternRangeCurlyBraceHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 				} );
 			}

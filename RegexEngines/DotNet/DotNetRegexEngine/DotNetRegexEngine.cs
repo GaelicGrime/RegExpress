@@ -73,6 +73,7 @@ namespace DotNetRegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
+		public string NoteForCaptures => null;
 
 		public event RegexEngineOptionsChanged OptionsChanged;
 
@@ -220,10 +221,10 @@ namespace DotNetRegexEngineNs
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
-			int para_size = 1;
+			int par_size = 1;
 			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, para_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
 		}
 
 		#endregion IRegexEngine
@@ -243,54 +244,14 @@ namespace DotNetRegexEngineNs
 			{
 				if( CachedColouringRegexes.TryGetValue( options, out Regex regex ) ) return regex;
 
-				const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
-				const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
-				const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
-				const string EscapesPattern = @"(?'escape'
-\\[0-7]{2,3} | 
-\\x[0-9A-Fa-f]{1,2} | 
-\\c[A-Za-z] | 
-\\u[0-9A-Fa-f]{1,4} | 
-\\(p|P)\{([A-Za-z]+\})? | 
-\\k<([A-Za-z]+>)? |
-\\.
-)"; // including incomplete '\x', '\u', '\p', '\k'
-				const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
-
-				string pattern;
-
-				if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
-				{
-					pattern =
-						@"(?nsx)(" + Environment.NewLine +
-							CommentPattern + " |" + Environment.NewLine +
-							EolCommentPattern + " |" + Environment.NewLine +
-							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-							EscapesPattern + " |" + Environment.NewLine +
-							NamedGroupPattern + " |" + Environment.NewLine +
-							".(?!)" + Environment.NewLine +
-						")";
-				}
-				else
-				{
-					pattern =
-						@"(?nsx)(" + Environment.NewLine +
-							CommentPattern + " |" + Environment.NewLine +
-							//EolCommentPattern + " |" + Environment.NewLine +
-							CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
-							EscapesPattern + " |" + Environment.NewLine +
-							NamedGroupPattern + " |" + Environment.NewLine +
-							".(?!)" + Environment.NewLine +
-						")";
-				}
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateCachedColouringRegex( options );
 
 				CachedColouringRegexes.Add( options, regex );
 
 				return regex;
 			}
 		}
+
 
 		static Regex GetCachedHighlightingRegex( RegexOptions options )
 		{
@@ -300,23 +261,89 @@ namespace DotNetRegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( options, out Regex regex ) ) return regex;
 
-				string pattern = "(?nsx)(";
-				pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
-				if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
-					pattern += @"(\#[^\n]*) | ";
-				pattern += @"(?'left_para'\() | "; // '('
-				pattern += @"(?'right_para'\)) | "; // ')'
-				pattern += @"(?'char_group'\[(\\.|.)*?(\](?'end')|$)) | "; // '[...]'
-				pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
-				pattern += @"(\\.)";
-				pattern += @")";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateHighlightingRegex( options );
 
 				CachedHighlightingRegexes.Add( options, regex );
 
 				return regex;
 			}
+		}
+
+
+		static Regex CreateCachedColouringRegex( RegexOptions options )
+		{
+			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
+
+			const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
+			const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
+			const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
+			const string EscapesPattern = @"(?'escape'
+\\[0-7]{2,3} | 
+\\x[0-9A-Fa-f]{1,2} | 
+\\c[A-Za-z] | 
+\\u[0-9A-Fa-f]{1,4} | 
+\\(p|P)\{([A-Za-z]+\})? | 
+\\k<([A-Za-z]+>)? |
+\\.
+)"; // including incomplete '\x', '\u', '\p', '\k'
+
+			//const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
+
+			const string NamedGroupPattern =
+				@"\(\?(?'name'<.*?>) | " + // (balancing groups covered too)
+				@"\(\?(?'name''.*?') | " +
+				@"(?'name'\\k<.*?>) | " +
+				@"(?'name'\\k'.*?')";
+
+			string pattern;
+
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
+			{
+				pattern =
+					@"(?nsx)(" + Environment.NewLine +
+						CommentPattern + " |" + Environment.NewLine +
+						EolCommentPattern + " |" + Environment.NewLine +
+						CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+						NamedGroupPattern + " |" + Environment.NewLine +
+						EscapesPattern + " |" + Environment.NewLine +
+						".(?!)" + Environment.NewLine +
+					")";
+			}
+			else
+			{
+				pattern =
+					@"(?nsx)(" + Environment.NewLine +
+						CommentPattern + " |" + Environment.NewLine +
+						//EolCommentPattern + " |" + Environment.NewLine +
+						CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+						NamedGroupPattern + " |" + Environment.NewLine +
+						EscapesPattern + " |" + Environment.NewLine +
+						".(?!)" + Environment.NewLine +
+					")";
+			}
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
+		}
+
+
+		static Regex CreateHighlightingRegex( RegexOptions options )
+		{
+			string pattern = "(?nsx)(";
+			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
+				pattern += @"(\#[^\n]*) | ";
+			pattern += @"(?'left_par'\() | "; // '('
+			pattern += @"(?'right_par'\)) | "; // ')'
+			pattern += @"(?'char_group'\[(\\.|.)*?(\](?'end')|$)) | "; // '[...]'
+			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
+			pattern += @"(\\.)";
+			pattern += @")";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
 		}
 	}
 }

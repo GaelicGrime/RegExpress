@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Oniguruma">
+      <UniqueIdentifier>{6fbe60ff-97b0-4384-88d9-72d09d8c00ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Oniguruma\src">
+      <UniqueIdentifier>{c792f611-8b75-4654-8ba9-11e628012794}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Oniguruma\src\h">
+      <UniqueIdentifier>{e13fec88-1c8d-4a9c-80b7-11b0a0ecd874}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OnigurumaRegexInterop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\config.h">
+      <Filter>Oniguruma</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\oniggnu.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\onigposix.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\oniguruma.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\regenc.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\regint.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\st.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Oniguruma-min\src\regparse.h">
+      <Filter>Oniguruma\src\h</Filter>
+    </ClInclude>
+    <ClInclude Include="Matcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Match.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Group.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Capture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OnigurumaHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="OnigurumaRegexInterop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regenc.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\ascii.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\big5.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\cp1251.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\euc_jp.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\euc_kr.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\euc_tw.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\gb18030.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_1.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_2.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_3.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_4.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_5.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_6.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_7.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_8.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_9.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_10.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_11.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_13.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_14.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_15.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\iso8859_16.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\koi8.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\koi8_r.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\mktable.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regcomp.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regerror.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regexec.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regext.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\reggnu.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regparse.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regposerr.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regposix.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regsyntax.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regtrav.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\regversion.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\sjis.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\st.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\unicode.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\utf8.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\utf16_be.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\utf16_le.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\utf32_be.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\utf32_le.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\unicode_fold1_key.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\unicode_fold2_key.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\unicode_fold3_key.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\unicode_unfold_key.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\euc_jp_prop.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Oniguruma-min\src\sjis_prop.c">
+      <Filter>Oniguruma\src</Filter>
+    </ClCompile>
+    <ClCompile Include="Matcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Match.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Group.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Capture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OnigurumaHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="app.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="app.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

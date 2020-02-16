@@ -62,6 +62,7 @@ namespace RegExpressWPF
 				new BoostRegexEngineNs.BoostRegexEngine( ),
 				new Pcre2RegexEngineNs.Pcre2RegexEngine(),
 				new Re2RegexEngineNs.Re2RegexEngine(),
+				new OnigurumaRegexEngineNs.OnigurumaRegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
@@ -424,7 +425,28 @@ namespace RegExpressWPF
 				CurrentRegexEngine = engine;
 				SetEngineOption( engine );
 
-				engine.ImportOptions( tabData.RegexOptions );
+				// some backward-compatibility stuff, when 'tabData.RegexOptions' was a number
+
+				string[] options = tabData.RegexOptions as string[];
+
+				if( options == null )
+				{
+					if( tabData.RegexOptions is int )
+					{
+						options = new string[] { $"OldRegexOptionsEnum:{tabData.RegexOptions}" };
+					}
+					else
+					{
+						if( tabData.RegexOptions is object[] )
+						{
+							options = ( (object[])tabData.RegexOptions ).Select( o => o.ToString( ) ).ToArray( );
+						}
+					}
+				}
+
+				if( options == null ) options = new string[] { };
+
+				engine.ImportOptions( options );
 
 				// also set options of inactive engines
 				foreach( var eng in RegexEngines )
@@ -689,7 +711,9 @@ namespace RegExpressWPF
 			cbShowCapturesDisabledUnchecked.Visibility = !captures_supported ? Visibility.Visible : Visibility.Collapsed;
 
 			// inelegant, but works
-			runShowCapturesNote.Text = engine is BoostRegexEngineNs.BoostRegexEngine ? "(requires ‘match_extra’)" : string.Empty;
+			string capture_note = engine.NoteForCaptures;
+
+			runShowCapturesNote.Text = !string.IsNullOrWhiteSpace( capture_note ) ? " (" + capture_note + ")" : string.Empty;
 		}
 
 		#region IDisposable Support

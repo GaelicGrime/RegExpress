@@ -38,6 +38,8 @@ namespace StdRegexEngineNs
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
+		public string NoteForCaptures => null;
+
 		public event RegexEngineOptionsChanged OptionsChanged;
 
 
@@ -133,17 +135,17 @@ namespace StdRegexEngineNs
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
-			int para_size = 1;
+			int par_size = 1;
 
 			if( grammar == GrammarEnum.basic ||
 				grammar == GrammarEnum.grep )
 			{
-				para_size = 2;
+				par_size = 2;
 			}
 
 			var regex = GetCachedHighlightingRegex( grammar );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, para_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
 		}
 
 		#endregion IRegexEngine
@@ -155,42 +157,14 @@ namespace StdRegexEngineNs
 		}
 
 
+
 		static Regex GetCachedColouringRegex( GrammarEnum grammar )
 		{
 			lock( CachedColouringRegexes )
 			{
 				if( CachedColouringRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
 
-				string escape = @"(?'escape'";
-
-				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
-				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
-				if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
-				if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
-
-				if( grammar == GrammarEnum.basic ||
-					grammar == GrammarEnum.grep )
-				{
-					escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\.";
-				}
-				else
-				{
-					escape += @"\\.";
-				}
-				escape += @")";
-
-				string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
-
-				string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) )";
-
-				// (group names and comments are not supported by C++ Regex)
-
-				string pattern = @"(?nsx)(" + Environment.NewLine +
-					escape + " | " + Environment.NewLine +
-					char_group + " | " + Environment.NewLine +
-					"(.(?!)) )";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateColouringRegex( grammar );
 
 				CachedColouringRegexes.Add( grammar, regex );
 
@@ -205,37 +179,82 @@ namespace StdRegexEngineNs
 			{
 				if( CachedHighlightingRegexes.TryGetValue( grammar, out Regex regex ) ) return regex;
 
-				string pattern = @"(?nsx)(";
-
-				if( grammar == GrammarEnum.extended ||
-					grammar == GrammarEnum.ECMAScript ||
-					grammar == GrammarEnum.egrep ||
-					grammar == GrammarEnum.awk )
-				{
-					pattern += @"(?'left_para'\() | "; // '('
-					pattern += @"(?'right_para'\)) | "; // ')'
-					pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
-				}
-
-				if( grammar == GrammarEnum.basic ||
-					grammar == GrammarEnum.grep )
-				{
-					pattern += @"(?'left_para'\\\() | "; // '\)'
-					pattern += @"(?'right_para'\\\)) | "; // '\('
-					pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
-				}
-
-				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-				pattern += @"\\. | .";
-
-				pattern += @")";
-
-				regex = new Regex( pattern, RegexOptions.Compiled );
+				regex = CreateHighlightingRegex( grammar );
 
 				CachedHighlightingRegexes.Add( grammar, regex );
 
 				return regex;
 			}
+		}
+
+
+		static Regex CreateColouringRegex( GrammarEnum grammar )
+		{
+			string escape = @"(?'escape'";
+
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
+			if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
+			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
+
+			if( grammar == GrammarEnum.basic ||
+				grammar == GrammarEnum.grep )
+			{
+				escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\.";
+			}
+			else
+			{
+				escape += @"\\.";
+			}
+			escape += @")";
+
+			string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
+
+			string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) )";
+
+			// (group names and comments are not supported by C++ Regex)
+
+			string pattern = @"(?nsx)(" + Environment.NewLine +
+				escape + " | " + Environment.NewLine +
+				char_group + " | " + Environment.NewLine +
+				"(.(?!)) )";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
+		}
+
+
+		static Regex CreateHighlightingRegex( GrammarEnum grammar )
+		{
+			string pattern = @"(?nsx)(";
+
+			if( grammar == GrammarEnum.extended ||
+				grammar == GrammarEnum.ECMAScript ||
+				grammar == GrammarEnum.egrep ||
+				grammar == GrammarEnum.awk )
+			{
+				pattern += @"(?'left_par'\() | "; // '('
+				pattern += @"(?'right_par'\)) | "; // ')'
+				pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
+			}
+
+			if( grammar == GrammarEnum.basic ||
+				grammar == GrammarEnum.grep )
+			{
+				pattern += @"(?'left_par'\\\() | "; // '\)'
+				pattern += @"(?'right_par'\\\)) | "; // '\('
+				pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
+			}
+
+			pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
+			pattern += @"\\. | .";
+
+			pattern += @")";
+
+			var regex = new Regex( pattern, RegexOptions.Compiled );
+
+			return regex;
 		}
 	}
 }
