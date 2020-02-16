@@ -11,6 +11,7 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 {
 	public static class HighlightHelper
 	{
+		[Obsolete( "Consider 'CommonHighlighting2' instead", error: false )]
 		public static void CommonHighlighting( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment,
 			Regex regex, int paraSize )
 		{
@@ -240,7 +241,7 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// range, '{...}' or '\{...\}'
+				// range, '{...}' or '\{...\}', depending on syntax
 				{
 					var left_brace = m.Groups["left_brace"];
 					var right_brace = m.Groups["right_brace"];
