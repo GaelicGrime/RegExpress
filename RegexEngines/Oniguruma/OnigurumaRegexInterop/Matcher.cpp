@@ -271,29 +271,36 @@ namespace OnigurumaRegexInterop
 
 			auto matches = gcnew List<IMatch^>;
 
-			int r;
+			OnigMatchParam* match_params = onig_new_match_param( );
 			OnigRegion* region = onig_region_new( );
-
-			const wchar_t* start = native_text;
-			const wchar_t* previous_start = start;
 
 			try
 			{
+				// currently default parameters are used
+				onig_initialize_match_param( match_params );
+				//int rl = onig_get_retry_limit_in_match( );
+				//int sl = onig_get_match_stack_limit_size( );
+				//onig_set_match_stack_limit_size_of_match_param ( OnigMatchParam * param, unsigned int limit );
+				//onig_set_retry_limit_in_match_of_match_param ( OnigMatchParam * param, unsigned long limit );
+
+				int r;
+				const wchar_t* start = native_text;
+				const wchar_t* previous_start = start;
+
 				for( ;;)
 				{
-					r = onig_search(
+					r = onig_search_with_param(
 						mData->mRegex,
 						(UChar*)native_text, (UChar*)( native_text + text->Length ),
 						(UChar*)start, (UChar*)( native_text + text->Length ),
 						region,
-						mData->mSearchOptions );
+						mData->mSearchOptions, 
+						match_params );
 
 					if( r == ONIG_MISMATCH ) break;
 
 					if( r < 0 )
 					{
-						onig_region_free( region, 1 );
-
 						throw gcnew Exception( FormatError( r, nullptr ) );
 					}
 
@@ -372,6 +379,7 @@ namespace OnigurumaRegexInterop
 			finally
 			{
 				onig_region_free( region, 1 );
+				onig_free_match_param( match_params );
 			}
 
 			return gcnew RegexMatches( matches->Count, matches );
