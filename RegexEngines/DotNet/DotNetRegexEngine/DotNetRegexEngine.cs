@@ -159,17 +159,6 @@ namespace DotNetRegexEngineNs
 					}
 				}
 
-				//if( cnc.IsCancellationRequested ) return;
-
-				// character groups, '[...]'
-				//{
-				//	var g = m.Groups["char_group"];
-				//	if( g.Success )
-				//	{
-
-				//	}
-				//}
-
 				if( cnc.IsCancellationRequested ) return;
 
 				// escapes, '\...'
@@ -222,9 +211,11 @@ namespace DotNetRegexEngineNs
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			int par_size = 1;
+			int bracket_size = 1;
+
 			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
+			HighlightHelper.CommonHighlighting2( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine
@@ -274,20 +265,20 @@ namespace DotNetRegexEngineNs
 		{
 			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
 
-			const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))"; // including incomplete
-			const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
-			const string CharGroupPattern = @"(?'char_group'\[\]?(<<INTERIOR>>|.)*?(\]|$))"; // including incomplete
-			const string EscapesPattern = @"(?'escape'
-\\[0-7]{2,3} | 
-\\x[0-9A-Fa-f]{1,2} | 
-\\c[A-Za-z] | 
-\\u[0-9A-Fa-f]{1,4} | 
-\\(p|P)\{([A-Za-z]+\})? | 
-\\k<([A-Za-z]+>)? |
-\\.
-)"; // including incomplete '\x', '\u', '\p', '\k'
+			// (some patterns includes incomplete constructs)
 
-			//const string NamedGroupPattern = @"\(\?(?'name'((?'a'')|<)\p{L}\w*(-\p{L}\w*)?(?(a)'|>))"; // (balancing groups covered too)
+			const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))";
+			const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
+			const string EscapesPattern = @"(?'escape'
+				\\[0-7]{2,3} | 
+				\\x[0-9A-Fa-f]{1,2} | 
+				\\c[A-Za-z] | 
+				\\u[0-9A-Fa-f]{1,4} | 
+				\\(p|P)\{([A-Za-z]+\})? | 
+				\\k<([A-Za-z]+>)? |
+				\\.)";
+
+			const string CharGroupPattern = @"(\[\]?(" + EscapesPattern + @"|.)*?(\]|$))";
 
 			const string NamedGroupPattern =
 				@"\(\?(?'name'<.*?>) | " + // (balancing groups covered too)
@@ -303,10 +294,9 @@ namespace DotNetRegexEngineNs
 					@"(?nsx)(" + Environment.NewLine +
 						CommentPattern + " |" + Environment.NewLine +
 						EolCommentPattern + " |" + Environment.NewLine +
-						CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+						CharGroupPattern + " |" + Environment.NewLine +
 						NamedGroupPattern + " |" + Environment.NewLine +
 						EscapesPattern + " |" + Environment.NewLine +
-						".(?!)" + Environment.NewLine +
 					")";
 			}
 			else
@@ -314,11 +304,9 @@ namespace DotNetRegexEngineNs
 				pattern =
 					@"(?nsx)(" + Environment.NewLine +
 						CommentPattern + " |" + Environment.NewLine +
-						//EolCommentPattern + " |" + Environment.NewLine +
 						CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
 						NamedGroupPattern + " |" + Environment.NewLine +
 						EscapesPattern + " |" + Environment.NewLine +
-						".(?!)" + Environment.NewLine +
 					")";
 			}
 
@@ -336,7 +324,7 @@ namespace DotNetRegexEngineNs
 				pattern += @"(\#[^\n]*) | ";
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'char_group'\[(\\.|.)*?(\](?'end')|$)) | "; // '[...]'
+			pattern += @"(?'left_bracket'\[) (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
 			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
 			pattern += @"(\\.)";
 			pattern += @")";
