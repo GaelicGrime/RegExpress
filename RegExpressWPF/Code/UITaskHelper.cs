@@ -60,7 +60,7 @@ namespace RegExpressWPF.Code
 			catch( Exception exc )
 			{
 				_ = exc;
-				if( Debugger.IsAttached ) Debugger.Break( );
+				if( Debugger.IsAttached && !( exc is TaskCanceledException ) ) Debugger.Break( );
 				throw;
 			}
 		}

@@ -136,6 +136,7 @@ namespace StdRegexEngineNs
 		{
 			GrammarEnum grammar = OptionsControl.GetGrammar( );
 			int par_size = 1;
+			int bracket_size = 1;
 
 			if( grammar == GrammarEnum.basic ||
 				grammar == GrammarEnum.grep )
@@ -145,7 +146,7 @@ namespace StdRegexEngineNs
 
 			var regex = GetCachedHighlightingRegex( grammar );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine
@@ -217,7 +218,7 @@ namespace StdRegexEngineNs
 			string pattern = @"(?nsx)(" + Environment.NewLine +
 				escape + " | " + Environment.NewLine +
 				char_group + " | " + Environment.NewLine +
-				"(.(?!)) )";
+				")";
 
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
@@ -236,7 +237,7 @@ namespace StdRegexEngineNs
 			{
 				pattern += @"(?'left_par'\() | "; // '('
 				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'range'\{(\\.|.)*?(\}(?'end')|$)) | "; // '{...}'
+				pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
 			}
 
 			if( grammar == GrammarEnum.basic ||
@@ -244,11 +245,11 @@ namespace StdRegexEngineNs
 			{
 				pattern += @"(?'left_par'\\\() | "; // '\)'
 				pattern += @"(?'right_par'\\\)) | "; // '\('
-				pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
+				pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
 			}
 
-			pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-			pattern += @"\\. | .";
+			pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+			pattern += @"\\.";  // '\...'
 
 			pattern += @")";
 

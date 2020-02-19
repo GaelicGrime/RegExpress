@@ -192,7 +192,7 @@ namespace OnigurumaRegexEngineNs
 
 			Regex regex = GetCachedHighlightingRegex( helper );
 
-			HighlightHelper.CommonHighlighting2( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracketSize: 1 );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracketSize: 1 );
 		}
 
 		#endregion
@@ -452,7 +452,7 @@ namespace OnigurumaRegexEngineNs
 						| ";
 				}
 
-				pattern += @"\\. | "; // '\.'
+				pattern += @"\\. | "; // '\...'
 			}
 
 			pattern = EndGroup( pattern, null );
