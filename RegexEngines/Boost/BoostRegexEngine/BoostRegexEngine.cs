@@ -195,6 +195,7 @@ namespace BoostRegexEngineNs
 			bool mod_x = OptionsControl.GetModX( );
 
 			int par_size = 1;
+			int bracket_size = 1;
 
 			bool is_POSIX_basic =
 				grammar == GrammarEnum.basic ||
@@ -209,7 +210,7 @@ namespace BoostRegexEngineNs
 
 			Regex regex = GetCachedHighlightingRegex( grammar, mod_x );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
+			HighlightHelper.CommonHighlighting2( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine
@@ -278,7 +279,8 @@ namespace BoostRegexEngineNs
 			bool is_emacs =
 				grammar == GrammarEnum.emacs;
 
-			string escape = @"(?'escape'";
+
+			string escape = "";
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\[1-9] | "; // back reference
 
@@ -295,56 +297,57 @@ namespace BoostRegexEngineNs
 			if( is_perl || is_POSIX_extended ) escape += @"\\. | "; // various
 			if( is_POSIX_basic ) escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\. | "; // various
 
-			escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
-			escape += ")";
+			escape = EndGroup( escape, "escape" );
 
 			// 
 
-			string comment = @"(?'comment'";
+			string comment = "";
 
 			if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
 			if( is_perl && modX ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
-			comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
-			comment += ")";
+			comment = EndGroup( comment, "comment" );
 
 			// 
 
-			string @class = @"(?'class'";
+			string @class = "";
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
 
-			@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
-			@class += ")";
+			@class = EndGroup( @class, "class" );
 
 			//
 
-			string char_group = @"(";
+			string char_group = "";
 
-			if( is_perl || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+			if( is_perl || is_POSIX_extended || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
-			char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
-			char_group += ")";
+			char_group = EndGroup( char_group, null );
 
 			//
 
-			string named_group = @"(?'named_group'";
+			string named_group = "";
 
 			if( is_perl ) named_group += @"\(\?(?'name'<.*?(>|$)) | \(\?(?'name''.*?('|$)) | ";
 			if( is_perl ) named_group += @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$)) | "; // back reference
 			if( is_perl ) named_group += @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$)) | "; // back reference
 
-			named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
-			named_group += ")";
+			named_group = EndGroup( named_group, "named_group" );
 
 			// 
 
+			string[] all = new[]
+			{
+				comment,
+				named_group,
+				char_group,
+				escape,
+			};
+
+
 			string pattern = @"(?nsx)(" + Environment.NewLine +
-				comment + " | " + Environment.NewLine +
-				named_group + " | " + Environment.NewLine +
-				escape + " | " + Environment.NewLine +
-				char_group + " | " + Environment.NewLine +
-				"(.(?!)) )";
+				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
+				")";
 
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
@@ -375,7 +378,7 @@ namespace BoostRegexEngineNs
 			bool is_emacs =
 				grammar == GrammarEnum.emacs;
 
-			string pattern = @"(?nsx)(";
+			string pattern = "";
 
 			if( is_perl || is_POSIX_extended )
 			{
@@ -386,28 +389,51 @@ namespace BoostRegexEngineNs
 			{
 				pattern += @"(?'left_par'\() | "; // '('
 				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'range'\{\s*\d+(\s*,(\s*\d+)?)?(\s*\}(?'end')|$)) | "; // '{...}' (spaces are allowed)
+				pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
 			}
 
 			if( is_POSIX_basic )
 			{
 				pattern += @"(?'left_par'\\\() | "; // '\('
 				pattern += @"(?'right_par'\\\)) | "; // '\)'
-				pattern += @"(?'range'\\{.*?(\\}(?'end')|$)) | "; // '\{...\}'
+				pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
 			}
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic )
 			{
-				pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-				pattern += @"\\. | . | ";
+				pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | ";
+				pattern += @"\\. | "; // '\...'
 			}
 
-			pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
-			pattern += @")";
+			pattern = EndGroup( pattern, null );
+
+			if( string.IsNullOrWhiteSpace( pattern ) )
+				pattern = "(?!)";
+			else
+				pattern = "(?nsx)" + pattern;
 
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
 			return regex;
+		}
+
+
+		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
+
+		static string EndGroup( string s, string name )
+		{
+			if( string.IsNullOrWhiteSpace( s ) ) return null;
+
+			if( name != null )
+			{
+				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
+			}
+			else
+			{
+				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
+			}
+
+			return s;
 		}
 	}
 }
