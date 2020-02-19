@@ -11,8 +11,11 @@
 
 #include <crtversion.h>
 
+#define NOMINMAX
+
 #include <string>
 #include <codecvt>
+#include <algorithm>
 
 // Some useful constants and their default values in 64-bit mode:
 //#define _REGEX_MAX_COMPLEXITY_COUNT 10000000L // set to 0 to disable
