@@ -452,7 +452,7 @@ namespace OnigurumaRegexEngineNs
 						| ";
 				}
 
-				pattern += @"\\. | "; // '\.'
+				pattern += @"\\. | "; // '\...'
 			}
 
 			pattern = EndGroup( pattern, null );
