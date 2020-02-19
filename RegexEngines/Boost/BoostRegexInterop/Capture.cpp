@@ -12,10 +12,14 @@ namespace BoostRegexInterop
 	Capture::Capture( Group^ parent, int index, const boost::wcsub_match& match )
 		:
 		mParent( parent ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( match.length( ) ) // TODO: deals with overflows
+		mIndex( index ),
+		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
 	{
-
+		auto len = match.length( );
+		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
 	}
 
 

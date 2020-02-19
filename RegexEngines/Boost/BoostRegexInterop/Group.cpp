@@ -27,10 +27,16 @@ namespace BoostRegexInterop
 		mParent( parent ),
 		mName( name ),
 		mSuccess( submatch.matched ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( submatch.length( ) ), // TODO: deals with overflows
+		mIndex( index ),
+		mLength( static_cast<decltype( mLength )>( submatch.length( ) ) ),
 		mCaptures( gcnew List<ICapture^> )
 	{
+		auto len = submatch.length( );
+		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
+
 		try
 		{
 			const MatcherData* d = parent->Parent->GetData( );
@@ -39,9 +45,13 @@ namespace BoostRegexInterop
 			{
 				if( !c.matched ) continue;
 
-				int index = c.first - d->mText.c_str( );
+				auto index = c.first - d->mText.c_str( );
+				if( index < 0 || index > std::numeric_limits<int>::max( ) )
+				{
+					throw gcnew OverflowException( );
+				}
 
-				Capture^ capture = gcnew Capture( this, index, c );
+				Capture^ capture = gcnew Capture( this, static_cast<int>( index ), c );
 
 				mCaptures->Add( capture );
 			}
