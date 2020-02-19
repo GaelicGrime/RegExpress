@@ -215,7 +215,7 @@ namespace DotNetRegexEngineNs
 
 			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
 
-			HighlightHelper.CommonHighlighting2( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine

@@ -210,7 +210,7 @@ namespace BoostRegexEngineNs
 
 			Regex regex = GetCachedHighlightingRegex( grammar, mod_x );
 
-			HighlightHelper.CommonHighlighting2( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine
@@ -344,7 +344,6 @@ namespace BoostRegexEngineNs
 				escape,
 			};
 
-
 			string pattern = @"(?nsx)(" + Environment.NewLine +
 				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
 				")";
@@ -401,7 +400,7 @@ namespace BoostRegexEngineNs
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic )
 			{
-				pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | ";
+				pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 				pattern += @"\\. | "; // '\...'
 			}
 

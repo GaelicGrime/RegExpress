@@ -185,9 +185,11 @@ namespace Pcre2RegexEngineNs
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
 			int par_size = 1;
+			int bracket_size = 1;
+
 			Regex regex = GetCachedHighlightingRegex( );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion IRegexEngine
@@ -253,7 +255,7 @@ namespace Pcre2RegexEngineNs
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
 
-			string escape = @"(?'escape'";
+			string escape = "";
 
 			escape += @"\\c[A-Za-z] | "; // ASCII escape
 			escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
@@ -273,40 +275,36 @@ namespace Pcre2RegexEngineNs
 
 			escape += @"\\. | ";
 
-			escape = Regex.Replace( escape, @"\s*\|\s*$", "" );
-			escape += ")";
+			escape = EndGroup( escape, "escape" );
 
 			// 
 
-			string @class = @"(?'class'";
+			string @class = "";
 
 			@class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
 
-			@class = Regex.Replace( @class, @"\s*\|\s*$", "" );
-			@class += ")";
+			@class = EndGroup( @class, "class" );
 
 			//
 
-			string char_group = @"(";
+			string char_group = "";
 
 			char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
-			char_group = Regex.Replace( char_group, @"\s*\|\s*$", "" );
-			char_group += ")";
+			char_group = EndGroup( char_group, null );
 
 			// 
 
-			string comment = @"(?'comment'";
+			string comment = "";
 
 			comment += @"\(\?\#.*?(\)|$) | "; // comment
 			if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
-			comment = Regex.Replace( comment, @"\s*\|\s*$", "" );
-			comment += ")";
+			comment = EndGroup( comment, "comment" );
 
 			//
 
-			string named_group = @"(?'named_group'";
+			string named_group = "";
 
 			named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>)) | ";
 			named_group += @"\(\?P(?'name'<.*?>) | ";
@@ -317,25 +315,28 @@ namespace Pcre2RegexEngineNs
 			named_group += @"(?'name'\\[gk]\{.*?(\}|$)) | ";
 			named_group += @"(?'name'\(\?P=.*?(\)|$)) | "; //
 
-			named_group = Regex.Replace( named_group, @"\s*\|\s*$", "" );
-			named_group += ")";
+			named_group = EndGroup( named_group, "named_group" );
 
 			// TODO: add support for '(*...)' constructs
 
 
 			// 
 
+			string[] all = new[]
+			{
+				comment,
+				named_group,
+				escape,
+				char_group,
+			};
+
 			string pattern = @"(?nsx)(" + Environment.NewLine +
-				comment + " | " + Environment.NewLine +
-				named_group + " | " + Environment.NewLine +
-				escape + " | " + Environment.NewLine +
-				char_group + " | " + Environment.NewLine +
-				"(.(?!)) )";
+				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
+				")";
 
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
 			return regex;
-
 		}
 
 
@@ -345,21 +346,43 @@ namespace Pcre2RegexEngineNs
 
 			if( is_literal ) return EmptyRegex;
 
-			string pattern = @"(?nsx)(";
+			string pattern = @"";
 
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
+			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+			pattern += @"\\."; // '\...'
 
-			pattern += @"(?'char_group'\[ ((\[:.*? (:\]|$)) | \\. | .)*? (\](?'end')|$) ) | "; // (including incomplete classes)
-			pattern += @"\\. | . | ";
+			pattern = EndGroup( pattern, null );
 
-			pattern = Regex.Replace( pattern, @"\s*\|\s*$", "" );
-			pattern += @")";
+			if( string.IsNullOrWhiteSpace( pattern ) )
+				pattern = "(?!)";
+			else
+				pattern = "(?nsx)" + pattern;
 
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
 			return regex;
+		}
+
+
+		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
+
+		static string EndGroup( string s, string name )
+		{
+			if( string.IsNullOrWhiteSpace( s ) ) return null;
+
+			if( name != null )
+			{
+				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
+			}
+			else
+			{
+				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
+			}
+
+			return s;
 		}
 	}
 }
