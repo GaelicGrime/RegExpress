@@ -98,7 +98,7 @@ namespace Re2RegexInterop
 		for( const wchar_t* p = start; *p; ++p ) // (we assume that the pinned array is zero-terminated)
 		{
 			indices->resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
-			( *indices )[bytes_written] = p - start;
+			( *indices )[bytes_written] = static_cast<int>( p - start );
 
 			dest->resize( bytes_written + mb_cur_max );
 
@@ -238,12 +238,12 @@ namespace Re2RegexInterop
 				full_text.size( ) - 1,
 				mData->mAnchor,
 				found_groups.data( ),
-				found_groups.size( ) )
+				static_cast<int>( found_groups.size( ) ) )
 				)
 			{
 				const re2::StringPiece& main_group = found_groups.front( );
 
-				int utf8index = main_group.data( ) - text.data( );
+				int utf8index = static_cast<int>( main_group.data( ) - text.data( ) );
 				int index = indices.at( utf8index );
 				if( index < 0 )
 				{
@@ -288,7 +288,7 @@ namespace Re2RegexInterop
 					}
 					else
 					{
-						int utf8index = g.data( ) - text.data( );
+						int utf8index = static_cast<int>( g.data( ) - text.data( ) );
 						int index = indices.at( utf8index );
 						if( index < 0 )
 						{
@@ -313,7 +313,7 @@ namespace Re2RegexInterop
 
 				// advance to the end of found match
 
-				start_pos = main_group.data( ) + main_group.size( ) - full_text.data( );
+				start_pos = static_cast<int>( main_group.data( ) + main_group.size( ) - full_text.data( ) );
 
 				if( start_pos == previous_start_pos ) // was empty match
 				{

@@ -26,12 +26,17 @@ namespace StdRegexInterop
 		mParent( parent ),
 		mGroupNumber( groupNumber ),
 		mSuccess( submatch.matched ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( submatch.length( ) ), // TODO: deals with overflows
+		mIndex( index ),
+		mLength( static_cast<decltype( mLength )>( submatch.length( ) ) ),
 		mCaptures( gcnew List<ICapture^> )
 	{
+		auto len = submatch.length( );
+		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
 
-		// TODO: collect captures
+		// TODO: collect captures, if supported
 	}
 
 

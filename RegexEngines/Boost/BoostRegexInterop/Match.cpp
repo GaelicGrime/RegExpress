@@ -15,9 +15,21 @@ namespace BoostRegexInterop
 		:
 		mParent( parent ),
 		mSuccess( !match.empty( ) ),
-		mIndex( match.position( ) ), // TODO: deals with overflows
-		mLength( match.length( ) ) // TODO: deals with overflows
+		mIndex( static_cast<decltype( mIndex )>( match.position( ) ) ),
+		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
 	{
+		auto pos = match.position( );
+		if( pos < std::numeric_limits<decltype( mIndex )>::min( ) || pos > std::numeric_limits<decltype( mIndex )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
+
+		auto len = match.length( );
+		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
+
 		try
 		{
 			mGroups = gcnew List<IGroup^>;
@@ -58,9 +70,13 @@ namespace BoostRegexInterop
 				}
 				else
 				{
-					int submatch_index = match.position( j );
+					auto submatch_index = match.position( j );
+					if( submatch_index < 0 || submatch_index > std::numeric_limits<int>::max( ) )
+					{
+						throw gcnew OverflowException( );
+					}
 
-					auto group = gcnew Group( this, name, submatch_index, submatch );
+					auto group = gcnew Group( this, name, static_cast<int>( submatch_index ), submatch );
 
 					mGroups->Add( group );
 				}

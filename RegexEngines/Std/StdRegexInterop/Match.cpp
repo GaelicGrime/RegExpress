@@ -13,9 +13,24 @@ namespace StdRegexInterop
 		:
 		mParent( parent ),
 		mSuccess( !match.empty( ) ),
-		mIndex( match.position( ) ), // TODO: deals with overflows
-		mLength( match.length( ) ) // TODO: deals with overflows
+		mIndex( static_cast<decltype( mIndex )>( match.position( ) ) ),
+		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
 	{
+		auto pos = match.position( );
+		if( pos < std::numeric_limits<decltype( mIndex )>::min( ) || pos > std::numeric_limits<decltype( mIndex )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
+
+		auto len = match.length( );
+		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
+		{
+			throw gcnew OverflowException( );
+		}
+
+
+
+
 		mGroups = gcnew List<IGroup^>;
 		int j = 0;
 
@@ -31,7 +46,13 @@ namespace StdRegexInterop
 			}
 			else
 			{
-				int submatch_index = match.position( j );
+				auto pos = match.position( j );
+				if( pos < std::numeric_limits<int>::min( ) || pos > std::numeric_limits<int>::max( ) )
+				{
+					throw gcnew OverflowException( );
+				}
+
+				int submatch_index = static_cast<int>( pos );
 
 				auto group = gcnew Group( this, j, submatch_index, submatch );
 

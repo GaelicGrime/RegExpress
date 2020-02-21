@@ -9,11 +9,13 @@
 
 // add headers that you want to pre-compile here
 
+#define NOMINMAX
+
+#include <algorithm>
 
 #include "pch-boost.h"
 #include "boost/regex.hpp"
 
 #include <msclr\marshal_cppstd.h>
-
 
 #endif //PCH_H
