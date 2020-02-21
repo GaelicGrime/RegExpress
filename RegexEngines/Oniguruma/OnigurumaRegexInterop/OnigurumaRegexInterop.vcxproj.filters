@@ -262,4 +262,12 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Oniguruma-min\AUTHORS">
+      <Filter>Oniguruma</Filter>
+    </None>
+    <None Include="Oniguruma-min\COPYING">
+      <Filter>Oniguruma</Filter>
+    </None>
+  </ItemGroup>
 </Project>

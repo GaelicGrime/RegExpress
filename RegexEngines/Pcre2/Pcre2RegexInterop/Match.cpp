@@ -15,8 +15,8 @@ namespace Pcre2RegexInterop
 		:
 		mParent( parent ),
 		mSuccess( ovector[0] >= 0 ),
-		mIndex( ovector[0] ), // TODO: deals with overflows
-		mLength( ovector[1] - ovector[0] ), // TODO: deals with overflows
+		mIndex( static_cast<int>( ovector[0] ) ), // TODO: deals with overflows
+		mLength( static_cast<int>( ovector[1] - ovector[0] ) ), // TODO: deals with overflows
 		mGroups( gcnew List<IGroup^> )
 	{
 		Debug::Assert( rc > 0 );
@@ -37,7 +37,8 @@ namespace Pcre2RegexInterop
 			{
 				Group^ group = gcnew Group( this,
 					i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
-					ovector[2 * i], ovector[2 * i + 1] - ovector[2 * i] );
+					static_cast<int>( ovector[2 * i] ),
+					static_cast<int>( ovector[2 * i + 1] - ovector[2 * i] ) );
 				mGroups->Add( group );
 			}
 
@@ -50,7 +51,7 @@ namespace Pcre2RegexInterop
 					PCRE2_INFO_CAPTURECOUNT,
 					&capturecount ) == 0 )
 				{
-					for( int i = rc; i <= capturecount; ++i )
+					for( int i = rc; i <= (int)capturecount; ++i )
 					{
 						Group^ group = gcnew Group( this,
 							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
@@ -84,7 +85,7 @@ namespace Pcre2RegexInterop
 					&name_entry_size );       /* where to put the answer */
 
 				tabptr = name_table;
-				for( int i = 0; i < namecount; i++ )
+				for( int i = 0; i < (int)namecount; i++ )
 				{
 					int n = *( (__int16*)tabptr );
 
