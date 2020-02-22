@@ -104,10 +104,6 @@ namespace OnigurumaRegexInterop
 
 	OnigurumaHelper^ Matcher::CreateOnigurumaHelper( cli::array<String^>^ options )
 	{
-		regex_t* reg;
-		OnigErrorInfo einfo;
-		int r;
-
 		String^ selected_syntax_name = L"ONIG_SYNTAX_ONIGURUMA";
 		auto selected_syntax = ONIG_SYNTAX_ONIGURUMA;
 
@@ -199,7 +195,7 @@ namespace OnigurumaRegexInterop
 	{
 		ForEachNameData* data = (ForEachNameData*)lparam;
 
-		String^ group_name = gcnew String( (wchar_t*)name, 0, ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) );
+		String^ group_name = gcnew String( (wchar_t*)name, 0, (int)( ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) ) );
 
 		int* nums;
 		int r = onig_name_to_group_numbers( regex, name, nameEnd, &nums );
@@ -294,7 +290,7 @@ namespace OnigurumaRegexInterop
 						(UChar*)native_text, (UChar*)( native_text + text->Length ),
 						(UChar*)start, (UChar*)( native_text + text->Length ),
 						region,
-						mData->mSearchOptions, 
+						mData->mSearchOptions,
 						match_params );
 
 					if( r == ONIG_MISMATCH ) break;
