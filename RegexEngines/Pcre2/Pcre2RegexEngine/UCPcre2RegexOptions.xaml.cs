@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,6 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
 namespace Pcre2RegexEngineNs
 {
 	/// <summary>
@@ -21,7 +23,7 @@ namespace Pcre2RegexEngineNs
 	/// </summary>
 	public partial class UCPcre2RegexOptions : UserControl
 	{
-		internal event EventHandler Changed;
+		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)
 
 
@@ -187,7 +189,7 @@ namespace Pcre2RegexEngineNs
 
 			CachedOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( null, null );
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
 
 
@@ -198,7 +200,7 @@ namespace Pcre2RegexEngineNs
 
 			CachedOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( null, null );
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
 

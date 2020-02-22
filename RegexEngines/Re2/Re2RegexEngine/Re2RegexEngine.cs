@@ -170,9 +170,9 @@ namespace Re2RegexEngineNs
 		#endregion
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 

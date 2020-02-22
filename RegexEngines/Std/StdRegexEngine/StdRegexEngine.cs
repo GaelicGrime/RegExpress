@@ -32,7 +32,7 @@ namespace StdRegexEngineNs
 
 		public string Id => "CppStdRegex";
 
-		public string Name => "<regex>";
+		public string Name => "std::wregex";
 
 		public string EngineVersion => StdRegexInterop.Matcher.GetCRTVersion( );
 
@@ -152,9 +152,9 @@ namespace StdRegexEngineNs
 		#endregion IRegexEngine
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 

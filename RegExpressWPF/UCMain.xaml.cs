@@ -321,29 +321,22 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			ucMatches.ShowInfo( "Matching…", delayed: false );
-			lblMatches.Text = "Matches";
-
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
 
 			UpdateOptions( CurrentRegexEngine );
 
-			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
-
-			FindMatchesLoop.SendRedoAsap( );
-
-			Changed?.Invoke( this, null );
+			HandleOptionsChange( preferImmediateReaction: true );
 		}
 
 
-		private void Engine_OptionsChanged( IRegexEngine sender )
+		private void Engine_OptionsChanged( IRegexEngine sender, RegexEngineOptionsChangedArgs args )
 		{
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
 			if( object.ReferenceEquals( sender, CurrentRegexEngine ) )
 			{
-				CbOption_CheckedChanged( null, null );
+				HandleOptionsChange( args?.PreferImmediateReaction == true );
 			}
 			else
 			{
@@ -354,11 +347,28 @@ namespace RegExpressWPF
 
 		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
 		{
+			HandleOptionsChange( preferImmediateReaction: false );
+		}
+
+
+		void HandleOptionsChange( bool preferImmediateReaction )
+		{
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
-			FindMatchesLoop.SendRestart( );
+
+			if( preferImmediateReaction )
+			{
+				ucMatches.ShowInfo( "Matching…", delayed: false );
+				lblMatches.Text = "Matches";
+
+				FindMatchesLoop.SendRedoAsap( );
+			}
+			else
+			{
+				FindMatchesLoop.SendRestart( );
+			}
 
 			Changed?.Invoke( this, null );
 		}

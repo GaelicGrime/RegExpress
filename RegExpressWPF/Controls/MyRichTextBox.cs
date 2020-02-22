@@ -53,7 +53,7 @@ namespace RegExpressWPF.Controls
 
 			LastGetTextDataDuration = t2 - t1; // (wrapping is ignored)
 
-			Debug.WriteLine( $"####### GetTextData: {LastGetTextDataDuration:F0} - {caller}:{line} '{Path.GetFileNameWithoutExtension( file )}'" );
+			//Debug.WriteLine( $"####### GetTextData: {LastGetTextDataDuration:F0} - {caller}:{line} '{Path.GetFileNameWithoutExtension( file )}'" );
 
 			return td;
 		}
@@ -81,7 +81,7 @@ namespace RegExpressWPF.Controls
 			}
 
 			var t2 = Environment.TickCount;
-			Debug.WriteLine( $"####### GetSimpleTextData {t2 - t1:F0}: {caller} - {Path.GetFileNameWithoutExtension( callerPath )}:{callerLine}" );
+			//Debug.WriteLine( $"####### GetSimpleTextData {t2 - t1:F0}: {caller} - {Path.GetFileNameWithoutExtension( callerPath )}:{callerLine}" );
 
 			return std;
 		}

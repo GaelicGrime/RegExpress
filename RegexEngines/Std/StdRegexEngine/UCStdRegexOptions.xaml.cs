@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,7 @@ namespace StdRegexEngineNs
 	/// </summary>
 	public partial class UCStdRegexOptions : UserControl
 	{
-		internal event EventHandler Changed;
+		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)
 
 
@@ -110,7 +111,7 @@ namespace StdRegexEngineNs
 
 			CachedOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( null, null );
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
 
 
@@ -121,7 +122,7 @@ namespace StdRegexEngineNs
 
 			CachedOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( null, null );
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 	}
 }

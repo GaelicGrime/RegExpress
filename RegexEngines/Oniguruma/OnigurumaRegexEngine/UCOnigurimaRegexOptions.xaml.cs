@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RegexEngineInfrastructure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
 namespace OnigurumaRegexEngineNs
 {
 	/// <summary>
@@ -20,7 +22,7 @@ namespace OnigurumaRegexEngineNs
 	/// </summary>
 	public partial class UCOnigurimaRegexOptions : UserControl
 	{
-		internal event EventHandler Changed;
+		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)
 
 
@@ -181,7 +183,7 @@ namespace OnigurumaRegexEngineNs
 		}
 
 
-		internal OnigurumaRegexInterop.OnigurumaHelper CreateOnigurumaHelper()
+		internal OnigurumaRegexInterop.OnigurumaHelper CreateOnigurumaHelper( )
 		{
 			return OnigurumaRegexInterop.Matcher.CreateOnigurumaHelper( CachedOptions );
 		}
@@ -218,13 +220,17 @@ namespace OnigurumaRegexEngineNs
 
 			CachedOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( null, null );
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
 		private void cbxSyntax_SelectionChanged( object sender, SelectionChangedEventArgs e )
 		{
-			// same stuff
-			CheckBox_Changed( null, null );
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
 
 
