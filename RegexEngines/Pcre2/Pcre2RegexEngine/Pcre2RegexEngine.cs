@@ -195,9 +195,9 @@ namespace Pcre2RegexEngineNs
 		#endregion IRegexEngine
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 
@@ -306,8 +306,9 @@ namespace Pcre2RegexEngineNs
 
 			string named_group = "";
 
-			named_group += @"\(\?(?'name'((?'a'')|<).*?(?(a)'|>)) | ";
-			named_group += @"\(\?P(?'name'<.*?>) | ";
+			named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
+			named_group += @"\(\?(?'name''.*?('|$)) | ";
+			named_group += @"\(\?P(?'name'<.*?(>|$)) | ";
 			named_group += @"(?'name'\\g[+]?[0-9]+) | ";
 			named_group += @"(?'name'\\g\{[+]?[0-9]*(\} | $)) | ";
 			named_group += @"(?'name'\\[gk]<.*?(>|$)) | ";

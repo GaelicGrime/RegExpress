@@ -24,7 +24,7 @@ namespace DotNetRegexEngineNs
 	/// </summary>
 	public partial class UCDotNetRegexOptions : UserControl
 	{
-		internal event EventHandler Changed;
+		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 
 		// (accessible from threads)
 		internal RegexOptions CachedRegexOptions;
@@ -56,12 +56,12 @@ namespace DotNetRegexEngineNs
 
 		internal void ImportOptions( string[] options0 )
 		{
-			if( options0.Length == 1 && options0[0].StartsWith("old:"))
+			if( options0.Length == 1 && options0[0].StartsWith( "OldRegexOptionsEnum:" ) )
 			{
 				// special backward-compatibility case; convert a number (treated as 'RegexOptions') to array of names
 
 				string number_s = options0[0].Substring( "OldRegexOptionsEnum:".Length );
-				if( int.TryParse(number_s, out int number))
+				if( int.TryParse( number_s, out int number ) )
 				{
 					RegexOptions opt = (RegexOptions)number;
 
@@ -171,7 +171,7 @@ namespace DotNetRegexEngineNs
 
 			CachedRegexOptions = GetSelectedOptions( );
 
-			Changed?.Invoke( sender, e );
+			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
 
@@ -185,7 +185,7 @@ namespace DotNetRegexEngineNs
 				CachedTimeout = t;
 			}
 
-			Changed?.Invoke( sender, e );
+			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
 	}
 }

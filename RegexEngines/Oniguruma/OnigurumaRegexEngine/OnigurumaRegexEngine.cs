@@ -198,9 +198,9 @@ namespace OnigurumaRegexEngineNs
 		#endregion
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 
@@ -359,7 +359,7 @@ namespace OnigurumaRegexEngineNs
 
 			if( helper.IsONIG_SYN_OP2_QMARK_LT_NAMED_GROUP )
 			{
-				named_group += @"\(\?(?'name'<.*?(>|$)) | ";
+				named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
 				named_group += @"\(\?(?'name''.*?('|$)) | ";
 			}
 			if( helper.IsONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY )

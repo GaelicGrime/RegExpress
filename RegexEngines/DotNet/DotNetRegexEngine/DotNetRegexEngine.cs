@@ -221,9 +221,9 @@ namespace DotNetRegexEngineNs
 		#endregion IRegexEngine
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 
@@ -281,10 +281,10 @@ namespace DotNetRegexEngineNs
 			const string CharGroupPattern = @"(\[\]?(" + EscapesPattern + @"|.)*?(\]|$))";
 
 			const string NamedGroupPattern =
-				@"\(\?(?'name'<.*?>) | " + // (balancing groups covered too)
-				@"\(\?(?'name''.*?') | " +
-				@"(?'name'\\k<.*?>) | " +
-				@"(?'name'\\k'.*?')";
+				@"\(\?(?'name'<(?![=!]).*?(>|$)) | " + // (balancing groups covered too)
+				@"\(\?(?'name''.*?('|$)) | " +
+				@"(?'name'\\k<.*?(>|$)) | " +
+				@"(?'name'\\k'.*?('|$))";
 
 			string pattern;
 

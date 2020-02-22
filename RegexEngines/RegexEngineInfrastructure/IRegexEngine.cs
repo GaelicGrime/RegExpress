@@ -11,7 +11,12 @@ using System.Windows.Controls;
 namespace RegexEngineInfrastructure
 {
 
-	public delegate void RegexEngineOptionsChanged( IRegexEngine sender );
+	public class RegexEngineOptionsChangedArgs : EventArgs
+	{
+		public bool PreferImmediateReaction;
+	}
+
+	public delegate void RegexEngineOptionsChanged( IRegexEngine sender, RegexEngineOptionsChangedArgs args );
 
 
 	public interface IRegexEngine

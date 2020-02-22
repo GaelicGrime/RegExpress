@@ -216,9 +216,9 @@ namespace BoostRegexEngineNs
 		#endregion IRegexEngine
 
 
-		private void OptionsControl_Changed( object sender, EventArgs e )
+		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
-			OptionsChanged?.Invoke( this );
+			OptionsChanged?.Invoke( this, args );
 		}
 
 
@@ -328,7 +328,7 @@ namespace BoostRegexEngineNs
 
 			string named_group = "";
 
-			if( is_perl ) named_group += @"\(\?(?'name'<.*?(>|$)) | \(\?(?'name''.*?('|$)) | ";
+			if( is_perl ) named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | \(\?(?'name''.*?('|$)) | ";
 			if( is_perl ) named_group += @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$)) | "; // back reference
 			if( is_perl ) named_group += @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$)) | "; // back reference
 
