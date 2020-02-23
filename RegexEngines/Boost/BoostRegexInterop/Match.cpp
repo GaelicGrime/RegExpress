@@ -95,7 +95,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{

@@ -30,7 +30,7 @@ namespace Re2RegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{

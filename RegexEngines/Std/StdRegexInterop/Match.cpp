@@ -16,48 +16,62 @@ namespace StdRegexInterop
 		mIndex( static_cast<decltype( mIndex )>( match.position( ) ) ),
 		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
 	{
-		auto pos = match.position( );
-		if( pos < std::numeric_limits<decltype( mIndex )>::min( ) || pos > std::numeric_limits<decltype( mIndex )>::max( ) )
+		try
 		{
-			throw gcnew OverflowException( );
-		}
-
-		auto len = match.length( );
-		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
-		{
-			throw gcnew OverflowException( );
-		}
-
-
-
-
-		mGroups = gcnew List<IGroup^>;
-		int j = 0;
-
-		for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
-		{
-			const std::wcsub_match& submatch = *i;
-
-			if( !submatch.matched )
+			auto pos = match.position( );
+			if( pos < std::numeric_limits<decltype( mIndex )>::min( ) || pos > std::numeric_limits<decltype( mIndex )>::max( ) )
 			{
-				auto group = gcnew Group( this, j );
-
-				mGroups->Add( group );
+				throw gcnew OverflowException( );
 			}
-			else
+
+			auto len = match.length( );
+			if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
 			{
-				auto pos = match.position( j );
-				if( pos < std::numeric_limits<int>::min( ) || pos > std::numeric_limits<int>::max( ) )
+				throw gcnew OverflowException( );
+			}
+
+
+			mGroups = gcnew List<IGroup^>;
+			int j = 0;
+
+			for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
+			{
+				const std::wcsub_match& submatch = *i;
+
+				if( !submatch.matched )
 				{
-					throw gcnew OverflowException( );
+					auto group = gcnew Group( this, j );
+
+					mGroups->Add( group );
 				}
+				else
+				{
+					auto pos = match.position( j );
+					if( pos < std::numeric_limits<int>::min( ) || pos > std::numeric_limits<int>::max( ) )
+					{
+						throw gcnew OverflowException( );
+					}
 
-				int submatch_index = static_cast<int>( pos );
+					int submatch_index = static_cast<int>( pos );
 
-				auto group = gcnew Group( this, j, submatch_index, submatch );
+					auto group = gcnew Group( this, j, submatch_index, submatch );
 
-				mGroups->Add( group );
+					mGroups->Add( group );
+				}
 			}
+		}
+		catch( const std::exception & exc )
+		{
+			String^ what = gcnew String( exc.what( ) );
+			throw gcnew Exception( "Error: " + what );
+		}
+		catch( Exception ^ exc )
+		{
+			throw;
+		}
+		catch( ... )
+		{
+			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 	}
 

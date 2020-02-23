@@ -105,7 +105,7 @@ namespace Pcre2RegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{

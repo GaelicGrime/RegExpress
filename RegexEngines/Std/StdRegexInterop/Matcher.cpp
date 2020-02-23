@@ -16,29 +16,32 @@ namespace StdRegexInterop
 	Matcher::Matcher( String^ pattern0, cli::array<String^>^ options )
 		: mData( nullptr )
 	{
-		marshal_context context{};
-		wregex::flag_type regex_flags{};
-		regex_constants::match_flag_type match_flags = regex_constants::match_flag_type::match_default;
-
-		wstring pattern = context.marshal_as<wstring>( pattern0 );
-
-		for each( String ^ o in options )
+		try
 		{
+			marshal_context context{};
+
+			wregex::flag_type regex_flags{};
+			regex_constants::match_flag_type match_flags = regex_constants::match_flag_type::match_default;
+
+			wstring pattern = context.marshal_as<wstring>( pattern0 );
+
+			for each( String ^ o in options )
+			{
 #define C(n) \
 	if( o == L#n ) regex_flags |= regex_constants::syntax_option_type::##n; \
 	else
 
-			C( ECMAScript )
-				C( basic )
-				C( extended )
-				C( awk )
-				C( grep )
-				C( egrep )
-				C( icase )
-				C( nosubs )
-				C( optimize )
-				C( collate )
-				;
+				C( ECMAScript )
+					C( basic )
+					C( extended )
+					C( awk )
+					C( grep )
+					C( egrep )
+					C( icase )
+					C( nosubs )
+					C( optimize )
+					C( collate )
+					;
 
 #undef C
 
@@ -46,25 +49,23 @@ namespace StdRegexInterop
 	if( o == L#n ) match_flags |= regex_constants::match_flag_type::##n; \
 	else
 
-			C( match_not_bol )
-				C( match_not_eol )
-				C( match_not_bow )
-				C( match_not_eow )
-				C( match_any )
-				C( match_not_null )
-				C( match_continuous )
-				C( match_prev_avail )
-				;
+				C( match_not_bol )
+					C( match_not_eol )
+					C( match_not_bow )
+					C( match_not_eow )
+					C( match_any )
+					C( match_not_null )
+					C( match_continuous )
+					C( match_prev_avail )
+					;
 
 #undef C
 
-		}
+			}
 
-		mData = new MatcherData{};
-		mData->mMatchFlags = match_flags;
+			mData = new MatcherData{};
+			mData->mMatchFlags = match_flags;
 
-		try
-		{
 			mData->mRegex.assign( std::move( pattern ), regex_flags );
 		}
 		catch( const regex_error & exc )
@@ -80,7 +81,7 @@ namespace StdRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{
@@ -152,7 +153,7 @@ namespace StdRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{

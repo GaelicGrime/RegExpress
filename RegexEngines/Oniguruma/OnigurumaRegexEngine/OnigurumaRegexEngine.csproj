@@ -73,8 +73,8 @@
   <ItemGroup>
     <Compile Include="OnigurumaRegexEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UCOnigurimaRegexOptions.xaml.cs">
-      <DependentUpon>UCOnigurimaRegexOptions.xaml</DependentUpon>
+    <Compile Include="UCOnigurumaRegexOptions.xaml.cs">
+      <DependentUpon>UCOnigurumaRegexOptions.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -88,7 +88,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="UCOnigurimaRegexOptions.xaml">
+    <Page Include="UCOnigurumaRegexOptions.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

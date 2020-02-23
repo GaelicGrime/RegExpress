@@ -148,7 +148,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{
@@ -229,7 +229,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{

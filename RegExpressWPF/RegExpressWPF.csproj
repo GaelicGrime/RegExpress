@@ -176,6 +176,10 @@
       <Project>{773e3bd2-e5b0-49b5-af57-12d8ca5c8c8b}</Project>
       <Name>BoostRegexEngine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\Icu\IcuRegexEngine\IcuRegexEngine.csproj">
+      <Project>{6d01364e-7efb-4998-9bc3-a767f6c2a18a}</Project>
+      <Name>IcuRegexEngine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RegexEngines\Oniguruma\OnigurumaRegexEngine\OnigurumaRegexEngine.csproj">
       <Project>{7a08032b-32a7-4c6d-99b1-cd0b9df19963}</Project>
       <Name>OnigurumaRegexEngine</Name>

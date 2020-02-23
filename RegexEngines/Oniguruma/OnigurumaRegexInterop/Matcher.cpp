@@ -387,7 +387,7 @@ namespace OnigurumaRegexInterop
 		//}
 		catch( Exception ^ exc )
 		{
-			throw exc;
+			throw;
 		}
 		catch( ... )
 		{
@@ -504,11 +504,11 @@ namespace OnigurumaRegexInterop
 
 		if( symbol != nullptr )
 		{
-			return String::Format( "{0}\r\n({1}, {2})", text, symbol, code );
+			return String::Format( "{0}\r\n\r\n({1}, {2})", text, symbol, code );
 		}
 		else
 		{
-			return String::Format( "{0}\r\n({1})", text, code );
+			return String::Format( "{0}\r\n\r\n({1})", text, code );
 		}
 	}
 

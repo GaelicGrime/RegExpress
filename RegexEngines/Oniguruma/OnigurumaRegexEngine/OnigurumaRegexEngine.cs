@@ -14,7 +14,7 @@ namespace OnigurumaRegexEngineNs
 {
 	public class OnigurumaRegexEngine : IRegexEngine
 	{
-		readonly UCOnigurimaRegexOptions OptionsControl;
+		readonly UCOnigurumaRegexOptions OptionsControl;
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -23,7 +23,7 @@ namespace OnigurumaRegexEngineNs
 
 		public OnigurumaRegexEngine( )
 		{
-			OptionsControl = new UCOnigurimaRegexOptions( );
+			OptionsControl = new UCOnigurumaRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
