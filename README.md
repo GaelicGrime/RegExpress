@@ -29,7 +29,7 @@ The contents is saved and reloaded automatically.
 
 <br/>
 
-* [Download Latest Release](https://github.com/Viorel/RegExpress/releases/latest)
+* [Download Latest Release](https://github.com/Viorel/RegExpress/releases)
 
 <br/>
 
