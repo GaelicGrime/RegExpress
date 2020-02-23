@@ -29,3 +29,12 @@ The contents is saved and reloaded automatically.
 * [Download Latest Release](https://github.com/Viorel/RegExpress/releases/latest)
 
 <br/>
+
+The archive, wich is attached to each release, contains an executable that runs in Windows 10.
+
+The sources can be compiled with Visual Studio 2019 that includes the next workloads:
+
+* .NET desktop development
+* Desktop development with C++
+
+<br/>
