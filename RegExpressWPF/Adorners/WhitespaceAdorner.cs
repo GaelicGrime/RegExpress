@@ -39,7 +39,7 @@ namespace RegExpressWPF.Adorners
 		bool mShowWhitespaces = false;
 		int PreviousTextChangedTime = Environment.TickCount;
 
-		public bool IsDbgDisabled; // (disable this adorner for debugging purposes)
+		internal bool IsDbgDisabled { get; set; } // (disable this adorner for debugging purposes)
 
 
 		public WhitespaceAdorner( MyRichTextBox rtb, ChangeEventHelper ceh ) : base( rtb )
