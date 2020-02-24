@@ -12,7 +12,7 @@ namespace IcuRegexInterop
 	ref class Group;
 
 
-	ref class Capture : ICapture
+	ref class Capture : public ICapture
 	{
 
 	public:

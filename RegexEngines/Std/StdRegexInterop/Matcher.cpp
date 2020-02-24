@@ -79,7 +79,7 @@ namespace StdRegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception ^ )
 		{
 			throw;
 		}
@@ -151,7 +151,7 @@ namespace StdRegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception ^ )
 		{
 			throw;
 		}

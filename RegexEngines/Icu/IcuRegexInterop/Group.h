@@ -13,7 +13,7 @@ namespace IcuRegexInterop
 	ref class Match;
 
 
-	ref class Group : IGroup
+	ref class Group : public IGroup
 	{
 
 	public:

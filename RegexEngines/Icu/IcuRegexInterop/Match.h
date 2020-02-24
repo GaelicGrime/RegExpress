@@ -12,7 +12,7 @@ namespace IcuRegexInterop
 	ref class Group;
 	ref class Matcher;
 
-	ref class Match : IMatch
+	ref class Match : public IMatch
 	{
 
 	public:

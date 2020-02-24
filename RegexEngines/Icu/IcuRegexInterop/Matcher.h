@@ -16,19 +16,19 @@ namespace IcuRegexInterop
 {
 	struct MatcherData
 	{
-		icu::RegexMatcher* mIcuRegexMatcher;
+		icu::RegexPattern* mIcuRegexPattern;
 
 		MatcherData( )
 			:
-			mIcuRegexMatcher( nullptr )
+			mIcuRegexPattern( nullptr )
 		{
 
 		}
 
 		~MatcherData( )
 		{
-			delete mIcuRegexMatcher;
-			mIcuRegexMatcher = nullptr;
+			delete mIcuRegexPattern;
+			mIcuRegexPattern = nullptr;
 		}
 	};
 

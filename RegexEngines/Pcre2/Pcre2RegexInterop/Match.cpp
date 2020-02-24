@@ -103,7 +103,7 @@ namespace Pcre2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception ^ )
 		{
 			throw;
 		}

@@ -62,8 +62,7 @@ namespace IcuRegexEngineNs
 		{
 			string[] selected_options = OptionsControl.CachedOptions;
 
-			throw new NotImplementedException( );
-
+			return new IcuRegexInterop.Matcher( pattern, selected_options );
 		}
 
 
