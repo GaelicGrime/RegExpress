@@ -32,7 +32,7 @@ namespace IcuRegexEngineNs
 
 		public string EngineVersion => IcuRegexInterop.Matcher.GetVersion( );
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
 		public string NoteForCaptures => null;
 
