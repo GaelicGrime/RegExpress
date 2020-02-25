@@ -14,6 +14,23 @@ using namespace RegexEngineInfrastructure::Matches;
 
 namespace IcuRegexInterop
 {
+	public ref class OptionInfo
+	{
+	public:
+		URegexpFlag const Flag;
+		String^ const FlagName;
+		String^ const Note;
+
+		OptionInfo( URegexpFlag flag, String^ flagName, String^ note )
+			:
+			Flag( flag ),
+			FlagName( flagName ),
+			Note( note )
+		{
+		}
+	};
+
+
 	struct MatcherData
 	{
 		icu::RegexPattern* mIcuRegexPattern;
@@ -46,6 +63,7 @@ namespace IcuRegexInterop
 
 
 		static String^ GetVersion( );
+		static List<OptionInfo^>^ GetOptions( ) { return mOptions; }
 
 
 #pragma region IMatcher
@@ -60,6 +78,12 @@ namespace IcuRegexInterop
 	private:
 
 		MatcherData* mData;
+		cli::array<String^> ^ mGroupNames;
+
+		static List<OptionInfo^>^ mOptions;
+		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
+
+		static void BuildOptions( );
 	};
 
 }

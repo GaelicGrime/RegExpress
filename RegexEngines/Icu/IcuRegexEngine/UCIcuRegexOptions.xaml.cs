@@ -33,6 +33,26 @@ namespace IcuRegexEngineNs
 		public UCIcuRegexOptions( )
 		{
 			InitializeComponent( );
+
+
+			// insert checkboxes
+
+			{
+				List<IcuRegexInterop.OptionInfo> compile_options = IcuRegexInterop.Matcher.GetOptions( );
+
+				foreach( var o in compile_options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.FlagName,
+						Content = CreateTextBlock( o.FlagName, o.Note )
+					};
+
+					pnlOptions.Children.Add( cb );
+				}
+			}
+
+
 		}
 
 
@@ -50,10 +70,11 @@ namespace IcuRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			//...
-
 			return
-				new string[0];
+				pnlOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) )
+					.ToArray( );
 		}
 
 
@@ -65,12 +86,51 @@ namespace IcuRegexEngineNs
 
 				options = options ?? new string[] { };
 
-				//...
+				foreach( var cb in pnlOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag );
+				}
 			}
 			finally
 			{
 				--ChangeCounter;
 			}
 		}
+
+
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( IsFullyLoaded ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			IsFullyLoaded = true;
+		}
+
+
+		private void CheckBox_Changed( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
+		}
+
+
+		TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
+		}
+
 	}
 }

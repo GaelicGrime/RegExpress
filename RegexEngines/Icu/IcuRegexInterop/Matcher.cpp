@@ -8,6 +8,7 @@
 
 using namespace System::Diagnostics;
 using namespace System::Collections::Generic;
+using namespace System::Text::RegularExpressions;
 
 using namespace msclr::interop;
 using namespace std;
@@ -20,6 +21,12 @@ namespace IcuRegexInterop
 
 	static Matcher::Matcher( )
 	{
+		mRegexGroupNames = gcnew Regex(
+			R"REGEX( \(\?<(?![=!])(?'n'.*?)> )REGEX",
+			RegexOptions::Compiled | RegexOptions::ExplicitCapture | RegexOptions::IgnorePatternWhitespace
+		);
+
+		BuildOptions( );
 	}
 
 
@@ -30,12 +37,21 @@ namespace IcuRegexInterop
 		{
 			marshal_context context{};
 
+			uint32_t icu_options = 0;
+
+			for each( auto optdef in mOptions )
+			{
+				if( Array::IndexOf( options, optdef->FlagName ) >= 0 ) icu_options |= optdef->Flag;
+			}
+
 			wstring pattern = context.marshal_as<wstring>( pattern0 );
 
 			UErrorCode status = U_ZERO_ERROR;
 			UParseError parse_error{};
 
-			icu::RegexPattern* icu_pattern = icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)pattern.c_str( ), pattern.length( ) ), 0, parse_error, status );
+			icu::RegexPattern* icu_pattern =
+				icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)pattern.c_str( ), pattern.length( ) ),
+					icu_options, parse_error, status );
 
 			/*
 				NOTE. Conversion from 'wchar_t*' to 'char16_t*' is required to work around a strange linker error:
@@ -49,6 +65,40 @@ namespace IcuRegexInterop
 
 				throw gcnew Exception( String::Format( "Invalid pattern at line {0}, column {1}.\r\n\r\nError {2} ({3})", parse_error.line, parse_error.offset, error_name, (unsigned)status ) );
 			}
+
+
+			// try identifying group names
+
+			mGroupNames = gcnew cli::array<String^>( 0 );
+
+			auto matches = mRegexGroupNames->Matches( pattern0 );
+			if( matches->Count > 0 )
+			{
+				for( int i = 0; i < matches->Count; ++i )
+				{
+					auto n = matches[i]->Groups["n"];
+					if( n->Success )
+					{
+						String^ group_name = n->Value;
+						wstring native_group_name = context.marshal_as<wstring>( group_name );
+
+						int group_number = icu_pattern->groupNumberFromName( icu::UnicodeString( (char16_t*)native_group_name.c_str( ), native_group_name.length( ) ), status );
+
+						// TODO: detect and show errors
+
+						if( !U_FAILURE( status ) )
+						{
+							if( group_number >= mGroupNames->Length )
+							{
+								Array::Resize( mGroupNames, group_number + 1 );
+							}
+
+							mGroupNames[group_number] = group_name;
+						}
+					}
+				}
+			}
+
 
 			mData = new MatcherData{};
 			mData->mIcuRegexPattern = icu_pattern;
@@ -136,7 +186,17 @@ namespace IcuRegexInterop
 					Check( status );
 
 					Group^ group;
-					String^ group_name = gr.ToString( System::Globalization::CultureInfo::InvariantCulture );
+					String^ group_name = nullptr;
+
+					if( gr < mGroupNames->Length )
+					{
+						group_name = mGroupNames[gr];
+					}
+
+					if( group_name == nullptr )
+					{
+						group_name = gr.ToString( System::Globalization::CultureInfo::InvariantCulture );
+					}
 
 					if( group_start < 0 )
 					{
@@ -177,6 +237,27 @@ namespace IcuRegexInterop
 		{
 			delete icu_matcher;
 		}
+	}
+
+
+	void Matcher::BuildOptions( )
+	{
+#define O(f, n) \
+	list->Add(gcnew OptionInfo( URegexpFlag::##f, gcnew String(#f), gcnew String(n)));
+
+		List<OptionInfo^>^ list = gcnew List<OptionInfo^>( );
+
+		O( UREGEX_CANON_EQ, "Forces normalization of pattern and strings" );
+		O( UREGEX_CASE_INSENSITIVE, "Enable case insensitive matching" );
+		O( UREGEX_COMMENTS, "Allow white space and comments within patterns" );
+		O( UREGEX_DOTALL, "If set, '.' matches line terminators, otherwise '.' matching stops at line end" );
+		O( UREGEX_LITERAL, "If set, treat the entire pattern as a literal string" );
+		O( UREGEX_MULTILINE, "Control behavior of '$' and '^'. If set, recognize line terminators within string, otherwise, match only at start and end of input string" );
+		O( UREGEX_UNIX_LINES, "Unix-only line endings. When this mode is enabled, only \\u000a is recognized as a line ending in the behavior of ., ^, and $" );
+		O( UREGEX_UWORD, "Unicode word boundaries. If set, uses the Unicode TR 29 definition of word boundaries" );
+		O( UREGEX_ERROR_ON_UNKNOWN_ESCAPES, "Error on Unrecognized backslash escapes" );
+
+		mOptions = list;
 	}
 
 
