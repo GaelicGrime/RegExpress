@@ -14,10 +14,10 @@
 
 #include <unicode/regex.h>
 
-#pragma comment(lib, "C:\\Users\\Viorel\\Downloads\\ICU\\icu4c-65_1-Win64-MSVC2017\\lib64\\icuin.lib")
-//#pragma comment(lib, "C:\\Users\\Viorel\\Downloads\\ICU\\icu4c-65_1-Win64-MSVC2017\\lib64\\icuio.lib")
-//#pragma comment(lib, "C:\\Users\\Viorel\\Downloads\\ICU\\icu4c-65_1-Win64-MSVC2017\\lib64\\icutu.lib")
-#pragma comment(lib, "C:\\Users\\Viorel\\Downloads\\ICU\\icu4c-65_1-Win64-MSVC2017\\lib64\\icuuc.lib")
+#pragma comment(lib, "ICU-min\\lib64\\icuin.lib")
+//#pragma comment(lib, "ICU-min\\lib64\\icuio.lib")
+//#pragma comment(lib, "ICU-min\\lib64\\icutu.lib")
+#pragma comment(lib, "ICU-min\\lib64\\icuuc.lib")
 
 #pragma managed
 
