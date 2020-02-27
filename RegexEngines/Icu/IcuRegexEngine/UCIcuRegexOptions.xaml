@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:IcuRegexEngineNs"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" 
+             d:DesignHeight="150" d:DesignWidth="200" 
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
@@ -16,8 +16,26 @@
     </UserControl.Resources>
 
     <Grid>
-        
-        <StackPanel x:Name="pnlOptions"/>
+
+        <StackPanel>
+
+            <StackPanel x:Name="pnlOptions"/>
+
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.LayoutTransform>
+
+                <Label Content="Limit:" Target="{Binding ElementName=tbxIterationLimit}" VerticalAlignment="Center"/>
+                <TextBox x:Name="tbxIterationLimit" Width="88" VerticalAlignment="Center" TextChanged="tbxIterationLimit_TextChanged" />
+                <TextBlock VerticalAlignment="Center" Text="steps" Margin="5 0 0 0"/>
+            </StackPanel>
+        </StackPanel>
 
     </Grid>
 </UserControl>

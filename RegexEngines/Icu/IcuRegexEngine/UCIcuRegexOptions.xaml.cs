@@ -74,6 +74,9 @@ namespace IcuRegexEngineNs
 				pnlOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) )
+					.Concat(
+						new[] { "limit:" + tbxIterationLimit.Text }
+					)
 					.ToArray( );
 		}
 
@@ -90,6 +93,10 @@ namespace IcuRegexEngineNs
 				{
 					cb.IsChecked = options.Contains( cb.Tag );
 				}
+
+				var limit = options.FirstOrDefault( o => o.StartsWith( "limit:" ) );
+				if( limit != null ) limit = limit.Substring( "limit:".Length );
+				tbxIterationLimit.Text = limit;
 			}
 			finally
 			{
@@ -109,6 +116,17 @@ namespace IcuRegexEngineNs
 
 
 		private void CheckBox_Changed( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
+		}
+
+
+		private void tbxIterationLimit_TextChanged( object sender, TextChangedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;

@@ -26,6 +26,8 @@ namespace IcuRegexInterop
 			RegexOptions::Compiled | RegexOptions::ExplicitCapture | RegexOptions::IgnorePatternWhitespace
 		);
 
+		LimitPrefix = "limit:";
+
 		BuildOptions( );
 	}
 
@@ -38,10 +40,26 @@ namespace IcuRegexInterop
 			marshal_context context{};
 
 			uint32_t icu_options = 0;
+			int32_t icu_time_limit = 0; // (steps)
 
 			for each( auto optdef in mOptions )
 			{
 				if( Array::IndexOf( options, optdef->FlagName ) >= 0 ) icu_options |= optdef->Flag;
+			}
+
+			for each( String ^ o in options )
+			{
+				if( o->StartsWith( LimitPrefix ) )
+				{
+					String^ limit = o->Substring( LimitPrefix->Length );
+					if( !String::IsNullOrWhiteSpace( limit ) )
+					{
+						if( !int32_t::TryParse( limit, icu_time_limit ) )
+						{
+							throw gcnew Exception( String::Format( "Invalid limit: '{0}'. Enter a number, or 0 for no limit.", limit ) );
+						}
+					}
+				}
 			}
 
 			wstring pattern = context.marshal_as<wstring>( pattern0 );
@@ -102,6 +120,7 @@ namespace IcuRegexInterop
 
 			mData = new MatcherData{};
 			mData->mIcuRegexPattern = icu_pattern;
+			mData->mTimeLimit = icu_time_limit;
 
 		}
 		catch( const std::exception & exc )
@@ -154,7 +173,9 @@ namespace IcuRegexInterop
 
 			UErrorCode status = U_ZERO_ERROR;
 			icu_matcher = mData->mIcuRegexPattern->matcher( unicode_string, status );
+			Check( status );
 
+			icu_matcher->setTimeLimit( mData->mTimeLimit, status );
 			Check( status );
 
 			List<IMatch^>^ matches = gcnew List<IMatch^>;

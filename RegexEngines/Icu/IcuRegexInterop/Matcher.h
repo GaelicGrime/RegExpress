@@ -34,6 +34,7 @@ namespace IcuRegexInterop
 	struct MatcherData
 	{
 		icu::RegexPattern* mIcuRegexPattern;
+		int32_t mTimeLimit;
 
 		MatcherData( )
 			:
@@ -82,6 +83,7 @@ namespace IcuRegexInterop
 
 		static List<OptionInfo^>^ mOptions;
 		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
+		static String^ LimitPrefix;
 
 		static void BuildOptions( );
 	};
