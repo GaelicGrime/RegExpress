@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
+
 namespace OnigurumaRegexEngineNs
 {
 	public class OnigurumaRegexEngine : IRegexEngine
@@ -18,7 +19,6 @@ namespace OnigurumaRegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)" );
 
 
 		public OnigurumaRegexEngine( )
@@ -189,10 +189,11 @@ namespace OnigurumaRegexEngineNs
 			var helper = OptionsControl.CreateOnigurumaHelper( );
 
 			int par_size = helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP ? 2 : 1;
+			int bracket_size = 1;
 
 			Regex regex = GetCachedHighlightingRegex( helper );
 
-			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracketSize: 1 );
+			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
 		#endregion
@@ -317,7 +318,7 @@ namespace OnigurumaRegexEngineNs
 			if( !helper.IsONIG_SYNTAX_ASIS && helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE )
 			{
 
-				quote = @"\\Q.*?(\\E|$)"; // quoted part
+				quote = @"\\Q.*?(\\E|$) | "; // quoted part
 			}
 
 			quote = EndGroup( quote, "escape" ); // use 'escape' name to take its colour

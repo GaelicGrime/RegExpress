@@ -19,7 +19,7 @@ namespace Pcre2RegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)" );
+		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled );
 
 
 		public Pcre2RegexEngine( )

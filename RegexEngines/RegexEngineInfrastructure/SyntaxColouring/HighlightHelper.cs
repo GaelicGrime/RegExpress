@@ -33,6 +33,17 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 		}
 
 
+		class ComparerByParIndex : IComparer<Par>
+		{
+			public int Compare( Par x, Par y )
+			{
+				return x.Index - y.Index;
+			}
+
+			public static readonly ComparerByParIndex Instance = new ComparerByParIndex( );
+		}
+
+
 		public static void CommonHighlighting( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment,
 			Regex regex, int paraSize, int bracketSize )
 		{
@@ -124,6 +135,9 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 				}
 			}
 
+			// parentheses are already ordered; brackets are not always ordered
+			brackets.Sort( ComparerByParIndex.Instance );
+
 			ProcessParenthesesOrBrackets( cnc, highlights, selectionStart, visibleSegment, paraSize, parentheses, isBracket: false );
 			ProcessParenthesesOrBrackets( cnc, highlights, selectionStart, visibleSegment, bracketSize, brackets, isBracket: true );
 		}
@@ -131,10 +145,13 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 		static void ProcessParenthesesOrBrackets( ICancellable cnc, Highlights highlights, int selectionStart, Segment visibleSegment, int size, List<Par> parentheses, bool isBracket )
 		{
-			var parentheses_at_left = parentheses.Where( g => ( g.IsLeft && selectionStart > g.Index ) || ( g.IsRight && selectionStart > g.Index + ( size - 1 ) ) ).ToArray( );
+			// must be ordered by index
+			Debug.Assert( !parentheses.Zip( parentheses.Skip( 1 ), ( a, b ) => a.Index < b.Index ).Any( c => !c ) );
+
+			var parentheses_at_left = parentheses.Where( p => ( p.IsLeft && selectionStart > p.Index ) || ( p.IsRight && selectionStart > p.Index + ( size - 1 ) ) ).ToArray( );
 			if( cnc.IsCancellationRequested ) return;
 
-			var parentheses_at_right = parentheses.Where( g => ( g.IsLeft && selectionStart <= g.Index ) || ( g.IsRight && selectionStart <= g.Index + ( size - 1 ) ) ).ToArray( );
+			var parentheses_at_right = parentheses.Where( p => ( p.IsLeft && selectionStart <= p.Index ) || ( p.IsRight && selectionStart <= p.Index + ( size - 1 ) ) ).ToArray( );
 			if( cnc.IsCancellationRequested ) return;
 
 			if( parentheses_at_left.Any( ) )
