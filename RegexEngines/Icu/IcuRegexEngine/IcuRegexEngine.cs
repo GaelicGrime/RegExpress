@@ -261,6 +261,7 @@ namespace IcuRegexEngineNs
 			escape += @"\\[uUx][0-9a-fA-F]+ | "; // hexadecimal char
 			escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // hexadecimal char
 			escape += @"\\0[0-7]+ | "; // octal
+			escape += @"\\. | "; // \.
 
 			escape = EndGroup( escape, "escape" );
 
