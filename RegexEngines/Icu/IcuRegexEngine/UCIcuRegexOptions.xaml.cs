@@ -70,14 +70,17 @@ namespace IcuRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			return
+			var selected_options =
 				pnlOptions.Children.OfType<CheckBox>( )
 					.Where( cb => cb.IsChecked == true )
-					.Select( cb => cb.Tag.ToString( ) )
-					.Concat(
-						new[] { "limit:" + tbxIterationLimit.Text }
-					)
-					.ToArray( );
+					.Select( cb => cb.Tag.ToString( ) );
+
+			var limit = tbxIterationLimit.Text.Trim( );
+
+			if( !string.IsNullOrWhiteSpace( limit ) )
+				selected_options = selected_options.Concat( new[] { "limit:" + limit } );
+
+			return selected_options.ToArray( );
 		}
 
 
@@ -96,6 +99,7 @@ namespace IcuRegexEngineNs
 
 				var limit = options.FirstOrDefault( o => o.StartsWith( "limit:" ) );
 				if( limit != null ) limit = limit.Substring( "limit:".Length );
+				if( string.IsNullOrWhiteSpace( limit ) ) limit = "0";
 				tbxIterationLimit.Text = limit;
 			}
 			finally
