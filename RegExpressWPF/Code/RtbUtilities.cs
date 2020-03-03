@@ -91,7 +91,7 @@ namespace RegExpressWPF.Code
 	public static class RtbUtilities
 	{
 		const int MAX_BLOCKING_TIME_MS = 222;
-		const int MAX_SEGMENT_LENGTH = 7000;
+		const int MAX_SEGMENT_LENGTH = 100;
 
 		class TraversalData
 		{

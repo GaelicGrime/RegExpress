@@ -566,7 +566,35 @@ namespace RegExpressWPF
 				try
 				{
 					parsed_pattern = engine.ParsePattern( pattern );
-					matches = parsed_pattern.Matches( text ); // TODO: make it cancellable, or use timeout
+					var show_indeterminate_progress_thread = new Thread( ShowIndeterminateProgressThreadProc ) { IsBackground = true };
+					try
+					{
+						show_indeterminate_progress_thread.Start( );
+
+						matches = parsed_pattern.Matches( text ); // TODO: make it cancellable
+					}
+					finally
+					{
+						try
+						{
+							show_indeterminate_progress_thread.Interrupt( );
+							show_indeterminate_progress_thread.Join( 333 );
+							show_indeterminate_progress_thread.Abort( );
+						}
+						catch( Exception )
+						{
+							if( Debugger.IsAttached ) Debugger.Break( );
+
+							// ignore
+						}
+
+						UITaskHelper.BeginInvoke( this, CancellationToken.None,
+						( ) =>
+						{
+							ucMatches.ShowIndeterminateProgress( false );
+						} );
+					}
+
 					is_good = true;
 				}
 				catch( Exception exc )
@@ -607,6 +635,34 @@ namespace RegExpressWPF
 										pnlShowFirst.Visibility = !first_only && count > 1 ? Visibility.Visible : Visibility.Collapsed;
 									} );
 				}
+			}
+		}
+
+
+		void ShowIndeterminateProgressThreadProc( )
+		{
+			try
+			{
+				Thread.Sleep( 2222 );
+
+				UITaskHelper.Invoke( this, CancellationToken.None,
+						( ) =>
+						{
+							ucMatches.ShowIndeterminateProgress( true );
+						} );
+			}
+			catch( ThreadInterruptedException )
+			{
+				// ignore					   
+			}
+			catch( ThreadAbortException )
+			{
+				// ignore
+			}
+			catch( Exception )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
+				// ignore
 			}
 		}
 

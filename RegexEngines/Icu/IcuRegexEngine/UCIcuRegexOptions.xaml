@@ -32,7 +32,7 @@
                 </StackPanel.LayoutTransform>
 
                 <Label Content="Limit:" Target="{Binding ElementName=tbxIterationLimit}" VerticalAlignment="Center"/>
-                <TextBox x:Name="tbxIterationLimit" Width="55" VerticalAlignment="Center" TextChanged="tbxIterationLimit_TextChanged" />
+                <TextBox x:Name="tbxIterationLimit" Width="55" VerticalAlignment="Center" TextChanged="tbxIterationLimit_TextChanged" Text="0" />
                 <TextBlock VerticalAlignment="Center" Text="steps" Margin="4 0 0 0"/>
             </StackPanel>
         </StackPanel>

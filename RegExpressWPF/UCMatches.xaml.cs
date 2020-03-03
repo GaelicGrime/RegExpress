@@ -224,6 +224,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void ShowIndeterminateProgress( bool yes )
+		{
+			pbProgressIndeterminate.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
+		}
+
+
 		public void SetMatches( string text, RegexMatches matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );
