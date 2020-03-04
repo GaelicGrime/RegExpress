@@ -304,7 +304,7 @@ namespace DotNetRegexEngineNs
 				pattern =
 					@"(?nsx)(" + Environment.NewLine +
 						CommentPattern + " |" + Environment.NewLine +
-						CharGroupPattern.Replace( "<<INTERIOR>>", EscapesPattern ) + " |" + Environment.NewLine +
+						CharGroupPattern + " |" + Environment.NewLine +
 						NamedGroupPattern + " |" + Environment.NewLine +
 						EscapesPattern + " |" + Environment.NewLine +
 					")";

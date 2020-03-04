@@ -566,33 +566,16 @@ namespace RegExpressWPF
 				try
 				{
 					parsed_pattern = engine.ParsePattern( pattern );
-					var show_indeterminate_progress_thread = new Thread( ShowIndeterminateProgressThreadProc ) { IsBackground = true };
+					var indeterminate_progress_thread = new Thread( IndeterminateProgressThreadProc ) { IsBackground = true };
 					try
 					{
-						show_indeterminate_progress_thread.Start( );
+						indeterminate_progress_thread.Start( );
 
 						matches = parsed_pattern.Matches( text ); // TODO: make it cancellable
 					}
 					finally
 					{
-						try
-						{
-							show_indeterminate_progress_thread.Interrupt( );
-							show_indeterminate_progress_thread.Join( 333 );
-							show_indeterminate_progress_thread.Abort( );
-						}
-						catch( Exception )
-						{
-							if( Debugger.IsAttached ) Debugger.Break( );
-
-							// ignore
-						}
-
-						UITaskHelper.BeginInvoke( this, CancellationToken.None,
-						( ) =>
-						{
-							ucMatches.ShowIndeterminateProgress( false );
-						} );
+						HideIndeterminateProgress( indeterminate_progress_thread );
 					}
 
 					is_good = true;
@@ -639,7 +622,7 @@ namespace RegExpressWPF
 		}
 
 
-		void ShowIndeterminateProgressThreadProc( )
+		void IndeterminateProgressThreadProc( )
 		{
 			try
 			{
@@ -662,8 +645,32 @@ namespace RegExpressWPF
 			catch( Exception )
 			{
 				if( Debugger.IsAttached ) Debugger.Break( );
+
 				// ignore
 			}
+		}
+
+
+		void HideIndeterminateProgress( Thread indeterminateProgressThread )
+		{
+			try
+			{
+				indeterminateProgressThread.Interrupt( );
+				indeterminateProgressThread.Join( 333 );
+				indeterminateProgressThread.Abort( );
+			}
+			catch( Exception )
+			{
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				// ignore
+			}
+
+			UITaskHelper.BeginInvoke( this, CancellationToken.None,
+			( ) =>
+			{
+				ucMatches.ShowIndeterminateProgress( false );
+			} );
 		}
 
 
