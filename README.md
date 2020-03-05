@@ -41,4 +41,6 @@ The sources contain code written in C#, C, C++ and C++/CLI. Can be compiled with
 * .NET desktop development
 * Desktop development with C++, incuding C++/CLI support.
 
+The Regular Expression libraries (minimal part) are included.
+
 <br/>
