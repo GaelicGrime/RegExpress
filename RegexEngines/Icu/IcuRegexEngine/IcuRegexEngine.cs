@@ -33,7 +33,7 @@ namespace IcuRegexEngineNs
 
 		public string Id => "IcuRegex";
 
-		public string Name => "Icu";
+		public string Name => "ICU";
 
 		public string EngineVersion => IcuRegexInterop.Matcher.GetVersion( );
 
