@@ -81,7 +81,7 @@ namespace IcuRegexInterop
 			{
 				String^ error_name = gcnew String( u_errorName( status ) );
 
-				throw gcnew Exception( String::Format( "Invalid pattern at line {0}, column {1}.\r\n\r\nError {2} ({3})", parse_error.line, parse_error.offset, error_name, (unsigned)status ) );
+				throw gcnew Exception( String::Format( "Invalid pattern at line {0}, column {1}.\r\n\r\n({2}, {3})", parse_error.line, parse_error.offset, error_name, (unsigned)status ) );
 			}
 
 
