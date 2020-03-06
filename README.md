@@ -43,4 +43,6 @@ The sources contain code written in C#, C, C++ and C++/CLI. Can be compiled with
 
 The Regular Expression libraries (minimal part) are included.
 
+Only “x64” platform is supported.
+
 <br/>
