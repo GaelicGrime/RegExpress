@@ -15,8 +15,8 @@ namespace IcuRegexInterop
 		:
 		mParent( parent ),
 		mSuccess( true ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( length ), // TODO: deals with overflows
+		mIndex( index ),
+		mLength( length ),
 		mGroups( gcnew List<IGroup^> )
 	{
 	}

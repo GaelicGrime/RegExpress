@@ -148,6 +148,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
@@ -229,6 +230,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

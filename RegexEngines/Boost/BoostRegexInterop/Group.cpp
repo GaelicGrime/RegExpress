@@ -28,15 +28,9 @@ namespace BoostRegexInterop
 		mName( name ),
 		mSuccess( submatch.matched ),
 		mIndex( index ),
-		mLength( static_cast<decltype( mLength )>( submatch.length( ) ) ),
+		mLength( CheckedCast::ToInt32( submatch.length( ) ) ),
 		mCaptures( gcnew List<ICapture^> )
 	{
-		auto len = submatch.length( );
-		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
-		{
-			throw gcnew OverflowException( );
-		}
-
 		try
 		{
 			const MatcherData* d = parent->Parent->GetData( );
@@ -46,12 +40,8 @@ namespace BoostRegexInterop
 				if( !c.matched ) continue;
 
 				auto index = c.first - d->mText.c_str( );
-				if( index < 0 || index > std::numeric_limits<int>::max( ) )
-				{
-					throw gcnew OverflowException( );
-				}
 
-				Capture^ capture = gcnew Capture( this, static_cast<int>( index ), c );
+				Capture^ capture = gcnew Capture( this, CheckedCast::ToInt32( index ), c );
 
 				mCaptures->Add( capture );
 			}
@@ -69,6 +59,7 @@ namespace BoostRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

@@ -17,7 +17,7 @@ namespace IcuRegexInterop
 		mParent( parent ),
 		mName( name ),
 		mSuccess( success ),
-		mIndex( index ), // TODO: deals with overflows
+		mIndex( index ),
 		mLength( length ),
 		mCaptures( gcnew List<ICapture^>( ) )
 	{

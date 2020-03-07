@@ -14,41 +14,22 @@ namespace Pcre2RegexInterop
 		mParent( parent ),
 		mName( name ),
 		mSuccess( index >= 0 ),
-		mIndex( index ), // TODO: deals with overflows
+		mIndex( index ),
 		mLength( length ),
 		mCaptures( gcnew List<ICapture^>( ) )
 	{
 		try
 		{
-
-			//...............
-			/*
-
-			const MatcherData* d = parent->Parent->GetData( );
-
-			for( const boost::wcsub_match& c : submatch.captures( ) )
-			{
-				if( !c.matched ) continue;
-
-				int index = c.first - d->mText.c_str( );
-
-				Capture^ capture = gcnew Capture( this, index, c );
-
-				mCaptures->Add( capture );
-			}
-			*/
-
-
-			//.............
-			//TODO: detect PCRE2 errors
+			// TODO: implement captures, if supported
 		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

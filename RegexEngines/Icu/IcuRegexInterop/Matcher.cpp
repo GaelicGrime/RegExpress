@@ -68,7 +68,7 @@ namespace IcuRegexInterop
 			UParseError parse_error{};
 
 			icu::RegexPattern* icu_pattern =
-				icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)pattern.c_str( ), pattern.length( ) ),
+				icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)pattern.c_str( ), CheckedCast::ToInt32( pattern.length( ) ) ),
 					icu_options, parse_error, status );
 
 			/*
@@ -100,7 +100,7 @@ namespace IcuRegexInterop
 						String^ group_name = n->Value;
 						wstring native_group_name = context.marshal_as<wstring>( group_name );
 
-						int group_number = icu_pattern->groupNumberFromName( icu::UnicodeString( (char16_t*)native_group_name.c_str( ), native_group_name.length( ) ), status );
+						int group_number = icu_pattern->groupNumberFromName( icu::UnicodeString( (char16_t*)native_group_name.c_str( ), CheckedCast::ToInt32( native_group_name.length( ) ) ), status );
 
 						// TODO: detect and show errors
 
@@ -130,6 +130,7 @@ namespace IcuRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
@@ -169,7 +170,7 @@ namespace IcuRegexInterop
 			marshal_context context{};
 
 			wstring text = context.marshal_as<wstring>( text0 );
-			icu::UnicodeString unicode_string( (char16_t*)text.c_str( ), text.length( ) );
+			icu::UnicodeString unicode_string( (char16_t*)text.c_str( ), CheckedCast::ToInt32( text.length( ) ) );
 
 			UErrorCode status = U_ZERO_ERROR;
 			icu_matcher = mData->mIcuRegexPattern->matcher( unicode_string, status );
@@ -247,6 +248,7 @@ namespace IcuRegexInterop
 		}
 		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

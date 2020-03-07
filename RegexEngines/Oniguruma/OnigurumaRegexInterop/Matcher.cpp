@@ -195,7 +195,7 @@ namespace OnigurumaRegexInterop
 	{
 		ForEachNameData* data = (ForEachNameData*)lparam;
 
-		String^ group_name = gcnew String( (wchar_t*)name, 0, (int)( ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) ) );
+		String^ group_name = gcnew String( (wchar_t*)name, 0, CheckedCast::ToInt32( ( (wchar_t*)nameEnd ) - ( (wchar_t*)name ) ) );
 
 		int* nums;
 		int r = onig_name_to_group_numbers( regex, name, nameEnd, &nums );
@@ -385,8 +385,9 @@ namespace OnigurumaRegexInterop
 		//	String^ what = gcnew String( exc.what( ) );
 		//	throw gcnew Exception( "Error: " + what );
 		//}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
@@ -513,7 +514,7 @@ namespace OnigurumaRegexInterop
 	}
 
 
-	static IntPtr ToIntPtr( unsigned int i ) { return IntPtr( (int)i ); }
+	static IntPtr ToIntPtr( unsigned int i ) { return IntPtr( CheckedCast::ToInt32( i ) ); }
 	static IntPtr ToIntPtr( void* p ) { return IntPtr( p ); }
 
 

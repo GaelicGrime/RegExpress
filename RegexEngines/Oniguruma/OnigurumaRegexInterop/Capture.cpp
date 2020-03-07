@@ -12,8 +12,8 @@ namespace OnigurumaRegexInterop
 	Capture::Capture( Group^ parent, int index, int length )
 		:
 		mParent( parent ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( length ) // TODO: deals with overflows
+		mIndex( index ),
+		mLength( length )
 	{
 	}
 

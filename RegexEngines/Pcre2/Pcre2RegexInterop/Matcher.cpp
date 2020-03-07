@@ -100,8 +100,9 @@ namespace Pcre2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
@@ -359,7 +360,7 @@ namespace Pcre2RegexInterop
 					Match^ match = gcnew Match( this, mData->mRe, ovector, rc );
 					matches->Add( match );
 
-				}      /* End of loop to find second and subsequent matches */
+				} /* End of loop to find second and subsequent matches */
 			}
 
 
@@ -370,8 +371,9 @@ namespace Pcre2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
@@ -429,7 +431,7 @@ namespace Pcre2RegexInterop
 		C( PCRE2_EXTRA_ESCAPED_CR_IS_LF, "Interpret \\r as \\n" );
 		C( PCRE2_EXTRA_MATCH_LINE, "Pattern matches whole lines" );
 		C( PCRE2_EXTRA_MATCH_WORD, "Pattern matches \"words\"" );
-																		   
+
 		mExtraCompileOptions = list;
 
 		list = gcnew List<OptionInfo^>( );

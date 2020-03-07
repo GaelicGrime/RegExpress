@@ -98,7 +98,7 @@ namespace Re2RegexInterop
 		for( const wchar_t* p = start; *p; ++p ) // (we assume that the pinned array is zero-terminated)
 		{
 			indices->resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
-			( *indices )[bytes_written] = static_cast<int>( p - start );
+			( *indices )[bytes_written] = CheckedCast::ToInt32( p - start );
 
 			dest->resize( bytes_written + mb_cur_max );
 
@@ -177,7 +177,7 @@ namespace Re2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception^ )
 		{
 			throw;
 		}
@@ -238,12 +238,12 @@ namespace Re2RegexInterop
 				full_text.size( ) - 1,
 				mData->mAnchor,
 				found_groups.data( ),
-				static_cast<int>( found_groups.size( ) ) )
+				CheckedCast::ToInt32( found_groups.size( ) ) )
 				)
 			{
 				const re2::StringPiece& main_group = found_groups.front( );
 
-				int utf8index = static_cast<int>( main_group.data( ) - text.data( ) );
+				int utf8index = CheckedCast::ToInt32( main_group.data( ) - text.data( ) );
 				int index = indices.at( utf8index );
 				if( index < 0 )
 				{
@@ -288,7 +288,7 @@ namespace Re2RegexInterop
 					}
 					else
 					{
-						int utf8index = static_cast<int>( g.data( ) - text.data( ) );
+						int utf8index = CheckedCast::ToInt32( g.data( ) - text.data( ) );
 						int index = indices.at( utf8index );
 						if( index < 0 )
 						{
@@ -313,7 +313,7 @@ namespace Re2RegexInterop
 
 				// advance to the end of found match
 
-				start_pos = static_cast<int>( main_group.data( ) + main_group.size( ) - full_text.data( ) );
+				start_pos = CheckedCast::ToInt32( main_group.data( ) + main_group.size( ) - full_text.data( ) );
 
 				if( start_pos == previous_start_pos ) // was empty match
 				{
@@ -336,8 +336,9 @@ namespace Re2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

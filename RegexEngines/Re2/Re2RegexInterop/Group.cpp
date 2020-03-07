@@ -13,23 +13,22 @@ namespace Re2RegexInterop
 		mParent( parent ),
 		mName( name ),
 		mSuccess( success ),
-		mIndex( index ), // TODO: deals with overflows
+		mIndex( index ),
 		mLength( length ),
 		mCaptures( gcnew List<ICapture^>( ) )
 	{
 		try
 		{
-
-			//...............
-
+			// TODO: implement captures, if supported
 		}
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

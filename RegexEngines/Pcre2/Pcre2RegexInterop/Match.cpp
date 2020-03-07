@@ -15,8 +15,8 @@ namespace Pcre2RegexInterop
 		:
 		mParent( parent ),
 		mSuccess( ovector[0] >= 0 ),
-		mIndex( static_cast<int>( ovector[0] ) ), // TODO: deals with overflows
-		mLength( static_cast<int>( ovector[1] - ovector[0] ) ), // TODO: deals with overflows
+		mIndex( CheckedCast::ToInt32( ovector[0] ) ),
+		mLength( CheckedCast::ToInt32( ovector[1] - ovector[0] ) ),
 		mGroups( gcnew List<IGroup^> )
 	{
 		Debug::Assert( rc > 0 );
@@ -37,8 +37,8 @@ namespace Pcre2RegexInterop
 			{
 				Group^ group = gcnew Group( this,
 					i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
-					static_cast<int>( ovector[2 * i] ),
-					static_cast<int>( ovector[2 * i + 1] - ovector[2 * i] ) );
+					CheckedCast::ToInt32( ovector[2 * i] ),
+					CheckedCast::ToInt32( ovector[2 * i + 1] - ovector[2 * i] ) );
 				mGroups->Add( group );
 			}
 
@@ -51,7 +51,8 @@ namespace Pcre2RegexInterop
 					PCRE2_INFO_CAPTURECOUNT,
 					&capturecount ) == 0 )
 				{
-					for( int i = rc; i <= (int)capturecount; ++i )
+					int total_captures = CheckedCast::ToInt32( capturecount );
+					for( int i = rc; i <= total_captures; ++i )
 					{
 						Group^ group = gcnew Group( this,
 							i.ToString( System::Globalization::CultureInfo::InvariantCulture ),
@@ -85,7 +86,8 @@ namespace Pcre2RegexInterop
 					&name_entry_size );       /* where to put the answer */
 
 				tabptr = name_table;
-				for( int i = 0; i < (int)namecount; i++ )
+				int total_names = CheckedCast::ToInt32( namecount );
+				for( int i = 0; i < total_names; i++ )
 				{
 					int n = *( (__int16*)tabptr );
 
@@ -103,8 +105,9 @@ namespace Pcre2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

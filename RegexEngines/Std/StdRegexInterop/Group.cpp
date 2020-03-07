@@ -27,15 +27,9 @@ namespace StdRegexInterop
 		mGroupNumber( groupNumber ),
 		mSuccess( submatch.matched ),
 		mIndex( index ),
-		mLength( static_cast<decltype( mLength )>( submatch.length( ) ) ),
+		mLength( CheckedCast::ToInt32( submatch.length( ) ) ),
 		mCaptures( gcnew List<ICapture^> )
 	{
-		auto len = submatch.length( );
-		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
-		{
-			throw gcnew OverflowException( );
-		}
-
 		// TODO: collect captures, if supported
 	}
 

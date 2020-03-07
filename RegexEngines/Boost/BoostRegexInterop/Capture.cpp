@@ -13,13 +13,8 @@ namespace BoostRegexInterop
 		:
 		mParent( parent ),
 		mIndex( index ),
-		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
+		mLength( CheckedCast::ToInt32( match.length( ) ) )
 	{
-		auto len = match.length( );
-		if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
-		{
-			throw gcnew OverflowException( );
-		}
 	}
 
 

@@ -13,24 +13,11 @@ namespace StdRegexInterop
 		:
 		mParent( parent ),
 		mSuccess( !match.empty( ) ),
-		mIndex( static_cast<decltype( mIndex )>( match.position( ) ) ),
-		mLength( static_cast<decltype( mLength )>( match.length( ) ) )
+		mIndex( CheckedCast::ToInt32( match.position( ) ) ),
+		mLength( CheckedCast::ToInt32( match.length( ) ) )
 	{
 		try
 		{
-			auto pos = match.position( );
-			if( pos < std::numeric_limits<decltype( mIndex )>::min( ) || pos > std::numeric_limits<decltype( mIndex )>::max( ) )
-			{
-				throw gcnew OverflowException( );
-			}
-
-			auto len = match.length( );
-			if( len < std::numeric_limits<decltype( mLength )>::min( ) || len > std::numeric_limits<decltype( mLength )>::max( ) )
-			{
-				throw gcnew OverflowException( );
-			}
-
-
 			mGroups = gcnew List<IGroup^>;
 			int j = 0;
 
@@ -47,12 +34,7 @@ namespace StdRegexInterop
 				else
 				{
 					auto pos = match.position( j );
-					if( pos < std::numeric_limits<int>::min( ) || pos > std::numeric_limits<int>::max( ) )
-					{
-						throw gcnew OverflowException( );
-					}
-
-					int submatch_index = static_cast<int>( pos );
+					int submatch_index = CheckedCast::ToInt32( pos );
 
 					auto group = gcnew Group( this, j, submatch_index, submatch );
 
@@ -65,8 +47,9 @@ namespace StdRegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )

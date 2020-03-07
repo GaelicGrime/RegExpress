@@ -81,6 +81,7 @@
     <Compile Include="SyntaxColouring\ColouredSegments.cs" />
     <Compile Include="SyntaxColouring\Highlights.cs" />
     <Compile Include="SyntaxColouring\HighlightHelper.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RegexEngineInfrastructure.snk" />

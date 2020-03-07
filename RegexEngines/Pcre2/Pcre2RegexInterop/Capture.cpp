@@ -12,8 +12,8 @@ namespace Pcre2RegexInterop
 	Capture::Capture( Group^ parent, int index, const pcre2_match_data* match )
 		:
 		mParent( parent ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( 0 ) //................. TODO: implement
+		mIndex( index ),
+		mLength( 0 ) // TODO: implement
 	{
 
 	}

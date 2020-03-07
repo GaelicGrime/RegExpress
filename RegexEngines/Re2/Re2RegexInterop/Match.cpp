@@ -15,14 +15,12 @@ namespace Re2RegexInterop
 		:
 		mParent( parent ),
 		mSuccess( true ),
-		mIndex( index ), // TODO: deals with overflows
-		mLength( length ), // TODO: deals with overflows
+		mIndex( index ),
+		mLength( length ),
 		mGroups( gcnew List<IGroup^> )
 	{
 		try
 		{
-
-			//.............
 
 		}
 		catch( const std::exception & exc )
@@ -30,8 +28,9 @@ namespace Re2RegexInterop
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ )
+		catch( Exception ^ exc )
 		{
+			UNREFERENCED_PARAMETER( exc );
 			throw;
 		}
 		catch( ... )
