@@ -38,6 +38,11 @@ namespace RegExpressWPF.Code
 				_ = exc;
 				throw;
 			}
+			catch( ThreadInterruptedException exc )
+			{
+				_ = exc;
+				throw;
+			}
 			catch( Exception exc )
 			{
 				_ = exc;
