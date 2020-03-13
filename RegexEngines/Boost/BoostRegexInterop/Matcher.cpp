@@ -252,6 +252,9 @@ namespace BoostRegexInterop
 
 							auto index = c.first - mData->mText.c_str( );
 
+							// WORKAROUND for an apparent problem of Boost Regex: the collection includes captures from other groups
+							if( index < m->Index ) continue;
+
 							group->AddCapture( CheckedCast::ToInt32( index ), CheckedCast::ToInt32( c.length( ) ) );
 						}
 					}
