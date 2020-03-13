@@ -86,6 +86,7 @@ namespace BoostRegexInterop
 		static List<OptionInfo^>^ mMatchOptions;
 		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
 
+		IMatch^ CreateMatch( const boost::wcmatch& match, Dictionary<int, String^>^ names );
 		static void BuildOptions( );
 	};
 

@@ -131,28 +131,7 @@ namespace StdRegexInterop
 			{
 				const wcmatch& match = *i;
 
-				auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
-				int j = 0;
-
-				for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
-				{
-					const std::wcsub_match& submatch = *i;
-
-					String^ group_name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
-
-					if( !submatch.matched )
-					{
-						m->AddGroup( 0, 0, false, group_name );
-					}
-					else
-					{
-						auto pos = match.position( j );
-						int submatch_index = CheckedCast::ToInt32( pos );
-
-						m->AddGroup( submatch_index, CheckedCast::ToInt32( submatch.length( ) ), true, group_name );
-					}
-				}
-
+				auto m = CreateMatch( match );
 				matches->Add( m );
 			}
 
@@ -185,4 +164,33 @@ namespace StdRegexInterop
 	{
 		return gcnew String( mData->mText.c_str( ), index, length );
 	}
+
+
+	IMatch^ Matcher::CreateMatch( const wcmatch& match )
+	{
+		auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
+		int j = 0;
+
+		for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
+		{
+			const std::wcsub_match& submatch = *i;
+
+			String^ group_name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
+
+			if( !submatch.matched )
+			{
+				m->AddGroup( 0, 0, false, group_name );
+			}
+			else
+			{
+				auto pos = match.position( j );
+				int submatch_index = CheckedCast::ToInt32( pos );
+
+				m->AddGroup( submatch_index, CheckedCast::ToInt32( submatch.length( ) ), true, group_name );
+			}
+		}
+
+		return m;
+	}
+
 }

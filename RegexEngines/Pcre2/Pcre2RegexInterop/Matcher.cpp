@@ -219,7 +219,7 @@ namespace Pcre2RegexInterop
 					"\\K was used in an assertion to set the match start after its end." ) );
 			}
 
-			auto match = CreateMatchAndGroups( mData->mRe, ovector, rc );
+			auto match = CreateMatch( mData->mRe, ovector, rc );
 			matches->Add( match );
 
 			// find next matches
@@ -367,7 +367,7 @@ namespace Pcre2RegexInterop
 							"\\K was used in an assertion to set the match start after its end." ) );
 					}
 
-					auto match = CreateMatchAndGroups( mData->mRe, ovector, rc );
+					auto match = CreateMatch( mData->mRe, ovector, rc );
 					matches->Add( match );
 
 				} /* End of loop to find second and subsequent matches */
@@ -400,7 +400,7 @@ namespace Pcre2RegexInterop
 	}
 
 
-	IMatch^ Matcher::CreateMatchAndGroups( pcre2_code* re, PCRE2_SIZE* ovector, int rc )
+	IMatch^ Matcher::CreateMatch( pcre2_code* re, PCRE2_SIZE* ovector, int rc )
 	{
 		if( ovector[0] > ovector[1] )
 		{

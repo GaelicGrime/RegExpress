@@ -207,8 +207,6 @@ namespace BoostRegexInterop
 			{
 				const wcmatch& match = *i;
 
-				auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
-
 				Dictionary<int, String^>^ names = nullptr;
 
 				if( GroupNames )
@@ -227,39 +225,7 @@ namespace BoostRegexInterop
 					}
 				}
 
-				int j = 0;
-
-				for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
-				{
-					const boost::wcsub_match& submatch = *i;
-
-					String^ name = nullptr;
-					if( !names || !names->TryGetValue( j, name ) ) name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
-
-					if( !submatch.matched )
-					{
-						m->AddGroup( 0, 0, false, name );
-					}
-					else
-					{
-						auto submatch_index = match.position( j );
-
-						auto group = m->AddGroup( CheckedCast::ToInt32( submatch_index ), CheckedCast::ToInt32( submatch.length( ) ), true, name );
-
-						for( const boost::wcsub_match& c : submatch.captures( ) )
-						{
-							if( !c.matched ) continue;
-
-							auto index = c.first - mData->mText.c_str( );
-
-							// WORKAROUND for an apparent problem of Boost Regex: the collection includes captures from other groups
-							if( index < m->Index ) continue;
-
-							group->AddCapture( CheckedCast::ToInt32( index ), CheckedCast::ToInt32( c.length( ) ) );
-						}
-					}
-				}
-
+				auto m = CreateMatch( match, names );
 				matches->Add( m );
 			}
 
@@ -292,6 +258,47 @@ namespace BoostRegexInterop
 	String^ Matcher::GetText( int index, int length )
 	{
 		return gcnew String( mData->mText.c_str( ), index, length );
+	}
+
+
+	IMatch^ Matcher::CreateMatch( const wcmatch& match, Dictionary<int, String^>^ names )
+	{
+		auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
+
+		int j = 0;
+
+		for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
+		{
+			const boost::wcsub_match& submatch = *i;
+
+			String^ name = nullptr;
+			if( !names || !names->TryGetValue( j, name ) ) name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
+
+			if( !submatch.matched )
+			{
+				m->AddGroup( 0, 0, false, name );
+			}
+			else
+			{
+				auto submatch_index = match.position( j );
+
+				auto group = m->AddGroup( CheckedCast::ToInt32( submatch_index ), CheckedCast::ToInt32( submatch.length( ) ), true, name );
+
+				for( const boost::wcsub_match& c : submatch.captures( ) )
+				{
+					if( !c.matched ) continue;
+
+					auto index = c.first - mData->mText.c_str( );
+
+					// WORKAROUND for an apparent problem of Boost Regex: the collection includes captures from other groups
+					if( index < m->Index ) continue;
+
+					group->AddCapture( CheckedCast::ToInt32( index ), CheckedCast::ToInt32( c.length( ) ) );
+				}
+			}
+		}
+
+		return m;
 	}
 
 

@@ -130,7 +130,7 @@ namespace Pcre2RegexInterop
 
 		static IEnumerable<IMatch^>^ mEmptyEnumeration;
 
-		IMatch^ CreateMatchAndGroups( pcre2_code* re, PCRE2_SIZE* ovector, int rc );
+		IMatch^ CreateMatch( pcre2_code* re, PCRE2_SIZE* ovector, int rc );
 		static void BuildOptions( );
 	};
 

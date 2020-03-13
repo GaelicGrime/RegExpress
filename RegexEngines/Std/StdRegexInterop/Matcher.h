@@ -50,6 +50,8 @@ namespace StdRegexInterop
 
 	private:
 
+		IMatch^ CreateMatch( const std::wcmatch& match );
+
 		MatcherData* mData;
 	};
 
