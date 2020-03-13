@@ -388,7 +388,6 @@ namespace Pcre2RegexInterop
 		}
 		catch( ... )
 		{
-			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 	}

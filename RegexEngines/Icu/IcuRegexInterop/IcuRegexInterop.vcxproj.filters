@@ -39,15 +39,6 @@
     <ClInclude Include="Matcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Match.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Group.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Capture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IcuRegexInterop.cpp">
@@ -60,15 +51,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Matcher.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Match.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Group.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Capture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

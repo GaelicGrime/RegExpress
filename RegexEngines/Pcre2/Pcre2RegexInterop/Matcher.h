@@ -118,8 +118,6 @@ namespace Pcre2RegexInterop
 
 #pragma endregion
 
-		const MatcherData* GetData( ) { return mData; }
-
 	private:
 
 		MatcherData* mData;

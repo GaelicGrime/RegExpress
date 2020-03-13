@@ -67,8 +67,6 @@ namespace BoostRegexInterop
 
 	internal:
 
-		const MatcherData* GetData( ) { return mData; }
-
 		property System::Collections::Specialized::StringCollection^ GroupNames
 		{
 			System::Collections::Specialized::StringCollection^ get( )

@@ -44,10 +44,6 @@ namespace StdRegexInterop
 
 #pragma endregion
 
-
-
-		const MatcherData* GetData( ) { return mData; }
-
 	private:
 
 		IMatch^ CreateMatch( const std::wcmatch& match );

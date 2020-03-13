@@ -537,7 +537,7 @@ namespace RegExpressWPF
 					if( match.Length == 0 )
 					{
 						value_inline = new Run( "(empty)", span.ContentEnd ); //
-						value_inline.Style( MatchNormalStyleInfo, highlight_style, LocationStyleInfo );
+						value_inline.Style( MatchNormalStyleInfo, LocationStyleInfo );
 					}
 					else
 					{

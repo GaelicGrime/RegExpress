@@ -10,6 +10,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace IcuRegexInterop
@@ -51,7 +52,7 @@ namespace IcuRegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -71,20 +72,25 @@ namespace IcuRegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
 
+#pragma region ISimpleTextReader
 
-		String^ OriginalText; // TODO: make it read-only
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
 
 	private:
 
+ 		String^ OriginalText;
 		MatcherData* mData;
-		cli::array<String^> ^ mGroupNames;
+		cli::array<String^>^ mGroupNames;
 
 		static List<OptionInfo^>^ mOptions;
 		static System::Text::RegularExpressions::Regex^ mRegexGroupNames;
 		static String^ LimitPrefix;
 
+		IMatch^ CreateMatch( const icu::RegexMatcher* icuMatcher );
 		static void BuildOptions( );
 	};
 

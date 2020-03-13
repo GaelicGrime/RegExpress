@@ -1,8 +1,5 @@
 #include "pch.h"
 
-#include "Capture.h"
-#include "Group.h"
-#include "Match.h"
 #include "Matcher.h"
 
 
@@ -190,51 +187,7 @@ namespace IcuRegexInterop
 					break;
 				}
 
-				int32_t start = icu_matcher->start( status );
-				Check( status );
-
-				int32_t end = icu_matcher->end( status );
-				Check( status );
-
-				Match^ match = gcnew Match( this, start, end - start );
-				Group^ default_group = gcnew Group( match, "0", true, start, end - start );
-
-				match->AddGroup( default_group );
-
-				int32_t group_count = icu_matcher->groupCount( );
-				for( int32_t gr = 1; gr <= group_count; ++gr )
-				{
-					int32_t group_start = icu_matcher->start( gr, status );
-					Check( status );
-
-					Group^ group;
-					String^ group_name = nullptr;
-
-					if( gr < mGroupNames->Length )
-					{
-						group_name = mGroupNames[gr];
-					}
-
-					if( group_name == nullptr )
-					{
-						group_name = gr.ToString( System::Globalization::CultureInfo::InvariantCulture );
-					}
-
-					if( group_start < 0 )
-					{
-						group = gcnew Group( match, group_name, false, 0, 0 );
-					}
-					else
-					{
-						int32_t group_end = icu_matcher->end( gr, status );
-						Check( status );
-
-						group = gcnew Group( match, group_name, true, group_start, group_end - group_start );
-					}
-
-					match->AddGroup( group );
-				}
-
+				auto match = CreateMatch( icu_matcher );
 				matches->Add( match );
 			}
 
@@ -253,13 +206,68 @@ namespace IcuRegexInterop
 		}
 		catch( ... )
 		{
-			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
 		finally
 		{
 			delete icu_matcher;
 		}
+	}
+
+
+	String^ Matcher::GetText( int index, int length )
+	{
+		return OriginalText->Substring( index, length );
+	}
+
+
+	IMatch^ Matcher::CreateMatch( const icu::RegexMatcher* icuMatcher )
+	{
+		UErrorCode status = U_ZERO_ERROR;
+
+		int32_t start = icuMatcher->start( status );
+		Check( status );
+
+		int32_t end = icuMatcher->end( status );
+		Check( status );
+
+		auto match = SimpleMatch::Create( start, end - start, this );
+
+		match->AddGroup( start, end - start, true, "0" ); // default group
+
+		int32_t group_count = icuMatcher->groupCount( );
+		for( int32_t gr = 1; gr <= group_count; ++gr )
+		{
+			int32_t group_start = icuMatcher->start( gr, status );
+			Check( status );
+
+			Group^ group;
+			String^ group_name = nullptr;
+
+			if( gr < mGroupNames->Length )
+			{
+				group_name = mGroupNames[gr];
+			}
+
+			if( group_name == nullptr )
+			{
+				group_name = gr.ToString( System::Globalization::CultureInfo::InvariantCulture );
+			}
+
+			if( group_start < 0 )
+			{
+				match->AddGroup( 0, 0, false, group_name );
+			}
+			else
+			{
+				int32_t group_end = icuMatcher->end( gr, status );
+				Check( status );
+
+				match->AddGroup( group_start, group_end - group_start, true, group_name );
+			}
+		}
+
+		return match;
 	}
 
 

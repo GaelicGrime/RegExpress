@@ -80,11 +80,9 @@ namespace OnigurumaRegexInterop
 
 #pragma endregion
 
-
-		String^ OriginalText; // TODO: make it read-only
-
 	private:
 
+		String^ OriginalText;
 		MatcherData* mData;
 
 		static List<OptionInfo^>^ mSyntaxOptions;
