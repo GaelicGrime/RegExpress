@@ -23,10 +23,9 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		#region IGroup
 
-
 		public bool Success { get; }
 
-		public string Name { get; }
+		public string Name { get; private set; }
 
 		public IEnumerable<ICapture> Captures => mCaptures;
 
@@ -39,5 +38,12 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 			return capture;
 		}
+
+
+		public void SetName( string name )
+		{
+			Name = name;
+		}
+
 	}
 }

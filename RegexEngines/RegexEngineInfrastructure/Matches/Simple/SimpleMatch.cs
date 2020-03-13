@@ -57,5 +57,13 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 			return group;
 		}
+
+
+		public void SetGroupName(int index, string name)
+		{
+			( (SimpleGroup)mGroups[index] ).SetName( name );
+		}
+
+
 	}
 }

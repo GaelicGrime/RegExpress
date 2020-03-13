@@ -6,6 +6,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace Pcre2RegexInterop
@@ -86,7 +87,7 @@ namespace Pcre2RegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -109,8 +110,13 @@ namespace Pcre2RegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
 
+#pragma region ISimpleTextReader
+
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
 
 		const MatcherData* GetData( ) { return mData; }
 
@@ -124,6 +130,7 @@ namespace Pcre2RegexInterop
 
 		static IEnumerable<IMatch^>^ mEmptyEnumeration;
 
+		IMatch^ CreateMatchAndGroups( pcre2_code* re, PCRE2_SIZE* ovector, int rc );
 		static void BuildOptions( );
 	};
 

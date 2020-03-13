@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "Matcher.h"
-#include "Match.h"
 
 
 using namespace System::Diagnostics;
@@ -133,8 +132,6 @@ namespace Pcre2RegexInterop
 
 	RegexMatches^ Matcher::Matches( String^ text0 )
 	{
-		// TODO: re-implement as lazy enumerator?
-
 		try
 		{
 			auto matches = gcnew List<IMatch^>( );
@@ -215,9 +212,15 @@ namespace Pcre2RegexInterop
 
 			PCRE2_SIZE* ovector = pcre2_get_ovector_pointer( mData->mMatchData );
 
-			Match^ match = gcnew Match( this, mData->mRe, ovector, rc );
-			matches->Add( match );
+			if( ovector[0] > ovector[1] )
+			{
+				// TODO: show more details; see 'pcre2demo.c'
+				throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
+					"\\K was used in an assertion to set the match start after its end." ) );
+			}
 
+			auto match = CreateMatchAndGroups( mData->mRe, ovector, rc );
+			matches->Add( match );
 
 			// find next matches
 
@@ -357,7 +360,14 @@ namespace Pcre2RegexInterop
 						throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
 					}
 
-					Match^ match = gcnew Match( this, mData->mRe, ovector, rc );
+					if( ovector[0] > ovector[1] )
+					{
+						// TODO: show more details; see 'pcre2demo.c'
+						throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
+							"\\K was used in an assertion to set the match start after its end." ) );
+					}
+
+					auto match = CreateMatchAndGroups( mData->mRe, ovector, rc );
 					matches->Add( match );
 
 				} /* End of loop to find second and subsequent matches */
@@ -381,6 +391,93 @@ namespace Pcre2RegexInterop
 			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
+	}
+
+
+	String^ Matcher::GetText( int index, int length )
+	{
+		return gcnew String( mData->mText.c_str( ), index, length );
+	}
+
+
+	IMatch^ Matcher::CreateMatchAndGroups( pcre2_code* re, PCRE2_SIZE* ovector, int rc )
+	{
+		if( ovector[0] > ovector[1] )
+		{
+			// TODO: show more details; see 'pcre2demo.c'
+			throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
+				"\\K was used in an assertion to set the match start after its end." ) );
+		}
+
+		auto match = SimpleMatch::Create( CheckedCast::ToInt32n( ovector[0] ), CheckedCast::ToInt32( ovector[1] - ovector[0] ), this );
+
+		// add all groups; the names will be put later
+		// group [0] is the whole match
+
+		for( int i = 0; i < rc; ++i )
+		{
+			auto index = CheckedCast::ToInt32n( ovector[2 * i] );
+			auto length = CheckedCast::ToInt32( ovector[2 * i + 1] - ovector[2 * i] );
+
+			match->AddGroup( index, length, index >= 0, i.ToString( System::Globalization::CultureInfo::InvariantCulture ) );
+		}
+
+		// add failed groups not included in 'rc'
+		{
+			uint32_t capturecount;
+
+			if( pcre2_pattern_info(
+				re,
+				PCRE2_INFO_CAPTURECOUNT,
+				&capturecount ) == 0 )
+			{
+				int total_captures = CheckedCast::ToInt32( capturecount );
+				for( int i = rc; i <= total_captures; ++i )
+				{
+					match->AddGroup( -1, 0, false, i.ToString( System::Globalization::CultureInfo::InvariantCulture ) );
+				}
+			}
+		}
+
+		uint32_t namecount;
+
+		(void)pcre2_pattern_info(
+			re,                   /* the compiled pattern */
+			PCRE2_INFO_NAMECOUNT, /* get the number of named substrings */
+			&namecount );         /* where to put the answer */
+
+		if( namecount > 0 )
+		{
+			PCRE2_SPTR name_table;
+			uint32_t name_entry_size;
+			PCRE2_SPTR tabptr;
+
+			(void)pcre2_pattern_info(
+				re,                       /* the compiled pattern */
+				PCRE2_INFO_NAMETABLE,     /* address of the table */
+				&name_table );            /* where to put the answer */
+
+			(void)pcre2_pattern_info(
+				re,                       /* the compiled pattern */
+				PCRE2_INFO_NAMEENTRYSIZE, /* size of each entry in the table */
+				&name_entry_size );       /* where to put the answer */
+
+			tabptr = name_table;
+			int total_names = CheckedCast::ToInt32( namecount );
+			for( int i = 0; i < total_names; i++ )
+			{
+				int n = *( (__int16*)tabptr );
+
+				String^ name = gcnew String( reinterpret_cast<const wchar_t*>( ( (__int16*)tabptr ) + 1 ), 0, name_entry_size - 2 );
+				name = name->TrimEnd( '\0' );
+
+				match->SetGroupName( n, name );
+
+				tabptr += name_entry_size;
+			}
+		}
+
+		return match;
 	}
 
 

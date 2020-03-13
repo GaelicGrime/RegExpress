@@ -15,6 +15,14 @@ namespace RegexEngineInfrastructure
 		}
 
 
+		public static Int32 ToInt32n( UInt64 v )
+		{
+			if( v == UInt64.MaxValue ) return -1;
+
+			return checked((Int32)v);
+		}
+
+
 		public static Int32 ToInt32( Int64 v )
 		{
 			return checked((Int32)v);

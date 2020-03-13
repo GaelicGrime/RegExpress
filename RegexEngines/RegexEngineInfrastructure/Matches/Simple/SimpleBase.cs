@@ -24,6 +24,6 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		public int Length { get; }
 
-		public string Value => TextGetter.GetText( Index, Length );
+		public string Value => Index < 0 ? String.Empty : TextGetter.GetText( Index, Length );
 	}
 }
