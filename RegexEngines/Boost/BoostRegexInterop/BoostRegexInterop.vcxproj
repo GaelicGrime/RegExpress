@@ -145,9 +145,6 @@
   <ItemGroup>
     <ClInclude Include="boost_1_72_0_min\libs\regex\src\internals.hpp" />
     <ClInclude Include="BoostRegexInterop.h" />
-    <ClInclude Include="Capture.h" />
-    <ClInclude Include="Group.h" />
-    <ClInclude Include="Match.h" />
     <ClInclude Include="Matcher.h" />
     <ClInclude Include="pch-boost.h" />
     <ClInclude Include="pch.h" />
@@ -326,9 +323,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="BoostRegexInterop.cpp" />
-    <ClCompile Include="Capture.cpp" />
-    <ClCompile Include="Group.cpp" />
-    <ClCompile Include="Match.cpp" />
     <ClCompile Include="Matcher.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

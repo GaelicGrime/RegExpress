@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "Matcher.h"
-#include "Match.h"
 
 
 using namespace System::Diagnostics;
@@ -175,7 +174,7 @@ namespace BoostRegexInterop
 	String^ Matcher::GetBoostVersion( )
 	{
 		/*
-		For Boost Documentation:
+		From Boost documentation:
 			BOOST_VERSION
 			<boost/version.hpp>
 			Describes the boost version number in XYYYZZ format such that:
@@ -191,13 +190,11 @@ namespace BoostRegexInterop
 
 	RegexMatches^ Matcher::Matches( String^ text0 )
 	{
-		// TODO: re-implement as lazy enumerator?
-
 		try
 		{
-			marshal_context context{};
+			marshal_context mc{};
 
-			mData->mText = context.marshal_as<std::wstring>( text0 );
+			mData->mText = mc.marshal_as<std::wstring>( text0 );
 
 			auto matches = gcnew List<IMatch^>( );
 
@@ -210,7 +207,55 @@ namespace BoostRegexInterop
 			{
 				const wcmatch& match = *i;
 
-				auto m = gcnew Match( this, match );
+				auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
+
+				Dictionary<int, String^>^ names = nullptr;
+
+				if( GroupNames )
+				{
+					names = gcnew Dictionary<int, String^>( GroupNames->Count ); // (or use array?)
+
+					for each( auto name0 in GroupNames )
+					{
+						const wchar_t* name = mc.marshal_as<const wchar_t*>( name0 );
+
+						int i = match.named_subexpression_index( name, name + wcslen( name ) );
+						if( i >= 0 )
+						{
+							names[i] = name0;
+						}
+					}
+				}
+
+				int j = 0;
+
+				for( auto i = match.begin( ); i != match.end( ); ++i, ++j )
+				{
+					const boost::wcsub_match& submatch = *i;
+
+					String^ name = nullptr;
+					if( !names || !names->TryGetValue( j, name ) ) name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
+
+					if( !submatch.matched )
+					{
+						m->AddGroup( 0, 0, false, name );
+					}
+					else
+					{
+						auto submatch_index = match.position( j );
+
+						auto group = m->AddGroup( CheckedCast::ToInt32( submatch_index ), CheckedCast::ToInt32( submatch.length( ) ), true, name );
+
+						for( const boost::wcsub_match& c : submatch.captures( ) )
+						{
+							if( !c.matched ) continue;
+
+							auto index = c.first - mData->mText.c_str( );
+
+							group->AddCapture( CheckedCast::ToInt32( index ), CheckedCast::ToInt32( c.length( ) ) );
+						}
+					}
+				}
 
 				matches->Add( m );
 			}
@@ -238,6 +283,12 @@ namespace BoostRegexInterop
 			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
+	}
+
+
+	String^ Matcher::GetText( int index, int length )
+	{
+		return gcnew String( mData->mText.c_str( ), index, length );
 	}
 
 

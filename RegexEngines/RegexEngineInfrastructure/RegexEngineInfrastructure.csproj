@@ -74,6 +74,11 @@
     <Compile Include="Matches\IGroup.cs" />
     <Compile Include="Matches\IMatch.cs" />
     <Compile Include="Matches\RegexMatches.cs" />
+    <Compile Include="Matches\Simple\ISimpleTextGetter.cs" />
+    <Compile Include="Matches\Simple\SimpleBase.cs" />
+    <Compile Include="Matches\Simple\SimpleCapture.cs" />
+    <Compile Include="Matches\Simple\SimpleGroup.cs" />
+    <Compile Include="Matches\Simple\SimpleMatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IRegexEngine.cs" />
     <Compile Include="RegexEngineCapabilityEnum.cs" />

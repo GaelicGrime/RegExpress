@@ -6,6 +6,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace BoostRegexInterop
@@ -35,7 +36,7 @@ namespace BoostRegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -56,7 +57,13 @@ namespace BoostRegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
+
+#pragma region ISimpleTextReader
+
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
 
 	internal:
 

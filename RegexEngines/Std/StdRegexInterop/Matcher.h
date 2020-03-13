@@ -6,6 +6,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace StdRegexInterop
@@ -18,7 +19,7 @@ namespace StdRegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -35,7 +36,14 @@ namespace StdRegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
+
+#pragma region ISimpleTextGetter
+
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
+
 
 
 		const MatcherData* GetData( ) { return mData; }

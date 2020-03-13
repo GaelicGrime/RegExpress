@@ -1,0 +1,43 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+namespace RegexEngineInfrastructure.Matches.Simple
+{
+	public sealed class SimpleGroup : SimpleBase, IGroup
+	{
+		readonly List<ICapture> mCaptures = new List<ICapture>( );
+
+
+		internal SimpleGroup( int index, int length, ISimpleTextGetter textGetter,
+			bool success, string name )
+			: base( index, length, textGetter )
+		{
+			Success = success;
+			Name = name;
+		}
+
+
+		#region IGroup
+
+
+		public bool Success { get; }
+
+		public string Name { get; }
+
+		public IEnumerable<ICapture> Captures => mCaptures;
+
+		#endregion
+
+		public SimpleCapture AddCapture( int index, int length )
+		{
+			var capture = new SimpleCapture( index, length, TextGetter );
+			mCaptures.Add( capture );
+
+			return capture;
+		}
+	}
+}

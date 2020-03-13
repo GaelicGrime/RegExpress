@@ -8,7 +8,7 @@ using RegexEngineInfrastructure.Matches;
 
 namespace RegexEngineInfrastructure.Matches
 {
-	public interface IMatch : IGroup
+	public interface IMatch : IGroup // TODO: reconsider the inheritance
 	{
 		IEnumerable<IGroup> Groups { get; }
 	}
