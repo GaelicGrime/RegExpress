@@ -1,8 +1,5 @@
 #include "pch.h"
 
-#include "Capture.h"
-#include "Group.h"
-#include "Match.h"
 #include "Matcher.h"
 #include "OnigurumaHelper.h"
 
@@ -216,7 +213,7 @@ namespace OnigurumaRegexInterop
 	private value struct TraverseTreeData
 	{
 		int groupNumber;
-		Group^ group;
+		SimpleGroup^ group;
 	};
 
 
@@ -235,8 +232,7 @@ namespace OnigurumaRegexInterop
 				Debug::Assert( ( beg % 2 ) == 0 ); // event positions expected
 				Debug::Assert( ( end % 2 ) == 0 );
 
-				auto capture = gcnew Capture( data->group, beg / 2, ( end - beg ) / 2 );
-				data->group->AddCapture( capture );
+				data->group->AddCapture( beg / 2, ( end - beg ) / 2 );
 			}
 		}
 
@@ -301,7 +297,7 @@ namespace OnigurumaRegexInterop
 					}
 
 
-					Match^ match0 = nullptr;
+					SimpleMatch^ match0 = nullptr;
 
 					for( int i = 0; i < region->num_regs; ++i )
 					{
@@ -320,8 +316,7 @@ namespace OnigurumaRegexInterop
 							}
 							else
 							{
-								Group^ group = gcnew Group( match0, group_name, false, 0, 0 );
-								match0->AddGroup( group );
+								match0->AddGroup( 0, 0, false, group_name );
 							}
 						}
 						else
@@ -336,13 +331,11 @@ namespace OnigurumaRegexInterop
 
 							if( i == 0 )
 							{
-								match0 = gcnew Match( this, begin, end - begin );
-
+								match0 = SimpleMatch::Create( begin, end - begin, this );
 								matches->Add( match0 );
 							}
 
-							Group^ group = gcnew Group( match0, group_name, true, begin, end - begin );
-							match0->AddGroup( group ); // (including default group)
+							SimpleGroup^ group = match0->AddGroup( begin, end - begin, true, group_name );
 
 							// captures
 
@@ -392,9 +385,14 @@ namespace OnigurumaRegexInterop
 		}
 		catch( ... )
 		{
-			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
+	}
+
+
+	String^ Matcher::GetText( int index, int length )
+	{
+		return OriginalText->Substring( index, length );
 	}
 
 
@@ -511,6 +509,68 @@ namespace OnigurumaRegexInterop
 		{
 			return String::Format( "{0}\r\n\r\n({1})", text, code );
 		}
+	}
+
+
+
+	IMatch^ Matcher::CreateMatch( OnigRegion* region, List<String^>^ groupNames )
+	{
+		SimpleMatch^ match = nullptr;
+
+		for( int i = 0; i < region->num_regs; ++i )
+		{
+			int group_number = i;
+			String^ group_name = nullptr;
+			if( group_number < groupNames->Count ) group_name = groupNames[group_number];
+			if( group_name == nullptr ) group_name = group_number.ToString( System::Globalization::CultureInfo::InvariantCulture );
+
+			if( region->beg[i] < 0 )
+			{
+				// failed group
+
+				if( i == 0 )
+				{
+					Debug::Assert( false );
+				}
+				else
+				{
+					match->AddGroup( 0, 0, false, group_name );
+				}
+			}
+			else
+			{
+				// succeeded group
+
+				Debug::Assert( ( region->beg[i] % sizeof( wchar_t ) ) == 0 ); // even positions expected
+				Debug::Assert( ( region->end[i] % sizeof( wchar_t ) ) == 0 );
+
+				int begin = region->beg[i] / sizeof( wchar_t );
+				int end = region->end[i] / sizeof( wchar_t );
+
+				if( i == 0 )
+				{
+					match = SimpleMatch::Create( begin, end - begin, this );
+				}
+
+				SimpleGroup^ group = match->AddGroup( begin, end - begin, true, group_name );
+
+				// captures
+
+				int number_of_captures = onig_number_of_captures( mData->mRegex );
+				int number_of_capture_histories = onig_number_of_capture_histories( mData->mRegex );
+				OnigCaptureTreeNode* capture_tree = onig_get_capture_tree( region );
+
+				{
+					TraverseTreeData data{};
+					data.groupNumber = group_number;
+					data.group = group;
+
+					onig_capture_tree_traverse( region, ONIG_TRAVERSE_CALLBACK_AT_FIRST, &TraverseTreeCallback, &data );
+				}
+			}
+		}
+
+		return match;
 	}
 
 

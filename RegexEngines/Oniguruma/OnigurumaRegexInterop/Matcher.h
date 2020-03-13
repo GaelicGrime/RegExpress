@@ -6,6 +6,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace OnigurumaRegexInterop
@@ -48,7 +49,7 @@ namespace OnigurumaRegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -71,7 +72,14 @@ namespace OnigurumaRegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
+
+#pragma region ISimpleTextReader
+
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
+
 
 		String^ OriginalText; // TODO: make it read-only
 
@@ -85,6 +93,7 @@ namespace OnigurumaRegexInterop
 		static List<OptionInfo^>^ mConfigurationOptions;
 		static Dictionary<String^, IntPtr>^ mTagToOption;
 
+		IMatch^ CreateMatch( OnigRegion* region, List<String^>^ groupNames );
 		static void BuildOptions( );
 	};
 
