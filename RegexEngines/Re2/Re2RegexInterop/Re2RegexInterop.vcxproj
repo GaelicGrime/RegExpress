@@ -134,8 +134,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Group.h" />
-    <ClInclude Include="Match.h" />
     <ClInclude Include="Matcher.h" />
     <ClInclude Include="pch-re2.h" />
     <ClInclude Include="pch.h" />
@@ -167,8 +165,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="Group.cpp" />
-    <ClCompile Include="Match.cpp" />
     <ClCompile Include="Matcher.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

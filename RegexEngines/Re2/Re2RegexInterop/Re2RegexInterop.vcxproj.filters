@@ -111,12 +111,6 @@
     <ClInclude Include="re2-min\re2\set.h">
       <Filter>RE2\re2\h</Filter>
     </ClInclude>
-    <ClInclude Include="Group.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Match.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Matcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -196,12 +190,6 @@
     </ClCompile>
     <ClCompile Include="re2-min\util\strutil.cc">
       <Filter>RE2\util</Filter>
-    </ClCompile>
-    <ClCompile Include="Group.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Match.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Matcher.cpp">
       <Filter>Source Files</Filter>

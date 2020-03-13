@@ -1,8 +1,6 @@
 #include "pch.h"
 
 #include "Matcher.h"
-#include "Group.h"
-#include "Match.h"
 
 
 using namespace System::Diagnostics;
@@ -227,7 +225,7 @@ namespace Re2RegexInterop
 			std::vector<re2::StringPiece> found_groups;
 			found_groups.resize( number_of_capturing_groups + 1 ); // include main match
 
-			const auto& group_names = mData->mRe->CapturingGroupNames( ); // a 'map<int, string>'
+			const std::map<int, std::string>& group_names = mData->mRe->CapturingGroupNames( );
 
 			int start_pos = 0;
 			int previous_start_pos = 0;
@@ -241,75 +239,10 @@ namespace Re2RegexInterop
 				CheckedCast::ToInt32( found_groups.size( ) ) )
 				)
 			{
-				const re2::StringPiece& main_group = found_groups.front( );
-
-				int utf8index = CheckedCast::ToInt32( main_group.data( ) - text.data( ) );
-				int index = indices.at( utf8index );
-				if( index < 0 )
-				{
-					throw gcnew Exception( "Index error (A)." );
-				}
-
-				int next_index = indices.at( utf8index + main_group.size( ) );
-				if( next_index < 0 )
-				{
-					// for example, '\C' in pattern -- match one byte
-					// TODO: find a more appropriate error text
-					throw gcnew Exception( "Index error (B)." );
-				}
-
-				int length = next_index - index;
-
-				Match^ match = gcnew Match( this, index, length );
-				// default group
-				match->AddGroup( gcnew Group( match, "0", true, index, length ) );
-
-				// groups
-				for( int i = 1; i < found_groups.size( ); ++i )
-				{
-					const re2::StringPiece& g = found_groups[i];
-
-					String^ group_name;
-					auto f = group_names.find( i );
-					if( f != group_names.cend( ) )
-					{
-						group_name = gcnew String( f->second.c_str( ) );
-					}
-					else
-					{
-						group_name = i.ToString( System::Globalization::CultureInfo::InvariantCulture );
-					}
-
-					Group^ group;
-
-					if( g.data( ) == nullptr ) // failed group
-					{
-						group = gcnew Group( match, group_name, false, 0, 0 );
-					}
-					else
-					{
-						int utf8index = CheckedCast::ToInt32( g.data( ) - text.data( ) );
-						int index = indices.at( utf8index );
-						if( index < 0 )
-						{
-							// for example, '\C' in pattern -- match one byte
-							// TODO: find a more appropriate error text
-							throw gcnew Exception( "Index error (C)." );
-						}
-
-						int next_index = indices.at( utf8index + g.size( ) );
-						if( next_index < 0 )
-						{
-							throw gcnew Exception( "Index error (D)." );
-						}
-
-						group = gcnew Group( match, group_name, true, index, next_index - index );
-					}
-
-					match->AddGroup( group );
-				}
-
+				auto match = CreateMatch( found_groups, group_names, text, indices );
 				matches->Add( match );
+
+				const re2::StringPiece& main_group = found_groups.front( );
 
 				// advance to the end of found match
 
@@ -343,9 +276,85 @@ namespace Re2RegexInterop
 		}
 		catch( ... )
 		{
-			// TODO: also catch 'boost::exception'?
 			throw gcnew Exception( "Unknown error.\r\n" __FILE__ );
 		}
+	}
+
+
+	String^ Matcher::GetText( int index, int length )
+	{
+		return OriginalText->Substring( index, length );
+	}
+
+
+	IMatch^ Matcher::CreateMatch( const std::vector<re2::StringPiece>& foundGroups, const std::map<int, std::string>& groupNames,
+		const std::vector<char>& text, const std::vector<int>& indices )
+	{
+		const re2::StringPiece& main_group = foundGroups.front( );
+
+		int utf8index = CheckedCast::ToInt32( main_group.data( ) - text.data( ) );
+		int index = indices.at( utf8index );
+		if( index < 0 )
+		{
+			throw gcnew Exception( "Index error (A)." );
+		}
+
+		int next_index = indices.at( utf8index + main_group.size( ) );
+		if( next_index < 0 )
+		{
+			// for example, '\C' in pattern -- match one byte
+			// TODO: find a more appropriate error text
+			throw gcnew Exception( "Index error (B)." );
+		}
+
+		int length = next_index - index;
+
+		auto match = SimpleMatch::Create( index, length, this );
+		// default group
+		match->AddGroup( index, length, true, L"0" );
+
+		// groups
+		for( int i = 1; i < foundGroups.size( ); ++i )
+		{
+			const re2::StringPiece& g = foundGroups[i];
+
+			String^ group_name;
+			auto f = groupNames.find( i );
+			if( f != groupNames.cend( ) )
+			{
+				group_name = gcnew String( f->second.c_str( ) );
+			}
+			else
+			{
+				group_name = i.ToString( System::Globalization::CultureInfo::InvariantCulture );
+			}
+
+			if( g.data( ) == nullptr ) // failed group
+			{
+				match->AddGroup( 0, 0, false, group_name );
+			}
+			else
+			{
+				int utf8index = CheckedCast::ToInt32( g.data( ) - text.data( ) );
+				int index = indices.at( utf8index );
+				if( index < 0 )
+				{
+					// for example, '\C' in pattern -- match one byte
+					// TODO: find a more appropriate error text
+					throw gcnew Exception( "Index error (C)." );
+				}
+
+				int next_index = indices.at( utf8index + g.size( ) );
+				if( next_index < 0 )
+				{
+					throw gcnew Exception( "Index error (D)." );
+				}
+
+				match->AddGroup( index, next_index - index, true, group_name );
+			}
+		}
+
+		return match;
 	}
 
 

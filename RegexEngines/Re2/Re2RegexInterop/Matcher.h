@@ -6,6 +6,7 @@ using namespace System::Collections::Generic;
 
 using namespace RegexEngineInfrastructure;
 using namespace RegexEngineInfrastructure::Matches;
+using namespace RegexEngineInfrastructure::Matches::Simple;
 
 
 namespace Re2RegexInterop
@@ -44,7 +45,7 @@ namespace Re2RegexInterop
 	};
 
 
-	public ref class Matcher : IMatcher
+	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
 	public:
 
@@ -65,7 +66,13 @@ namespace Re2RegexInterop
 
 		virtual RegexMatches^ Matches( String^ text );
 
-#pragma endregion IMatcher
+#pragma endregion
+
+#pragma region ISimpleTextReader
+
+		virtual String^ GetText( int index, int length );
+
+#pragma endregion
 
 
 		const MatcherData* GetData( ) { return mData; }
@@ -80,6 +87,8 @@ namespace Re2RegexInterop
 
 		static IEnumerable<IMatch^>^ mEmptyEnumeration;
 
+		IMatch^ CreateMatch( const std::vector<re2::StringPiece>& foundGroups, const std::map<int, std::string>& groupNames,
+			const std::vector<char>& text, const std::vector<int>& indices );
 		static void BuildOptions( );
 	};
 }
