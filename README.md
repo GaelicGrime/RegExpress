@@ -11,7 +11,7 @@ It includes several Regular Expression engines:
 * **PCRE2** Open Source Regex Library 10.34 \[[link](https://pcre.org/)\]
 * **RE2** C++ Library 2020-03-03 from Google \[[link](https://github.com/google/re2)\]
 * **Oniguruma** Regular Expression Library 6.9.4 \[[link](https://github.com/kkos/oniguruma)\]
-* **ICU Regular Expressions** 65.1 \[[link](http://site.icu-project.org/)\]
+* **ICU Regular Expressions** 66.1 \[[link](http://site.icu-project.org/)\]
 
 <br/>
 
@@ -41,7 +41,7 @@ The sources contain code written in C#, C, C++ and C++/CLI. Can be compiled with
 * .NET desktop development
 * Desktop development with C++, incuding C++/CLI support.
 
-The Regular Expression libraries (minimal part) are included.
+The Regular Expression libraries (minimal parts) are included.
 
 Only “x64” platform is supported.
 
