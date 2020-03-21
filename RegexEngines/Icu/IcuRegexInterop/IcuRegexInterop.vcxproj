@@ -184,9 +184,9 @@ copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ICU-min\bin64\icudt65.dll" />
-    <None Include="ICU-min\bin64\icuin65.dll" />
-    <None Include="ICU-min\bin64\icuuc65.dll" />
+    <None Include="ICU-min\bin64\icudt66.dll" />
+    <None Include="ICU-min\bin64\icuin66.dll" />
+    <None Include="ICU-min\bin64\icuuc66.dll" />
     <None Include="IcuRegexEngine.snk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
