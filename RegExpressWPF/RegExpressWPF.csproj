@@ -92,7 +92,6 @@
     <Compile Include="Adorners\UnderliningAdorner.cs" />
     <Compile Include="Adorners\WhitespaceAdorner.cs" />
     <Compile Include="Code\ResumableLoop.cs" />
-    <Compile Include="Code\NaiveRanges.cs" />
     <Compile Include="Code\StyleInfo.cs" />
     <Compile Include="Code\TabData.cs" />
     <Compile Include="Code\UITaskHelper.cs" />

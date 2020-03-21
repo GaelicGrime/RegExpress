@@ -520,8 +520,9 @@ namespace RegExpressWPF
 
 			// (NOTE. Overlaps are possible in this example: (?=(..))
 
-			var coloured_ranges = new NaiveRanges( bottom_index - top_index + 1 );
 			var segments_and_styles = new List<(Segment segment, StyleInfo styleInfo)>( );
+			var segments_to_uncolour = new List<Segment>( );
+			segments_to_uncolour.Add( new Segment( top_index, bottom_index - top_index + 1 ) );
 
 			if( matches != null && matches.Count > 0 )
 			{
@@ -540,16 +541,15 @@ namespace RegExpressWPF
 
 					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
 
-					coloured_ranges.SafeSet( match.Index - top_index, match.Length );
+					Segment.Except( segments_to_uncolour, match.Index, match.Length );
 					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
 				}
 			}
 
 			if( cnc.IsCancellationRequested ) return;
 
-			List<(Segment segment, StyleInfo styleInfo)> segments_to_uncolour =
-							coloured_ranges
-								.GetSegments( cnc, false, top_index )
+			List<(Segment segment, StyleInfo styleInfo)> segments_to_uncolour_with_style =
+							segments_to_uncolour
 								.Select( s => (s, NormalStyleInfo) )
 								.ToList( );
 
@@ -558,7 +558,7 @@ namespace RegExpressWPF
 			int center_index = ( top_index + bottom_index ) / 2;
 
 			var all_segments_and_styles =
-				segments_and_styles.Concat( segments_to_uncolour )
+				segments_and_styles.Concat( segments_to_uncolour_with_style )
 				.OrderBy( s => Math.Abs( center_index - ( s.segment.Index + s.segment.Length / 2 ) ) )
 				.ToList( );
 

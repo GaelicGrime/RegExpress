@@ -41,7 +41,7 @@ namespace RegexEngineInfrastructure
 		public bool Intersects( Segment b )
 		{
 			var i = Math.Max( Index, b.Index );
-			var e = Math.Min( End, b.Index + b.Length );
+			var e = Math.Min( End, b.End );
 
 			return e > i;
 		}
@@ -69,11 +69,11 @@ namespace RegexEngineInfrastructure
 
 		public static void Except( List<Segment> list, Segment a )
 		{
-			Exclude( list, a.Index, a.Length );
+			Except( list, a.Index, a.Length );
 		}
 
 
-		public static void Exclude( List<Segment> list, int index, int length )
+		public static void Except( List<Segment> list, int index, int length )
 		{
 			if( length == 0 ) return;
 
