@@ -4,11 +4,19 @@
 
 using namespace System::Diagnostics;
 using namespace System::Runtime::InteropServices;
+using namespace System::Text;
 using namespace msclr::interop;
 
 
 namespace SubRegRegexInterop
 {
+
+	static Matcher::Matcher( )
+	{
+		AsciiEncoding = Encoding::GetEncoding( "ASCII", EncoderFallback::ExceptionFallback, DecoderFallback::ExceptionFallback );
+	}
+
+
 	Matcher::Matcher( String^ pattern, cli::array<String^>^ options )
 		: Pattern( pattern ), MaximumDepth( 4 )
 	{
@@ -43,21 +51,54 @@ namespace SubRegRegexInterop
 	}
 
 
-	RegexMatches^ Matcher::Matches( String^ text0 )
+	RegexMatches^ Matcher::Matches( String^ text )
 	{
 		try
 		{
-			OriginalText = text0;
+			OriginalText = text;
 
-			marshal_context context{};
+			cli::array<unsigned char>^ pattern_bytes;
+			cli::array<unsigned char>^ text_bytes;
+			int invalid_pattern_index = -1;
+			int invalid_text_index = -1;
 
-			std::string pattern = context.marshal_as<std::string>( Pattern );
-			std::string text = context.marshal_as<std::string>( text0 );
+			try
+			{
+				pattern_bytes = AsciiEncoding->GetBytes( Pattern );
+			}
+			catch( EncoderFallbackException ^ exc )
+			{
+				invalid_pattern_index = exc->Index;
+			}
 
-			const int MAX_CAPTURES = 1000;
+			try
+			{
+				text_bytes = AsciiEncoding->GetBytes( text );
+			}
+			catch( EncoderFallbackException ^ exc )
+			{
+				invalid_text_index = exc->Index;
+			}
+
+			if( invalid_pattern_index >= 0 || invalid_text_index >= 0 )
+			{
+				String^ msg = "SubReg only supports ASCII character encoding.\r\n";
+				if( invalid_pattern_index >= 0 ) msg += String::Format( "Pattern contains an invalid character at position {0}.\r\n", invalid_pattern_index );
+				if( invalid_text_index >= 0 ) msg += String::Format( "Text contains an invalid character at position {0}.\r\n", invalid_text_index );
+
+				throw gcnew Exception( msg );
+			}
+
+			pin_ptr<unsigned char> pinned_pattern_bytes = &pattern_bytes[0];
+			pin_ptr<unsigned char> pinned_text_bytes = &text_bytes[0];
+
+			const char* native_pattern = (const char*)pinned_pattern_bytes;
+			const char* native_text = (const char*)pinned_text_bytes;
+
+			const int MAX_CAPTURES = 100;
 			std::unique_ptr<subreg_capture_t[]> captures( new subreg_capture_t[MAX_CAPTURES]( ) );
 
-			int result = subreg_match( pattern.c_str( ), text.c_str( ), captures.get( ), MAX_CAPTURES, MaximumDepth );
+			int result = subreg_match( native_pattern, native_text, captures.get( ), MAX_CAPTURES, MaximumDepth );
 
 			CheckResult( result );
 
@@ -66,7 +107,7 @@ namespace SubRegRegexInterop
 			if( result > 0 )
 			{
 				const subreg_capture_t& capture0 = captures[0];
-				int index0 = capture0.start - text.c_str( );
+				int index0 = capture0.start - native_text;
 				int length0 = capture0.length;
 
 				auto match = SimpleMatch::Create( index0, length0, this );
@@ -75,7 +116,7 @@ namespace SubRegRegexInterop
 				{
 					// (the first is the entire input)
 					const subreg_capture_t& capture = captures[i];
-					int index = capture.start - text.c_str( );
+					int index = capture.start - native_text;
 					int length = capture.length;
 
 					match->AddGroup( index, length, true, i.ToString( System::Globalization::CultureInfo::InvariantCulture ) );

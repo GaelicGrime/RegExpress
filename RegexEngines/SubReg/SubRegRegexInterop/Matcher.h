@@ -13,6 +13,8 @@ namespace SubRegRegexInterop
 {
 	public ref class Matcher : IMatcher, ISimpleTextGetter
 	{
+		static Matcher( );
+
 	public:
 		Matcher( String^ pattern, cli::array<String^>^ options );
 
@@ -32,6 +34,8 @@ namespace SubRegRegexInterop
 #pragma endregion
 
 	private:
+
+		static System::Text::Encoding^ AsciiEncoding;
 
 		int MaximumDepth;
 		String^ const Pattern;
