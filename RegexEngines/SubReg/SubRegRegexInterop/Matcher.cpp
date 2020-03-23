@@ -84,8 +84,6 @@ namespace SubRegRegexInterop
 				matches->Add( match );
 			}
 
-
-
 			return gcnew RegexMatches( matches->Count, matches );
 
 		}
@@ -112,9 +110,10 @@ namespace SubRegRegexInterop
 		if( result >= 1 || result == SUBREG_RESULT_NO_MATCH ) return;
 
 		const char* msg = nullptr;
+		const char* sym = nullptr;
 
 #define T(code, message) \
-	case code : msg = message; break;
+	case code : msg = message; sym = #code; break;
 
 		switch( result )
 		{
@@ -137,7 +136,7 @@ namespace SubRegRegexInterop
 
 		if( msg != nullptr )
 		{
-			throw gcnew Exception( gcnew String( msg ) );
+			throw gcnew Exception( String::Format( "{0}\r\n\r\n({1}, {2})", gcnew String( msg ), gcnew String( sym ), result ) );
 		}
 	}
 
