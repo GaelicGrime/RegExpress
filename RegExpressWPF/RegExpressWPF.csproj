@@ -203,6 +203,10 @@
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
       <Name>RegexEngineInfrastructure</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\SubReg\SubRegRegexEngine\SubRegRegexEngine.csproj">
+      <Project>{9aa90821-f9e5-44eb-a3c2-e38f2f09fdb0}</Project>
+      <Name>SubRegRegexEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

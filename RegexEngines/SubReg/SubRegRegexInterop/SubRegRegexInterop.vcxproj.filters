@@ -13,18 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ICU">
-      <UniqueIdentifier>{933580b7-4f10-4a38-a890-17e5eaeea75e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ICU\bin64">
-      <UniqueIdentifier>{3e5af92a-8d35-4b69-a7b8-62703901ac3c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ICU\h">
-      <UniqueIdentifier>{8a5e0764-3f94-4e94-9f15-d11fcd0410de}</UniqueIdentifier>
+    <Filter Include="SubReg">
+      <UniqueIdentifier>{5fab8c97-aa01-49a5-bb17-ca965ba3844a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IcuRegexInterop.h">
+    <ClInclude Include="SubRegRegexInterop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
@@ -33,15 +27,15 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ICU-min\include\unicode\regex.h">
-      <Filter>ICU\h</Filter>
+    <ClInclude Include="SubReg-min\subreg.h">
+      <Filter>SubReg</Filter>
     </ClInclude>
     <ClInclude Include="Matcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="IcuRegexInterop.cpp">
+    <ClCompile Include="SubRegRegexInterop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -49,6 +43,9 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SubReg-min\subreg.c">
+      <Filter>SubReg</Filter>
     </ClCompile>
     <ClCompile Include="Matcher.cpp">
       <Filter>Source Files</Filter>
@@ -65,15 +62,8 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="IcuRegexEngine.snk" />
-    <None Include="ICU-min\bin64\icudt66.dll">
-      <Filter>ICU\bin64</Filter>
-    </None>
-    <None Include="ICU-min\bin64\icuin66.dll">
-      <Filter>ICU\bin64</Filter>
-    </None>
-    <None Include="ICU-min\bin64\icuuc66.dll">
-      <Filter>ICU\bin64</Filter>
+    <None Include="SubReg-min\LICENSE">
+      <Filter>SubReg</Filter>
     </None>
   </ItemGroup>
 </Project>

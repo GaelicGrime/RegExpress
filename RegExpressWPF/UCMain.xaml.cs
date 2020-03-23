@@ -64,6 +64,7 @@ namespace RegExpressWPF
 				new Re2RegexEngineNs.Re2RegexEngine(),
 				new OnigurumaRegexEngineNs.OnigurumaRegexEngine(),
 				new IcuRegexEngineNs.IcuRegexEngine(),
+				new SubRegRegexEngineNs.SubRegRegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
