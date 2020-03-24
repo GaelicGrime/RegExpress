@@ -107,7 +107,7 @@ namespace SubRegRegexInterop
 			if( result > 0 )
 			{
 				const subreg_capture_t& capture0 = captures[0];
-				int index0 = capture0.start - native_text;
+				int index0 = CheckedCast::ToInt32( capture0.start - native_text );
 				int length0 = capture0.length;
 
 				auto match = SimpleMatch::Create( index0, length0, this );
@@ -116,7 +116,7 @@ namespace SubRegRegexInterop
 				{
 					// (the first is the entire input)
 					const subreg_capture_t& capture = captures[i];
-					int index = capture.start - native_text;
+					int index = CheckedCast::ToInt32( capture.start - native_text );
 					int length = capture.length;
 
 					match->AddGroup( index, length, true, i.ToString( System::Globalization::CultureInfo::InvariantCulture ) );

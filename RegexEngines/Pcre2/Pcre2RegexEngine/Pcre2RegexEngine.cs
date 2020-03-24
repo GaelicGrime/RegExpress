@@ -275,7 +275,7 @@ namespace Pcre2RegexEngineNs
 
 			escape += @"\\. | ";
 
-			escape = EndGroup( escape, "escape" );
+			escape = RegexUtilities.EndGroup( escape, "escape" );
 
 			// 
 
@@ -283,7 +283,7 @@ namespace Pcre2RegexEngineNs
 
 			@class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
 
-			@class = EndGroup( @class, "class" );
+			@class = RegexUtilities.EndGroup( @class, "class" );
 
 			//
 
@@ -291,7 +291,7 @@ namespace Pcre2RegexEngineNs
 
 			char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
-			char_group = EndGroup( char_group, null );
+			char_group = RegexUtilities.EndGroup( char_group, null );
 
 			// 
 
@@ -300,7 +300,7 @@ namespace Pcre2RegexEngineNs
 			comment += @"\(\?\#.*?(\)|$) | "; // comment
 			if( is_extended ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
-			comment = EndGroup( comment, "comment" );
+			comment = RegexUtilities.EndGroup( comment, "comment" );
 
 			//
 
@@ -316,7 +316,7 @@ namespace Pcre2RegexEngineNs
 			named_group += @"(?'name'\\[gk]\{.*?(\}|$)) | ";
 			named_group += @"(?'name'\(\?P=.*?(\)|$)) | "; //
 
-			named_group = EndGroup( named_group, "named_group" );
+			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
 
 			// TODO: add support for '(*...)' constructs
 
@@ -355,7 +355,7 @@ namespace Pcre2RegexEngineNs
 			pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 
-			pattern = EndGroup( pattern, null );
+			pattern = RegexUtilities.EndGroup( pattern, null );
 
 			if( string.IsNullOrWhiteSpace( pattern ) )
 				pattern = "(?!)";
@@ -367,23 +367,5 @@ namespace Pcre2RegexEngineNs
 			return regex;
 		}
 
-
-		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
-
-		static string EndGroup( string s, string name )
-		{
-			if( string.IsNullOrWhiteSpace( s ) ) return null;
-
-			if( name != null )
-			{
-				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-			else
-			{
-				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-
-			return s;
-		}
 	}
 }

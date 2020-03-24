@@ -263,7 +263,7 @@ namespace IcuRegexEngineNs
 			escape += @"\\0[0-7]+ | "; // octal
 			escape += @"\\. | "; // \.
 
-			escape = EndGroup( escape, "escape" );
+			escape = RegexUtilities.EndGroup( escape, "escape" );
 
 			//
 
@@ -272,7 +272,7 @@ namespace IcuRegexEngineNs
 			named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
 			named_group += @"(?'name'\\k<.*?(>|$)) | ";
 
-			named_group = EndGroup( named_group, "named_group" );
+			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
 
 			//
 
@@ -280,7 +280,7 @@ namespace IcuRegexEngineNs
 
 			quote = @"\\Q.*?(\\E|$) | "; // quoted part
 
-			quote = EndGroup( quote, "escape" ); // use 'escape' name to take its colour
+			quote = RegexUtilities.EndGroup( quote, "escape" ); // use 'escape' name to take its colour
 
 			//
 
@@ -294,7 +294,7 @@ namespace IcuRegexEngineNs
 						\]
 						";
 
-			char_group = EndGroup( char_group, null );
+			char_group = RegexUtilities.EndGroup( char_group, null );
 
 			//
 
@@ -304,7 +304,7 @@ namespace IcuRegexEngineNs
 
 			if( UREGEX_COMMENTS ) comment += @"\#.*?(\n|$) | "; // line-comment
 
-			comment = EndGroup( comment, "comment" );
+			comment = RegexUtilities.EndGroup( comment, "comment" );
 
 			//
 
@@ -357,7 +357,7 @@ namespace IcuRegexEngineNs
 
 			pattern += @"\\. | "; // '\...'
 
-			pattern = EndGroup( pattern, null );
+			pattern = RegexUtilities.EndGroup( pattern, null );
 
 			if( string.IsNullOrWhiteSpace( pattern ) )
 				return EmptyRegex;
@@ -367,25 +367,6 @@ namespace IcuRegexEngineNs
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
 			return regex;
-		}
-
-
-		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
-
-		static string EndGroup( string s, string name )
-		{
-			if( string.IsNullOrWhiteSpace( s ) ) return null;
-
-			if( name != null )
-			{
-				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-			else
-			{
-				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-
-			return s;
 		}
 
 	}

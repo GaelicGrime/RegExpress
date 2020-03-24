@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
+
 namespace SubRegRegexEngineNs
 {
 	public class SubRegRegexEngine : IRegexEngine
@@ -128,7 +129,7 @@ namespace SubRegRegexEngineNs
 			escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
 			escape += @"\\. | ";
 
-			escape = EndGroup( escape, "escape" );
+			escape = RegexUtilities.EndGroup( escape, "escape" );
 
 			// that's all
 
@@ -156,7 +157,7 @@ namespace SubRegRegexEngineNs
 
 			pattern += @"\\. | "; // '\...'
 
-			pattern = EndGroup( pattern, null );
+			pattern = RegexUtilities.EndGroup( pattern, null );
 
 			if( string.IsNullOrWhiteSpace( pattern ) )
 				pattern = "(?!)";
@@ -166,25 +167,6 @@ namespace SubRegRegexEngineNs
 			var regex = new Regex( pattern, RegexOptions.Compiled );
 
 			return regex;
-		}
-
-
-		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
-
-		static string EndGroup( string s, string name )
-		{
-			if( string.IsNullOrWhiteSpace( s ) ) return null;
-
-			if( name != null )
-			{
-				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-			else
-			{
-				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-
-			return s;
 		}
 
 
