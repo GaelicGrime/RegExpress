@@ -297,7 +297,7 @@ namespace BoostRegexEngineNs
 			if( is_perl || is_POSIX_extended ) escape += @"\\. | "; // various
 			if( is_POSIX_basic ) escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\. | "; // various
 
-			escape = EndGroup( escape, "escape" );
+			escape = RegexUtilities.EndGroup( escape, "escape" );
 
 			// 
 
@@ -306,7 +306,7 @@ namespace BoostRegexEngineNs
 			if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
 			if( is_perl && modX ) comment += @"\#.*?(\n|$) | "; // line-comment*/
 
-			comment = EndGroup( comment, "comment" );
+			comment = RegexUtilities.EndGroup( comment, "comment" );
 
 			// 
 
@@ -314,7 +314,7 @@ namespace BoostRegexEngineNs
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
 
-			@class = EndGroup( @class, "class" );
+			@class = RegexUtilities.EndGroup( @class, "class" );
 
 			//
 
@@ -322,7 +322,7 @@ namespace BoostRegexEngineNs
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
-			char_group = EndGroup( char_group, null );
+			char_group = RegexUtilities.EndGroup( char_group, null );
 
 			//
 
@@ -332,7 +332,7 @@ namespace BoostRegexEngineNs
 			if( is_perl ) named_group += @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$)) | "; // back reference
 			if( is_perl ) named_group += @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$)) | "; // back reference
 
-			named_group = EndGroup( named_group, "named_group" );
+			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
 
 			// 
 
@@ -404,7 +404,7 @@ namespace BoostRegexEngineNs
 				pattern += @"\\. | "; // '\...'
 			}
 
-			pattern = EndGroup( pattern, null );
+			pattern = RegexUtilities.EndGroup( pattern, null );
 
 			if( string.IsNullOrWhiteSpace( pattern ) )
 				pattern = "(?!)";
@@ -416,23 +416,5 @@ namespace BoostRegexEngineNs
 			return regex;
 		}
 
-
-		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
-
-		static string EndGroup( string s, string name )
-		{
-			if( string.IsNullOrWhiteSpace( s ) ) return null;
-
-			if( name != null )
-			{
-				s = "(?'" + name + "'" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-			else
-			{
-				s = "(" + EndGroupRegex.Replace( s, ")", 1 );
-			}
-
-			return s;
-		}
 	}
 }

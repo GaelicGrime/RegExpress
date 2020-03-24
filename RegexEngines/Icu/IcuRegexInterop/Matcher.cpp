@@ -241,7 +241,6 @@ namespace IcuRegexInterop
 			int32_t group_start = icuMatcher->start( gr, status );
 			Check( status );
 
-			Group^ group;
 			String^ group_name = nullptr;
 
 			if( gr < mGroupNames->Length )
