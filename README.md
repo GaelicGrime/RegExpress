@@ -12,6 +12,7 @@ It includes several Regular Expression engines:
 * **RE2** C++ Library 2020-03-03 from Google \[[link](https://github.com/google/re2)\]
 * **Oniguruma** Regular Expression Library 6.9.4 \[[link](https://github.com/kkos/oniguruma)\]
 * **ICU Regular Expressions** 66.1 \[[link](http://site.icu-project.org/)\]
+* **SubReg** 2020-01-04 \[[link](https://github.com/mattbucknall/subreg)\]
 
 <br/>
 
