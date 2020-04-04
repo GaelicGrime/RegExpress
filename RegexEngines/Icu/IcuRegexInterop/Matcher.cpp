@@ -29,13 +29,11 @@ namespace IcuRegexInterop
 	}
 
 
-	Matcher::Matcher( String^ pattern0, cli::array<String^>^ options )
+	Matcher::Matcher( String^ pattern, cli::array<String^>^ options )
 		:mData( nullptr )
 	{
 		try
 		{
-			marshal_context context{};
-
 			uint32_t icu_options = 0;
 			int32_t icu_time_limit = 0; // (steps)
 
@@ -59,13 +57,14 @@ namespace IcuRegexInterop
 				}
 			}
 
-			wstring pattern = context.marshal_as<wstring>( pattern0 );
+			pin_ptr<const wchar_t> pinned_pattern = PtrToStringChars( pattern );
+			const wchar_t* native_pattern = pinned_pattern;
 
 			UErrorCode status = U_ZERO_ERROR;
 			UParseError parse_error{};
 
 			icu::RegexPattern* icu_pattern =
-				icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)pattern.c_str( ), CheckedCast::ToInt32( pattern.length( ) ) ),
+				icu::RegexPattern::compile( icu::UnicodeString( (char16_t*)native_pattern, pattern->Length ),
 					icu_options, parse_error, status );
 
 			/*
@@ -86,7 +85,7 @@ namespace IcuRegexInterop
 
 			mGroupNames = gcnew cli::array<String^>( 0 );
 
-			auto matches = mRegexGroupNames->Matches( pattern0 );
+			auto matches = mRegexGroupNames->Matches( pattern );
 			if( matches->Count > 0 )
 			{
 				for( int i = 0; i < matches->Count; ++i )
@@ -95,9 +94,10 @@ namespace IcuRegexInterop
 					if( n->Success )
 					{
 						String^ group_name = n->Value;
-						wstring native_group_name = context.marshal_as<wstring>( group_name );
+						pin_ptr<const wchar_t> pinned_group_name = PtrToStringChars( group_name );
+						const wchar_t* native_group_name = pinned_group_name;
 
-						int group_number = icu_pattern->groupNumberFromName( icu::UnicodeString( (char16_t*)native_group_name.c_str( ), CheckedCast::ToInt32( native_group_name.length( ) ) ), status );
+						int group_number = icu_pattern->groupNumberFromName( icu::UnicodeString( (char16_t*)native_group_name, group_name->Length ), status );
 
 						// TODO: detect and show errors
 
@@ -156,18 +156,18 @@ namespace IcuRegexInterop
 	}
 
 
-	RegexMatches^ Matcher::Matches( String^ text0 )
+	RegexMatches^ Matcher::Matches( String^ text )
 	{
 		icu::RegexMatcher* icu_matcher = nullptr;
 
 		try
 		{
-			OriginalText = text0;
+			OriginalText = text;
 
-			marshal_context context{};
+			pin_ptr<const wchar_t> pinned_text = PtrToStringChars( text );
+			const wchar_t* native_text = pinned_text;
 
-			wstring text = context.marshal_as<wstring>( text0 );
-			icu::UnicodeString unicode_string( (char16_t*)text.c_str( ), CheckedCast::ToInt32( text.length( ) ) );
+			icu::UnicodeString unicode_string( (char16_t*)native_text, text->Length );
 
 			UErrorCode status = U_ZERO_ERROR;
 			icu_matcher = mData->mIcuRegexPattern->matcher( unicode_string, status );
