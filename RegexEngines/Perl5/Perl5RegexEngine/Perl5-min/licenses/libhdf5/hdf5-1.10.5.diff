@@ -1,0 +1,299 @@
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/CMakeFilters.cmake hdf5-1.10.5/CMakeFilters.cmake
+--- hdf5-1.10.5.original/CMakeFilters.cmake	2019-05-22 02:37:46.000552200 +0200
++++ hdf5-1.10.5/CMakeFilters.cmake	2019-05-22 02:36:59.533973200 +0200
+@@ -52,10 +52,10 @@
+       find_package (ZLIB NAMES ${ZLIB_PACKAGE_NAME}${HDF_PACKAGE_EXT} COMPONENTS static shared)
+       if (NOT ZLIB_FOUND)
+         find_package (ZLIB) # Legacy find
+-        if (ZLIB_FOUND)
+-          set (LINK_COMP_LIBS ${LINK_COMP_LIBS} ${ZLIB_LIBRARIES})
+-          set (LINK_COMP_SHARED_LIBS ${LINK_COMP_SHARED_LIBS} ${ZLIB_LIBRARIES})
+-        endif ()
++      endif ()
++      if (ZLIB_FOUND)
++        set (LINK_COMP_LIBS ${LINK_COMP_LIBS} ${ZLIB_LIBRARIES})
++        set (LINK_COMP_SHARED_LIBS ${LINK_COMP_SHARED_LIBS} ${ZLIB_LIBRARIES})
+       endif ()
+     endif ()
+     if (ZLIB_FOUND)
+@@ -103,10 +103,10 @@
+     find_package (SZIP NAMES ${SZIP_PACKAGE_NAME}${HDF_PACKAGE_EXT} COMPONENTS static shared)
+     if (NOT SZIP_FOUND)
+       find_package (SZIP) # Legacy find
+-      if (SZIP_FOUND)
+-        set (LINK_COMP_LIBS ${LINK_COMP_LIBS} ${SZIP_LIBRARIES})
+-        set (LINK_COMP_SHARED_LIBS ${LINK_COMP_SHARED_LIBS} ${SZIP_LIBRARIES})
+-      endif ()
++    endif ()
++    if (SZIP_FOUND)
++      set (LINK_COMP_LIBS ${LINK_COMP_LIBS} ${SZIP_LIBRARIES})
++      set (LINK_COMP_SHARED_LIBS ${LINK_COMP_SHARED_LIBS} ${SZIP_LIBRARIES})
+     endif ()
+   endif ()
+   if (SZIP_FOUND)
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/CMakeInstallation.cmake hdf5-1.10.5/CMakeInstallation.cmake
+--- hdf5-1.10.5.original/CMakeInstallation.cmake	2019-05-22 02:37:46.108499400 +0200
++++ hdf5-1.10.5/CMakeInstallation.cmake	2019-05-22 02:37:00.096426200 +0200
+@@ -197,7 +197,7 @@
+   install (
+       FILES
+           ${HDF5_SOURCE_DIR}/COPYING
+-      DESTINATION ${HDF5_INSTALL_DATA_DIR}
++      DESTINATION ${HDF5_INSTALL_DATA_DIR}/doc/hdf5
+       COMPONENT hdfdocuments
+   )
+   if (EXISTS "${HDF5_SOURCE_DIR}/release_docs" AND IS_DIRECTORY "${HDF5_SOURCE_DIR}/release_docs")
+@@ -241,7 +241,7 @@
+     endif ()
+     install (
+         FILES ${release_files}
+-        DESTINATION ${HDF5_INSTALL_DATA_DIR}
++        DESTINATION ${HDF5_INSTALL_DATA_DIR}/doc/hdf5
+         COMPONENT hdfdocuments
+     )
+   endif ()
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/config/cmake_ext_mod/ConfigureChecks.cmake hdf5-1.10.5/config/cmake_ext_mod/ConfigureChecks.cmake
+--- hdf5-1.10.5.original/config/cmake_ext_mod/ConfigureChecks.cmake	2019-05-22 02:37:51.374021900 +0200
++++ hdf5-1.10.5/config/cmake_ext_mod/ConfigureChecks.cmake	2019-05-22 02:36:56.971642700 +0200
+@@ -405,7 +405,7 @@
+   if (NOT ${HDF_PREFIX}_SIZEOF_SSIZE_T)
+     set (${HDF_PREFIX}_SIZEOF_SSIZE_T 0)
+   endif ()
+-  if (NOT WINDOWS)
++  if (NOT MSVC)
+     HDF_CHECK_TYPE_SIZE (ptrdiff_t    ${HDF_PREFIX}_SIZEOF_PTRDIFF_T)
+   endif ()
+ endif ()
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/config/cmake_ext_mod/FindSZIP.cmake hdf5-1.10.5/config/cmake_ext_mod/FindSZIP.cmake
+--- hdf5-1.10.5.original/config/cmake_ext_mod/FindSZIP.cmake	2019-05-22 02:37:51.613402600 +0200
++++ hdf5-1.10.5/config/cmake_ext_mod/FindSZIP.cmake	2019-05-22 02:36:59.268358200 +0200
+@@ -100,7 +100,7 @@
+     NO_DEFAULT_PATH
+ )
+ 
+-if (WIN32)
++if (MSVC)
+     set (SZIP_SEARCH_DEBUG_NAMES "sz_d;libsz_d")
+     set (SZIP_SEARCH_RELEASE_NAMES "sz;libsz;libszip")
+ else ()
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/config/cmake_ext_mod/HDFMacros.cmake hdf5-1.10.5/config/cmake_ext_mod/HDFMacros.cmake
+--- hdf5-1.10.5.original/config/cmake_ext_mod/HDFMacros.cmake	2019-05-22 02:37:52.499751400 +0200
++++ hdf5-1.10.5/config/cmake_ext_mod/HDFMacros.cmake	2019-05-22 02:37:00.799504000 +0200
+@@ -108,7 +108,10 @@
+ 
+ #-------------------------------------------------------------------------------
+ macro (HDF_SET_LIB_OPTIONS libtarget libname libtype)
+-  if (WIN32)
++  if (MINGW)
++    string(REGEX REPLACE "^lib([A-za-z]+)" "\\1" libname ${libname})
++  endif ()
++  if (MSVC)
+     set (LIB_DEBUG_SUFFIX "_D")
+   else ()
+     set (LIB_DEBUG_SUFFIX "_debug")
+@@ -117,7 +120,7 @@
+     set (LIB_RELEASE_NAME "${libname}")
+     set (LIB_DEBUG_NAME "${libname}${LIB_DEBUG_SUFFIX}")
+   else ()
+-    if (WIN32)
++    if (MSVC)
+       set (LIB_RELEASE_NAME "lib${libname}")
+       set (LIB_DEBUG_NAME "lib${libname}${LIB_DEBUG_SUFFIX}")
+     else ()
+@@ -139,6 +142,13 @@
+          OUTPUT_NAME_RELWITHDEBINFO
+                ${LIB_RELEASE_NAME}
+   )
++ 
++  if (MINGW)
++    set_target_properties (${libtarget} PROPERTIES OUTPUT_NAME ${libname} ARCHIVE_OUTPUT_NAME ${libname})
++    if (${libtype} MATCHES "SHARED")
++      set_target_properties (${libtarget} PROPERTIES RUNTIME_OUTPUT_NAME ${libname}-0)
++    endif ()
++  endif ()
+   if (${libtype} MATCHES "STATIC")
+     if (WIN32)
+       set_target_properties (${libtarget}
+@@ -152,15 +162,6 @@
+     endif ()
+   endif ()
+ 
+-  #----- Use MSVC Naming conventions for Shared Libraries
+-  if (MINGW AND ${libtype} MATCHES "SHARED")
+-    set_target_properties (${libtarget}
+-        PROPERTIES
+-        IMPORT_SUFFIX ".lib"
+-        IMPORT_PREFIX ""
+-        PREFIX ""
+-    )
+-  endif ()
+ endmacro ()
+ 
+ #-------------------------------------------------------------------------------
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/fortran/test/CMakeLists.txt hdf5-1.10.5/fortran/test/CMakeLists.txt
+--- hdf5-1.10.5.original/fortran/test/CMakeLists.txt	2019-05-22 02:38:11.553016300 +0200
++++ hdf5-1.10.5/fortran/test/CMakeLists.txt	2019-05-22 02:37:02.127533900 +0200
+@@ -228,7 +228,7 @@
+ )
+ target_link_libraries (testhdf5_fortran
+     PRIVATE
+-        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ #set_property(TARGET testhdf5_fortran APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -274,7 +274,7 @@
+   )
+   target_link_libraries (testhdf5_fortran-shared
+       PRIVATE
+-          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+ #  set_property(TARGET testhdf5_fortran-shared APPEND PROPERTY
+ #      LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -312,7 +312,7 @@
+ )
+ target_link_libraries (testhdf5_fortran_1_8
+     PRIVATE
+-        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ #set_property(TARGET testhdf5_fortran_1_8 APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -349,7 +349,7 @@
+   )
+   target_link_libraries (testhdf5_fortran_1_8-shared
+       PRIVATE
+-          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+ #  set_property(TARGET testhdf5_fortran_1_8-shared APPEND PROPERTY
+ #      LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -389,7 +389,7 @@
+ )
+ target_link_libraries (fortranlib_test_F03
+     PRIVATE
+-        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ #set_property(TARGET fortranlib_test_F03 APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -428,7 +428,7 @@
+   )
+   target_link_libraries (fortranlib_test_F03-shared
+       PRIVATE
+-          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+ #  set_property(TARGET fortranlib_test_F03-shared APPEND PROPERTY
+ #      LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -459,7 +459,7 @@
+ )
+ target_link_libraries (fflush1
+     PRIVATE
+-        ${HDF5_F90_LIB_TARGET} ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++        ${HDF5_F90_LIB_TARGET} ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ #set_property(TARGET fflush1 APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -489,7 +489,7 @@
+   )
+   target_link_libraries (fflush1-shared
+       PRIVATE
+-          ${HDF5_F90_LIBSH_TARGET} ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++          ${HDF5_F90_LIBSH_TARGET} ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+ #  set_property(TARGET fflush1-shared APPEND PROPERTY
+ #      LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -520,7 +520,7 @@
+ )
+ target_link_libraries (fflush2
+     PRIVATE
+-        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++        ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ #set_property(TARGET fflush2 APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+@@ -550,7 +550,7 @@
+   )
+   target_link_libraries (fflush2-shared
+       PRIVATE
+-          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++          ${HDF5_F90_TEST_LIBSH_TARGET} ${HDF5_F90_LIBSH_TARGET} ${HDF5_LIBSH_TARGET} $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+ #  set_property(TARGET fflush2-shared APPEND PROPERTY
+ #      LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/fortran/testpar/CMakeLists.txt hdf5-1.10.5/fortran/testpar/CMakeLists.txt
+--- hdf5-1.10.5.original/fortran/testpar/CMakeLists.txt	2019-05-22 02:38:15.985872300 +0200
++++ hdf5-1.10.5/fortran/testpar/CMakeLists.txt	2019-05-22 02:37:02.299406700 +0200
+@@ -27,7 +27,7 @@
+ target_link_libraries (parallel_test
+     PRIVATE
+         ${HDF5_F90_TEST_LIB_TARGET} ${HDF5_F90_LIB_TARGET} ${HDF5_LIB_TARGET} ${LINK_Fortran_LIBS}
+-        $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"ws2_32.lib">
++        $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"ws2_32">
+ )
+ #set_property(TARGET parallel_test APPEND PROPERTY
+ #    LINK_FLAGS $<$<STREQUAL:"x${CMAKE_Fortran_SIMULATE_ID}","xMSVC">:"-SUBSYSTEM:CONSOLE">
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/src/CMakeLists.txt hdf5-1.10.5/src/CMakeLists.txt
+--- hdf5-1.10.5.original/src/CMakeLists.txt	2019-05-22 02:39:28.612100000 +0200
++++ hdf5-1.10.5/src/CMakeLists.txt	2019-05-22 02:37:02.440021200 +0200
+@@ -934,7 +934,7 @@
+   target_compile_definitions(H5detect PUBLIC ${HDF_EXTRA_C_FLAGS} ${HDF_EXTRA_FLAGS})
+   TARGET_C_PROPERTIES (H5detect STATIC)
+   target_link_libraries (H5detect
+-      PRIVATE "$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_LIBRARIES}>" $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++      PRIVATE "$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_LIBRARIES}>" $<$<PLATFORM_ID:Windows>:ws2_32>
+       PRIVATE $<$<PLATFORM_ID:Emscripten>:"-O0">
+   )
+ 
+@@ -1024,7 +1024,7 @@
+ target_compile_definitions(H5make_libsettings PUBLIC ${HDF_EXTRA_C_FLAGS} ${HDF_EXTRA_FLAGS})
+ TARGET_C_PROPERTIES (H5make_libsettings STATIC)
+ target_link_libraries (H5make_libsettings
+-    PRIVATE "$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_LIBRARIES}>" $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++    PRIVATE "$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_LIBRARIES}>" $<$<PLATFORM_ID:Windows>:ws2_32>
+     PRIVATE $<$<PLATFORM_ID:Emscripten>:"-O0">
+ )
+ 
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/src/H5win32defs.h hdf5-1.10.5/src/H5win32defs.h
+--- hdf5-1.10.5.original/src/H5win32defs.h	2019-05-22 02:40:18.287105100 +0200
++++ hdf5-1.10.5/src/H5win32defs.h	2019-05-22 02:37:01.330742700 +0200
+@@ -54,7 +54,7 @@
+  * Also note that the variadic macro is using a VC++ extension
+  * where the comma is dropped if nothing is passed to the ellipsis.
+  */
+-#define HDopen(S,F,...)       _open(S, F | _O_BINARY, __VA_ARGS__)
++#define HDopen(S,F,...)       _open(S, F | _O_BINARY, ##__VA_ARGS__)
+ #define HDread(F,M,Z)       _read(F,M,Z)
+ #define HDrmdir(S)          _rmdir(S)
+ #define HDsetvbuf(F,S,M,Z)  setvbuf(F,S,M,(Z>1?Z:2))
+diff -r -u --strip-trailing-cr hdf5-1.10.5.original/test/CMakeLists.txt hdf5-1.10.5/test/CMakeLists.txt
+--- hdf5-1.10.5.original/test/CMakeLists.txt	2019-05-22 02:40:22.942810500 +0200
++++ hdf5-1.10.5/test/CMakeLists.txt	2019-05-22 02:37:02.486874800 +0200
+@@ -31,10 +31,10 @@
+ TARGET_C_PROPERTIES (${HDF5_TEST_LIB_TARGET} STATIC)
+ target_link_libraries (${HDF5_TEST_LIB_TARGET}
+     PUBLIC ${LINK_LIBS} ${HDF5_LIB_TARGET}
+-    PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++    PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32>
+ )
+ if (MINGW)
+-  target_link_libraries (${HDF5_TEST_LIB_TARGET} PRIVATE "wsock32.lib")
++  target_link_libraries (${HDF5_TEST_LIB_TARGET} PRIVATE "wsock32")
+ endif ()
+ H5_SET_LIB_OPTIONS (${HDF5_TEST_LIB_TARGET} ${HDF5_TEST_LIB_NAME} STATIC 0)
+ 
+@@ -50,10 +50,10 @@
+   TARGET_C_PROPERTIES (${HDF5_TEST_LIBSH_TARGET} SHARED)
+   target_link_libraries (${HDF5_TEST_LIBSH_TARGET}
+       PUBLIC ${LINK_LIBS} ${HDF5_LIBSH_TARGET}
+-      PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32.lib>
++      PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32>
+   )
+   if (MINGW)
+-    target_link_libraries (${HDF5_TEST_LIBSH_TARGET} PRIVATE "wsock32.lib")
++    target_link_libraries (${HDF5_TEST_LIBSH_TARGET} PRIVATE "wsock32")
+   endif ()
+   H5_SET_LIB_OPTIONS (${HDF5_TEST_LIBSH_TARGET} ${HDF5_TEST_LIB_NAME} SHARED "LIB")
+   set_target_properties (${HDF5_TEST_LIBSH_TARGET} PROPERTIES FOLDER libraries/test)

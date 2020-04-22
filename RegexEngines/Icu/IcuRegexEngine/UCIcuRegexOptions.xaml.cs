@@ -51,8 +51,6 @@ namespace IcuRegexEngineNs
 					pnlOptions.Children.Add( cb );
 				}
 			}
-
-
 		}
 
 
@@ -141,7 +139,7 @@ namespace IcuRegexEngineNs
 		}
 
 
-		TextBlock CreateTextBlock( string text, string note )
+		static TextBlock CreateTextBlock( string text, string note )
 		{
 			var tb = new TextBlock( );
 			new Run( text, tb.ContentEnd );

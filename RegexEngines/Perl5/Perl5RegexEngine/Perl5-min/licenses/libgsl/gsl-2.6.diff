@@ -1,0 +1,21 @@
+diff -r -u --strip-trailing-cr gsl-2.6.original/gsl-config.bat.win-gcc gsl-2.6/gsl-config.bat.win-gcc
+--- gsl-2.6.original/gsl-config.bat.win-gcc	2020-02-07 15:20:39.542361100 +0100
++++ gsl-2.6/gsl-config.bat.win-gcc	2020-02-07 15:19:00.229802300 +0100
+@@ -0,0 +1,17 @@
++@echo off
++rem simplified replacement for the original shell script
++set ROOT=%~dp0
++
++set XCFLAGS=-I"%ROOT%..\include"
++set XLIBS1=-L"%ROOT%..\lib" -lgsl -lgslcblas
++set XLIBS2=-L"%ROOT%..\lib" -lgsl
++set XVERSION=2.6
++set XPREFIX=%ROOT%..\
++
++for %%p in (%*) do (
++  if x%%p == x--cflags     echo %XCFLAGS%
++  if x%%p == x--libs       echo %XLIBS1%
++  if x%%p == x--libs-without-cblas echo %XLIBS2%
++  if x%%p == x--version    echo %XVERSION%
++  if x%%p == x--prefix     echo %XPREFIX% 
++)

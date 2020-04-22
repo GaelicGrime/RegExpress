@@ -1,0 +1,4 @@
+Package: hdf5-1.10.5
+Sources: https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/hdf5-1.10.5.tar.gz
+Patch: hdf5-1.10.5.diff
+Homepage: http://www.hdfgroup.org/HDF5/

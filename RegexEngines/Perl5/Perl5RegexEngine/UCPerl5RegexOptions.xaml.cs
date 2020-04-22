@@ -34,7 +34,24 @@ namespace Perl5RegexEngineNs
 		public UCPerl5RegexOptions( )
 		{
 			InitializeComponent( );
+
+			// insert checkboxes
+			{
+				var options = Matcher.GetOptionInfoList( );
+
+				foreach( var o in options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.Modifier,
+						Content = CreateTextBlock( o.Modifier, o.Note )
+					};
+
+					pnlOptions.Children.Add( cb );
+				}
+			}
 		}
+
 
 		internal string[] ExportOptions( )
 		{
@@ -42,7 +59,7 @@ namespace Perl5RegexEngineNs
 		}
 
 
-		internal void ImportOptions(string[] options)
+		internal void ImportOptions( string[] options )
 		{
 			SetSelectedOptions( options );
 		}
@@ -50,21 +67,67 @@ namespace Perl5RegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			return null;
+			var selected_options =
+				pnlOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) );
+
+			return selected_options.ToArray( );
 		}
 
-		internal void SetSelectedOptions(string[] options)
+
+		internal void SetSelectedOptions( string[] options )
 		{
 			try
 			{
 				++ChangeCounter;
 
-				//...
+				options = options ?? new string[] { };
+
+				foreach( var cb in pnlOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag );
+				}
 			}
 			finally
 			{
 				--ChangeCounter;
 			}
+		}
+
+
+		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		{
+			if( IsFullyLoaded ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			IsFullyLoaded = true;
+		}
+
+
+		private void CheckBox_Changed( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
+		}
+
+
+		static TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
 		}
 
 	}

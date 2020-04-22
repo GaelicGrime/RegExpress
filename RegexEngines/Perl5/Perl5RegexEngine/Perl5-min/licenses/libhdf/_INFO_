@@ -1,0 +1,4 @@
+Package: hdf-4.2.14
+Sources: https://support.hdfgroup.org/ftp/HDF/releases/HDF4.2.14/src/hdf-4.2.14.tar.gz
+Patch: hdf-4.2.14.diff
+Homepage: http://www.hdfgroup.org/products/hdf4/

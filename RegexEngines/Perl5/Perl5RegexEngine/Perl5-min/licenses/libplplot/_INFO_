@@ -1,0 +1,4 @@
+Package: plplot-5.14.0
+Sources: http://downloads.sourceforge.net/plplot/plplot-5.14.0.tar.gz
+Patch: plplot-5.14.0.diff
+Homepage: http://plplot.sourceforge.net/
