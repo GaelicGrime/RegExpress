@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
@@ -48,6 +49,7 @@ namespace Perl5RegexEngineNs
 				new OptionInfo("d", "old, problematic default character set behavior"),
 				new OptionInfo("u", "use Unicode rules"),
 				new OptionInfo("l", "use the current locale's rules"),
+				//?new OptionInfo("c", "keep the current position during repeated matching"),
 			};
 		}
 
@@ -65,6 +67,9 @@ namespace Perl5RegexEngineNs
 		{
 			Text = text;
 
+			var all_modifiers = OptionInfoList.Select( oi => oi.Modifier );
+			string selected_modifiers = SelectedOptions == null ? "" : string.Concat( SelectedOptions.Where( o => all_modifiers.Contains( o ) ) );
+
 			var matches = new List<IMatch>( );
 
 			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
@@ -72,62 +77,71 @@ namespace Perl5RegexEngineNs
 			string perl_dir = Path.Combine( assembly_dir, @"Perl5-min\perl" );
 			string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
-			var psi = new ProcessStartInfo( );
+			var output_sb = new StringBuilder( );
+			var error_sb = new StringBuilder( );
 
-			psi.FileName = perl_exe;
-			psi.Arguments = @"-CS -e ""
+			using( Process p = new Process( ) )
+			{
+				p.StartInfo.FileName = perl_exe;
+				p.StartInfo.Arguments = @"-CS -e ""
 eval
 {
-use strict; 
-use feature 'unicode_strings';
-use utf8;
+	use strict; 
+	use feature 'unicode_strings';
+	use utf8;
 
-chomp( my $pattern = <STDIN> ); 
-chomp( my $text = <STDIN> ); 
-chomp( my $options = <STDIN> ); 
+	chomp( my $pattern = <STDIN> ); 
+	chomp( my $text = <STDIN> ); 
 
-print q('), $pattern, q(' ), length $pattern, qq(\n);
+	#print q('), $pattern, q(' ), length $pattern, qq(\n);
 
-$pattern = substr $pattern, 1, length($pattern) - 2;
-$text = substr $text, 1, length($text) - 2;
+	$pattern = substr $pattern, 1, length($pattern) - 2;
+	$text = substr $text, 1, length($text) - 2;
 
-print q('), $pattern, q(' ), length $pattern, qq(\n);
+	#print q('), $pattern, q(' ), length $pattern, qq(\n);
 
-utf8::decode( $pattern );
-utf8::decode( $text );
-utf8::decode( $options );
+	utf8::decode( $pattern );
+	utf8::decode( $text );
 
-print $pattern, ' ', length $pattern, qq(\n);
-print $text, ' ', length $text, q(\n);
-print '<START>';
+	$pattern =~ s/\\n/\n/g;
+	$pattern =~ s/\\r/\r/g;
+	$pattern =~ s/\\\\/\\/g;
 
-# TODO: unescape strings
+	$text =~ s/\\n/\n/g;
+	$text =~ s/\\r/\r/g;
+	$text =~ s/\\\\/\\/g;
 
+	#print $pattern, ' ', length $pattern, qq(\n);
+	#print $text, ' ', length $text, q(\n);
 
-while ($text =~ /$pattern/g{OPTIONS}) 
-{
-	for( my $i = 0; $i < scalar @+; ++$i)
+	print '<RESULTS>';
+
+	while ($text =~ /$pattern/g[*MODIFIERS*]) 
 	{
-		my $success = defined @-[$i]; 
-		if( ! $success )
+		for( my $i = 0; $i < scalar @+; ++$i)
 		{
-			print '0|0|0';
-		}
-		else
-		{
-			my $index = @-[$i];
-			my $length = @+[$i] - @-[$i];
-			#my $val = @{^CAPTURE}[$i];
+			my $success = defined @-[$i]; 
+			if( ! $success )
+			{
+				print '0|0|0';
+			}
+			else
+			{
+				my $index = @-[$i];
+				my $length = @+[$i] - @-[$i];
+				#my $val = @{^CAPTURE}[$i];
 			
-			print qq(1|$index|$length);
+				print qq(1|$index|$length);
+			}
+
+			print 'G';
 		}
 
-		print 'G';
+		print 'M';
+
 	}
 
-	print 'M';
-
-}
+	print '</RESULTS>';
 
 };
 
@@ -136,53 +150,57 @@ if( $@ )
 	print STDERR $@, qq(\n);
 }
 """
-.Replace( "{OPTIONS}", string.Concat( SelectedOptions ?? new string[] { } ) );
+.Replace( "[*MODIFIERS*]", selected_modifiers );
 
-			psi.UseShellExecute = false;
-			psi.RedirectStandardInput = true;
-			psi.RedirectStandardOutput = true;
-			psi.RedirectStandardError = true;
-			psi.StandardOutputEncoding = Encoding.UTF8;
-			psi.StandardErrorEncoding = Encoding.UTF8;
-			psi.CreateNoWindow = true;
-			psi.WindowStyle = ProcessWindowStyle.Hidden;
+				p.StartInfo.UseShellExecute = false;
+				p.StartInfo.CreateNoWindow = true;
+				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 
-			string output;
-			string error;
+				p.StartInfo.RedirectStandardInput = true;
+				p.StartInfo.RedirectStandardOutput = true;
+				p.StartInfo.RedirectStandardError = true;
+				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
 
-			using( Process p = Process.Start( psi ) )
-			{
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, new UTF8Encoding( encoderShouldEmitUTF8Identifier: false ) ) )
-				//using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Encoding.ASCII ) )
+				p.OutputDataReceived += ( s, a ) =>
 				{
-					sw.WriteLine( EscapeString( Pattern ) );
-					sw.WriteLine( EscapeString( text ) );
-					sw.WriteLine( EscapeString( "options..." ) );
+					output_sb.Append( a.Data );
+				};
+
+				p.ErrorDataReceived += ( s, a ) =>
+				{
+					error_sb.Append( a.Data );
+				};
+
+				p.Start( );
+				p.BeginOutputReadLine( );
+				p.BeginErrorReadLine( );
+
+				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, new UTF8Encoding( encoderShouldEmitUTF8Identifier: false ) ) )
+				{
+					sw.WriteLine( PrepareString( Pattern ) );
+					sw.WriteLine( PrepareString( text ) );
 				}
 
-				output = p.StandardOutput.ReadToEnd( );
-				error = p.StandardError.ReadToEnd( );
+				p.WaitForExit( ); // TODO: use timeout
 			}
 
-			if( output.StartsWith( "ERROR: " ) )
-			{
-				if( !string.IsNullOrEmpty( error ) ) error += Environment.NewLine;
-				error += output.Substring( "ERROR: ".Length );
-			}
+			string error = error_sb.ToString( );
 
 			if( !string.IsNullOrWhiteSpace( error ) )
 			{
-				throw new Exception( "Perl error: " + error );
+				string error_message = Regex.Replace( error, @"\s+at -e line \d+, <STDIN> line \d+(?=\.\s*$)", "" );
+
+				throw new Exception( error_message );
 			}
 
 			// TODO: optimise, redesign
 
-			int start = output.IndexOf( "<START>" );
-			if( start >= 0 ) output = output.Substring( start + "<START>".Length );
+			string output = output_sb.ToString( );
 
-			output = output.TrimStart( );
+			string results = Regex.Match( output, @"<RESULTS>(.*?)</RESULTS>" ).Groups[1].Value.Trim( );
 
-			var split_m = output.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );
+			var split_m = results.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );
 			foreach( var m in split_m )
 			{
 				SimpleMatch match = null;
@@ -233,37 +251,7 @@ if( $@ )
 		public static IReadOnlyList<OptionInfo> GetOptionInfoList( ) => OptionInfoList;
 
 
-		string EscapeString1( string text ) //.......
-		{
-			var sb = new StringBuilder( "[" );
-
-			var bytes = Encoding.UTF8.GetBytes( text );
-
-			foreach( byte b in bytes )
-			{
-				switch( b )
-				{
-				case unchecked((byte)'\\'):
-					sb.Append( "\\\\" );
-					break;
-				case unchecked((byte)'\n'):
-					sb.Append( "\\n" );
-					break;
-				case unchecked((byte)'\r'):
-					sb.Append( "\\r" );
-					break;
-				default:
-
-					sb.Append( (char)b );
-					break;
-				}
-			}
-
-			return sb.Append( ']' ).ToString( );
-		}
-
-
-		string EscapeString( string text )
+		string PrepareString( string text )
 		{
 			var sb = new StringBuilder( "[" );
 
@@ -288,8 +276,6 @@ if( $@ )
 
 			return sb.Append( ']' ).ToString( );
 		}
-
-
 
 	}
 }
