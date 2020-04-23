@@ -89,6 +89,7 @@ eval
 	use strict; 
 	use feature 'unicode_strings';
 	use utf8;
+	use re 'eval';
 
 	chomp( my $pattern = <STDIN> ); 
 	chomp( my $text = <STDIN> ); 
@@ -114,7 +115,7 @@ eval
 	#print $pattern, ' ', length $pattern, qq(\n);
 	#print $text, ' ', length $text, q(\n);
 
-	print '<RESULTS>';
+	my $results = qq(<RESULTS-\x1F>);
 
 	while ($text =~ /$pattern/g[*MODIFIERS*]) 
 	{
@@ -123,7 +124,7 @@ eval
 			my $success = defined @-[$i]; 
 			if( ! $success )
 			{
-				print '0|0|0';
+				$results .= '0|0|0';
 			}
 			else
 			{
@@ -131,17 +132,17 @@ eval
 				my $length = @+[$i] - @-[$i];
 				#my $val = @{^CAPTURE}[$i];
 			
-				print qq(1|$index|$length);
+				$results .= qq(1|$index|$length);
 			}
 
-			print 'G';
+			$results .= 'G';
 		}
 
-		print 'M';
+		$results .= 'M';
 
 	}
 
-	print '</RESULTS>';
+	$results .= '</RESULTS-\x1F>';
 
 };
 
@@ -198,7 +199,7 @@ if( $@ )
 
 			string output = output_sb.ToString( );
 
-			string results = Regex.Match( output, @"<RESULTS>(.*?)</RESULTS>" ).Groups[1].Value.Trim( );
+			string results = Regex.Match( output, @"<RESULTS-\x1F>(.*?)</RESULTS-\x1F>" ).Groups[1].Value.Trim( );
 
 			var split_m = results.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );
 			foreach( var m in split_m )
