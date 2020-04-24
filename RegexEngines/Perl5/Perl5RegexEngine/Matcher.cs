@@ -89,7 +89,7 @@ eval
 	use strict; 
 	use feature 'unicode_strings';
 	use utf8;
-	use re 'eval';
+	#use re 'eval';
 
 	chomp( my $pattern = <STDIN> ); 
 	chomp( my $text = <STDIN> ); 
@@ -112,9 +112,9 @@ eval
 	$text =~ s/\\r/\r/g;
 	$text =~ s/\\\\/\\/g;
 
-	#print $pattern, ' ', length $pattern, qq(\n);
-	#print $text, ' ', length $text, q(\n);
-
+	#print 'pattern: ', q('), $pattern, q(' ), length $pattern, qq(\r\n);
+	#print 'text: ', q('), $text, ' ', q(' ), length $text, qq(\r\n);
+	
 	my $results = qq(<RESULTS-\x1F>);
 
 	while ($text =~ /$pattern/g[*MODIFIERS*]) 
@@ -142,7 +142,9 @@ eval
 
 	}
 
-	$results .= '</RESULTS-\x1F>';
+	$results .= qq(</RESULTS-\x1F>);
+
+	print $results;
 
 };
 
@@ -150,6 +152,7 @@ if( $@ )
 {
 	print STDERR $@, qq(\n);
 }
+
 """
 .Replace( "[*MODIFIERS*]", selected_modifiers );
 

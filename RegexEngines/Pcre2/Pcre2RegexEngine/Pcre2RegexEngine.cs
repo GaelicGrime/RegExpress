@@ -347,7 +347,12 @@ namespace Pcre2RegexEngineNs
 
 			if( is_literal ) return EmptyRegex;
 
+			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+
 			string pattern = @"";
+
+			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
+			if( is_extended ) pattern += @"(\#[^\n]*) | "; // line comment
 
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
