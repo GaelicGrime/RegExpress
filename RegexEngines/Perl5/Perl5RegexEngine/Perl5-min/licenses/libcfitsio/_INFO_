@@ -1,0 +1,4 @@
+Package: cfitsio-3.47
+Sources: https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz
+Patch: cfitsio-3.47.diff
+Homepage: http://heasarc.gsfc.nasa.gov/fitsio/

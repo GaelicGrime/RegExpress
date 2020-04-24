@@ -65,6 +65,7 @@ namespace RegExpressWPF
 				new OnigurumaRegexEngineNs.OnigurumaRegexEngine(),
 				new IcuRegexEngineNs.IcuRegexEngine(),
 				new SubRegRegexEngineNs.SubRegRegexEngine(),
+				new Perl5RegexEngineNs.Perl5RegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
@@ -81,14 +82,14 @@ namespace RegExpressWPF
 			UpdateWhitespaceWarningLoop.Priority = ThreadPriority.Lowest;
 			ShowTextInfoLoop.Priority = ThreadPriority.Lowest;
 
-			foreach( var eng in RegexEngines )
+			foreach (var eng in RegexEngines)
 			{
 				eng.OptionsChanged += Engine_OptionsChanged;
 
 				var cbxi = new ComboBoxItem
 				{
 					Tag = eng.Id,
-					Content = eng.Name + " " + ( eng.EngineVersion ?? "" ),
+					Content = eng.Name + " " + (eng.EngineVersion ?? ""),
 					IsSelected = eng.Id == DefaultRegexEngine.Id
 				};
 
@@ -97,11 +98,11 @@ namespace RegExpressWPF
 		}
 
 
-		public void ApplyTabData( TabData tabData )
+		public void ApplyTabData(TabData tabData)
 		{
 			Debug.Assert( !IsInChange );
 
-			if( !IsFullyLoaded || !IsVisible )
+			if (!IsFullyLoaded || !IsVisible)
 			{
 				InitialTabData = tabData;
 			}
@@ -116,9 +117,9 @@ namespace RegExpressWPF
 		}
 
 
-		public void ExportTabData( TabData tabData )
+		public void ExportTabData(TabData tabData)
 		{
-			if( InitialTabData != null )
+			if (InitialTabData != null)
 			{
 				// did not have chance to finish initialisation 
 
@@ -149,9 +150,9 @@ namespace RegExpressWPF
 
 				tabData.InactiveRegexOptions = new Dictionary<string, string[]>( );
 
-				foreach( var engine in RegexEngines )
+				foreach (var engine in RegexEngines)
 				{
-					if( object.ReferenceEquals( engine, CurrentRegexEngine ) ) continue;
+					if (object.ReferenceEquals( engine, CurrentRegexEngine )) continue;
 
 					tabData.InactiveRegexOptions[engine.Id] = engine.ExportOptions( );
 				}
@@ -159,15 +160,15 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowNewTabButton( bool yes )
+		public void ShowNewTabButton(bool yes)
 		{
 			btnNewTab.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
 		}
 
 
-		private void UserControl_Loaded( object sender, RoutedEventArgs e )
+		private void UserControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			if( IsFullyLoaded ) return;
+			if (IsFullyLoaded) return;
 
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == "DotNetRegex" ); // default
 			SetEngineOption( CurrentRegexEngine );
@@ -178,9 +179,9 @@ namespace RegExpressWPF
 
 			Debug.Assert( !IsInChange );
 
-			if( IsVisible )
+			if (IsVisible)
 			{
-				if( InitialTabData != null )
+				if (InitialTabData != null)
 				{
 					var tab_data = InitialTabData;
 					InitialTabData = null;
@@ -200,13 +201,13 @@ namespace RegExpressWPF
 		}
 
 
-		private void UserControl_IsVisibleChanged( object sender, DependencyPropertyChangedEventArgs e )
+		private void UserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
 		{
 			Debug.Assert( !IsInChange );
 
-			if( true.Equals( e.NewValue ) && IsFullyLoaded )
+			if (true.Equals( e.NewValue ) && IsFullyLoaded)
 			{
-				if( InitialTabData != null )
+				if (InitialTabData != null)
 				{
 					StopAll( );
 
@@ -221,16 +222,16 @@ namespace RegExpressWPF
 		}
 
 
-		private void BtnNewTab_Click( object sender, EventArgs e )
+		private void BtnNewTab_Click(object sender, EventArgs e)
 		{
 			NewTabClicked?.Invoke( this, null );
 		}
 
 
-		private void UcPattern_TextChanged( object sender, EventArgs e )
+		private void UcPattern_TextChanged(object sender, EventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			FindMatchesLoop.SendRestart( );
 			UpdateWhitespaceWarningLoop.SendRestart( );
@@ -239,10 +240,10 @@ namespace RegExpressWPF
 		}
 
 
-		private void UcText_TextChanged( object sender, EventArgs e )
+		private void UcText_TextChanged(object sender, EventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			FindMatchesLoop.SendRestart( );
 			ShowTextInfoLoop.SendRestart( );
@@ -252,21 +253,21 @@ namespace RegExpressWPF
 		}
 
 
-		private void UcText_SelectionChanged( object sender, EventArgs e )
+		private void UcText_SelectionChanged(object sender, EventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ShowTextInfoLoop.SendRestart( );
 		}
 
 
-		private void ucText_GotKeyboardFocus( object sender, KeyboardFocusChangedEventArgs e )
+		private void ucText_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
-			if( !ucTextHadFocus )
+			if (!ucTextHadFocus)
 			{
 				ucTextHadFocus = true;
 
@@ -275,18 +276,18 @@ namespace RegExpressWPF
 		}
 
 
-		private void UcText_LostFocus( object sender, RoutedEventArgs e )
+		private void UcText_LostFocus(object sender, RoutedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ucMatches.SetExternalUnderlining( null, setSelection: false );
 		}
 
 
-		private void UcText_LocalUnderliningFinished( object sender, EventArgs e )
+		private void UcText_LocalUnderliningFinished(object sender, EventArgs e)
 		{
-			if( ucText.IsKeyboardFocusWithin )
+			if (ucText.IsKeyboardFocusWithin)
 			{
 				var underlining_info = ucText.GetUnderliningInfo( );
 				ucMatches.SetExternalUnderlining( underlining_info, setSelection: Properties.Settings.Default.MoveCaretToUnderlinedText );
@@ -298,10 +299,10 @@ namespace RegExpressWPF
 		}
 
 
-		private void UcMatches_SelectionChanged( object sender, EventArgs e )
+		private void UcMatches_SelectionChanged(object sender, EventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			var segments = ucMatches.GetUnderlinedSegments( );
 
@@ -309,21 +310,21 @@ namespace RegExpressWPF
 		}
 
 
-		private void UcMatches_LostFocus( object sender, RoutedEventArgs e )
+		private void UcMatches_LostFocus(object sender, RoutedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ucText.SetExternalUnderlining( Enumerable.Empty<Segment>( ).ToList( ), setSelection: false );
 		}
 
 
-		private void cbxEngine_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		private void cbxEngine_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
-			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ( (ComboBoxItem)e.AddedItems[0] ).Tag.ToString( ) );
+			CurrentRegexEngine = RegexEngines.Single( n => n.Id == ((ComboBoxItem)e.AddedItems[0]).Tag.ToString( ) );
 
 			UpdateOptions( CurrentRegexEngine );
 
@@ -331,12 +332,12 @@ namespace RegExpressWPF
 		}
 
 
-		private void Engine_OptionsChanged( IRegexEngine sender, RegexEngineOptionsChangedArgs args )
+		private void Engine_OptionsChanged(IRegexEngine sender, RegexEngineOptionsChangedArgs args)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
-			if( object.ReferenceEquals( sender, CurrentRegexEngine ) )
+			if (object.ReferenceEquals( sender, CurrentRegexEngine ))
 			{
 				HandleOptionsChange( args?.PreferImmediateReaction == true );
 			}
@@ -347,20 +348,20 @@ namespace RegExpressWPF
 		}
 
 
-		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
+		private void CbOption_CheckedChanged(object sender, RoutedEventArgs e)
 		{
 			HandleOptionsChange( preferImmediateReaction: false );
 		}
 
 
-		void HandleOptionsChange( bool preferImmediateReaction )
+		void HandleOptionsChange(bool preferImmediateReaction)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 
-			if( preferImmediateReaction )
+			if (preferImmediateReaction)
 			{
 				ucMatches.ShowInfo( "Matching…", delayed: false );
 				lblMatches.Text = "Matches";
@@ -376,10 +377,10 @@ namespace RegExpressWPF
 		}
 
 
-		private void CbShowWhitespaces_CheckedChanged( object sender, RoutedEventArgs e )
+		private void CbShowWhitespaces_CheckedChanged(object sender, RoutedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ucPattern.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 			ucText.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
@@ -390,28 +391,28 @@ namespace RegExpressWPF
 		}
 
 
-		private void LnkShowAll_Click( object sender, RoutedEventArgs e )
+		private void LnkShowAll_Click(object sender, RoutedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			cbShowFirstOnly.IsChecked = false;
 		}
 
 
-		private void LnkShowFirst_Click( object sender, RoutedEventArgs e )
+		private void LnkShowFirst_Click(object sender, RoutedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			cbShowFirstOnly.IsChecked = true;
 		}
 
 
-		private void CbxEol_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		private void CbxEol_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			if( !IsFullyLoaded ) return;
-			if( IsInChange ) return;
+			if (!IsFullyLoaded) return;
+			if (IsInChange) return;
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
 			FindMatchesLoop.SendRestart( );
@@ -424,7 +425,7 @@ namespace RegExpressWPF
 		// --------------------
 
 
-		private void LoadTabData( TabData tabData )
+		private void LoadTabData(TabData tabData)
 		{
 			Debug.Assert( !IsInChange );
 			IsInChange = true;
@@ -432,7 +433,7 @@ namespace RegExpressWPF
 			try
 			{
 				IRegexEngine engine = RegexEngines.SingleOrDefault( n => n.Id == tabData.RegexEngineId );
-				if( engine == null ) engine = DefaultRegexEngine;
+				if (engine == null) engine = DefaultRegexEngine;
 
 				CurrentRegexEngine = engine;
 				SetEngineOption( engine );
@@ -441,31 +442,31 @@ namespace RegExpressWPF
 
 				string[] options = tabData.RegexOptions as string[];
 
-				if( options == null )
+				if (options == null)
 				{
-					if( tabData.RegexOptions is int )
+					if (tabData.RegexOptions is int)
 					{
 						options = new string[] { $"OldRegexOptionsEnum:{tabData.RegexOptions}" };
 					}
 					else
 					{
-						if( tabData.RegexOptions is object[] )
+						if (tabData.RegexOptions is object[])
 						{
-							options = ( (object[])tabData.RegexOptions ).Select( o => o.ToString( ) ).ToArray( );
+							options = ((object[])tabData.RegexOptions).Select( o => o.ToString( ) ).ToArray( );
 						}
 					}
 				}
 
-				if( options == null ) options = new string[] { };
+				if (options == null) options = new string[] { };
 
 				engine.ImportOptions( options );
 
 				// also set options of inactive engines
-				foreach( var eng in RegexEngines )
+				foreach (var eng in RegexEngines)
 				{
-					if( object.ReferenceEquals( eng, engine ) ) continue;
+					if (object.ReferenceEquals( eng, engine )) continue;
 					string[] inactive_options = null;
-					if( tabData.InactiveRegexOptions?.TryGetValue( eng.Id, out inactive_options ) == true )
+					if (tabData.InactiveRegexOptions?.TryGetValue( eng.Id, out inactive_options ) == true)
 					{
 						eng.ImportOptions( inactive_options );
 					}
@@ -476,11 +477,11 @@ namespace RegExpressWPF
 				cbShowCaptures.IsChecked = tabData.ShowCaptures;
 				cbShowWhitespaces.IsChecked = tabData.ShowWhiteSpaces;
 
-				foreach( var item in cbxEol.Items.Cast<ComboBoxItem>( ) )
+				foreach (var item in cbxEol.Items.Cast<ComboBoxItem>( ))
 				{
 					item.IsSelected = (string)item.Tag == tabData.Eol;
 				}
-				if( cbxEol.SelectedItem == null ) ( (ComboBoxItem)cbxEol.Items[0] ).IsSelected = true;
+				if (cbxEol.SelectedItem == null) ((ComboBoxItem)cbxEol.Items[0]).IsSelected = true;
 
 				ucPattern.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
 				ucText.ShowWhiteSpaces( tabData.ShowWhiteSpaces );
@@ -524,7 +525,7 @@ namespace RegExpressWPF
 
 
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
-		void FindMatchesThreadProc( ICancellable cnc )
+		void FindMatchesThreadProc(ICancellable cnc)
 		{
 			string eol = null;
 			string pattern = null;
@@ -537,16 +538,16 @@ namespace RegExpressWPF
 				{
 					eol = GetEolOption( );
 					pattern = ucPattern.GetSimpleTextData( eol ).Text;
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 					text = ucText.GetSimpleTextData( eol ).Text;
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 					first_only = cbShowFirstOnly.IsChecked == true;
 					engine = CurrentRegexEngine;
 				} );
 
-			if( cnc.IsCancellationRequested ) return;
+			if (cnc.IsCancellationRequested) return;
 
-			if( string.IsNullOrEmpty( pattern ) )
+			if (string.IsNullOrEmpty( pattern ))
 			{
 				UITaskHelper.BeginInvoke( this,
 					( ) =>
@@ -581,7 +582,7 @@ namespace RegExpressWPF
 
 					is_good = true;
 				}
-				catch( Exception exc )
+				catch (Exception exc)
 				{
 					UITaskHelper.BeginInvoke( this, CancellationToken.None,
 						( ) =>
@@ -596,17 +597,17 @@ namespace RegExpressWPF
 					Debug.Assert( !is_good );
 				}
 
-				if( is_good )
+				if (is_good)
 				{
 					int count = matches.Count;
 
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 
 					var matches_to_show = first_only ?
 						new RegexMatches( Math.Min( 1, count ), matches.Matches.Take( 1 ) ) :
 						matches;
 
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 
 					UITaskHelper.BeginInvoke( this,
 									( ) =>
@@ -635,24 +636,24 @@ namespace RegExpressWPF
 							ucMatches.ShowIndeterminateProgress( true );
 						} );
 			}
-			catch( ThreadInterruptedException )
+			catch (ThreadInterruptedException)
 			{
 				// ignore					   
 			}
-			catch( ThreadAbortException )
+			catch (ThreadAbortException)
 			{
 				// ignore
 			}
-			catch( Exception )
+			catch (Exception)
 			{
-				if( Debugger.IsAttached ) Debugger.Break( );
+				if (Debugger.IsAttached) Debugger.Break( );
 
 				// ignore
 			}
 		}
 
 
-		void HideIndeterminateProgress( Thread indeterminateProgressThread )
+		void HideIndeterminateProgress(Thread indeterminateProgressThread)
 		{
 			try
 			{
@@ -660,9 +661,9 @@ namespace RegExpressWPF
 				indeterminateProgressThread.Join( 333 );
 				indeterminateProgressThread.Abort( );
 			}
-			catch( Exception )
+			catch (Exception)
 			{
-				if( Debugger.IsAttached ) Debugger.Break( );
+				if (Debugger.IsAttached) Debugger.Break( );
 
 				// ignore
 			}
@@ -675,21 +676,21 @@ namespace RegExpressWPF
 		}
 
 
-		void ShowTextInfoThreadProc( ICancellable cnc )
+		void ShowTextInfoThreadProc(ICancellable cnc)
 		{
 			UITaskHelper.BeginInvoke( this,
 				( ) =>
 				{
 					var td = ucText.GetTextData( GetEolOption( ) );
 
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 
 					lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
-					if( lblTextInfo.Visibility == Visibility.Visible )
+					if (lblTextInfo.Visibility == Visibility.Visible)
 					{
-						string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
+						string s = $"({td.Text.Length:#,##0} character{(td.Text.Length == 1 ? "" : "s")}";
 
-						if( ucTextHadFocus )
+						if (ucTextHadFocus)
 						{
 							s += $", Index: {td.SelectionStart:#,##0}";
 						}
@@ -702,7 +703,7 @@ namespace RegExpressWPF
 		}
 
 
-		void UpdateWhitespaceWarningThreadProc( ICancellable cnc )
+		void UpdateWhitespaceWarningThreadProc(ICancellable cnc)
 		{
 			bool has_whitespaces = false;
 			bool show_whitespaces_option = false;
@@ -716,14 +717,14 @@ namespace RegExpressWPF
 					eol = GetEolOption( );
 					td = ucPattern.GetSimpleTextData( eol );
 
-					if( cnc.IsCancellationRequested ) return;
+					if (cnc.IsCancellationRequested) return;
 				} );
 
-			if( cnc.IsCancellationRequested ) return;
+			if (cnc.IsCancellationRequested) return;
 
 			has_whitespaces = RegexHasWhitespace.IsMatch( td.Text );
 
-			if( !has_whitespaces )
+			if (!has_whitespaces)
 			{
 				UITaskHelper.Invoke( this,
 					( ) =>
@@ -737,16 +738,16 @@ namespace RegExpressWPF
 			bool show1 = false;
 			bool show2 = false;
 
-			if( show_whitespaces_option )
+			if (show_whitespaces_option)
 			{
-				if( has_whitespaces )
+				if (has_whitespaces)
 				{
 					show2 = true;
 				}
 			}
 			else
 			{
-				if( has_whitespaces )
+				if (has_whitespaces)
 				{
 					show1 = true;
 				}
@@ -755,15 +756,15 @@ namespace RegExpressWPF
 			UITaskHelper.Invoke( this,
 				( ) =>
 				{
-					if( show1 && lblWhitespaceWarning1.Parent == null ) lblWarnings.Inlines.Add( lblWhitespaceWarning1 );
-					if( !show1 && lblWhitespaceWarning1.Parent != null ) lblWarnings.Inlines.Remove( lblWhitespaceWarning1 );
-					if( show2 && lblWhitespaceWarning2.Parent == null ) lblWarnings.Inlines.Add( lblWhitespaceWarning2 );
-					if( !show2 && lblWhitespaceWarning2.Parent != null ) lblWarnings.Inlines.Remove( lblWhitespaceWarning2 );
+					if (show1 && lblWhitespaceWarning1.Parent == null) lblWarnings.Inlines.Add( lblWhitespaceWarning1 );
+					if (!show1 && lblWhitespaceWarning1.Parent != null) lblWarnings.Inlines.Remove( lblWhitespaceWarning1 );
+					if (show2 && lblWhitespaceWarning2.Parent == null) lblWarnings.Inlines.Add( lblWhitespaceWarning2 );
+					if (!show2 && lblWhitespaceWarning2.Parent != null) lblWarnings.Inlines.Remove( lblWhitespaceWarning2 );
 				} );
 		}
 
 
-		void SetEngineOption( IRegexEngine engine )
+		void SetEngineOption(IRegexEngine engine)
 		{
 			var cbxitem = cbxEngine.Items.Cast<ComboBoxItem>( ).Single( i => i.Tag.ToString( ) == engine.Id );
 			cbxEngine.SelectedItem = cbxitem;
@@ -772,7 +773,7 @@ namespace RegExpressWPF
 		}
 
 
-		void UpdateOptions( IRegexEngine engine )
+		void UpdateOptions(IRegexEngine engine)
 		{
 			pnlRegexOptions.Children.Clear( );
 			pnlRegexOptions.Children.Add( engine.GetOptionsControl( ) );
@@ -795,17 +796,17 @@ namespace RegExpressWPF
 
 		private bool disposedValue = false; // To detect redundant calls
 
-		protected virtual void Dispose( bool disposing )
+		protected virtual void Dispose(bool disposing)
 		{
-			if( !disposedValue )
+			if (!disposedValue)
 			{
-				if( disposing )
+				if (disposing)
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( FindMatchesLoop ) { }
-					using( UpdateWhitespaceWarningLoop ) { }
-					using( ShowTextInfoLoop ) { }
+					using (FindMatchesLoop) { }
+					using (UpdateWhitespaceWarningLoop) { }
+					using (ShowTextInfoLoop) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

@@ -4,7 +4,10 @@ using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -20,6 +23,21 @@ namespace IcuRegexEngineNs
 		static readonly Dictionary<object, Regex> CachedColouringRegexes = new Dictionary<object, Regex>( );
 		static readonly Dictionary<object, Regex> CachedHighlightingRegexes = new Dictionary<object, Regex>( );
 		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled );
+
+
+		[DllImport( "kernel32", CharSet = CharSet.Unicode, SetLastError = true )]
+		static extern bool SetDllDirectory( string lpPathName );
+
+
+		static IcuRegexEngine( )
+		{
+			Assembly current_assembly = Assembly.GetExecutingAssembly( );
+			string current_assembly_path = Path.GetDirectoryName( current_assembly.Location );
+			string dll_path = Path.Combine( current_assembly_path, @"ICU-min\bin64" );
+
+			bool b = SetDllDirectory( dll_path );
+			if( !b ) throw new ApplicationException( $"SetDllDirectory failed: '{dll_path}'" );
+		}
 
 
 		public IcuRegexEngine( )

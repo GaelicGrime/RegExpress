@@ -1,0 +1,4 @@
+Package: gsl-2.6
+Sources: http://ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz
+Patch: gsl-2.6.diff
+Homepage: http://www.gnu.org/software/gsl/

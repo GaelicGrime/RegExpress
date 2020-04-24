@@ -1,0 +1,250 @@
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/cmake/modules/FindGD.cmake plplot-5.14.0/cmake/modules/FindGD.cmake
+--- plplot-5.14.0.original/cmake/modules/FindGD.cmake	2019-05-22 02:25:00.507973300 +0200
++++ plplot-5.14.0/cmake/modules/FindGD.cmake	2019-05-22 02:23:48.073445000 +0200
+@@ -14,11 +14,11 @@
+ /usr/include
+ )
+ 
+-if(WIN32_AND_NOT_CYGWIN)
++if(WIN32_AND_NOT_CYGWIN AND NOT MINGW)
+   set(GD_NAMES ${GD_NAMES} bgd)
+ else(WIN32_AND_NOT_CYGWIN)
+   set(GD_NAMES ${GD_NAMES} gd)
+-endif(WIN32_AND_NOT_CYGWIN)
++endif(WIN32_AND_NOT_CYGWIN AND NOT MINGW)
+ 
+ find_library(GD_LIBRARY
+   NAMES ${GD_NAMES}
+@@ -33,12 +33,12 @@
+ endif(GD_LIBRARY AND GD_INCLUDE_DIR)
+ 
+ if(GD_FOUND)
+-  if(WIN32_AND_NOT_CYGWIN)
++  if(WIN32_AND_NOT_CYGWIN AND NOT MINGW)
+     set(GD_SUPPORTS_PNG ON)
+     set(GD_SUPPORTS_JPEG ON)
+     set(GD_SUPPORTS_GIF ON)
+     get_filename_component(GD_LIBRARY_DIR ${GD_LIBRARY} PATH)
+-  else(WIN32_AND_NOT_CYGWIN)
++  else(WIN32_AND_NOT_CYGWIN AND NOT MINGW)
+     include(CheckLibraryExists)
+     get_filename_component(GD_LIB_PATH ${GD_LIBRARY} PATH)
+     get_filename_component(GD_LIB ${GD_LIBRARY} NAME)
+@@ -110,7 +110,7 @@
+         set(GD_LIBRARY_DIR "${GD_LIBRARY_DIR}" "${GD_NEXTLIBDIR}")
+       endif(NOT GD_TMP_FOUND)
+     endforeach(GD_LIB ${GD_LIBRARIES})
+-  endif(WIN32_AND_NOT_CYGWIN)
++  endif(WIN32_AND_NOT_CYGWIN AND NOT MINGW)
+ endif(GD_FOUND)
+ 
+ if(GD_FOUND)
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/cmake/modules/pdf.cmake plplot-5.14.0/cmake/modules/pdf.cmake
+--- plplot-5.14.0.original/cmake/modules/pdf.cmake	2019-05-22 02:25:05.124791000 +0200
++++ plplot-5.14.0/cmake/modules/pdf.cmake	2019-05-22 02:23:50.292049000 +0200
+@@ -32,13 +32,11 @@
+   find_package(hpdf)
+   if(hpdf_FOUND)
+     message(STATUS "Looking for haru pdf header and library - found")
+-    if(WIN32_OR_CYGWIN AND NOT CMAKE_COMPILER_IS_GNUCC)
++    if(WIN32_OR_CYGWIN)
+       set(pdf_COMPILE_FLAGS "-I${hpdf_INCLUDE_DIRS} -DHPDF_DLL")
+-    elseif(WIN32_OR_CYGWIN AND CMAKE_COMPILER_IS_GNUCC)
+-      set(pdf_COMPILE_FLAGS "-I${hpdf_INCLUDE_DIRS} -DHPDF_DLL_CDECL")
+-    else(WIN32_OR_CYGWIN AND NOT CMAKE_COMPILER_IS_GNUCC)
++    else(WIN32_OR_CYGWIN)
+       set(pdf_COMPILE_FLAGS "-I${hpdf_INCLUDE_DIRS}")
+-    endif(WIN32_OR_CYGWIN AND NOT CMAKE_COMPILER_IS_GNUCC)
++    endif(WIN32_OR_CYGWIN)
+     set(pdf_LINK_FLAGS "${hpdf_LIBRARIES}")
+     set(pdf_RPATH ${hpdf_LIBRARY_DIRS})
+     filter_rpath(pdf_RPATH)
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/CMakeLists.txt plplot-5.14.0/CMakeLists.txt
+--- plplot-5.14.0.original/CMakeLists.txt	2019-05-22 02:25:14.730815800 +0200
++++ plplot-5.14.0/CMakeLists.txt	2019-05-22 02:23:49.026499400 +0200
+@@ -158,6 +158,29 @@
+ 
+ # Use configured variables to process configurable top-level files.
+ 
++# Installation paths
++#
++SET(BIN_INSTALL_DIR bin CACHE PATH "Where to install binaries to.")
++SET(LIB_INSTALL_DIR lib CACHE PATH "Where to install libraries to.")
++SET(INCLUDE_INSTALL_DIR include CACHE PATH "Where to install headers to.")
++
++# Set a couple variables to be substituted inside the .pc file.
++# We can't just use LIB_INSTALL_DIR in the .pc file, as passing them as absolue
++# or relative paths is both valid and supported by cmake.
++SET (PKGCONFIG_PREFIX ${CMAKE_INSTALL_PREFIX})
++
++IF(IS_ABSOLUTE ${LIB_INSTALL_DIR})
++  SET (PKGCONFIG_LIBDIR ${LIB_INSTALL_DIR})
++ELSE(IS_ABSOLUTE ${LIB_INSTALL_DIR})
++  SET (PKGCONFIG_LIBDIR "\${prefix}/${LIB_INSTALL_DIR}")
++ENDIF (IS_ABSOLUTE ${LIB_INSTALL_DIR})
++
++IF(IS_ABSOLUTE ${INCLUDE_INSTALL_DIR})
++  SET (PKGCONFIG_INCLUDEDIR ${INCLUDE_INSTALL_DIR})
++ELSE(IS_ABSOLUTE ${INCLUDE_INSTALL_DIR})
++  SET (PKGCONFIG_INCLUDEDIR "\${prefix}/${INCLUDE_INSTALL_DIR}")
++ENDIF(IS_ABSOLUTE ${INCLUDE_INSTALL_DIR})
++
+ # This CMake-configured template file is processed further by sed for
+ # abi-compliance-checker.
+ configure_file(
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/drivers/pdf.c plplot-5.14.0/drivers/pdf.c
+--- plplot-5.14.0.original/drivers/pdf.c	2019-05-22 02:30:26.774828100 +0200
++++ plplot-5.14.0/drivers/pdf.c	2019-05-22 02:23:50.401413500 +0200
+@@ -118,7 +118,12 @@
+ void plD_tidy_pdf( PLStream * );
+ void plD_state_pdf( PLStream *, PLINT );
+ void plD_esc_pdf( PLStream *, PLINT, void * );
+-void error_handler( HPDF_STATUS error_no, HPDF_STATUS detail_no, void *user_data );
++#ifdef HPDF_DLL
++void __stdcall
++#else
++void
++#endif
++error_handler( HPDF_STATUS error_no, HPDF_STATUS detail_no, void *user_data );
+ void PSDrawTextToCanvas( pdfdev* dev, unsigned char* type1_string, short drawText );
+ void PSSetFont( pdfdev* dev, PLUNICODE fci );
+ void PSDrawText( pdfdev* dev, PLUNICODE* ucs4, int ucs4Len, short drawText );
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/drivers/wxwidgets_comms.h plplot-5.14.0/drivers/wxwidgets_comms.h
+--- plplot-5.14.0.original/drivers/wxwidgets_comms.h	2019-05-22 02:30:30.475765700 +0200
++++ plplot-5.14.0/drivers/wxwidgets_comms.h	2019-05-22 02:23:50.010806400 +0200
+@@ -24,7 +24,7 @@
+ 
+ #include "plplotP.h"
+ #ifdef _WIN32
+-#include <Windows.h>
++#include <wx/msw/wrapwin.h>
+ #else
+ #include <sys/mman.h>
+ #include <sys/stat.h>
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/pkgcfg/plplot-template.pc.in plplot-5.14.0/pkgcfg/plplot-template.pc.in
+--- plplot-5.14.0.original/pkgcfg/plplot-template.pc.in	2019-05-22 02:31:51.698955900 +0200
++++ plplot-5.14.0/pkgcfg/plplot-template.pc.in	2019-05-22 02:23:49.307730400 +0200
+@@ -1,6 +1,7 @@
+-libdir=@LIB_DIR@
+-includedir=@INCLUDE_DIR@
+-drvdir=@LIB_DIR@/plplot@PLPLOT_VERSION@/drivers
++prefix="@PKGCONFIG_PREFIX@"
++libdir=@PKGCONFIG_LIBDIR@
++includedir=@PKGCONFIG_INCLUDEDIR@/plplot
++drvdir=@PKGCONFIG_LIBDIR@/plplot@PLPLOT_VERSION@/drivers
+ 
+ Name: PLplot @PC_SHORT_NAME@
+ Description: Scientific plotting library (@PC_PRECISION@@PC_LONG_NAME@)
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/src/CMakeLists.txt plplot-5.14.0/src/CMakeLists.txt
+--- plplot-5.14.0.original/src/CMakeLists.txt	2019-05-22 02:32:00.589952800 +0200
++++ plplot-5.14.0/src/CMakeLists.txt	2019-05-22 02:23:49.651496400 +0200
+@@ -257,9 +257,9 @@
+ if(PL_HAVE_QHULL)
+   list(APPEND libplplot_LINK_LIBRARIES PLPLOT::csironn)
+   if(QHULL_RPATH)
+-    list(APPEND pc_libplplot_LINK_FLAGS -l${WRITEABLE_TARGET}csironn -L${QHULL_RPATH} -lqhull)
++    list(APPEND pc_libplplot_LINK_FLAGS -l${WRITEABLE_TARGET}csironn -L${QHULL_RPATH})
+   else(QHULL_RPATH)
+-    list(APPEND pc_libplplot_LINK_FLAGS -l${WRITEABLE_TARGET}csironn -lqhull)
++    list(APPEND pc_libplplot_LINK_FLAGS -l${WRITEABLE_TARGET}csironn)
+   endif(QHULL_RPATH)
+ 
+   # Needed by plgridd.c.
+diff -r -u --strip-trailing-cr plplot-5.14.0.original/src/plctrl.c plplot-5.14.0/src/plctrl.c
+--- plplot-5.14.0.original/src/plctrl.c	2019-05-22 02:32:01.930308600 +0200
++++ plplot-5.14.0/src/plctrl.c	2019-05-22 02:23:48.510909300 +0200
+@@ -56,6 +56,10 @@
+ #include <errno.h>
+ #endif
+ 
++#ifdef _WIN32
++#include <windows.h>
++#endif
++
+ // Random number generator (Mersenne Twister)
+ #include "mt19937ar.h"
+ 
+@@ -68,6 +72,10 @@
+ // work even in the single precision floating point case.
+ #define FUZZ_EPSILON    1.e-4
+ 
++#ifdef _WIN32
++static HMODULE handle_dll;
++#endif
++
+ // Static functions
+ 
+ // Used by any external init code to suggest a path
+@@ -125,6 +133,41 @@
+ 
+ #endif
+ 
++#ifdef _WIN32
++BOOL WINAPI
++DllMain (HINSTANCE hinstDLL,
++         DWORD     fdwReason,
++         LPVOID    lpvReserved)
++{
++  switch (fdwReason)
++    {
++    case DLL_PROCESS_ATTACH:
++      handle_dll = (HMODULE) hinstDLL;
++      break;
++    }
++
++  return TRUE;
++}
++
++char * plGetWinInstallDir()
++{
++	char *path;
++	char *p;
++	
++	path = (char*) malloc(MAX_PATH);
++	
++	GetModuleFileName(handle_dll, path, MAX_PATH);
++	
++	p = strrchr (path, '\\');
++	*p = '\0';
++	p = strrchr (path, '\\');
++	*p = '\0';
++	
++	return path;
++}
++#endif
++
++
+ //--------------------------------------------------------------------------
+ //  Routines that deal with colors & color maps.
+ //--------------------------------------------------------------------------
+@@ -2203,6 +2246,14 @@
+         return fs;
+ #endif
+ 
++#ifdef _WIN32
++	dn = plGetWinInstallDir();
++	plGetName( dn, "bin", fn, &fs );
++	free(dn);
++    if ( !plFindName( fs ) )
++        return fs;
++#endif
++
+ // Crapped out
+ 
+     free_mem( fs );
+@@ -2338,6 +2389,15 @@
+         goto done;
+ #endif // macintosh
+ 
++#ifdef _WIN32
++	dn = plGetWinInstallDir();
++	plGetName( dn, "share\\plplot" PLPLOT_VERSION, fn, &fs );
++	free(dn);
++	if ( ( file = pdf_fopen( fs, "rb" ) ) != NULL )
++		goto done;
++	fprintf( stderr, "WININSTALLDIR =\"%s\" ; file=\"%s\"\n", dn, fs ); // what IS set?
++#endif
++
+     if ( plplotLibDir != NULL )
+     {
+         plGetName( plplotLibDir, "", fn, &fs );

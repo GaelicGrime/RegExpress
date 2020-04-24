@@ -379,6 +379,9 @@ namespace BoostRegexEngineNs
 
 			string pattern = "";
 
+			if( is_perl ) pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
+			if( is_perl && modX ) pattern += @"(\#[^\n]*) | "; // line comment
+
 			if( is_perl || is_POSIX_extended )
 			{
 				pattern += @"\\Q.*?(\\E|$) | "; // skip \Q...\E

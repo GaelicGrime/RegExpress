@@ -320,12 +320,11 @@ namespace DotNetRegexEngineNs
 		{
 			string pattern = "(?nsx)(";
 			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
-				pattern += @"(\#[^\n]*) | ";
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pattern += @"(\#[^\n]*) | "; // line comment
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
+			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"(?'left_bracket'\[) (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
-			pattern += @"(?'range'\{\d+(,(\d+)?)?(\}(?'end')|$)) | "; // '{...}'
 			pattern += @"(\\.)";
 			pattern += @")";
 

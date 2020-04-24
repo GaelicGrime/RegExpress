@@ -1,0 +1,68 @@
+diff -r -u --strip-trailing-cr ta-lib-0.4.0.original/bsd.txt ta-lib-0.4.0/bsd.txt
+--- ta-lib-0.4.0.original/bsd.txt	2019-05-22 02:18:48.695436900 +0200
++++ ta-lib-0.4.0/bsd.txt	2019-05-22 02:18:44.672703400 +0200
+@@ -0,0 +1,32 @@
++/* TA-LIB Copyright (c) 1999-2007, Mario Fortier
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or
++ * without modification, are permitted provided that the following
++ * conditions are met:
++ *
++ * - Redistributions of source code must retain the above copyright
++ *   notice, this list of conditions and the following disclaimer.
++ *
++ * - Redistributions in binary form must reproduce the above copyright
++ *   notice, this list of conditions and the following disclaimer in
++ *   the documentation and/or other materials provided with the
++ *   distribution.
++ *
++ * - Neither name of author nor the names of its contributors
++ *   may be used to endorse or promote products derived from this
++ *   software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++ * REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
++ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
+\ No newline at end of file
+diff -r -u --strip-trailing-cr ta-lib-0.4.0.original/configure ta-lib-0.4.0/configure
+--- ta-lib-0.4.0.original/configure	2019-05-22 02:18:49.135727300 +0200
++++ ta-lib-0.4.0/configure	2019-05-22 02:18:44.891427200 +0200
+@@ -7604,7 +7604,7 @@
+       # _LT_AC_TAGVAR(hardcode_libdir_flag_spec, ) is actually meaningless,
+       # as there is no search path for DLLs.
+       hardcode_libdir_flag_spec='-L$libdir'
+-      allow_undefined_flag=unsupported
++      allow_undefined_flag=supported
+       always_export_symbols=no
+       enable_shared_with_static_runtimes=yes
+       export_symbols_cmds='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[BCDGRS] /s/.* \([^ ]*\)/\1 DATA/'\'' | $SED -e '\''/^[AITW] /s/.* //'\'' | sort | uniq > $export_symbols'
+diff -r -u --strip-trailing-cr ta-lib-0.4.0.original/ta-lib-config.bat.win-gcc ta-lib-0.4.0/ta-lib-config.bat.win-gcc
+--- ta-lib-0.4.0.original/ta-lib-config.bat.win-gcc	2019-05-22 02:19:22.099826200 +0200
++++ ta-lib-0.4.0/ta-lib-config.bat.win-gcc	2019-05-22 02:18:45.110179300 +0200
+@@ -0,0 +1,15 @@
++@echo off
++rem simplified replacement for the original shell script
++set ROOT=%~dp0
++
++set XCFLAGS=-I"%ROOT%..\include\ta-lib"
++set XLIBS=-L"%ROOT%..\lib" -lta_lib
++set XVERSION=0.4.0
++set XPREFIX=%ROOT%..\
++
++for %%p in (%*) do (
++  if x%%p == x--cflags     echo %XCFLAGS%
++  if x%%p == x--libs       echo %XLIBS%
++  if x%%p == x--version    echo %XVERSION%
++  if x%%p == x--prefix     echo %XPREFIX% 
++)

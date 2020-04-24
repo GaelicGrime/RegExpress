@@ -187,6 +187,10 @@
       <Project>{b7beb394-9f76-4f5f-b7fb-d88369d98c54}</Project>
       <Name>Pcre2RegexEngine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\Perl5\Perl5RegexEngine\Perl5RegexEngine.csproj">
+      <Project>{490d9c31-2f47-4164-9465-4611d913a9c0}</Project>
+      <Name>Perl5RegexEngine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RegexEngines\Re2\Re2RegexEngine\Re2RegexEngine.csproj">
       <Project>{573aaf62-0e02-46b1-9879-c5a8dbc4a266}</Project>
       <Name>Re2RegexEngine</Name>
@@ -209,4 +213,12 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>@call "$(ProjectDir)PostBuildStep.cmd" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)"
+
+
+
+
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>

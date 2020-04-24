@@ -97,8 +97,8 @@
       <AdditionalDependencies />
     </Link>
     <PostBuildEvent>
-      <Command>@echo copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"
-copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -113,8 +113,8 @@ copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin
       <AdditionalDependencies />
     </Link>
     <PostBuildEvent>
-      <Command>@echo copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"
-copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -129,8 +129,8 @@ copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin
       <AdditionalDependencies />
     </Link>
     <PostBuildEvent>
-      <Command>@echo copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"
-copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -145,8 +145,8 @@ copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin
       <AdditionalDependencies />
     </Link>
     <PostBuildEvent>
-      <Command>@echo copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"
-copy "$(ProjectDir)ICU-min\bin64\*.dll" "$(ProjectDir)..\..\..\RegExpressWPF\bin\$(PlatformTarget)\$(Configuration)"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

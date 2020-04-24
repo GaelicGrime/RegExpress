@@ -1,0 +1,4 @@
+Package: netcdf-c-4.6.3
+Sources: ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-c-4.6.3.tar.gz
+Patch: netcdf-c-4.6.3.diff
+Homepage: http://www.unidata.ucar.edu/software/netcdf/
