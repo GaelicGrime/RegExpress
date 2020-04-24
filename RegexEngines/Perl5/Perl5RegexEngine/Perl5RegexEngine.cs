@@ -9,14 +9,19 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+
 
 namespace Perl5RegexEngineNs
 {
 	public class Perl5RegexEngine : IRegexEngine
 	{
 		readonly UCPerl5RegexOptions OptionsControl;
+
+		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
+
 
 
 		[DllImport( "kernel32", CharSet = CharSet.Unicode, SetLastError = true )]
@@ -53,10 +58,12 @@ namespace Perl5RegexEngineNs
 
 		public event RegexEngineOptionsChanged OptionsChanged;
 
+
 		public Control GetOptionsControl( )
 		{
 			return OptionsControl;
 		}
+
 
 		public string[] ExportOptions( )
 		{
@@ -76,9 +83,11 @@ namespace Perl5RegexEngineNs
 			return new Matcher( pattern, selected_options );
 		}
 
+
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
 		}
+
 
 		public void HighlightPattern( ICancellable cnc, Highlights highlights, string pattern, int selectionStart, int selectionEnd, Segment visibleSegment )
 		{
@@ -144,6 +153,40 @@ namespace Perl5RegexEngineNs
 			}
 
 			return PerlVersion;
+		}
+
+
+		Regex GetCachedColouringRegex( )
+		{
+			bool is_x = OptionsControl.IsModifierSelected( "x" );
+			bool is_xx = OptionsControl.IsModifierSelected( "xx" );
+			bool is_x_or_xx = is_x || is_xx;
+
+			string key = string.Join( "\u001F", new object[] { is_x_or_xx } );
+
+			lock( CachedColouringRegexes )
+			{
+				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
+
+				regex = CreateColouringRegex( );
+
+				CachedColouringRegexes.Add( key, regex );
+
+				return regex;
+			}
+		}
+
+
+		Regex CreateColouringRegex( )
+		{
+
+
+
+
+
+
+
+			throw new NotImplementedException( );
 		}
 	}
 }

@@ -19,14 +19,14 @@ namespace Perl5RegexEngineNs
 		readonly string Pattern;
 		readonly string[] SelectedOptions;
 		string Text;
-		static readonly List<OptionInfo> OptionInfoList;
+		static readonly List<ModifierInfo> ModifierInfoList;
 
-		public class OptionInfo
+		public class ModifierInfo
 		{
 			public readonly string Modifier;
 			public readonly string Note;
 
-			public OptionInfo( string modifier, string note )
+			public ModifierInfo( string modifier, string note )
 			{
 				Modifier = modifier;
 				Note = note;
@@ -36,19 +36,19 @@ namespace Perl5RegexEngineNs
 
 		static Matcher( )
 		{
-			OptionInfoList = new List<OptionInfo>
+			ModifierInfoList = new List<ModifierInfo>
 			{
-				new OptionInfo("m", "change \"^\" and \"$\" to matching the start and end of each line within the string"),
-				new OptionInfo("s", "change \".\" to match any character whatsoever, even a newline"),
-				new OptionInfo("i", "do case-insensitive pattern matching"),
-				new OptionInfo("x", "permitting whitespace and comments"),
-				new OptionInfo("xx", "like \"x\", but additionally ignore spaces within [ ]"),
-				new OptionInfo("n", "prevent the grouping metacharacters ( ) from capturing"),
-				new OptionInfo("a", "ASCII-restrict"),
-				new OptionInfo("aa", "forbid ASCII/non-ASCII matches"),
-				new OptionInfo("d", "old, problematic default character set behavior"),
-				new OptionInfo("u", "use Unicode rules"),
-				new OptionInfo("l", "use the current locale's rules"),
+				new ModifierInfo("m", "change \"^\" and \"$\" to matching the start and end of each line within the string"),
+				new ModifierInfo("s", "change \".\" to match any character whatsoever, even a newline"),
+				new ModifierInfo("i", "do case-insensitive pattern matching"),
+				new ModifierInfo("x", "permitting whitespace and comments"),
+				new ModifierInfo("xx", "like \"x\", but additionally ignore spaces within [ ]"),
+				new ModifierInfo("n", "prevent the grouping metacharacters ( ) from capturing"),
+				new ModifierInfo("a", "ASCII-restrict"),
+				new ModifierInfo("aa", "forbid ASCII/non-ASCII matches"),
+				new ModifierInfo("d", "old, problematic default character set behavior"),
+				new ModifierInfo("u", "use Unicode rules"),
+				new ModifierInfo("l", "use the current locale's rules"),
 				//?new OptionInfo("c", "keep the current position during repeated matching"),
 			};
 		}
@@ -67,7 +67,7 @@ namespace Perl5RegexEngineNs
 		{
 			Text = text;
 
-			var all_modifiers = OptionInfoList.Select( oi => oi.Modifier );
+			var all_modifiers = ModifierInfoList.Select( oi => oi.Modifier );
 			string selected_modifiers = SelectedOptions == null ? "" : string.Concat( SelectedOptions.Where( o => all_modifiers.Contains( o ) ) );
 
 			var matches = new List<IMatch>( );
@@ -249,7 +249,7 @@ if( $@ )
 		#endregion
 
 
-		public static IReadOnlyList<OptionInfo> GetOptionInfoList( ) => OptionInfoList;
+		public static IReadOnlyList<ModifierInfo> GetOptionInfoList( ) => ModifierInfoList;
 
 
 		string PrepareString( string text )

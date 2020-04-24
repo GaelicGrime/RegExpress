@@ -96,6 +96,12 @@ namespace Perl5RegexEngineNs
 		}
 
 
+		internal bool IsModifierSelected( string m )
+		{
+			return CachedOptions.Any( o => o == m );
+		}
+
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;
