@@ -265,11 +265,11 @@ namespace OnigurumaRegexEngineNs
 				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
 				escape += @"\\[0-7]{1,3} | "; // octal, three digits
 
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) escape += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
+				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) escape += @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$) | "; // \o{17777777777 ...} wide octal chars
 
 				escape += @"\\u[0-9a-fA-F]+ | "; // \uHHHH wide hexadecimal char
 				if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
+				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) escape += @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$) | "; // \x{7HHHHHHH ...} wide hexadecimal chars
 
 				if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
 				{
@@ -427,8 +427,8 @@ namespace OnigurumaRegexEngineNs
 					pattern += @"(?'right_par'\\\)) | "; // '\)'
 				}
 
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pattern += @"\\o\{[0-7]+(\}|$) | "; // \o{17777777777} wide octal char
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pattern += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // \x{7HHHHHHH} wide hexadecimal char
+				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pattern += @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$) | "; // \o{17777777777 ...} wide octal chars
+				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pattern += @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$) | "; // \x{7HHHHHHH ...} wide hexadecimal chars
 
 				if( helper.IsONIG_SYN_OP2_ESC_P_BRACE_CHAR_PROPERTY || helper.IsONIG_SYN_OP2_ESC_P_BRACE_CIRCUMFLEX_NOT )
 				{

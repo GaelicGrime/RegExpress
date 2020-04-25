@@ -270,10 +270,10 @@ namespace OnigurumaRegexInterop
 			{
 				// currently default parameters are used
 				onig_initialize_match_param( match_params );
-				//int rl = onig_get_retry_limit_in_match( );
-				//int sl = onig_get_match_stack_limit_size( );
+
 				//onig_set_match_stack_limit_size_of_match_param ( OnigMatchParam * param, unsigned int limit );
 				//onig_set_retry_limit_in_match_of_match_param ( OnigMatchParam * param, unsigned long limit );
+				//onig_set_subexp_call_max_nest_level(  ); 
 
 				int r;
 				const wchar_t* start = native_text;
@@ -378,7 +378,7 @@ namespace OnigurumaRegexInterop
 		//	String^ what = gcnew String( exc.what( ) );
 		//	throw gcnew Exception( "Error: " + what );
 		//}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;
@@ -413,6 +413,7 @@ namespace OnigurumaRegexInterop
 		C( ONIGERR_MATCH_STACK_LIMIT_OVER );
 		C( ONIGERR_PARSE_DEPTH_LIMIT_OVER );
 		C( ONIGERR_RETRY_LIMIT_IN_MATCH_OVER );
+		C( ONIGERR_RETRY_LIMIT_IN_SEARCH_OVER );
 		C( ONIGERR_DEFAULT_ENCODING_IS_NOT_SETTED );
 		C( ONIGERR_SPECIFIED_ENCODING_CANT_CONVERT_TO_WIDE_CHAR );
 		C( ONIGERR_FAIL_TO_INITIALIZE );
