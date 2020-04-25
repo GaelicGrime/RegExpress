@@ -264,3 +264,10 @@ __pycache__/
 
 #
 !RegexEngines/CppBoostRegexInterop/boost_1_72_0_min/**
+!RegexEngines/Icu/IcuRegexInterop/ICU-min/**
+!RegexEngines/Oniguruma/OnigurumaRegexInterop/Oniguruma-min/**
+!RegexEngines/Pcre2/Pcre2RegexInterop/PCRE2/**
+!RegexEngines/Perl5/Perl5RegexEngine/Perl5-min/**
+!RegexEngines/Re2/Re2RegexInterop/re2-min/**
+!RegexEngines/SubReg/SubRegRegexInterop/SubReg-min/**
+
