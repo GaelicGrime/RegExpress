@@ -130,7 +130,7 @@ namespace Pcre2RegexInterop
 	}
 
 
-	RegexMatches^ Matcher::Matches( String^ text0 )
+	RegexMatches^ Matcher::Matches( String^ text0, ICancellable^ cnc )
 	{
 		try
 		{

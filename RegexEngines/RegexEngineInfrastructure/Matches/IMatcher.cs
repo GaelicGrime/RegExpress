@@ -10,6 +10,6 @@ namespace RegexEngineInfrastructure.Matches
 {
 	public interface IMatcher
 	{
-		RegexMatches Matches( string text );
+		RegexMatches Matches( string text, ICancellable cnc );
 	}
 }

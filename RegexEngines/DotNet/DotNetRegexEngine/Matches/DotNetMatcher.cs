@@ -22,7 +22,7 @@ namespace DotNetRegexEngineNs.Matches
 
 		#region IMatcher
 
-		public RegexMatches Matches( string text )
+		public RegexMatches Matches( string text, ICancellable cnc )
 		{
 			MatchCollection dotnet_matches = mRegex.Matches( text );
 			IEnumerable<DotNetRegexMatch> matches = dotnet_matches.OfType<Match>( ).Select( m => new DotNetRegexMatch( m ) );

@@ -23,7 +23,7 @@ namespace SubRegRegexInterop
 
 #pragma region IMatcher
 
-		virtual RegexMatches^ Matches( String^ text );
+		virtual RegexMatches^ Matches( String^ text, ICancellable^ cnc );
 
 #pragma endregion
 

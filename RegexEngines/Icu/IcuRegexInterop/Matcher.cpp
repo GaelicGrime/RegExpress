@@ -156,7 +156,7 @@ namespace IcuRegexInterop
 	}
 
 
-	RegexMatches^ Matcher::Matches( String^ text )
+	RegexMatches^ Matcher::Matches( String^ text, ICancellable^ cnc )
 	{
 		icu::RegexMatcher* icu_matcher = nullptr;
 

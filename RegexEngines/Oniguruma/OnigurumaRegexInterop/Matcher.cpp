@@ -240,7 +240,7 @@ namespace OnigurumaRegexInterop
 	}
 
 
-	RegexMatches^ Matcher::Matches( String^ text )
+	RegexMatches^ Matcher::Matches( String^ text, ICancellable^ cnc )
 	{
 		try
 		{

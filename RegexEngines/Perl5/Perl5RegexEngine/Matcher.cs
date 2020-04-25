@@ -1,4 +1,5 @@
-﻿using RegexEngineInfrastructure.Matches;
+﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.Matches.Simple;
 using System;
 using System.Collections.Generic;
@@ -63,7 +64,7 @@ namespace Perl5RegexEngineNs
 
 		#region IMatcher
 
-		public RegexMatches Matches( string text )
+		public RegexMatches Matches( string text, ICancellable cnc )
 		{
 			Text = text;
 
@@ -186,7 +187,38 @@ if( $@ )
 					sw.WriteLine( PrepareString( text ) );
 				}
 
-				p.WaitForExit( ); // TODO: use timeout
+				// TODO: use timeout
+				// TODO: implement "cancelisation" in more places
+
+				bool done = false;
+				bool cancel = false;
+
+				for(; ; )
+				{
+					done = p.WaitForExit( 444 );
+					if( done ) break;
+
+					cancel = cnc.IsCancellationRequested;
+					if( cancel ) break;
+				}
+
+				if( cancel )
+				{
+					try
+					{
+						p.Kill( );
+					}
+					catch( Exception _ )
+					{
+						if( Debugger.IsAttached ) Debugger.Break( );
+
+						// ignore
+					}
+
+					return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
+				}
+
+				Debug.Assert( done );
 			}
 
 			string error = error_sb.ToString( );
