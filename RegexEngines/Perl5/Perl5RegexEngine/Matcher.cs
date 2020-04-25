@@ -10,7 +10,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 
 namespace Perl5RegexEngineNs
@@ -190,16 +189,25 @@ if( $@ )
 				// TODO: use timeout
 				// TODO: implement "cancelisation" in more places
 
-				bool done = false;
 				bool cancel = false;
+				bool done = false;
 
 				for(; ; )
 				{
-					done = p.WaitForExit( 444 );
-					if( done ) break;
-
 					cancel = cnc.IsCancellationRequested;
 					if( cancel ) break;
+
+					done = p.WaitForExit( 444 );
+					if( done )
+					{
+						// another 'WaitForExit' required to finish the processing of streams;
+						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
+						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
+
+						p.WaitForExit( );
+
+						break;
+					}
 				}
 
 				if( cancel )
