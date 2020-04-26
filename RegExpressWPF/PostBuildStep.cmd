@@ -5,12 +5,12 @@ set PlatformName=%~2
 set TargetDir=%~3
 set ThisCmdPath=%~dp0
 
-echo %ConfigurationName%
-echo %PlatformName%
-echo %ThisCmdPath%
+rem echo %ConfigurationName%
+rem echo %PlatformName%
+rem echo %ThisCmdPath%
 
 set MainProjectPath=%ThisCmdPath%
-echo %MainProjectPath%
+rem echo %MainProjectPath%
 
 
 rem -- ICU --
