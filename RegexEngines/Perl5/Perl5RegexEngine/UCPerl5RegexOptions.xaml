@@ -14,9 +14,10 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <StackPanel>
 
         <StackPanel x:Name="pnlOptions"/>
-        
-    </Grid>
+        <CheckBox x:Name="chbUseReStrict" Content="use re 'strict';"/>
+
+    </StackPanel>
 </UserControl>
