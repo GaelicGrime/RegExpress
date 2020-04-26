@@ -72,6 +72,11 @@ namespace Perl5RegexEngineNs
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) );
 
+			if( chbUseReStrict.IsChecked == true )
+			{
+				selected_options = selected_options.Append( "strict" );
+			}
+
 			return selected_options.ToArray( );
 		}
 
@@ -88,6 +93,8 @@ namespace Perl5RegexEngineNs
 				{
 					cb.IsChecked = options.Contains( cb.Tag );
 				}
+
+				chbUseReStrict.IsChecked = options.Contains( "strict" );
 			}
 			finally
 			{
@@ -100,6 +107,9 @@ namespace Perl5RegexEngineNs
 		{
 			return CachedOptions.Any( o => o == m );
 		}
+
+
+		internal bool IsReStrict => CachedOptions.Contains( "strict" );
 
 
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )

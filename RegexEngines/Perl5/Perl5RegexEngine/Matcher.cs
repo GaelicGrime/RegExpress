@@ -77,19 +77,15 @@ namespace Perl5RegexEngineNs
 			string perl_dir = Path.Combine( assembly_dir, @"Perl5-min\perl" );
 			string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
-
-			using( Process p = new Process( ) )
-			{
-				p.StartInfo.FileName = perl_exe;
-				p.StartInfo.Arguments = @"-CS -e ""
+			string arguments = @"-CS -e ""
 eval
 {
 	use strict; 
 	use feature 'unicode_strings';
 	use utf8;
 	#use re 'eval';
+	no warnings 'experimental::re_strict';
+	[*USE RE STRICT*]
 
 	chomp( my $pattern = <STDIN> ); 
 	chomp( my $text = <STDIN> ); 
@@ -154,7 +150,16 @@ if( $@ )
 }
 
 """
-.Replace( "[*MODIFIERS*]", selected_modifiers );
+.Replace( "[*MODIFIERS*]", selected_modifiers )
+.Replace( "[*USE RE STRICT*]", SelectedOptions.Contains( "strict" ) ? "use re 'strict';" : "" );
+
+			var output_sb = new StringBuilder( );
+			var error_sb = new StringBuilder( );
+
+			using( Process p = new Process( ) )
+			{
+				p.StartInfo.FileName = perl_exe;
+				p.StartInfo.Arguments = arguments;
 
 				p.StartInfo.UseShellExecute = false;
 				p.StartInfo.CreateNoWindow = true;
