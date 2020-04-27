@@ -65,6 +65,8 @@ namespace Perl5RegexEngineNs
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
+			// TODO: optimise, redesign
+
 			Text = text;
 
 			var all_modifiers = ModifierInfoList.Select( oi => oi.Modifier );
@@ -78,6 +80,7 @@ namespace Perl5RegexEngineNs
 			string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
 			string arguments = @"-CS -e ""
+my $pattern;
 eval
 {
 	use strict; 
@@ -87,7 +90,7 @@ eval
 	no warnings 'experimental::re_strict';
 	[*USE RE STRICT*]
 
-	chomp( my $pattern = <STDIN> ); 
+	chomp( $pattern = <STDIN> ); 
 	chomp( my $text = <STDIN> ); 
 
 	#print q('), $pattern, q(' ), length $pattern, qq(\n);
@@ -111,9 +114,21 @@ eval
 	#print 'pattern: ', q('), $pattern, q(' ), length $pattern, qq(\r\n);
 	#print 'text: ', q('), $text, ' ', q(' ), length $text, qq(\r\n);
 	
-	my $results = qq(<RESULTS-\x1F>);
+	my $re;
+	do 
+	{
+		use re qw(Debug PARSE);
 
-	while ($text =~ /$pattern/g[*MODIFIERS*]) 
+		print STDERR qq(<DEBUG-PARSE\x1F>\n);
+
+		$re = qr/$pattern/[*MODIFIERS*];
+
+		print STDERR qq(</DEBUG-PARSE\x1F>\n);
+	};
+
+	my $results = qq(<RESULTS\x1F>);
+
+	while( $text =~ /$re/g ) 
 	{
 		for( my $i = 0; $i < scalar @+; ++$i)
 		{
@@ -138,7 +153,7 @@ eval
 
 	}
 
-	$results .= qq(</RESULTS-\x1F>);
+	$results .= qq(</RESULTS\x1F>);
 
 	print $results;
 
@@ -146,8 +161,10 @@ eval
 
 if( $@ )
 {
-	print STDERR $@, qq(\n);
+	print STDERR qq(<ERR\x1F>), $@, qq(</ERR\x1F>\n);
 }
+
+print STDERR qq(<END-ERR\x1F/>\n);
 
 """
 .Replace( "[*MODIFIERS*]", selected_modifiers )
@@ -173,12 +190,12 @@ if( $@ )
 
 				p.OutputDataReceived += ( s, a ) =>
 				{
-					output_sb.Append( a.Data );
+					output_sb.AppendLine( a.Data );
 				};
 
 				p.ErrorDataReceived += ( s, a ) =>
 				{
-					error_sb.Append( a.Data );
+					error_sb.AppendLine( a.Data );
 				};
 
 				p.Start( );
@@ -235,19 +252,35 @@ if( $@ )
 			}
 
 			string error = error_sb.ToString( );
+			string debug_parse = Regex.Match( error, @"<DEBUG-PARSE\x1F>(.*?)</DEBUG-PARSE\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
+			string error_text = Regex.Match( error, @"<ERR\x1F>(.*?)</ERR\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
 
-			if( !string.IsNullOrWhiteSpace( error ) )
+			if( !string.IsNullOrWhiteSpace( error_text ) )
 			{
-				string error_message = Regex.Replace( error, @"\s+at -e line \d+, <STDIN> line \d+(?=\.\s*$)", "" );
+				string error_message = Regex.Replace( error_text, @"\s+at -e line \d+, <STDIN> line \d+(?=\.\s*$)", "", RegexOptions.Singleline | RegexOptions.Compiled );
 
 				throw new Exception( error_message );
 			}
 
-			// TODO: optimise, redesign
+			// try figuring out the names and their numbers
+
+			var numbered_names = new List<string>( );
+
+			foreach( Match m in Regex.Matches( debug_parse, @"tail~ OPEN(\d+) '(.*?)'", RegexOptions.Compiled ) )
+			{
+				string name = m.Groups[2].Value;
+				int number = int.Parse( m.Groups[1].Value, CultureInfo.InvariantCulture );
+
+				for( int i = numbered_names.Count; i <= number; ++i ) numbered_names.Add( null );
+
+				Debug.Assert( numbered_names[number] == null || numbered_names[number] == name );
+
+				numbered_names[number] = name;
+			}
 
 			string output = output_sb.ToString( );
 
-			string results = Regex.Match( output, @"<RESULTS-\x1F>(.*?)</RESULTS-\x1F>" ).Groups[1].Value.Trim( );
+			string results = Regex.Match( output, @"<RESULTS\x1F>(.*?)</RESULTS\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
 
 			var split_m = results.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );
 			foreach( var m in split_m )
@@ -264,9 +297,12 @@ if( $@ )
 
 					bool success = split[0] == "1";
 
+					string deduced_name = i < numbered_names.Count ? numbered_names[i] : null;
+					if( deduced_name == null ) deduced_name = i.ToString( CultureInfo.InvariantCulture );
+
 					if( !success )
 					{
-						match.AddGroup( 0, 0, false, i.ToString( CultureInfo.InvariantCulture ) );
+						match.AddGroup( 0, 0, false, deduced_name );
 					}
 					else
 					{
@@ -275,7 +311,7 @@ if( $@ )
 
 						if( match == null ) match = SimpleMatch.Create( index, length, this );
 
-						match.AddGroup( index, length, true, i.ToString( CultureInfo.InvariantCulture ) );
+						match.AddGroup( index, length, true, deduced_name );
 					}
 				}
 
