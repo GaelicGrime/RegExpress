@@ -53,9 +53,9 @@ namespace RegExpressWPF
 		readonly DispatcherTimer TimerShowInfo;
 		string InfoText;
 
-		readonly LengthConverter LengthConverter = new LengthConverter( );
-
 		bool AlreadyLoaded = false;
+
+		const int MIN_LEFT_WIDTH = 24;
 
 		string LastText;
 		RegexMatches LastMatches;
@@ -363,7 +363,7 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			rtbMatches.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
+			rtbMatches.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtbMatches );
 			adorner_layer.Add( LocalUnderliningAdorner );
@@ -479,6 +479,8 @@ namespace RegExpressWPF
 			int match_index = -1;
 			bool document_has_changed = false;
 
+			int left_width = EvaluateLeftWidth( matches, show_succeeded_groups_only );
+
 			foreach( IMatch match in matches.Matches )
 			{
 				Debug.Assert( match.Success );
@@ -504,9 +506,7 @@ namespace RegExpressWPF
 
 				if( cnc.IsCancellationRequested ) break;
 
-				const int LEFT_WIDTH = 24;
-
-				int left_width_for_match = LEFT_WIDTH + ( match.Index - min_index );
+				int left_width_for_match = left_width + ( match.Index - min_index );
 
 				Paragraph para = null;
 				Run run = null;
@@ -1195,6 +1195,25 @@ namespace RegExpressWPF
 			}
 
 			pbProgress.Visibility = Visibility.Hidden;
+		}
+
+
+		int EvaluateLeftWidth( RegexMatches matches, bool showSucceededGroupsOnly )
+		{
+			if( matches == null ) return MIN_LEFT_WIDTH;
+
+			int max_name_length = matches.Matches
+				.SelectMany( m => m.Groups )
+				.Where( g => !showSucceededGroupsOnly || g.Success )
+				.Select( m => m.Name.Length )
+				.Append( 0 )
+				.Max( );
+
+			int w = max_name_length + 11;
+
+			if( w < MIN_LEFT_WIDTH ) return MIN_LEFT_WIDTH;
+
+			return MIN_LEFT_WIDTH + ( ( w - MIN_LEFT_WIDTH ) / 4 + 1 ) * 4;
 		}
 
 

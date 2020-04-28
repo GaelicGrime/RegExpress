@@ -54,9 +54,6 @@ namespace RegExpressWPF
 		readonly StyleInfo NormalStyleInfo;
 		readonly StyleInfo[] HighlightStyleInfos;
 
-		readonly LengthConverter LengthConverter = new LengthConverter( );
-
-
 		public event EventHandler TextChanged;
 		public event EventHandler SelectionChanged;
 		public event EventHandler LocalUnderliningFinished;
@@ -235,7 +232,7 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			rtb.Document.MinPageWidth = (double)LengthConverter.ConvertFromString( "21cm" );
+			rtb.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );

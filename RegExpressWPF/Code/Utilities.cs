@@ -9,10 +9,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 
+
 namespace RegExpressWPF.Code
 {
 	static class Utilities
 	{
+		static readonly LengthConverter LengthConverter = new LengthConverter( );
+
+
 		public static int LineNumber( [CallerLineNumber] int lineNumber = 0 )
 		{
 			return lineNumber;
@@ -27,6 +31,20 @@ namespace RegExpressWPF.Code
 			if( from >= toExcluding ) return string.Empty;
 
 			return text.Substring( from, toExcluding - from );
+		}
+
+
+		public static double ToPixels( string value )
+		{
+			return (double)LengthConverter.ConvertFromInvariantString( value );
+		}
+
+
+		public static double ToPoints( string value )
+		{
+			double r = (double)LengthConverter.ConvertFrom( "1pt" );
+
+			return ToPixels(value) * r;
 		}
 
 
