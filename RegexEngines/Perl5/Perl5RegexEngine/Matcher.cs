@@ -259,14 +259,14 @@ print STDERR qq(<END-ERR\x1F/>\n);
 			{
 				string error_message = Regex.Replace( error_text, @"\s+at -e line \d+, <STDIN> line \d+(?=\.\s*$)", "", RegexOptions.Singleline | RegexOptions.Compiled );
 
-				throw new Exception( error_message );
+				throw new Exception( $"Perl error: {error_message}" );
 			}
 
 			// try figuring out the names and their numbers
 
 			var numbered_names = new List<string>( );
 
-			foreach( Match m in Regex.Matches( debug_parse, @"tail~ OPEN(\d+) '(.*?)'", RegexOptions.Compiled ) )
+			foreach( Match m in Regex.Matches( debug_parse, @"(?:\r|\n) +\| +\| +~ CLOSE(\d+) '(.*?)' \(\d+\)(?: -> \w+)?(?:\r|\n)", RegexOptions.Compiled ) )
 			{
 				string name = m.Groups[2].Value;
 				int number = int.Parse( m.Groups[1].Value, CultureInfo.InvariantCulture );
