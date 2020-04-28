@@ -24,7 +24,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="boost_1_72_0_min\libs\regex\src\internals.hpp">
+    <ClInclude Include="boost-min\libs\regex\src\internals.hpp">
       <Filter>Boost</Filter>
     </ClInclude>
     <ClInclude Include="BoostRegexInterop.h">
@@ -44,55 +44,55 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\c_regex_traits.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\c_regex_traits.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\cpp_regex_traits.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\cpp_regex_traits.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\cregex.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\cregex.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\fileiter.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\fileiter.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\icu.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\icu.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\instances.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\instances.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\posix_api.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\posix_api.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\regex.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\regex.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\regex_debug.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\regex_debug.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\regex_raw_buffer.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\regex_raw_buffer.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\regex_traits_defaults.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\regex_traits_defaults.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\static_mutex.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\static_mutex.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\usinstances.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\usinstances.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\w32_regex_traits.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\w32_regex_traits.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\wc_regex_traits.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\wc_regex_traits.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\wide_posix_api.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\wide_posix_api.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost_1_72_0_min\libs\regex\src\winstances.cpp">
+    <ClCompile Include="boost-min\libs\regex\src\winstances.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
     <ClCompile Include="BoostRegexInterop.cpp">
@@ -113,7 +113,7 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="boost_1_72_0_min\LICENSE_1_0.txt">
+    <Text Include="boost-min\LICENSE_1_0.txt">
       <Filter>Boost</Filter>
     </Text>
   </ItemGroup>
