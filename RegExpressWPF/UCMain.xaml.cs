@@ -66,6 +66,7 @@ namespace RegExpressWPF
 				new IcuRegexEngineNs.IcuRegexEngine(),
 				new SubRegRegexEngineNs.SubRegRegexEngine(),
 				new Perl5RegexEngineNs.Perl5RegexEngine(),
+				new PythonRegexEngineNs.PythonRegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;

@@ -26,3 +26,10 @@ set Prj=%MainProjectPath%\..\RegexEngines\Perl5\Perl5RegexEngine
 
 xcopy /E /D /R /Y "%Prj%\Perl5-min\*" "%TargetDir%\Perl5-min\*"
  
+
+rem -- Python --
+
+set Prj=%MainProjectPath%\..\RegexEngines\Python\PythonRegexEngine
+xcopy /E /D /R /Y "%Prj%\python-embed\*" "%TargetDir%\python-embed\*"
+
+
