@@ -18,7 +18,7 @@ namespace PythonRegexEngineNs
 	{
 		static string PythonVersion = null;
 		static readonly object Locker = new object( );
-		static readonly Regex RegexMG = new Regex( @"^(?'t'[MG]) (?'s'-?\d+) , (?'e'-?\d+)$", RegexOptions.Compiled );
+		static readonly Regex RegexMG = new Regex( @"^(?'t'(?'m'M)|G) (?'s'-?\d+), (?'e'-?\d+)(?(m), (?'n'\d+))$", RegexOptions.Compiled );
 
 		readonly string Pattern;
 		readonly string[] SelectedOptions;
@@ -116,10 +116,10 @@ try:
 	matches = regex.finditer( text )
 
 	for match in matches :
-		print( 'M', match.start(), ',', match.end())
+		print( f'M {match.start()}, {match.end()}, {len(match.groups())}')
 		if match.lastindex:
 			for g in range(0, match.lastindex + 1):
-				print( 'G', match.start(g), ',', match.end(g) )
+				print( f'G {match.start(g)}, {match.end(g)}' )
 
 except:
 	ex_type, ex, tb = sys.exc_info()
@@ -219,21 +219,37 @@ except:
 			string output = output_sb.ToString( );
 
 			SimpleMatch match = null;
+			int group_count = 0;
 			int group_i = 0;
 
 			using( var sr = new StringReader( output ) )
 			{
 				string line;
 
+				void addMissingGroups( ) // (Python does not report failed tailing groups via 'match.lastindex')
+				{
+					if( match != null )
+					{
+						for( int i = match.Groups.Count( ); i <= group_count; ++i )
+						{
+							string name = i.ToString( CultureInfo.InvariantCulture );
+
+							match.AddGroup( -1, 0, false, name );
+						}
+					}
+				}
+
 				while( ( line = sr.ReadLine( ) ) != null )
 				{
-					if( line.Length == 0 ) continue;
+					if( line.Length == 0 || line.StartsWith( "#" ) ) continue;
 
 					var m = RegexMG.Match( line );
 
 					if( !m.Success )
 					{
 						if( Debugger.IsAttached ) Debugger.Break( );
+
+						throw new Exception( "Internal error in Python engine." );
 					}
 					else
 					{
@@ -245,6 +261,10 @@ except:
 						if( m.Groups["t"].Value == "M" )
 						{
 							Debug.Assert( success );
+
+							addMissingGroups( );
+
+							group_count = int.Parse( m.Groups["n"].Value, CultureInfo.InvariantCulture );
 
 							match = SimpleMatch.Create( index, length, this );
 							group_i = 0;
@@ -264,10 +284,10 @@ except:
 						}
 					}
 				}
+
+				addMissingGroups( );
 			}
 
-
-			//throw new Exception( "Output: \r\n" + output ); //...
 
 			return new RegexMatches( matches.Count, matches );
 		}
