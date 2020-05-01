@@ -54,10 +54,10 @@ namespace Perl5RegexEngineNs
 		}
 
 
-		public Matcher( string pattern, string[] selected_options )
+		public Matcher( string pattern, string[] selectedOptions )
 		{
 			Pattern = pattern;
-			SelectedOptions = selected_options;
+			SelectedOptions = selectedOptions;
 		}
 
 
