@@ -30,11 +30,25 @@ namespace PythonRegexEngineNs
 		int ChangeCounter = 0;
 
 
-
 		public UCPythonRegexOptions( )
 		{
 			InitializeComponent( );
 
+			// insert checkboxes
+			{
+				var options = Matcher.GetOptionInfoList( );
+
+				foreach( var o in options )
+				{
+					var cb = new CheckBox
+					{
+						Tag = o.Flag,
+						Content = CreateTextBlock( o.Flag, o.Note )
+					};
+
+					pnlOptions.Children.Add( cb );
+				}
+			}
 		}
 
 
@@ -52,7 +66,12 @@ namespace PythonRegexEngineNs
 
 		internal string[] GetSelectedOptions( )
 		{
-			return null;
+			var selected_options =
+				pnlOptions.Children.OfType<CheckBox>( )
+					.Where( cb => cb.IsChecked == true )
+					.Select( cb => cb.Tag.ToString( ) );
+
+			return selected_options.ToArray( );
 		}
 
 
@@ -62,12 +81,23 @@ namespace PythonRegexEngineNs
 			{
 				++ChangeCounter;
 
-				
+				options = options ?? new string[] { };
+
+				foreach( var cb in pnlOptions.Children.OfType<CheckBox>( ) )
+				{
+					cb.IsChecked = options.Contains( cb.Tag );
+				}
 			}
 			finally
 			{
 				--ChangeCounter;
 			}
+		}
+
+
+		internal bool IsFlagSelected( string m )
+		{
+			return CachedOptions.Any( o => o == m );
 		}
 
 
@@ -89,6 +119,20 @@ namespace PythonRegexEngineNs
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
+		}
+
+
+		static TextBlock CreateTextBlock( string text, string note )
+		{
+			var tb = new TextBlock( );
+			new Run( text, tb.ContentEnd );
+			if( !string.IsNullOrWhiteSpace( note ) )
+			{
+				new Run( " – " + note, tb.ContentEnd )
+					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
+			}
+
+			return tb;
 		}
 	}
 }

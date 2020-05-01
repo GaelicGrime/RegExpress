@@ -18,15 +18,40 @@ namespace PythonRegexEngineNs
 	{
 		static string PythonVersion = null;
 		static readonly object Locker = new object( );
-		static readonly Regex RegexMG = new Regex( @"^(?'t'(?'m'M)|G) (?'s'-?\d+), (?'e'-?\d+)(?(m), (?'n'\d+))$", RegexOptions.Compiled );
+		static readonly Regex RegexMG =
+			new Regex( @"^(?'t'[MG]) (?'s'-?\d+), (?'e'-?\d+)|(?'t'N) (?'i'\d+) <(?'n'.*)>$",
+				RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 		readonly string Pattern;
 		readonly string[] SelectedOptions;
 		string Text;
+		static readonly List<FlagInfo> FlagInfoList;
+
+
+		public class FlagInfo
+		{
+			public readonly string Flag;
+			public readonly string Note;
+
+			public FlagInfo( string flag, string note )
+			{
+				Flag = flag;
+				Note = note;
+			}
+		}
 
 
 		static Matcher( )
 		{
+			FlagInfoList = new List<FlagInfo>
+			{
+				new FlagInfo( "ASCII", @"Make \w, \W, \b, \B, \d, \D, \s and \S perform ASCII-only matching"),
+				new FlagInfo( "IGNORECASE", @"Perform case-insensitive matching"),
+				new FlagInfo( "LOCALE", @"Make \w, \W, \b, \B and case-insensitive matching dependent on the current locale"),
+				new FlagInfo( "MULTILINE", @"When specified, the pattern character '^' matches at the beginning of the string and at the beginning of each line (immediately following each newline); and the pattern character '$' matches at the end of the string and at the end of each line (immediately preceding each newline)"),
+				new FlagInfo( "DOTALL", @"Make the '.' special character match any character at all, including a newline"),
+				new FlagInfo( "VERBOSE", @"Allow spaces and comments"),
+			};
 		}
 
 
@@ -94,6 +119,10 @@ namespace PythonRegexEngineNs
 
 			Text = text;
 
+			var all_flags = FlagInfoList.Select( oi => oi.Flag );
+			var selected_flags = SelectedOptions?.Where( o => all_flags.Contains( o ) ) ?? Enumerable.Empty<string>( );
+
+
 			var matches = new List<IMatch>( );
 
 			string arguments = @"-I -E -s -S -X utf8 -c ""
@@ -109,17 +138,25 @@ text = text.replace('\\r', '\r').replace('\\n', '\n').replace('\\\\', '\\')
 pattern = pattern[1:-1]
 text = text[1:-1]
 
+#print( f'# pattern=[{pattern}], len={len(pattern)}');
+#print( f'# text=[{text}], len={len(text)}');
+
 try:
 
-	regex = re.compile( pattern, 0)
+	regex = re.compile( pattern, [*FLAGS*])
+
+	#print( f'# {regex.groups}')
+	#print( f'# {regex.groupindex}')
+
+	for key, value in regex.groupindex.items():
+		print( f'N {value} <{key}>')
 
 	matches = regex.finditer( text )
 
 	for match in matches :
-		print( f'M {match.start()}, {match.end()}, {len(match.groups())}')
-		if match.lastindex:
-			for g in range(0, match.lastindex + 1):
-				print( f'G {match.start(g)}, {match.end(g)}' )
+		print( f'M {match.start()}, {match.end()}')
+		for g in range(0, regex.groups + 1):
+			print( f'G {match.start(g)}, {match.end(g)}' )
 
 except:
 	ex_type, ex, tb = sys.exc_info()
@@ -128,6 +165,9 @@ except:
 
 ""
 ";
+
+			arguments = arguments.Replace( "[*FLAGS*]",
+				selected_flags.Any( ) ? string.Join( "|", selected_flags.Select( f => "re." + f ) ) : "0" );
 
 			var output_sb = new StringBuilder( );
 			var error_sb = new StringBuilder( );
@@ -219,25 +259,12 @@ except:
 			string output = output_sb.ToString( );
 
 			SimpleMatch match = null;
-			int group_count = 0;
 			int group_i = 0;
+			var names = new Dictionary<int, string>( );
 
 			using( var sr = new StringReader( output ) )
 			{
 				string line;
-
-				void addMissingGroups( ) // (Python does not report failed tailing groups via 'match.lastindex')
-				{
-					if( match != null )
-					{
-						for( int i = match.Groups.Count( ); i <= group_count; ++i )
-						{
-							string name = i.ToString( CultureInfo.InvariantCulture );
-
-							match.AddGroup( -1, 0, false, name );
-						}
-					}
-				}
 
 				while( ( line = sr.ReadLine( ) ) != null )
 				{
@@ -253,39 +280,56 @@ except:
 					}
 					else
 					{
-						int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
-						int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
-						bool success = index >= 0;
-						int length = end - index;
-
-						if( m.Groups["t"].Value == "M" )
+						switch( m.Groups["t"].Value )
 						{
-							Debug.Assert( success );
+						case "N":
+						{
+							int index = int.Parse( m.Groups["i"].Value, CultureInfo.InvariantCulture );
+							string name = m.Groups["n"].Value;
 
-							addMissingGroups( );
+							Debug.Assert( !names.ContainsKey( index ) );
 
-							group_count = int.Parse( m.Groups["n"].Value, CultureInfo.InvariantCulture );
+							names[index] = name;
+						}
+						break;
+						case "M":
+						{
+							int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
+							int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
+							int length = end - index;
+
+							Debug.Assert( index >= 0 && end >= 0 );
 
 							match = SimpleMatch.Create( index, length, this );
+							matches.Add( match );
+
 							group_i = 0;
 						}
-						else
+						break;
+						case "G":
 						{
-							Debug.Assert( m.Groups["t"].Value == "G" );
+							int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
+							int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
+							int length = end - index;
+							bool success = index >= 0;
+
 							Debug.Assert( match != null );
 
-							string name = group_i.ToString( CultureInfo.InvariantCulture );
+							string name;
+							if( !names.TryGetValue( group_i, out name ) ) name = group_i.ToString( CultureInfo.InvariantCulture );
 
 							match.AddGroup( index, length, success, name );
 
-							if( group_i == 0 ) matches.Add( match );
-
 							++group_i;
+						}
+						break;
+						default:
+							if( Debugger.IsAttached ) Debugger.Break( );
+
+							throw new Exception( "Internal error in Python engine." );
 						}
 					}
 				}
-
-				addMissingGroups( );
 			}
 
 
@@ -302,6 +346,9 @@ except:
 		}
 
 		#endregion
+
+
+		public static IReadOnlyList<FlagInfo> GetOptionInfoList( ) => FlagInfoList;
 
 
 		static string GetPythonExePath( )
