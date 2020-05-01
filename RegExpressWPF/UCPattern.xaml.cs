@@ -148,7 +148,8 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			rtb.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
+			// TODO: add an option
+			//rtb.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );
