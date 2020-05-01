@@ -289,7 +289,7 @@ namespace Pcre2RegexEngineNs
 
 			string char_group = "";
 
-			char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+			char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
 			char_group = RegexUtilities.EndGroup( char_group, null );
 
@@ -357,7 +357,7 @@ namespace Pcre2RegexEngineNs
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 
 			pattern = RegexUtilities.EndGroup( pattern, null );

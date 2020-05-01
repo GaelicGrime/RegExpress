@@ -324,7 +324,7 @@ namespace DotNetRegexEngineNs
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"(?'left_bracket'\[) (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
+			pattern += @"(?'left_bracket'\[) \]? (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
 			pattern += @"(\\.)";
 			pattern += @")";
 

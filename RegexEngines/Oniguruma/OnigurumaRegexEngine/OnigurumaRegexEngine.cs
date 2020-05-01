@@ -332,7 +332,8 @@ namespace OnigurumaRegexEngineNs
 			if( !helper.IsONIG_SYNTAX_ASIS )
 			{
 				char_group = $@"
-						\[
+						\[ 
+						\]?
 						(?> {posix_bracket} \[(?<c>) | ({escape} | [^\[\]])+ | \](?<-c>))*
 						(?(c)(?!))
 						\]
@@ -445,6 +446,7 @@ namespace OnigurumaRegexEngineNs
 				{
 					pattern += $@"
 						(?'left_bracket'\[)
+						\]?
 						(?> {posix_bracket} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
 						(?(c)(?!))
 						(?'right_bracket'\])?

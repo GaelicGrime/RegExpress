@@ -320,7 +320,7 @@ namespace BoostRegexEngineNs
 
 			string char_group = "";
 
-			if( is_perl || is_POSIX_extended || is_POSIX_basic ) char_group += @"\[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+			if( is_perl || is_POSIX_extended || is_POSIX_basic ) char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
 			char_group = RegexUtilities.EndGroup( char_group, null );
 
@@ -403,7 +403,7 @@ namespace BoostRegexEngineNs
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic )
 			{
-				pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+				pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 				pattern += @"\\. | "; // '\...'
 			}
 
