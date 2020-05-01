@@ -310,7 +310,7 @@ namespace DotNetRegexEngineNs
 					")";
 			}
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
@@ -328,7 +328,7 @@ namespace DotNetRegexEngineNs
 			pattern += @"(\\.)";
 			pattern += @")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}

@@ -220,7 +220,7 @@ namespace StdRegexEngineNs
 				char_group + " | " + Environment.NewLine +
 				")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
@@ -253,7 +253,7 @@ namespace StdRegexEngineNs
 
 			pattern += @")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}

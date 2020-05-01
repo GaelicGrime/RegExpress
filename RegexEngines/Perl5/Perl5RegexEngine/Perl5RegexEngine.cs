@@ -386,7 +386,7 @@ namespace Perl5RegexEngineNs
 				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
 				")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
@@ -404,7 +404,7 @@ namespace Perl5RegexEngineNs
 			pattern += @"\\."; // '\...'
 			pattern += @")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}

@@ -22,7 +22,7 @@ namespace IcuRegexEngineNs
 
 		static readonly Dictionary<object, Regex> CachedColouringRegexes = new Dictionary<object, Regex>( );
 		static readonly Dictionary<object, Regex> CachedHighlightingRegexes = new Dictionary<object, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled );
+		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 
 		[DllImport( "kernel32", CharSet = CharSet.Unicode, SetLastError = true )]
@@ -341,7 +341,7 @@ namespace IcuRegexEngineNs
 				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
 				")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
@@ -384,7 +384,7 @@ namespace IcuRegexEngineNs
 			else
 				pattern = "(?nsx)" + pattern;
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}

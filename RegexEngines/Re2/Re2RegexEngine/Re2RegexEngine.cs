@@ -19,7 +19,7 @@ namespace Re2RegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled );
+		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 
 		public Re2RegexEngine( )
@@ -279,7 +279,7 @@ namespace Re2RegexEngineNs
 				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
 				")";
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
@@ -306,7 +306,7 @@ namespace Re2RegexEngineNs
 			else
 				pattern = "(?nsx)" + pattern;
 
-			var regex = new Regex( pattern, RegexOptions.Compiled );
+			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 			return regex;
 		}
