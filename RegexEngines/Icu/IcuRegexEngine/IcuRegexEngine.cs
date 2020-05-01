@@ -307,6 +307,7 @@ namespace IcuRegexEngineNs
 
 			char_group = $@"
 						\[
+						\]?
 						(?> {posix_bracket} \[(?<c>) | ({escape} | [^\[\]])+ | \](?<-c>))*
 						(?(c)(?!))
 						\]
@@ -366,6 +367,7 @@ namespace IcuRegexEngineNs
 
 			pattern += $@"
 						(?'left_bracket'\[)
+						\]?
 						(?> {posix_bracket} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
 						(?(c)(?!))
 						(?'right_bracket'\])?
