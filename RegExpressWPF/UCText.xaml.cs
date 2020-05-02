@@ -54,6 +54,8 @@ namespace RegExpressWPF
 		readonly StyleInfo NormalStyleInfo;
 		readonly StyleInfo[] HighlightStyleInfos;
 
+		bool mIsWrap;
+
 		public event EventHandler TextChanged;
 		public event EventHandler SelectionChanged;
 		public event EventHandler LocalUnderliningFinished;
@@ -111,6 +113,34 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.Init( );
 		}
+
+
+		public void SetWrap( bool yes )
+		{
+			if( yes )
+			{
+				rtb.Document.MinPageWidth = 0;
+			}
+			else
+			{
+				AdjustNonwrappingMode( );
+			}
+
+			mIsWrap = yes;
+		}
+
+
+		void AdjustNonwrappingMode( )
+		{
+			//rtb.Document.MinPageWidth = Utilities.ToDeviceIndependentPixels( "21cm" );
+
+			var std = GetSimpleTextData( null );
+
+			int max_line_len = std.Text.Split( new[] { std.Eol }, StringSplitOptions.None ).Max( s => s.Length );
+
+			rtb.Document.MinPageWidth = Math.Max( Utilities.ToDeviceIndependentPixels( "21cm" ), max_line_len * 10 ); //...
+		}
+
 
 
 		public void SetMatches( RegexMatches matches, bool showCaptures, string eol )
@@ -232,8 +262,6 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			rtb.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
-
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );
 			adorner_layer.Add( LocalUnderliningAdorner );
@@ -279,6 +307,11 @@ namespace RegExpressWPF
 			//}
 
 			MatchesUpdatedEvent.Reset( );
+
+			if( !mIsWrap )
+			{
+				AdjustNonwrappingMode( );
+			}
 
 			TextChanged?.Invoke( this, null );
 		}

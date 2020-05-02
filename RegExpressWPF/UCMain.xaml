@@ -47,6 +47,7 @@
                         Click="BtnNewTab_Click" IsTabStop="False"
                         />
                 </StackPanel>
+
                 <local:UCPattern x:Name="ucPattern" Grid.Row="1" TextChanged="UcPattern_TextChanged"  />
             </Grid>
 
@@ -153,6 +154,7 @@
                                     </TextBlock>
                                 </CheckBox>
                                 <CheckBox x:Name="cbShowCapturesDisabledUnchecked" Content="Show captures" IsEnabled="False" Visibility="Collapsed"/>
+                                <CheckBox x:Name="cbWrap" Content="Wrap pattern and text" Checked="cbWrap_Checked" Unchecked="cbWrap_Unchecked"/>
                                 <CheckBox x:Name="cbShowWhitespaces" Checked="CbShowWhitespaces_CheckedChanged" Unchecked="CbShowWhitespaces_CheckedChanged">
                                     <TextBlock>
                                             Show whitespaces 

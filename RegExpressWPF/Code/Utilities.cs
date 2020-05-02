@@ -34,17 +34,10 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static double ToPixels( string value )
+		public static double ToDeviceIndependentPixels( string value )
 		{
+			// such as: "10 in", "10 cm", "10 pt"
 			return (double)LengthConverter.ConvertFromInvariantString( value );
-		}
-
-
-		public static double ToPoints( string value )
-		{
-			double r = (double)LengthConverter.ConvertFrom( "1pt" );
-
-			return ToPixels(value) * r;
 		}
 
 

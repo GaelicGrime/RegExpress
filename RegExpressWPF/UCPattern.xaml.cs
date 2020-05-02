@@ -58,6 +58,7 @@ namespace RegExpressWPF
 
 		IRegexEngine mRegexEngine;
 		string mEol;
+		bool mIsWrap;
 
 		public event EventHandler TextChanged;
 
@@ -101,6 +102,33 @@ namespace RegExpressWPF
 			RtbUtilities.SetText( rtb, value );
 
 			UndoRedoHelper.Init( );
+		}
+
+
+		public void SetWrap( bool yes )
+		{
+			if( yes )
+			{
+				rtb.Document.MinPageWidth = 0;
+			}
+			else
+			{
+				AdjustNonwrappingMode( );
+			}
+
+			mIsWrap = yes;
+		}
+
+
+		void AdjustNonwrappingMode( )
+		{
+			//rtb.Document.MinPageWidth = Utilities.ToDeviceIndependentPixels( "21cm" );
+
+			var std = GetSimpleTextData( null );
+
+			int max_line_len = std.Text.Split( new[] { std.Eol }, StringSplitOptions.None ).Max( s => s.Length );
+
+			rtb.Document.MinPageWidth = Math.Max( Utilities.ToDeviceIndependentPixels( "21cm" ), max_line_len * 10 ); //...
 		}
 
 
@@ -148,9 +176,6 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			// TODO: add an option
-			//rtb.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
-
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtb );
 			adorner_layer.Add( WhitespaceAdorner );
 
@@ -174,6 +199,11 @@ namespace RegExpressWPF
 
 			RecolouringLoop.SendRestart( );
 			HighlightingLoop.SendRestart( );
+
+			if( !mIsWrap )
+			{
+				AdjustNonwrappingMode( );
+			}
 
 			TextChanged?.Invoke( this, null );
 		}

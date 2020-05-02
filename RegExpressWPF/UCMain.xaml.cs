@@ -134,6 +134,7 @@ namespace RegExpressWPF
 				tabData.ShowCaptures = InitialTabData.ShowCaptures;
 				tabData.ShowWhiteSpaces = InitialTabData.ShowWhiteSpaces;
 				tabData.Eol = InitialTabData.Eol;
+				tabData.Wrap = InitialTabData.Wrap;
 			}
 			else
 			{
@@ -146,6 +147,7 @@ namespace RegExpressWPF
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
 				tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 				tabData.Eol = GetEolOption( );
+				tabData.Wrap = cbWrap.IsChecked == true;
 
 				// also save options of inactive engines
 
@@ -174,7 +176,10 @@ namespace RegExpressWPF
 			CurrentRegexEngine = RegexEngines.Single( n => n.Id == "DotNetRegex" ); // default
 			SetEngineOption( CurrentRegexEngine );
 
+			cbWrap.IsChecked = true;
+			ucPattern.SetWrap( true );
 			ucPattern.SetFocus( );
+			ucText.SetWrap( true );
 
 			IsFullyLoaded = true;
 
@@ -491,7 +496,12 @@ namespace RegExpressWPF
 
 				ucPattern.SetRegexOptions( CurrentRegexEngine, tabData.Eol );
 				ucPattern.SetText( tabData.Pattern );
+				ucPattern.SetWrap( tabData.Wrap );
+
 				ucText.SetText( tabData.Text );
+				ucText.SetWrap( tabData.Wrap );
+
+				cbWrap.IsChecked = tabData.Wrap;
 			}
 			finally
 			{
@@ -625,6 +635,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void IndeterminateProgressThreadProc( )
 		{
 			try
@@ -654,6 +665,7 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void HideIndeterminateProgress( Thread indeterminateProgressThread )
 		{
 			try
@@ -834,5 +846,26 @@ namespace RegExpressWPF
 		}
 
 		#endregion
+
+
+
+		private void cbWrap_Checked( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			ucPattern.SetWrap( true );
+			ucText.SetWrap( true );
+		}
+
+		private void cbWrap_Unchecked( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			ucPattern.SetWrap( false );
+			ucText.SetWrap( false );
+		}
+
 	}
 }

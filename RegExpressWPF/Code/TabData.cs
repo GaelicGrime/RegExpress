@@ -27,6 +27,7 @@ namespace RegExpressWPF.Code
 		public bool ShowCaptures;
 		public bool ShowWhiteSpaces;
 		public string Eol;
+		public bool Wrap = true;
 
 #pragma warning restore CA1051 // Do not declare visible instance fields
 	}
