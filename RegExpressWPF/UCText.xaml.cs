@@ -571,10 +571,10 @@ namespace RegExpressWPF
 
 					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
 
-					Segment.Except( segments_to_uncolour, match.Index, match.Length );
-					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+						Segment.Except( segments_to_uncolour, match.Index, match.Length );
+						segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+					}
 				}
-			}
 
 			if( cnc.IsCancellationRequested ) return;
 
@@ -594,7 +594,14 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-			RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, pbProgress, td, all_segments_and_styles );
+			if( mIsWrap )
+			{
+				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, pbProgress, td, all_segments_and_styles );
+			}
+			else
+			{
+				RtbUtilities.ApplyStyle( cnc, ChangeEventHelper, pbProgress, td, all_segments_and_styles, clip_rect );
+			}
 
 			if( cnc.IsCancellationRequested ) return;
 

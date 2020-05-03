@@ -732,6 +732,113 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IReadOnlyList<(Segment segment, StyleInfo styleInfo)> segmentsAndStyles, Rect clipRect )
+		{
+			// split into smaller segments
+
+			var segments = new List<(int index, int length, StyleInfo styleInfo)>( segmentsAndStyles.Count );
+
+			foreach( var segment_and_style in segmentsAndStyles )
+			{
+				int j = segment_and_style.segment.Index;
+				int rem = segment_and_style.segment.Length;
+
+				do
+				{
+					if( reh.IsCancellationRequested ) return false;
+
+					int len = Math.Min( MAX_SEGMENT_LENGTH, rem );
+
+					segments.Add( (j, len, segment_and_style.styleInfo) );
+
+					j += len;
+					rem -= len;
+
+				} while( rem > 0 );
+			}
+
+
+			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
+			int last_i = segments.Count;
+
+			if( pb != null )
+			{
+				ceh.Invoke( CancellationToken.None, ( ) => //...
+				{
+					pb.Visibility = Visibility.Hidden;
+					pb.Maximum = last_i;
+				} );
+			}
+
+			//var rnd = new Random( );
+			//segments = segments.OrderBy( s => rnd.Next() ).ToList( ); // just for fun
+
+			//...
+			//Debug.WriteLine( $"Total segments: {segments.Count}" );
+
+			for( int i = 0; i < last_i; )
+			{
+				if( reh.IsCancellationRequested ) return false;
+
+				ceh.Invoke( CancellationToken.None, ( ) =>
+				{
+					if( pb != null )
+					{
+						if( Environment.TickCount > show_pb_time )
+						{
+							pb.Value = i;
+							pb.Visibility = Visibility.Visible;
+						}
+					}
+
+					var end = Environment.TickCount + MAX_BLOCKING_TIME_MS;
+					//int dbg_i = i;//...
+					do
+					{
+						//if( reh.IsAnyRequested ) return false;
+
+						var segment = segments[i];
+
+						bool do_it = false;
+
+						var r1 = td.Pointers[segment.index].GetCharacterRect( LogicalDirection.Backward );
+						if( r1.IntersectsWith( clipRect ) )
+						{
+							do_it = true;
+						}
+						else
+						{
+							var r2 = td.Pointers[segment.index + segment.length].GetCharacterRect( LogicalDirection.Forward );
+							if( r2.IntersectsWith( clipRect ) )
+							{
+								do_it = true;
+							}
+							else
+							{
+								var u = Rect.Union( r1, r2 );
+								if( u.IntersectsWith( clipRect ) )
+								{
+									do_it = true;
+								}
+							}
+						}
+
+						if( do_it )
+						{
+							td.Range0F( segment.index, segment.length ).Style( segment.styleInfo );
+						}
+
+					} while( ++i < last_i && Environment.TickCount < end );
+
+					//Debug.WriteLine( $"Subsegments: {i - dbg_i}" ); //...
+
+				} );
+			}
+
+			return true;
+		}
+
+
 		public static bool ApplyStyle( ICancellable reh, ChangeEventHelper ceh, ProgressBar pb, TextData td, IList<Segment> segments0, StyleInfo styleInfo )
 		{
 			// split into smaller segments
