@@ -103,13 +103,15 @@ eval
 	utf8::decode( $pattern );
 	utf8::decode( $text );
 
+	$pattern =~ s/\\\\/\x1F/g;
 	$pattern =~ s/\\n/\n/g;
 	$pattern =~ s/\\r/\r/g;
-	$pattern =~ s/\\\\/\\/g;
+	$pattern =~ s/\x1F/\\/g;
 
+	$text =~ s/\\\\/\x1F/g;
 	$text =~ s/\\n/\n/g;
 	$text =~ s/\\r/\r/g;
-	$text =~ s/\\\\/\\/g;
+	$text =~ s/\x1F/\\/g;
 
 	#print 'pattern: ', q('), $pattern, q(' ), length $pattern, qq(\r\n);
 	#print 'text: ', q('), $text, ' ', q(' ), length $text, qq(\r\n);

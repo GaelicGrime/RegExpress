@@ -132,8 +132,8 @@ import re
 pattern = input().strip(' \r\n')
 text = input().strip(' \r\n')
 
-pattern = pattern.replace('\\r', '\r').replace('\\n', '\n').replace('\\\\', '\\')
-text = text.replace('\\r', '\r').replace('\\n', '\n').replace('\\\\', '\\')
+pattern = pattern.replace('\\\\', '\x1F').replace('\\r', '\r').replace('\\n', '\n').replace('\x1F', '\\')
+text = text.replace('\\\\', '\x1F').replace('\\r', '\r').replace('\\n', '\n').replace('\x1F', '\\')
 
 pattern = pattern[1:-1]
 text = text[1:-1]
