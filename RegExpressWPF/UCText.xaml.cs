@@ -95,15 +95,15 @@ namespace RegExpressWPF
 		}
 
 
-		public TextData GetTextData( string eol )
+		public BaseTextData GetBaseTextData( string eol )
 		{
-			return rtb.GetTextData( eol );
+			return rtb.GetBaseTextData( eol );
 		}
 
 
-		public SimpleTextData GetSimpleTextData( string eol )
+		public TextData GetTextData( string eol )
 		{
-			return rtb.GetSimpleTextData( eol );
+			return rtb.GetTextData( eol );
 		}
 
 
@@ -132,7 +132,7 @@ namespace RegExpressWPF
 				last_eol = LastEol;
 			}
 
-			string text = GetSimpleTextData( eol ).Text;
+			string text = GetBaseTextData( eol ).Text;
 
 			if( last_matches != null )
 			{
@@ -487,7 +487,7 @@ namespace RegExpressWPF
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
 				if( cnc.IsCancellationRequested ) return;
 
-				top_index = RtbUtilities.FindNearestBefore( td.NewPointers, top_pointer );
+				top_index = td.TextPointers.GetIndex( top_pointer, LogicalDirection.Backward );
 				if( cnc.IsCancellationRequested ) return;
 				if( top_index < 0 ) top_index = 0;
 
@@ -502,7 +502,7 @@ namespace RegExpressWPF
 				}
 				else
 				{
-					bottom_index = RtbUtilities.FindNearestAfter( td.NewPointers, bottom_pointer );
+					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
 				//...if( bottom_index >= td.OldPointers.Count - 1 ) bottom_index = td.OldPointers.Count - 2;

@@ -329,7 +329,7 @@ namespace RegExpressWPF.Adorners
 					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 					TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-					top_index = RtbUtilities.FindNearestBefore( td.NewPointers, start_pointer );
+					top_index = td.TextPointers.GetIndex( start_pointer, LogicalDirection.Backward );
 					if( top_index < 0 ) top_index = 0;
 				} );
 
@@ -385,8 +385,8 @@ namespace RegExpressWPF.Adorners
 					if( cnc.IsCancellationRequested ) return;
 
 					var index = indices[current_i];
-					var left = td.NewPointers[index];
-					var right = td.NewPointers[index + 1];
+					var left = td.TextPointers.GetTextPointer( index );
+					var right = td.TextPointers.GetTextPointer( index + 1 );
 
 					var left_rect = left.GetCharacterRect( LogicalDirection.Forward );
 					var right_rect = right.GetCharacterRect( LogicalDirection.Backward );
@@ -512,7 +512,7 @@ namespace RegExpressWPF.Adorners
 					UITaskHelper.Invoke( rtb,
 						( ) =>
 						{
-							TextPointer left = td.NewPointers[index];
+							TextPointer left = td.TextPointers.GetTextPointer( index );
 
 							left_rect = left.GetCharacterRect( LogicalDirection.Forward );
 
@@ -568,7 +568,7 @@ namespace RegExpressWPF.Adorners
 					UITaskHelper.Invoke( rtb,
 						( ) =>
 						{
-							TextPointer left = td.NewPointers[index];
+							TextPointer left = td.TextPointers.GetTextPointer( index );
 
 							eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
 						} );
