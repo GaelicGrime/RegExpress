@@ -385,8 +385,9 @@ namespace RegExpressWPF.Adorners
 					if( cnc.IsCancellationRequested ) return;
 
 					var index = indices[current_i];
-					var left = td.TextPointers.GetTextPointer( index );
-					var right = td.TextPointers.GetTextPointer( index + 1 );
+					var tps = td.TextPointers.GetTextPointers( index, index + 1 );
+					var left = tps.Item1;
+					var right = tps.Item2;
 
 					var left_rect = left.GetCharacterRect( LogicalDirection.Forward );
 					var right_rect = right.GetCharacterRect( LogicalDirection.Backward );

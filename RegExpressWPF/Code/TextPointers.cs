@@ -44,6 +44,26 @@ namespace RegExpressWPF.Code
 		}
 
 
+		public ValueTuple<TextPointer, TextPointer> GetTextPointers( int index1, int index2 )
+		{
+			Debug.Assert( index1 >= 0 );
+			Debug.Assert( index2 >= 0 );
+
+			RangeData rd = new RangeData( index1, index2 );
+
+			foreach( var block in Doc.Blocks )
+			{
+				var r = FindTextPointersB( (dynamic)block, ref rd );
+				if( r ) break;
+			}
+
+			var tp1 = rd.Pointer1 ?? Doc.ContentEnd;
+			var tp2 = rd.Pointer2 ?? Doc.ContentEnd;
+
+			return ValueTuple.Create( tp1, tp2 );
+		}
+
+
 		public int GetIndex( TextPointer tp, LogicalDirection dir )
 		{
 			Debug.Assert( tp.IsInSameDocument( Doc.ContentStart ) );
@@ -134,6 +154,142 @@ namespace RegExpressWPF.Code
 
 			return null;
 		}
+
+
+		//---------
+
+
+		struct RangeData
+		{
+			public TextPointer Pointer1;
+			public TextPointer Pointer2;
+			public int Remaining1;
+			public int Remaining2;
+
+			public bool Done => Pointer1 != null && Pointer2 != null;
+
+			public RangeData( int remaining1, int remaining2 ) : this( )
+			{
+				Remaining1 = remaining1;
+				Remaining2 = remaining2;
+			}
+		}
+
+
+		bool FindTextPointersB( Section section, ref RangeData rd )
+		{
+			foreach( var block in section.Blocks )
+			{
+				var r = FindTextPointersB( (dynamic)block, ref rd );
+				if( r ) return true;
+			}
+
+			return false;
+		}
+
+
+		bool FindTextPointersB( Paragraph para, ref RangeData rd )
+		{
+			foreach( var inline in para.Inlines )
+			{
+				var r = FindTextPointersI( (dynamic)inline, ref rd );
+				if( r ) return true;
+			}
+
+			if( rd.Pointer1 == null )
+			{
+				rd.Remaining1 -= EolLength;
+				if( rd.Remaining1 < 0 ) rd.Pointer1 = para.ContentEnd;
+			}
+
+			if( rd.Pointer2 == null )
+			{
+				rd.Remaining2 -= EolLength;
+				if( rd.Remaining2 < 0 ) rd.Pointer2 = para.ContentEnd;
+			}
+
+			return rd.Done;
+		}
+
+
+		bool FindTextPointersI( Span span, ref RangeData rd )
+		{
+			foreach( var inline in span.Inlines )
+			{
+				var r = FindTextPointersI( (dynamic)inline, ref rd );
+				if( r ) return true;
+			}
+
+			return false;
+		}
+
+
+		bool FindTextPointersI( Run run, ref RangeData rd )
+		{
+			Debug.Assert( !run.Text.Contains( '\r' ) );
+			Debug.Assert( !run.Text.Contains( '\n' ) );
+
+			var text_len = run.Text.Length;
+
+			if( rd.Pointer1 == null )
+			{
+				if( rd.Remaining1 <= text_len )
+				{
+					rd.Pointer1 = run.ContentStart.GetPositionAtOffset( rd.Remaining1 );
+				}
+				else
+				{
+					rd.Remaining1 -= text_len;
+				}
+			}
+
+			if( rd.Pointer2 == null )
+			{
+				if( rd.Remaining2 <= text_len )
+				{
+					rd.Pointer2 = run.ContentStart.GetPositionAtOffset( rd.Remaining2 );
+				}
+				else
+				{
+					rd.Remaining2 -= text_len;
+				}
+			}
+
+			return rd.Done;
+		}
+
+
+		bool FindTextPointersI( LineBreak lb, ref RangeData rd )
+		{
+			if( rd.Pointer1 == null )
+			{
+				if( rd.Remaining1 <= EolLength )
+				{
+					rd.Pointer1 = lb.ElementStart;
+				}
+				else
+				{
+					rd.Remaining1 -= EolLength;
+				}
+			}
+
+			if( rd.Pointer2 == null )
+			{
+				if( rd.Remaining2 <= EolLength )
+				{
+					rd.Pointer2 = lb.ElementStart;
+				}
+				else
+				{
+					rd.Remaining2 -= EolLength;
+				}
+			}
+
+			return rd.Done;
+		}
+
+
+		//---------
 
 
 		int FindStartIndex( TextElement el )

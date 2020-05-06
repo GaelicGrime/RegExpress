@@ -36,12 +36,6 @@ namespace RegExpressWPF.Code
 			Eol = eol;
 			TextPointers = pointers;
 		}
-
-
-		public TextPointer SafeGetPointer( int index )
-		{
-			return TextPointers.GetTextPointer( index );
-		}
 	}
 
 
@@ -175,20 +169,16 @@ namespace RegExpressWPF.Code
 
 		public static void SafeSelect( RichTextBox rtb, TextData td, int selectionStart, int selectionEnd )
 		{
-			//...Debug.Assert( td.OldPointers.Any( ) );
-			//...Debug.Assert( selectionStart < td.OldPointers.Count );
-			//...ebug.Assert( selectionEnd < td.OldPointers.Count );
+			var tps = td.TextPointers.GetTextPointers( selectionStart, selectionEnd );
 
-			//...if( td.OldPointers.Any( ) )
-			{
-				rtb.Selection.Select( td.SafeGetPointer( selectionStart ), td.SafeGetPointer( selectionEnd ) );
-			}
+			rtb.Selection.Select( tps.Item1, tps.Item2 );
 		}
 
 
 		public static TextRange Range( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.TextPointers.GetTextPointer( start ), td.TextPointers.GetTextPointer( start + len ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2 );
 
 			return range;
 		}
@@ -196,7 +186,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange Range0F( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.TextPointers.GetTextPointer( start ), td.TextPointers.GetTextPointer( start + len ).GetInsertionPosition( LogicalDirection.Forward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2.GetInsertionPosition( LogicalDirection.Forward ) );
 
 			return range;
 		}
@@ -204,7 +195,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange Range0B( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.TextPointers.GetTextPointer( start ), td.TextPointers.GetTextPointer( start + len ).GetInsertionPosition( LogicalDirection.Backward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2.GetInsertionPosition( LogicalDirection.Backward ) );
 
 			return range;
 		}
@@ -212,7 +204,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange RangeFB( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.TextPointers.GetTextPointer( start ).GetInsertionPosition( LogicalDirection.Forward ), td.TextPointers.GetTextPointer( start + len ).GetInsertionPosition( LogicalDirection.Backward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1.GetInsertionPosition( LogicalDirection.Forward ), tps.Item2.GetInsertionPosition( LogicalDirection.Backward ) );
 
 			return range;
 		}
