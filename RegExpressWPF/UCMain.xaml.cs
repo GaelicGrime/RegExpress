@@ -137,8 +137,8 @@ namespace RegExpressWPF
 			}
 			else
 			{
-				tabData.Pattern = ucPattern.GetSimpleTextData( "\n" ).Text;
-				tabData.Text = ucText.GetSimpleTextData( "\n" ).Text;
+				tabData.Pattern = ucPattern.GetBaseTextData( "\n" ).Text;
+				tabData.Text = ucText.GetBaseTextData( "\n" ).Text;
 				tabData.RegexEngineId = CurrentRegexEngine.Id;
 				tabData.RegexOptions = CurrentRegexEngine.ExportOptions( );
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
@@ -538,9 +538,9 @@ namespace RegExpressWPF
 				( ) =>
 				{
 					eol = GetEolOption( );
-					pattern = ucPattern.GetSimpleTextData( eol ).Text;
+					pattern = ucPattern.GetBaseTextData( eol ).Text;
 					if( cnc.IsCancellationRequested ) return;
-					text = ucText.GetSimpleTextData( eol ).Text;
+					text = ucText.GetBaseTextData( eol ).Text;
 					if( cnc.IsCancellationRequested ) return;
 					first_only = cbShowFirstOnly.IsChecked == true;
 					engine = CurrentRegexEngine;
@@ -709,14 +709,14 @@ namespace RegExpressWPF
 			bool has_whitespaces = false;
 			bool show_whitespaces_option = false;
 			string eol = null;
-			SimpleTextData td = null;
+			BaseTextData td = null;
 
 			UITaskHelper.Invoke( this,
 				( ) =>
 				{
 					show_whitespaces_option = cbShowWhitespaces.IsChecked == true;
 					eol = GetEolOption( );
-					td = ucPattern.GetSimpleTextData( eol );
+					td = ucPattern.GetBaseTextData( eol );
 
 					if( cnc.IsCancellationRequested ) return;
 				} );
@@ -730,7 +730,7 @@ namespace RegExpressWPF
 				UITaskHelper.Invoke( this,
 					( ) =>
 					{
-						td = ucText.GetSimpleTextData( eol );
+						td = ucText.GetBaseTextData( eol );
 					} );
 
 				has_whitespaces = RegexHasWhitespace.IsMatch( td.Text );

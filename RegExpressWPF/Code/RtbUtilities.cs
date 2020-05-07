@@ -17,34 +17,24 @@ using System.Windows.Media;
 
 namespace RegExpressWPF.Code
 {
+
 	public class BaseTextData
 	{
 #pragma warning disable CA1051 // Do not declare visible instance fields
 
 		public readonly string Text; // (lines are separated by EOL specified in the call of 'GetBaseTextData' and 'GetTextData',
 		public readonly string Eol;  //  which is also kept in 'Eol')
-		public readonly IReadOnlyList<TextPointer> Pointers; // (maps string index of 'Text' to 'TextPointer')
+		internal readonly TextPointers TextPointers; // (maps string index of 'Text' to 'TextPointer')
 
 #pragma warning restore CA1051 // Do not declare visible instance fields
 
-
-		public BaseTextData( string text, string eol, IReadOnlyList<TextPointer> pointers )
+		internal BaseTextData( string text, string eol, TextPointers pointers )
 		{
+			Debug.Assert( eol.Length == pointers.EolLength );
+
 			Text = text;
 			Eol = eol;
-			Pointers = pointers;
-		}
-
-
-		public TextPointer SafeGetPointer( int i )
-		{
-			Debug.Assert( Pointers.Any( ) );
-			Debug.Assert( i >= 0 ); // covered by this function, but not really expected
-
-			if( i >= Pointers.Count ) i = Pointers.Count - 1;
-			if( i < 0 ) i = 0;
-
-			return Pointers[i];
+			TextPointers = pointers;
 		}
 	}
 
@@ -58,30 +48,9 @@ namespace RegExpressWPF.Code
 
 #pragma warning restore CA1051 // Do not declare visible instance fields
 
-		internal TextData( string text, string eol, IReadOnlyList<TextPointer> pointers, int selectionStart, int selectionEnd )
+		internal TextData( string text, string eol, TextPointers pointers, int selectionStart, int selectionEnd )
 			: base( text, eol, pointers )
 		{
-			SelectionStart = selectionStart;
-			SelectionEnd = selectionEnd;
-		}
-	}
-
-
-	public sealed class SimpleTextData
-	{
-#pragma warning disable CA1051 // Do not declare visible instance fields
-
-		public readonly string Text;
-		public readonly string Eol;
-		public readonly int SelectionStart;
-		public readonly int SelectionEnd;
-
-#pragma warning restore CA1051 // Do not declare visible instance fields
-
-		internal SimpleTextData( string text, string eol, int selectionStart, int selectionEnd )
-		{
-			Text = text;
-			Eol = eol;
 			SelectionStart = selectionStart;
 			SelectionEnd = selectionEnd;
 		}
@@ -92,27 +61,6 @@ namespace RegExpressWPF.Code
 	{
 		const int MAX_BLOCKING_TIME_MS = 222;
 		const int MAX_SEGMENT_LENGTH = 100;
-
-		class TraversalData
-		{
-			internal string Eol;
-
-			internal StringBuilder Sb = new StringBuilder( );
-			internal List<TextPointer> Pointers = new List<TextPointer>( );
-			internal Paragraph PrevPara = null;
-		}
-
-
-		class SimpleTraversalData
-		{
-			internal string Eol;
-			internal TextSelection Selection;
-
-			internal StringBuilder Sb = new StringBuilder( );
-			internal Paragraph PrevPara = null;
-			internal int SelectionStart = 0;
-			internal int SelectionEnd = 0;
-		}
 
 
 		public static void SetText( RichTextBox rtb, string text )
@@ -134,20 +82,43 @@ namespace RegExpressWPF.Code
 			DbgValidateEol( eol );
 
 			FlowDocument doc = rtb.Document;
+			RtbTextHelper th = new RtbTextHelper( doc, eol );
 
-			TraversalData data = new TraversalData
+			string text = th.GetText( );
+
+			return new BaseTextData( text, eol, new TextPointers( doc, eol.Length ) );
+		}
+
+
+		public static BaseTextData GetBaseTextDataFrom( RichTextBox rtb, BaseTextData btd, string eol )
+		{
+			DbgValidateEol( eol );
+			DbgValidateEol( btd.Eol );
+			Debug.Assert( object.ReferenceEquals( rtb.Document, btd.TextPointers.Doc ) );
+
+			string text;
+			TextPointers textpointers;
+
+			if( btd.Eol == eol )
 			{
-				Eol = eol,
-			};
+				text = btd.Text;
+			}
+			else
+			{
+				text = btd.Text.Replace( btd.Eol, eol );
+			}
 
-			ProcessBlocks( data, doc.Blocks );
+			if( btd.Eol.Length == eol.Length )
+			{
+				textpointers = btd.TextPointers;
+			}
+			else
+			{
+				textpointers = new TextPointers( rtb.Document, eol.Length );
 
-			data.Pointers.Add( doc.ContentEnd );
-			string text = data.Sb.ToString( );
+			}
 
-			Debug.Assert( text.Length + 1 == data.Pointers.Count );
-
-			return new BaseTextData( text, eol, data.Pointers );
+			return new BaseTextData( text, eol, textpointers );
 		}
 
 
@@ -155,422 +126,57 @@ namespace RegExpressWPF.Code
 		{
 			DbgValidateEol( eol );
 			DbgValidateEol( btd.Eol );
-			Debug.Assert( !btd.Pointers.Any( ) || btd.Pointers.All( p => p.IsInSameDocument( rtb.Document.ContentStart ) ) );
+			Debug.Assert( object.ReferenceEquals( rtb.Document, btd.TextPointers.Doc ) );
+
+			string text;
+			TextPointers textpointers;
+
+			if( btd.Eol == eol )
+			{
+				text = btd.Text;
+			}
+			else
+			{
+				text = btd.Text.Replace( btd.Eol, eol );
+			}
 
 			if( btd.Eol.Length == eol.Length )
 			{
-				string text;
-
-				if( btd.Eol == eol )
-				{
-					text = btd.Text;
-				}
-				else
-				{
-					text = btd.Text.Replace( btd.Eol, eol );
-				}
-
-				var (selection_start, selection_end) = GetSelection( rtb.Selection, btd.Pointers );
-
-				Debug.Assert( text.Length <= btd.Pointers.Count );
-
-				return new TextData( text, eol, btd.Pointers, selection_start, selection_end );
+				textpointers = btd.TextPointers;
 			}
 			else
 			{
-				string old_text = btd.Text;
-				string old_eol = btd.Eol;
-				IReadOnlyList<TextPointer> old_pointers = btd.Pointers;
-				int old_eol_length = old_eol.Length;
-				int new_eol_length = eol.Length;
-				int prev_i = 0;
-				var sb = new StringBuilder( old_text.Length );
-				var pointers = new List<TextPointer>( btd.Pointers.Count );
-
-				for( int i = old_text.IndexOf( old_eol, StringComparison.Ordinal );
-					i >= 0;
-					i = old_text.IndexOf( old_eol, prev_i = i + old_eol_length, StringComparison.Ordinal ) )
-				{
-					sb.Append( old_text, prev_i, i - prev_i );
-					sb.Append( eol );
-
-					for( int k = prev_i; k < i; ++k ) pointers.Add( old_pointers[k] );
-					for( int k = 0; k < new_eol_length; ++k ) pointers.Add( old_pointers[i] );
-				}
-
-				// last segment
-				sb.Append( old_text, prev_i, old_text.Length - prev_i );
-				for( int k = prev_i; k < old_pointers.Count; ++k ) pointers.Add( old_pointers[k] ); // including end-of-document
-
-				string text = sb.ToString( );
-				Debug.Assert( text.Length + 1 == pointers.Count );
-
-				var (selection_start, selection_end) = GetSelection( rtb.Selection, pointers );
-
-				return new TextData( text, eol, pointers, selection_start, selection_end );
+				textpointers = new TextPointers( rtb.Document, eol.Length );
 			}
+
+			var (selection_start, selection_end) = GetSelection( rtb.Selection, textpointers );
+
+			return new TextData( text, eol, textpointers, selection_start, selection_end );
 		}
 
 
-		internal static SimpleTextData GetSimpleTextDataInternal( RichTextBox rtb, string eol )
+		static (int selection_start, int selection_end) GetSelection( TextSelection selection, TextPointers pointers )
 		{
-			DbgValidateEol( eol );
-
-			FlowDocument doc = rtb.Document;
-
-			SimpleTraversalData data = new SimpleTraversalData
-			{
-				Eol = eol,
-				Selection = rtb.Selection,
-			};
-
-			ProcessBlocks( data, doc.Blocks );
-
-			return new SimpleTextData( data.Sb.ToString( ), data.Eol, data.SelectionStart, data.SelectionEnd );
-		}
-
-
-		internal static SimpleTextData GetSimpleTextDataFrom( RichTextBox rtb, BaseTextData btd, string eol )
-		{
-			DbgValidateEol( eol );
-
-			var td = GetTextDataFrom( rtb, btd, eol );
-
-			return new SimpleTextData( td.Text, td.Eol, td.SelectionStart, td.SelectionEnd );
-		}
-
-
-		internal static SimpleTextData GetSimpleTextDataFrom( SimpleTextData std, string eol )
-		{
-			DbgValidateEol( eol );
-			DbgValidateEol( std.Eol );
-
-			if( std.Eol.Length == eol.Length )
-			{
-				if( std.Eol == eol )
-				{
-					return std;
-				}
-				else
-				{
-					string text = std.Text.Replace( std.Eol, eol );
-
-					return new SimpleTextData( text, eol, std.SelectionStart, std.SelectionEnd );
-				}
-			}
-			else
-			{
-				string old_text = std.Text;
-				int old_eol_len = std.Eol.Length;
-				int diff = eol.Length - old_eol_len;
-				int selectionStart = std.SelectionStart;
-				int selectionEnd = std.SelectionEnd;
-				int prev_i = 0;
-				var sb = new StringBuilder( old_text.Length );
-
-				for( int i = old_text.IndexOf( std.Eol, StringComparison.Ordinal );
-					i >= 0;
-					i = old_text.IndexOf( std.Eol, prev_i = i + old_eol_len, StringComparison.Ordinal ) )
-				{
-					sb.Append( old_text, prev_i, i - prev_i );
-					sb.Append( eol );
-
-					if( selectionStart > i )
-					{
-						selectionStart += diff;
-					}
-
-					if( selectionEnd > i )
-					{
-						selectionEnd += diff;
-					}
-				}
-
-				// last segment
-				sb.Append( old_text, prev_i, old_text.Length - prev_i );
-
-				return new SimpleTextData( sb.ToString( ), eol, selectionStart, selectionEnd );
-			}
-		}
-
-
-		static (int selection_start, int selection_end) GetSelection( TextSelection selection, IReadOnlyList<TextPointer> pointers )
-		{
-			int selection_start = Math.Max( 0, FindNearestAfter( pointers, selection.Start ) );
-			int selection_end = Math.Max( 0, FindNearestAfter( pointers, selection.End ) );
+			// TODO: implement 'pointers.GetIndices' that takes two text pointers
+			int selection_start = Math.Max( 0, pointers.GetIndex( selection.Start, LogicalDirection.Backward ) );
+			int selection_end = Math.Max( 0, pointers.GetIndex( selection.End, LogicalDirection.Forward ) );
 
 			return (selection_start, selection_end);
 		}
 
 
-		public static int FindNearestBefore( IReadOnlyList<TextPointer> pointers, TextPointer target )
-		{
-			if( pointers.Count == 0 ) return -1;
-
-			Debug.Assert( pointers[0].IsInSameDocument( target ) );
-
-			int left = 0;
-			int right = pointers.Count( ) - 1;
-			int last_good = -1;
-
-			do
-			{
-				int mid = ( left + right ) / 2;
-
-				int cmp = pointers[mid].CompareTo( target );
-
-				if( cmp == 0 ) return mid;
-
-				if( cmp < 0 )
-				{
-					last_good = mid;
-					left = mid + 1;
-				}
-				else
-				{
-					right = mid - 1;
-				}
-			} while( left <= right );
-
-			return last_good;
-		}
-
-
-		public static int FindNearestAfter( IReadOnlyList<TextPointer> pointers, TextPointer target )
-		{
-			if( pointers.Count == 0 ) return -1;
-
-			Debug.Assert( pointers[0].IsInSameDocument( target ) );
-
-			int left = 0;
-			int right = pointers.Count( ) - 1;
-			int last_good = -1;
-
-			do
-			{
-				int mid = ( left + right ) / 2;
-
-				int cmp = pointers[mid].CompareTo( target );
-
-				if( cmp == 0 ) return mid;
-
-				if( cmp < 0 )
-				{
-					left = mid + 1;
-				}
-				else
-				{
-					last_good = mid;
-					right = mid - 1;
-				}
-			} while( left <= right );
-
-			return last_good;
-		}
-
-
-		public static int Find( IReadOnlyList<TextPointer> pointers, TextPointer target )
-		{
-			if( pointers.Count == 0 ) return -1;
-
-			Debug.Assert( pointers[0].IsInSameDocument( target ) );
-
-			int left = 0;
-			int right = pointers.Count( ) - 1;
-
-			do
-			{
-				int mid = ( left + right ) / 2;
-
-				int cmp = pointers[mid].CompareTo( target );
-
-				if( cmp == 0 ) return mid;
-
-				if( cmp < 0 )
-				{
-					left = mid + 1;
-				}
-				else
-				{
-					right = mid - 1;
-				}
-			} while( left <= right );
-
-			return -1;
-		}
-
-
 		public static void SafeSelect( RichTextBox rtb, TextData td, int selectionStart, int selectionEnd )
 		{
-			Debug.Assert( td.Pointers.Any( ) );
-			Debug.Assert( selectionStart < td.Pointers.Count );
-			Debug.Assert( selectionEnd < td.Pointers.Count );
+			var tps = td.TextPointers.GetTextPointers( selectionStart, selectionEnd );
 
-			if( td.Pointers.Any( ) )
-			{
-				rtb.Selection.Select( td.SafeGetPointer( selectionStart ), td.SafeGetPointer( selectionEnd ) );
-			}
-		}
-
-
-		static void ProcessBlocks( TraversalData data, IEnumerable<Block> blocks )
-		{
-			foreach( var block in blocks )
-			{
-				switch( block )
-				{
-				case Section section:
-					ProcessBlocks( data, section.Blocks );
-					break;
-				case Paragraph para:
-				{
-					if( data.PrevPara != null )
-					{
-						data.Sb.Append( data.Eol );
-						for( var i = 0; i < data.Eol.Length; ++i ) data.Pointers.Add( data.PrevPara.ContentEnd );
-					}
-					ProcessInlines( data, para.Inlines );
-					data.PrevPara = para;
-				}
-				break;
-				default:
-					Debug.Assert( false );
-					break;
-				}
-			}
-		}
-
-
-		static void ProcessBlocks( SimpleTraversalData data, IEnumerable<Block> blocks )
-		{
-			foreach( var block in blocks )
-			{
-				switch( block )
-				{
-				case Section section:
-					ProcessBlocks( data, section.Blocks );
-					break;
-				case Paragraph para:
-				{
-					if( data.PrevPara != null )
-					{
-						data.Sb.Append( data.Eol );
-					}
-					ProcessInlines( data, para.Inlines );
-					data.PrevPara = para;
-				}
-				break;
-				default:
-					Debug.Assert( false );
-					break;
-				}
-			}
-		}
-
-
-		static void ProcessInlines( TraversalData data, IEnumerable<Inline> inlines )
-		{
-			foreach( Inline inline in inlines )
-			{
-				switch( inline )
-				{
-				case Run run:
-					var start = run.ContentStart;
-
-					for( int i = 0; i < run.Text.Length; ++i )
-					{
-						var c = run.Text[i];
-						var p = start.GetPositionAtOffset( i );
-						int next_i;
-
-						switch( c )
-						{
-						case '\r':
-							data.Sb.Append( data.Eol );
-							for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( p );
-							next_i = i + 1;
-							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
-							break;
-						case '\n':
-							data.Sb.Append( data.Eol );
-							for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( p );
-							next_i = i + 1;
-							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
-							break;
-						default:
-							data.Sb.Append( c );
-							data.Pointers.Add( p );
-							break;
-						}
-					}
-					break;
-				case Span span:
-					ProcessInlines( data, span.Inlines );
-					break;
-				case LineBreak lb:
-					data.Sb.Append( data.Eol );
-					for( int j = 0; j < data.Eol.Length; ++j ) data.Pointers.Add( lb.ContentStart );
-					break;
-				}
-			}
-		}
-
-
-		static void ProcessInlines( SimpleTraversalData data, IEnumerable<Inline> inlines )
-		{
-			foreach( Inline inline in inlines )
-			{
-				switch( inline )
-				{
-				case Run run:
-					var start = run.ContentStart;
-
-					if( object.ReferenceEquals( data.Selection.Start.Parent, run ) )
-					{
-						data.SelectionStart = data.Sb.Length + start.GetOffsetToPosition( data.Selection.Start );
-					}
-					if( object.ReferenceEquals( data.Selection.End.Parent, run ) )
-					{
-						data.SelectionEnd = data.Sb.Length + start.GetOffsetToPosition( data.Selection.End );
-					}
-
-					for( int i = 0; i < run.Text.Length; ++i )
-					{
-						var c = run.Text[i];
-						int next_i;
-
-						switch( c )
-						{
-						case '\r':
-							data.Sb.Append( data.Eol );
-							next_i = i + 1;
-							if( next_i < run.Text.Length && run.Text[next_i] == '\n' ) ++i; // skip
-							break;
-						case '\n':
-							data.Sb.Append( data.Eol );
-							next_i = i + 1;
-							if( next_i < run.Text.Length && run.Text[next_i] == '\r' ) ++i; // skip
-							break;
-						default:
-							data.Sb.Append( c );
-							break;
-						}
-					}
-					break;
-				case Span span:
-					ProcessInlines( data, span.Inlines );
-					break;
-				case LineBreak lb:
-					data.Sb.Append( data.Eol );
-					break;
-				}
-			}
+			rtb.Selection.Select( tps.Item1, tps.Item2 );
 		}
 
 
 		public static TextRange Range( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.Pointers[start], td.Pointers[start + len] );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2 );
 
 			return range;
 		}
@@ -578,7 +184,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange Range0F( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.Pointers[start], td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Forward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2.GetInsertionPosition( LogicalDirection.Forward ) );
 
 			return range;
 		}
@@ -586,7 +193,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange Range0B( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.Pointers[start], td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Backward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1, tps.Item2.GetInsertionPosition( LogicalDirection.Backward ) );
 
 			return range;
 		}
@@ -594,7 +202,8 @@ namespace RegExpressWPF.Code
 
 		public static TextRange RangeFB( this BaseTextData td, int start, int len )
 		{
-			var range = new TextRange( td.Pointers[start].GetInsertionPosition( LogicalDirection.Forward ), td.Pointers[start + len].GetInsertionPosition( LogicalDirection.Backward ) );
+			var tps = td.TextPointers.GetTextPointers( start, start + len );
+			var range = new TextRange( tps.Item1.GetInsertionPosition( LogicalDirection.Forward ), tps.Item2.GetInsertionPosition( LogicalDirection.Backward ) );
 
 			return range;
 		}

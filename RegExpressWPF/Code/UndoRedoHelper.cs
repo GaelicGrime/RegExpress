@@ -77,7 +77,7 @@ namespace RegExpressWPF.Code
 
 		public void Init( )
 		{
-			var td = Rtb.GetSimpleTextData( "\n" );
+			var td = Rtb.GetTextData( "\n" );
 
 			PreviousText = td.Text;
 			UndoList.Clear( );
@@ -96,7 +96,7 @@ namespace RegExpressWPF.Code
 		{
 			if( IsUndoOrRedo ) return;
 
-			var td = Rtb.GetSimpleTextData( "\n" );
+			var td = Rtb.GetTextData( "\n" );
 			var si = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 			var ui = new UndoItem
 			{
@@ -133,7 +133,7 @@ namespace RegExpressWPF.Code
 		{
 			if( IsUndoOrRedo ) return;
 
-			var td = Rtb.GetSimpleTextData( "\n" );
+			var td = Rtb.GetTextData( "\n" );
 
 			PreviousSelection = new SelectionInfo( td.SelectionStart, td.SelectionEnd );
 		}

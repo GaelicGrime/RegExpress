@@ -90,18 +90,20 @@ namespace RegExpressWPF
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
 			//WhitespaceAdorner.IsDbgDisabled = true;
+			//LocalUnderliningAdorner.IsDbgDisabled = true;
+			//ExternalUnderliningAdorner.IsDbgDisabled = true;
+		}
+
+
+		public BaseTextData GetBaseTextData( string eol )
+		{
+			return rtb.GetBaseTextData( eol );
 		}
 
 
 		public TextData GetTextData( string eol )
 		{
 			return rtb.GetTextData( eol );
-		}
-
-
-		public SimpleTextData GetSimpleTextData( string eol )
-		{
-			return rtb.GetSimpleTextData( eol );
 		}
 
 
@@ -130,7 +132,7 @@ namespace RegExpressWPF
 				last_eol = LastEol;
 			}
 
-			string text = GetSimpleTextData( eol ).Text;
+			string text = GetBaseTextData( eol ).Text;
 
 			if( last_matches != null )
 			{
@@ -475,7 +477,6 @@ namespace RegExpressWPF
 				if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 				var td0 = rtb.GetTextData( eol );
-				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 				if( cnc.IsCancellationRequested ) return;
 
@@ -485,24 +486,23 @@ namespace RegExpressWPF
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
 				if( cnc.IsCancellationRequested ) return;
 
-				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				top_index = td.TextPointers.GetIndex( top_pointer, LogicalDirection.Backward );
 				if( cnc.IsCancellationRequested ) return;
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
 				if( cnc.IsCancellationRequested ) return;
 
-				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					bottom_index = td.Pointers.Count - 2;
+					bottom_index = td.Text.Length;
 				}
 				else
 				{
-					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
-				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index > td.Text.Length ) bottom_index = td.Text.Length;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 			} );
 
@@ -513,7 +513,7 @@ namespace RegExpressWPF
 
 			Debug.Assert( top_index >= 0 );
 			Debug.Assert( bottom_index >= top_index );
-			Debug.Assert( bottom_index < td.Pointers.Count );
+			Debug.Assert( bottom_index <= td.Text.Length );
 
 			// (NOTE. Overlaps are possible in this example: (?=(..))
 
@@ -610,15 +610,28 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-			LocalUnderliningAdorner.SetRangesToUnderline(
-							segments_to_underline
-								?.Select( s => (td.SafeGetPointer( s.Index ), td.SafeGetPointer( s.Index + s.Length )) )
-								?.ToList( ) );
+			IReadOnlyList<(TextPointer start, TextPointer end)> ranges_to_underline = null;
+
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			 {
+				 ranges_to_underline =
+								 segments_to_underline
+									 ?.Select( s =>
+									 {
+										 var t = td.TextPointers.GetTextPointers( s.Index, s.Index + s.Length );
+										 return (t.Item1, t.Item2);
+									 } )
+									 ?.ToList( );
+			 } );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			LocalUnderliningAdorner.SetRangesToUnderline( ranges_to_underline );
+
+			if( cnc.IsCancellationRequested ) return;
 
 			if( is_focussed )
 			{
-				if( cnc.IsCancellationRequested ) return;
-
 				ChangeEventHelper.BeginInvoke( CancellationToken.None, ( ) =>
 							{
 								LocalUnderliningFinished?.Invoke( this, null );
@@ -649,10 +662,23 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-			ExternalUnderliningAdorner.SetRangesToUnderline(
-							segments
-								?.Select( s => (td.SafeGetPointer( s.Index ), td.SafeGetPointer( s.Index + s.Length )) )
-								?.ToList( ) );
+			IReadOnlyList<(TextPointer start, TextPointer end)> ranges_to_underline = null;
+
+			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
+			{
+				ranges_to_underline =
+								segments
+									?.Select( s =>
+									{
+										var t = td.TextPointers.GetTextPointers( s.Index, s.Index + s.Length );
+										return (t.Item1, t.Item2);
+									} )
+									?.ToList( );
+			} );
+
+			if( cnc.IsCancellationRequested ) return;
+
+			ExternalUnderliningAdorner.SetRangesToUnderline( ranges_to_underline );
 
 			if( cnc.IsCancellationRequested ) return;
 

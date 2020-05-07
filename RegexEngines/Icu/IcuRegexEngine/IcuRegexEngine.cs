@@ -147,34 +147,6 @@ namespace IcuRegexEngineNs
 					}
 				}
 
-				//......
-#if false
-				if( cnc.IsCancellationRequested ) return;
-
-				// class (within [...] groups), '[:...:]', '[=...=]', '[. ... .]'
-				{
-					var g = m.Groups["class"];
-					if( g.Success )
-					{
-						if( cnc.IsCancellationRequested ) return;
-
-						foreach( Capture c in g.Captures )
-						{
-							if( cnc.IsCancellationRequested ) return;
-
-							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
-
-							if( !intersection.IsEmpty )
-							{
-								colouredSegments.Escapes.Add( intersection );
-							}
-						}
-
-						continue;
-					}
-				}
-
-#endif
 				if( cnc.IsCancellationRequested ) return;
 
 				// named groups and back references

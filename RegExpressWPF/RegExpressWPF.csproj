@@ -71,9 +71,11 @@
     </ApplicationDefinition>
     <Compile Include="Adorners\UnderliningAdorner.cs" />
     <Compile Include="Adorners\WhitespaceAdorner.cs" />
+    <Compile Include="Code\RtbTextHelper.cs" />
     <Compile Include="Code\ResumableLoop.cs" />
     <Compile Include="Code\StyleInfo.cs" />
     <Compile Include="Code\TabData.cs" />
+    <Compile Include="Code\TextPointers.cs" />
     <Compile Include="Code\UITaskHelper.cs" />
     <Compile Include="Code\UndoRedoHelper.cs" />
     <Compile Include="Code\ChangeEventHelper.cs" />

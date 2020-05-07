@@ -321,7 +321,6 @@ namespace RegExpressWPF.Adorners
 					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 					var td0 = rtb.GetTextData( null );
-					if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
 
 					if( cnc.IsCancellationRequested ) return;
 
@@ -329,7 +328,7 @@ namespace RegExpressWPF.Adorners
 					clip_rect = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) );
 
 					TextPointer start_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int unused );
-					top_index = RtbUtilities.FindNearestBefore( td.Pointers, start_pointer );
+					top_index = td.TextPointers.GetIndex( start_pointer, LogicalDirection.Backward );
 					if( top_index < 0 ) top_index = 0;
 				} );
 
@@ -385,8 +384,9 @@ namespace RegExpressWPF.Adorners
 					if( cnc.IsCancellationRequested ) return;
 
 					var index = indices[current_i];
-					var left = td.Pointers[index];
-					var right = td.Pointers[index + 1];
+					var tps = td.TextPointers.GetTextPointers( index, index + 1 );
+					var left = tps.Item1;
+					var right = tps.Item2;
 
 					var left_rect = left.GetCharacterRect( LogicalDirection.Forward );
 					var right_rect = right.GetCharacterRect( LogicalDirection.Backward );
@@ -503,7 +503,6 @@ namespace RegExpressWPF.Adorners
 				{
 					// RTL needs more navigation to find the rightmost X
 
-					TextPointer left = td.Pointers[index];
 					Rect left_rect = Rect.Empty;
 					double max_x = double.NaN;
 
@@ -513,6 +512,8 @@ namespace RegExpressWPF.Adorners
 					UITaskHelper.Invoke( rtb,
 						( ) =>
 						{
+							TextPointer left = td.TextPointers.GetTextPointer( index );
+
 							left_rect = left.GetCharacterRect( LogicalDirection.Forward );
 
 							if( left_rect.Bottom < clip_rect.Top ) { should_continue = true; return; }
@@ -562,12 +563,13 @@ namespace RegExpressWPF.Adorners
 				{
 					// no RTL; quick answer
 
-					TextPointer left = td.Pointers[index];
 					Rect eol_rect = Rect.Empty;
 
 					UITaskHelper.Invoke( rtb,
 						( ) =>
 						{
+							TextPointer left = td.TextPointers.GetTextPointer( index );
+
 							eol_rect = left.GetCharacterRect( LogicalDirection.Forward );
 						} );
 

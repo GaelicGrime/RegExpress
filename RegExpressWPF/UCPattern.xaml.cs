@@ -81,18 +81,20 @@ namespace RegExpressWPF
 
 			RecolouringLoop = new ResumableLoop( RecolouringThreadProc, 222, 444 );
 			HighlightingLoop = new ResumableLoop( HighlightingThreadProc, 111, 444 );
+
+			//WhitespaceAdorner.IsDbgDisabled = true;
+		}
+
+
+		public BaseTextData GetBaseTextData( string eol )
+		{
+			return rtb.GetBaseTextData( eol );
 		}
 
 
 		public TextData GetTextData( string eol )
 		{
 			return rtb.GetTextData( eol );
-		}
-
-
-		public SimpleTextData GetSimpleTextData( string eol )
-		{
-			return rtb.GetSimpleTextData( eol );
 		}
 
 
@@ -286,8 +288,6 @@ namespace RegExpressWPF
 
 				var td0 = rtb.GetTextData( eol );
 
-				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
 				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
@@ -296,24 +296,23 @@ namespace RegExpressWPF
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
 				if( cnc.IsCancellationRequested ) return;
 
-				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				top_index = td.TextPointers.GetIndex( top_pointer, LogicalDirection.Backward );
 				if( cnc.IsCancellationRequested ) return;
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
 				if( cnc.IsCancellationRequested ) return;
 
-				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					bottom_index = td.Pointers.Count - 2;
+					bottom_index = td.Text.Length;
 				}
 				else
 				{
-					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
-				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index > td.Text.Length ) bottom_index = td.Text.Length;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 			} );
 
@@ -324,7 +323,8 @@ namespace RegExpressWPF
 
 			Debug.Assert( top_index >= 0 );
 			Debug.Assert( bottom_index >= top_index );
-			Debug.Assert( bottom_index < td.Pointers.Count );
+			//Debug.Assert( bottom_index < td.OldPointers.Count );
+			Debug.Assert( bottom_index <= td.Text.Length );
 
 			var visible_segment = new Segment( top_index, bottom_index - top_index + 1 );
 			var segments_to_colourise = new ColouredSegments( );
@@ -403,8 +403,6 @@ namespace RegExpressWPF
 
 				var td0 = rtb.GetTextData( eol );
 
-				if( !td0.Pointers.Any( ) || !td0.Pointers[0].IsInSameDocument( start_doc ) ) return;
-
 				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
@@ -413,23 +411,22 @@ namespace RegExpressWPF
 				TextPointer top_pointer = rtb.GetPositionFromPoint( new Point( 0, 0 ), snapToText: true ).GetLineStartPosition( -1, out int _ );
 				if( cnc.IsCancellationRequested ) return;
 
-				top_index = RtbUtilities.FindNearestBefore( td.Pointers, top_pointer );
+				top_index = td.TextPointers.GetIndex( top_pointer, LogicalDirection.Backward );
 				if( top_index < 0 ) top_index = 0;
 
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
 				if( cnc.IsCancellationRequested ) return;
 
-				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					bottom_index = td.Pointers.Count - 2;
+					bottom_index = td.Text.Length;
 				}
 				else
 				{
-					bottom_index = RtbUtilities.FindNearestAfter( td.Pointers, bottom_pointer );
+					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
-				if( bottom_index >= td.Pointers.Count - 1 ) bottom_index = td.Pointers.Count - 2;
+				if( bottom_index > td.Text.Length ) bottom_index = td.Text.Length;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 
 				is_focused = rtb.IsFocused;
@@ -442,7 +439,7 @@ namespace RegExpressWPF
 
 			Debug.Assert( top_index >= 0 );
 			Debug.Assert( bottom_index >= top_index );
-			Debug.Assert( bottom_index < td.Pointers.Count );
+			Debug.Assert( bottom_index <= td.Text.Length );
 
 			Highlights highlights = null;
 

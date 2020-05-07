@@ -15,8 +15,7 @@ namespace RegExpressWPF.Controls
 {
 	internal class MyRichTextBox : RichTextBox
 	{
-		readonly WeakReference<BaseTextData> mCachedTextData = new WeakReference<BaseTextData>( null );
-		readonly WeakReference<SimpleTextData> mCachedSimpleTextData = new WeakReference<SimpleTextData>( null );
+		readonly WeakReference<BaseTextData> mCachedBaseTextData = new WeakReference<BaseTextData>( null );
 
 		public int LastGetTextDataDuration { get; private set; } = 0;
 
@@ -37,14 +36,14 @@ namespace RegExpressWPF.Controls
 
 			TextData td;
 
-			if( mCachedTextData.TryGetTarget( out BaseTextData btd ) )
+			if( mCachedBaseTextData.TryGetTarget( out BaseTextData btd ) )
 			{
 				// nothing
 			}
 			else
 			{
 				btd = RtbUtilities.GetBaseTextDataInternal( this, eol ?? "\n" );
-				mCachedTextData.SetTarget( btd );
+				mCachedBaseTextData.SetTarget( btd );
 			}
 
 			td = RtbUtilities.GetTextDataFrom( this, btd, eol ?? btd.Eol );
@@ -59,38 +58,33 @@ namespace RegExpressWPF.Controls
 		}
 
 
-		internal SimpleTextData GetSimpleTextData( string eol, [CallerMemberName] string caller = null, [CallerFilePath] string callerPath = null, [CallerLineNumber] int callerLine = 0 )
+		internal BaseTextData GetBaseTextData( string eol, [CallerMemberName] string caller = null, [CallerFilePath] string callerPath = null, [CallerLineNumber] int callerLine = 0 )
 		{
 			//...
-			var t1 = Environment.TickCount;
+			//var t1 = Environment.TickCount;
 
-			SimpleTextData std;
+			BaseTextData btd;
 
-			if( mCachedSimpleTextData.TryGetTarget( out std ) )
+			if( mCachedBaseTextData.TryGetTarget( out btd ) )
 			{
-				std = RtbUtilities.GetSimpleTextDataFrom( std, eol ?? std.Eol );
-			}
-			else if( mCachedTextData.TryGetTarget( out BaseTextData btd ) )
-			{
-				std = RtbUtilities.GetSimpleTextDataFrom( this, btd, eol ?? btd.Eol );
+				btd = RtbUtilities.GetBaseTextDataFrom( this, btd, eol ?? btd.Eol );
 			}
 			else
 			{
-				std = RtbUtilities.GetSimpleTextDataInternal( this, eol ?? "\n" );
-				mCachedSimpleTextData.SetTarget( std );
+				btd = RtbUtilities.GetBaseTextDataInternal( this, eol ?? "\n" );
+				mCachedBaseTextData.SetTarget( btd );
 			}
 
-			var t2 = Environment.TickCount;
+			//var t2 = Environment.TickCount;
 			//Debug.WriteLine( $"####### GetSimpleTextData {t2 - t1:F0}: {caller} - {Path.GetFileNameWithoutExtension( callerPath )}:{callerLine}" );
 
-			return std;
+			return btd;
 		}
 
 
 		protected override void OnTextChanged( TextChangedEventArgs e )
 		{
-			mCachedTextData.SetTarget( null );
-			mCachedSimpleTextData.SetTarget( null );
+			mCachedBaseTextData.SetTarget( null );
 
 			base.OnTextChanged( e );
 		}
