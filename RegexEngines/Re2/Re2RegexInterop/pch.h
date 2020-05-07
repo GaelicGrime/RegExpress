@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 
+#include <uchar.h>
 
 #include "pch-re2.h"
 #include "re2/re2.h"
@@ -17,6 +18,5 @@
 #include <exception>
 #include <map>
 #include <functional>
-
 
 #endif //PCH_H

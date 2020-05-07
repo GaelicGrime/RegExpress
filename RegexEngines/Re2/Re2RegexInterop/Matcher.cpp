@@ -37,25 +37,24 @@ namespace Re2RegexInterop
 		pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
 		const wchar_t* start = pinned;
 
-		auto mb_cur_max = MB_CUR_MAX;
+		auto const mb_cur_max = MB_CUR_MAX;
 		mbstate_t mbstate = { 0 };
 
 		size_t bytes_written = 0;
 
 		for( const wchar_t* p = start; *p; ++p ) // (we assume that the array is zero-terminated)
 		{
-			size_t size_converted;
-			errno_t error;
-
 			utf8.resize( bytes_written + mb_cur_max );
 
-			error = wcrtomb_s( &size_converted, utf8.data( ) + bytes_written, mb_cur_max, *p, &mbstate );
+			size_t size_converted = c16rtomb( utf8.data( ) + bytes_written, *p, &mbstate );
 
-			if( error )
+			if( size_converted == (size_t)-1 )
 			{
+				auto error_code = errno;
+
 				setlocale( LC_ALL, old_locale ); // restore
 
-				String^ err = gcnew String( strerror( error ) );
+				String^ err = gcnew String( strerror( error_code ) );
 
 				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
 			}
@@ -88,7 +87,7 @@ namespace Re2RegexInterop
 		pin_ptr<const wchar_t> pinned = PtrToStringChars( s );
 		const wchar_t* start = pinned;
 
-		auto mb_cur_max = MB_CUR_MAX;
+		auto const mb_cur_max = MB_CUR_MAX;
 		mbstate_t mbstate = { 0 };
 
 		size_t bytes_written = 0;
@@ -100,16 +99,15 @@ namespace Re2RegexInterop
 
 			dest->resize( bytes_written + mb_cur_max );
 
-			size_t size_converted;
-			errno_t error;
+			size_t size_converted = c16rtomb( dest->data( ) + bytes_written, *p, &mbstate );
 
-			error = wcrtomb_s( &size_converted, dest->data( ) + bytes_written, mb_cur_max, *p, &mbstate );
-
-			if( error )
+			if( size_converted == (size_t)-1 )
 			{
+				auto error_code = errno;
+
 				setlocale( LC_ALL, old_locale ); // restore
 
-				String^ err = gcnew String( strerror( error ) );
+				String^ err = gcnew String( strerror( error_code ) );
 
 				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
 			}
@@ -170,7 +168,7 @@ namespace Re2RegexInterop
 				mData->mAnchor = RE2::Anchor::ANCHOR_BOTH;
 			}
 		}
-		catch( const std::exception & exc )
+		catch( const std::exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
@@ -264,12 +262,12 @@ namespace Re2RegexInterop
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
-		catch( const std::exception & exc )
+		catch( const std::exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;
