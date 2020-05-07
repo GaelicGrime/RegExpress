@@ -270,4 +270,5 @@ __pycache__/
 !RegexEngines/Perl5/Perl5RegexEngine/Perl5-min/**
 !RegexEngines/Re2/Re2RegexInterop/re2-min/**
 !RegexEngines/SubReg/SubRegRegexInterop/SubReg-min/**
+!RegexEngines/Python/PythonRegexEngine/Python-embed/**
 
