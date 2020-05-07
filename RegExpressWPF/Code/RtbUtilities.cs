@@ -94,7 +94,6 @@ namespace RegExpressWPF.Code
 		{
 			DbgValidateEol( eol );
 			DbgValidateEol( btd.Eol );
-			//...Debug.Assert( !btd.OldPointers.Any( ) || btd.OldPointers.All( p => p.IsInSameDocument( rtb.Document.ContentStart ) ) );
 			Debug.Assert( object.ReferenceEquals( rtb.Document, btd.TextPointers.Doc ) );
 
 			string text;
@@ -127,39 +126,38 @@ namespace RegExpressWPF.Code
 		{
 			DbgValidateEol( eol );
 			DbgValidateEol( btd.Eol );
-			//...Debug.Assert( !btd.OldPointers.Any( ) || btd.OldPointers.All( p => p.IsInSameDocument( rtb.Document.ContentStart ) ) );
 			Debug.Assert( object.ReferenceEquals( rtb.Document, btd.TextPointers.Doc ) );
 
-			var (selection_start, selection_end) = GetSelection( rtb.Selection, btd.TextPointers );
-
-			string new_text;
-			TextPointers new_textpointers;
+			string text;
+			TextPointers textpointers;
 
 			if( btd.Eol == eol )
 			{
-				new_text = btd.Text;
+				text = btd.Text;
 			}
 			else
 			{
-				new_text = btd.Text.Replace( btd.Eol, eol );
+				text = btd.Text.Replace( btd.Eol, eol );
 			}
 
 			if( btd.Eol.Length == eol.Length )
 			{
-				new_textpointers = btd.TextPointers;
+				textpointers = btd.TextPointers;
 			}
 			else
 			{
-				new_textpointers = new TextPointers( rtb.Document, eol.Length );
-
+				textpointers = new TextPointers( rtb.Document, eol.Length );
 			}
 
-			return new TextData( new_text, eol, new_textpointers, selection_start, selection_end );
+			var (selection_start, selection_end) = GetSelection( rtb.Selection, textpointers );
+
+			return new TextData( text, eol, textpointers, selection_start, selection_end );
 		}
 
 
 		static (int selection_start, int selection_end) GetSelection( TextSelection selection, TextPointers pointers )
 		{
+			// TODO: implement 'pointers.GetIndices' that takes two text pointers
 			int selection_start = Math.Max( 0, pointers.GetIndex( selection.Start, LogicalDirection.Backward ) );
 			int selection_end = Math.Max( 0, pointers.GetIndex( selection.End, LogicalDirection.Forward ) );
 

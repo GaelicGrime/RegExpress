@@ -61,7 +61,7 @@ namespace RegExpressWPF.Controls
 		internal BaseTextData GetBaseTextData( string eol, [CallerMemberName] string caller = null, [CallerFilePath] string callerPath = null, [CallerLineNumber] int callerLine = 0 )
 		{
 			//...
-			var t1 = Environment.TickCount;
+			//var t1 = Environment.TickCount;
 
 			BaseTextData btd;
 
@@ -75,7 +75,7 @@ namespace RegExpressWPF.Controls
 				mCachedBaseTextData.SetTarget( btd );
 			}
 
-			var t2 = Environment.TickCount;
+			//var t2 = Environment.TickCount;
 			//Debug.WriteLine( $"####### GetSimpleTextData {t2 - t1:F0}: {caller} - {Path.GetFileNameWithoutExtension( callerPath )}:{callerLine}" );
 
 			return btd;

@@ -153,8 +153,8 @@ namespace RegExpressWPF
 #if !DEBUG
 			pnlDebug.Visibility = Visibility.Collapsed;
 #endif
-			LocalUnderliningAdorner.IsDbgDisabled = true; //......
-			ExternalUnderliningAdorner.IsDbgDisabled = true; //.......
+			//LocalUnderliningAdorner.IsDbgDisabled = true; 
+			//ExternalUnderliningAdorner.IsDbgDisabled = true;
 		}
 
 

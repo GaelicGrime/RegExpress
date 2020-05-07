@@ -81,6 +81,8 @@ namespace RegExpressWPF
 
 			RecolouringLoop = new ResumableLoop( RecolouringThreadProc, 222, 444 );
 			HighlightingLoop = new ResumableLoop( HighlightingThreadProc, 111, 444 );
+
+			//WhitespaceAdorner.IsDbgDisabled = true;
 		}
 
 
@@ -286,8 +288,6 @@ namespace RegExpressWPF
 
 				var td0 = rtb.GetTextData( eol );
 
-				//...if( !td0.OldPointers.Any( ) || !td0.NewPointers[0].IsInSameDocument( start_doc ) ) return;
-
 				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
@@ -303,10 +303,8 @@ namespace RegExpressWPF
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
 				if( cnc.IsCancellationRequested ) return;
 
-				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					//...bottom_index = td.OldPointers.Count - 2;
 					bottom_index = td.Text.Length;
 				}
 				else
@@ -314,7 +312,6 @@ namespace RegExpressWPF
 					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
-				//if( bottom_index >= td.OldPointers.Count - 1 ) bottom_index = td.OldPointers.Count - 2;
 				if( bottom_index > td.Text.Length ) bottom_index = td.Text.Length;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 			} );
@@ -406,8 +403,6 @@ namespace RegExpressWPF
 
 				var td0 = rtb.GetTextData( eol );
 
-				//...if( !td0.OldPointers.Any( ) || !td0.NewPointers[0].IsInSameDocument( start_doc ) ) return;
-
 				if( cnc.IsCancellationRequested ) return;
 
 				td = td0;
@@ -422,10 +417,8 @@ namespace RegExpressWPF
 				TextPointer bottom_pointer = rtb.GetPositionFromPoint( new Point( 0, rtb.ViewportHeight ), snapToText: true ).GetLineStartPosition( +1, out int lines_skipped );
 				if( cnc.IsCancellationRequested ) return;
 
-				// (Note. Last pointer from 'td.Pointers' is reserved for end-of-document)
 				if( bottom_pointer == null || lines_skipped == 0 )
 				{
-					//...bottom_index = td.OldPointers.Count - 2;
 					bottom_index = td.Text.Length;
 				}
 				else
@@ -433,7 +426,6 @@ namespace RegExpressWPF
 					bottom_index = td.TextPointers.GetIndex( bottom_pointer, LogicalDirection.Forward );
 					if( cnc.IsCancellationRequested ) return;
 				}
-				//...if( bottom_index >= td.OldPointers.Count - 1 ) bottom_index = td.OldPointers.Count - 2;
 				if( bottom_index > td.Text.Length ) bottom_index = td.Text.Length;
 				if( bottom_index < top_index ) bottom_index = top_index; // (including 'if bottom_index == 0')
 
@@ -447,7 +439,6 @@ namespace RegExpressWPF
 
 			Debug.Assert( top_index >= 0 );
 			Debug.Assert( bottom_index >= top_index );
-			//...Debug.Assert( bottom_index < td.OldPointers.Count );
 			Debug.Assert( bottom_index <= td.Text.Length );
 
 			Highlights highlights = null;

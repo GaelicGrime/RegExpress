@@ -79,10 +79,38 @@ namespace RegExpressWPF.Code
 
 		void ProcessInline( Run run )
 		{
-			Debug.Assert( !run.Text.Contains( '\r' ) );
-			Debug.Assert( !run.Text.Contains( '\n' ) );
+			//Unfortunately, '\r[\n]' and '\n' are possible inside Run 
+			//Debug.Assert( !run.Text.Contains( '\r' ) );
+			//Debug.Assert( !run.Text.Contains( '\n' ) );
+			//Sb.Append( run.Text );
 
-			Sb.Append( run.Text );
+			char prev_c = '\0';
+
+			foreach( char c in run.Text )
+			{
+				switch( c )
+				{
+				case '\r':
+					Sb.Append( Eol );
+					break;
+				case '\n':
+					if( prev_c == '\r' )
+					{
+						// ignore '\n' after '\r'
+					}
+					else
+					{
+						Sb.Append( Eol );
+					}
+					break;
+				default:
+					Sb.Append( c );
+					break;
+				}
+
+				prev_c = c;
+			}
+
 		}
 
 

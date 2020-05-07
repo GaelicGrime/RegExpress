@@ -35,11 +35,6 @@ namespace RegExpressWPF.Code
 				if( tb != null ) return tb;
 			}
 
-			if( remaining_index == 0 )
-			{
-				return Doc.ContentEnd;
-			}
-
 			return Doc.ContentEnd; //?
 		}
 
@@ -48,6 +43,8 @@ namespace RegExpressWPF.Code
 		{
 			Debug.Assert( index1 >= 0 );
 			Debug.Assert( index2 >= 0 );
+
+			//return ValueTuple.Create( GetTextPointer( index1 ), GetTextPointer( index2 ) );	//
 
 			RangeData rd = new RangeData( index1, index2 );
 
@@ -69,6 +66,9 @@ namespace RegExpressWPF.Code
 			Debug.Assert( tp.IsInSameDocument( Doc.ContentStart ) );
 
 			tp = tp.GetInsertionPosition( dir );
+
+			if( tp.Parent is FlowDocument ) return 0;
+
 			TextElement parent = (TextElement)tp.Parent;
 
 			int index = FindStartIndex( parent );
@@ -85,6 +85,9 @@ namespace RegExpressWPF.Code
 		}
 
 
+		//---
+
+
 		TextPointer FindTextPointerB( Section section, ref int remainingIndex )
 		{
 			foreach( var block in section.Blocks )
@@ -98,16 +101,19 @@ namespace RegExpressWPF.Code
 		}
 
 
-		TextPointer FindTextPointerB( Paragraph para, ref int remainingIndex )
+		TextPointer FindTextPointerB( Paragraph paragraph, ref int remainingIndex )
 		{
-			foreach( var inline in para.Inlines )
+			if( remainingIndex <= 0 ) return paragraph.ContentStart.GetInsertionPosition(LogicalDirection.Forward);
+
+			foreach( var inline in paragraph.Inlines )
 			{
 				var tp = FindTextPointerI( (dynamic)inline, ref remainingIndex );
 				if( tp != null ) return tp;
 			}
 
+			if( remainingIndex <= 0 ) return paragraph.ContentEnd;
+
 			remainingIndex -= EolLength;
-			if( remainingIndex < 0 ) return para.ContentEnd;
 
 			return null;
 		}
@@ -127,17 +133,40 @@ namespace RegExpressWPF.Code
 
 		TextPointer FindTextPointerI( Run run, ref int remainingIndex )
 		{
-			Debug.Assert( !run.Text.Contains( '\r' ) );
-			Debug.Assert( !run.Text.Contains( '\n' ) );
+			// Unfortunately, '\r[\n]' and '\n' are possible inside Run 
+			//Debug.Assert( !run.Text.Contains( '\r' ) );
+			//Debug.Assert( !run.Text.Contains( '\n' ) );
 
-			var text_len = run.Text.Length;
+			char prev_c = '\0';
+			int i = 0;
 
-			if( remainingIndex <= text_len )
+			foreach( char c in run.Text )
 			{
-				return run.ContentStart.GetPositionAtOffset( remainingIndex );
-			}
+				if( remainingIndex <= 0 ) return run.ContentStart.GetPositionAtOffset( i );
 
-			remainingIndex -= text_len;
+				switch( c )
+				{
+				case '\r':
+					remainingIndex -= EolLength;
+					break;
+				case '\n':
+					if( prev_c == '\r' )
+					{
+						// ignore '\n' after '\r'
+					}
+					else
+					{
+						remainingIndex -= EolLength;
+					}
+					break;
+				default:
+					--remainingIndex;
+					break;
+				}
+
+				prev_c = c;
+				++i;
+			}
 
 			return null;
 		}
@@ -145,10 +174,7 @@ namespace RegExpressWPF.Code
 
 		TextPointer FindTextPointerI( LineBreak lb, ref int remainingIndex )
 		{
-			if( remainingIndex <= EolLength )
-			{
-				return lb.ElementStart;
-			}
+			if( remainingIndex <= 0 ) return lb.ElementStart;
 
 			remainingIndex -= EolLength;
 
@@ -156,7 +182,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		//---------
+		//---
 
 
 		struct RangeData
@@ -188,9 +214,14 @@ namespace RegExpressWPF.Code
 		}
 
 
-		bool FindTextPointersB( Paragraph para, ref RangeData rd )
+		bool FindTextPointersB( Paragraph paragraph, ref RangeData rd )
 		{
-			foreach( var inline in para.Inlines )
+			if( rd.Pointer1 == null && rd.Remaining1 <= 0 ) rd.Pointer1 = paragraph.ContentStart;
+			if( rd.Pointer2 == null && rd.Remaining2 <= 0 ) rd.Pointer2 = paragraph.ContentStart;
+
+			if( rd.Done ) return true;
+
+			foreach( var inline in paragraph.Inlines )
 			{
 				var r = FindTextPointersI( (dynamic)inline, ref rd );
 				if( r ) return true;
@@ -198,14 +229,18 @@ namespace RegExpressWPF.Code
 
 			if( rd.Pointer1 == null )
 			{
-				rd.Remaining1 -= EolLength;
-				if( rd.Remaining1 < 0 ) rd.Pointer1 = para.ContentEnd;
+				if( rd.Remaining1 <= 0 )
+					rd.Pointer1 = paragraph.ContentEnd;
+				else
+					rd.Remaining1 -= EolLength;
 			}
 
 			if( rd.Pointer2 == null )
 			{
-				rd.Remaining2 -= EolLength;
-				if( rd.Remaining2 < 0 ) rd.Pointer2 = para.ContentEnd;
+				if( rd.Remaining2 <= 0 )
+					rd.Pointer2 = paragraph.ContentEnd;
+				else
+					rd.Remaining2 -= EolLength;
 			}
 
 			return rd.Done;
@@ -226,36 +261,48 @@ namespace RegExpressWPF.Code
 
 		bool FindTextPointersI( Run run, ref RangeData rd )
 		{
-			Debug.Assert( !run.Text.Contains( '\r' ) );
-			Debug.Assert( !run.Text.Contains( '\n' ) );
+			//Unfortunately, '\r[\n]' and '\n' are possible inside Run 
+			//Debug.Assert( !run.Text.Contains( '\r' ) );
+			//Debug.Assert( !run.Text.Contains( '\n' ) );
 
-			var text_len = run.Text.Length;
+			char prev_c = '\0';
+			int i = 0;
 
-			if( rd.Pointer1 == null )
+			foreach( char c in run.Text )
 			{
-				if( rd.Remaining1 <= text_len )
+				if( rd.Pointer1 == null && rd.Remaining1 <= 0 ) rd.Pointer1 = run.ContentStart.GetPositionAtOffset( i );
+				if( rd.Pointer2 == null && rd.Remaining2 <= 0 ) rd.Pointer2 = run.ContentStart.GetPositionAtOffset( i );
+
+				if( rd.Done ) return true;
+
+				switch( c )
 				{
-					rd.Pointer1 = run.ContentStart.GetPositionAtOffset( rd.Remaining1 );
+				case '\r':
+					if( rd.Pointer1 == null ) rd.Remaining1 -= EolLength;
+					if( rd.Pointer2 == null ) rd.Remaining2 -= EolLength;
+					break;
+				case '\n':
+					if( prev_c == '\r' )
+					{
+						// ignore '\n' after '\r'
+					}
+					else
+					{
+						if( rd.Pointer1 == null ) rd.Remaining1 -= EolLength;
+						if( rd.Pointer2 == null ) rd.Remaining2 -= EolLength;
+					}
+					break;
+				default:
+					if( rd.Pointer1 == null ) --rd.Remaining1;
+					if( rd.Pointer2 == null ) --rd.Remaining2;
+					break;
 				}
-				else
-				{
-					rd.Remaining1 -= text_len;
-				}
+
+				prev_c = c;
+				++i;
 			}
 
-			if( rd.Pointer2 == null )
-			{
-				if( rd.Remaining2 <= text_len )
-				{
-					rd.Pointer2 = run.ContentStart.GetPositionAtOffset( rd.Remaining2 );
-				}
-				else
-				{
-					rd.Remaining2 -= text_len;
-				}
-			}
-
-			return rd.Done;
+			return false;
 		}
 
 
@@ -263,33 +310,25 @@ namespace RegExpressWPF.Code
 		{
 			if( rd.Pointer1 == null )
 			{
-				if( rd.Remaining1 <= EolLength )
-				{
-					rd.Pointer1 = lb.ElementStart;
-				}
+				if( rd.Remaining1 <= 0 )
+					rd.Pointer1 = lb.ContentStart;
 				else
-				{
 					rd.Remaining1 -= EolLength;
-				}
 			}
 
 			if( rd.Pointer2 == null )
 			{
-				if( rd.Remaining2 <= EolLength )
-				{
-					rd.Pointer2 = lb.ElementStart;
-				}
+				if( rd.Remaining2 <= 0 )
+					rd.Pointer2 = lb.ContentStart;
 				else
-				{
 					rd.Remaining2 -= EolLength;
-				}
 			}
 
 			return rd.Done;
 		}
 
 
-		//---------
+		//---
 
 
 		int FindStartIndex( TextElement el )
@@ -347,12 +386,34 @@ namespace RegExpressWPF.Code
 
 		bool FindStartIndexI( Run run, TextElement el, ref int index )
 		{
-			Debug.Assert( !run.Text.Contains( '\r' ) );
-			Debug.Assert( !run.Text.Contains( '\n' ) );
-
 			if( object.ReferenceEquals( run, el ) ) return true;
 
-			index += run.Text.Length;
+			char prev_c = '\0';
+
+			foreach( char c in run.Text )
+			{
+				switch( c )
+				{
+				case '\r':
+					index += EolLength;
+					break;
+				case '\n':
+					if( prev_c == '\r' )
+					{
+						// ignore '\n' after '\r'
+					}
+					else
+					{
+						index += EolLength;
+					}
+					break;
+				default:
+					++index;
+					break;
+				}
+
+				prev_c = c;
+			}
 
 			return false;
 		}

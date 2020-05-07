@@ -321,7 +321,6 @@ namespace RegExpressWPF.Adorners
 					if( !start_doc.HasValidLayout || !end_doc.HasValidLayout ) return;
 
 					var td0 = rtb.GetTextData( null );
-					//...if( !td0.OldPointers.Any( ) || !td0.NewPointers[0].IsInSameDocument( start_doc ) ) return;
 
 					if( cnc.IsCancellationRequested ) return;
 
