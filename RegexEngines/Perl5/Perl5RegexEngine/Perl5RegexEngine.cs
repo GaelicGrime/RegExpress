@@ -52,7 +52,7 @@ namespace Perl5RegexEngineNs
 
 		public string EngineVersion => GetPerl5Version( );
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures | RegexEngineCapabilityEnum.CombineSurrogatePairs;
 
 		public string NoteForCaptures => null;
 
