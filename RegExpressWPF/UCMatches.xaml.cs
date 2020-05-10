@@ -240,8 +240,8 @@ namespace RegExpressWPF
 			{
 				if( LastMatches != null )
 				{
-					var old_groups = LastMatches.Matches.SelectMany( m => m.Groups ).Select( g => (g.TextIndex, g.TextLength, g.Value, g.Name) );
-					var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.TextIndex, g.TextLength, g.Value, g.Name) );
+					var old_groups = LastMatches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
+					var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
 
 					var old_captures = LastMatches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
 					var new_captures = matches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
