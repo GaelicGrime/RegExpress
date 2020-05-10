@@ -12,5 +12,6 @@ namespace RegexEngineInfrastructure
 	{
 		Default = 0,
 		NoCaptures = ( 1 << 1 ),
+		CombineSurrogatePairs = ( 1 << 2 ),
 	}
 }

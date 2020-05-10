@@ -66,9 +66,11 @@
     <Compile Include="IRegexEngine.cs" />
     <Compile Include="RegexEngineCapabilityEnum.cs" />
     <Compile Include="Segment.cs" />
+    <Compile Include="SurrogatePairsHelper.cs" />
     <Compile Include="SyntaxColouring\ColouredSegments.cs" />
     <Compile Include="SyntaxColouring\Highlights.cs" />
     <Compile Include="SyntaxColouring\HighlightHelper.cs" />
+    <Compile Include="SyntaxColouring\UnderlineInfo.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,7 @@ namespace RegexEngineInfrastructure.Matches
 		public int Count { get; }
 		public IEnumerable<IMatch> Matches { get; }
 
+
 		public RegexMatches( int count, IEnumerable<IMatch> matches )
 		{
 			Debug.Assert( matches != null );

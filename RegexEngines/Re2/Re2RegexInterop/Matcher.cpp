@@ -91,12 +91,15 @@ namespace Re2RegexInterop
 		mbstate_t mbstate = { 0 };
 
 		size_t bytes_written = 0;
+		bool is_surrogate_pair = false;
 
 		for( const wchar_t* p = start; *p; ++p ) // (we assume that the pinned array is zero-terminated)
 		{
 			indices->resize( bytes_written + 1, -1 ); // ('-1' will denote unset elements)
-			( *indices )[bytes_written] = CheckedCast::ToInt32( p - start );
-
+			if( !is_surrogate_pair )
+			{
+				( *indices )[bytes_written] = CheckedCast::ToInt32( p - start );
+			}
 			dest->resize( bytes_written + mb_cur_max );
 
 			size_t size_converted = c16rtomb( dest->data( ) + bytes_written, *p, &mbstate );
@@ -111,6 +114,10 @@ namespace Re2RegexInterop
 
 				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
 			}
+
+			Debug::Assert( !( is_surrogate_pair && size_converted == 0 ) );
+
+			is_surrogate_pair = size_converted == 0;
 
 			bytes_written += size_converted;
 		}
@@ -215,6 +222,8 @@ namespace Re2RegexInterop
 			std::vector<int> indices; // 
 
 			ToUtf8( &text, &indices, text0 );
+
+			//auto utf8 = System::Text::Encoding::UTF8->GetBytes( text0 );
 
 			re2::StringPiece const full_text( text.data( ), text.size( ) );
 

@@ -261,6 +261,7 @@ except:
 			SimpleMatch match = null;
 			int group_i = 0;
 			var names = new Dictionary<int, string>( );
+			var sph = new SurrogatePairsHelper( text, processSurrogatePairs: true );
 
 			using( var sr = new StringReader( output ) )
 			{
@@ -300,7 +301,9 @@ except:
 
 							Debug.Assert( index >= 0 && end >= 0 );
 
-							match = SimpleMatch.Create( index, length, this );
+							var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
+
+							match = SimpleMatch.Create( index, length, text_index, text_length, this );
 							matches.Add( match );
 
 							group_i = 0;
@@ -315,10 +318,12 @@ except:
 
 							Debug.Assert( match != null );
 
+							var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
+
 							string name;
 							if( !names.TryGetValue( group_i, out name ) ) name = group_i.ToString( CultureInfo.InvariantCulture );
 
-							match.AddGroup( index, length, success, name );
+							match.AddGroup( index, length, text_index, text_length, success, name );
 
 							++group_i;
 						}

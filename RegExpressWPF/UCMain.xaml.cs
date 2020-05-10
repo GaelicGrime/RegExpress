@@ -20,6 +20,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
+using RegexEngineInfrastructure.SyntaxColouring;
 using RegExpressWPF.Code;
 
 
@@ -316,7 +317,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			ucText.SetExternalUnderlining( Enumerable.Empty<Segment>( ).ToList( ), setSelection: false );
+			ucText.SetExternalUnderlining( UnderlineInfo.Empty, setSelection: false );
 		}
 
 

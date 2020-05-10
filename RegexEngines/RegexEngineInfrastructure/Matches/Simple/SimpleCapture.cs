@@ -13,5 +13,11 @@ namespace RegexEngineInfrastructure.Matches.Simple
 			: base( index, length, textGetter )
 		{
 		}
+
+
+		internal SimpleCapture( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter )
+			: base( index, length, textIndex, textLength, textGetter )
+		{
+		}
 	}
 }
