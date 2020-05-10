@@ -19,6 +19,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
+using RegexEngineInfrastructure.SyntaxColouring;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -48,8 +49,8 @@ namespace RegExpressWPF
 		RegexMatches LastMatches;
 		bool LastShowCaptures;
 		string LastEol;
-		IReadOnlyList<Segment> LastExternalUnderliningSegments;
-		bool LastExternalUnderliningSetSelection;
+		UnderlineInfo LastExternalUnderlineInfo;
+		bool LastExternalUnderlineSetSelection;
 
 		readonly StyleInfo NormalStyleInfo;
 		readonly StyleInfo[] HighlightStyleInfos;
@@ -147,7 +148,7 @@ namespace RegExpressWPF
 					lock( this )
 					{
 						LastMatches = matches;
-						LastExternalUnderliningSegments = null;
+						LastExternalUnderlineInfo = null;
 					}
 
 					MatchesUpdatedEvent.Set( );
@@ -166,7 +167,7 @@ namespace RegExpressWPF
 				LastMatches = matches;
 				LastShowCaptures = showCaptures;
 				LastEol = eol;
-				LastExternalUnderliningSegments = null;
+				LastExternalUnderlineInfo = null;
 			}
 
 			MatchesUpdatedEvent.Set( );
@@ -208,14 +209,14 @@ namespace RegExpressWPF
 		}
 
 
-		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
+		public void SetExternalUnderlining( UnderlineInfo underlineInfo, bool setSelection )
 		{
 			ExternalUnderliningLoop.SendStop( );
 
 			lock( this )
 			{
-				LastExternalUnderliningSegments = segments;
-				LastExternalUnderliningSetSelection = setSelection;
+				LastExternalUnderlineInfo = underlineInfo;
+				LastExternalUnderlineSetSelection = setSelection;
 			}
 
 			ExternalUnderliningLoop.SendRestart( );
@@ -533,13 +534,13 @@ namespace RegExpressWPF
 					Debug.Assert( match.Success );
 
 					// TODO: consider these conditions for bi-directional text
-					if( match.Index + match.Length < top_index ) continue;
-					if( match.Index > bottom_index ) continue; // (do not break; the order of indices is unspecified)
+					if( match.TextIndex + match.TextLength < top_index ) continue;
+					if( match.TextIndex > bottom_index ) continue; // (do not break; the order of indices is unspecified)
 
 					var highlight_index = unchecked(i % HighlightStyleInfos.Length);
 
-					Segment.Except( segments_to_uncolour, match.Index, match.Length );
-					segments_and_styles.Add( (new Segment( match.Index, match.Length ), HighlightStyleInfos[highlight_index]) );
+					Segment.Except( segments_to_uncolour, match.TextIndex, match.TextLength );
+					segments_and_styles.Add( (new Segment( match.TextIndex, match.TextLength ), HighlightStyleInfos[highlight_index]) );
 				}
 			}
 
@@ -643,14 +644,14 @@ namespace RegExpressWPF
 		void ExternalUnderliningThreadProc( ICancellable cnc )
 		{
 			string eol;
-			IReadOnlyList<Segment> segments;
+			UnderlineInfo underline_info;
 			bool set_selection;
 
 			lock( this )
 			{
 				eol = LastEol;
-				segments = LastExternalUnderliningSegments;
-				set_selection = LastExternalUnderliningSetSelection;
+				underline_info = LastExternalUnderlineInfo;
+				set_selection = LastExternalUnderlineSetSelection;
 			}
 
 			TextData td = null;
@@ -662,12 +663,16 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
+			IReadOnlyList<Segment> adjusted_segments;
+
+			if( cnc.IsCancellationRequested ) return;
+
 			IReadOnlyList<(TextPointer start, TextPointer end)> ranges_to_underline = null;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 			{
 				ranges_to_underline =
-								segments
+								underline_info?.Segments
 									?.Select( s =>
 									{
 										var t = td.TextPointers.GetTextPointers( s.Index, s.Index + s.Length );
@@ -682,11 +687,11 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-			if( segments?.Count > 0 )
+			if( underline_info?.Segments?.Count > 0 )
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					var first = segments.First( );
+					var first = underline_info.Segments.First( );
 
 					var r = td.Range( first.Index, first.Length );
 
@@ -736,26 +741,26 @@ namespace RegExpressWPF
 						{
 							if( reh.IsCancellationRequested ) break;
 
-							if( td.SelectionStart >= capture.Index && td.SelectionStart <= capture.Index + capture.Length )
+							if( td.SelectionStart >= capture.TextIndex && td.SelectionStart <= capture.TextIndex + capture.TextLength )
 							{
-								items.Add( new Segment( capture.Index, capture.Length ) );
+								items.Add( new Segment( capture.TextIndex, capture.TextLength ) );
 								found = true;
 							}
 						}
 					}
 
-					if( td.SelectionStart >= group.Index && td.SelectionStart <= group.Index + group.Length )
+					if( td.SelectionStart >= group.TextIndex && td.SelectionStart <= group.TextIndex + group.TextLength )
 					{
-						items.Add( new Segment( group.Index, group.Length ) );
+						items.Add( new Segment( group.TextIndex, group.TextLength ) );
 						found = true;
 					}
 				}
 
 				if( !found )
 				{
-					if( td.SelectionStart >= match.Index && td.SelectionStart <= match.Index + match.Length )
+					if( td.SelectionStart >= match.TextIndex && td.SelectionStart <= match.TextIndex + match.TextLength )
 					{
-						items.Add( new Segment( match.Index, match.Length ) );
+						items.Add( new Segment( match.TextIndex, match.TextLength ) );
 					}
 				}
 			}

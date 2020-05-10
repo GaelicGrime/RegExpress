@@ -14,8 +14,18 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		protected SimpleBase( int index, int length, ISimpleTextGetter textGetter )
 		{
+			Index = TextIndex = index;
+			Length = TextLength = length;
+			TextGetter = textGetter;
+		}
+
+
+		protected SimpleBase( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter )
+		{
 			Index = index;
 			Length = length;
+			TextIndex = textIndex;
+			TextLength = textLength;
 			TextGetter = textGetter;
 		}
 
@@ -24,6 +34,10 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		public int Length { get; }
 
-		public string Value => Index < 0 ? String.Empty : TextGetter.GetText( Index, Length );
+		public int TextIndex { get; }
+
+		public int TextLength { get; }
+
+		public string Value => Index < 0 ? String.Empty : TextGetter.GetText( TextIndex, TextLength );
 	}
 }

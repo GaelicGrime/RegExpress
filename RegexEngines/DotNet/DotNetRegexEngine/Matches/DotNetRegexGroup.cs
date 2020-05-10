@@ -25,6 +25,10 @@ namespace DotNetRegexEngineNs.Matches
 
 		public int Length => Group.Length;
 
+		public int TextIndex => Group.Index;
+
+		public int TextLength => Group.Length;
+
 		public string Value => Group.Value;
 
 		#endregion ICapture

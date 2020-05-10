@@ -18,9 +18,21 @@ namespace RegexEngineInfrastructure.Matches.Simple
 		}
 
 
+		private SimpleMatch( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter )
+			: base( index, length, textIndex, textLength, textGetter )
+		{
+		}
+
+
 		public static SimpleMatch Create( int index, int length, ISimpleTextGetter textGetter )
 		{
 			return new SimpleMatch( index, length, textGetter );
+		}
+
+
+		public static SimpleMatch Create( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter )
+		{
+			return new SimpleMatch( index, length, textIndex, textLength, textGetter );
 		}
 
 
@@ -59,7 +71,16 @@ namespace RegexEngineInfrastructure.Matches.Simple
 		}
 
 
-		public void SetGroupName(int index, string name)
+		public SimpleGroup AddGroup( int index, int length, int textIndex, int textLength, bool success, string name )
+		{
+			var group = new SimpleGroup( index, length, textIndex, textLength, TextGetter, success, name );
+			mGroups.Add( group );
+
+			return group;
+		}
+
+
+		public void SetGroupName( int index, string name )
 		{
 			( (SimpleGroup)mGroups[index] ).SetName( name );
 		}

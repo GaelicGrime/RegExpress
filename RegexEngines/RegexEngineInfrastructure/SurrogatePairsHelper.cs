@@ -8,41 +8,80 @@ using System.Threading.Tasks;
 
 namespace RegexEngineInfrastructure
 {
-	public sealed class SurrogatePairsHelper
+	public struct SurrogatePairsHelper
 	{
-		readonly List<int> SurrogatePairs = new List<int>( );
+		readonly bool ProcessSurrogatePairs;
+		readonly List<int> SurrogatePairs;
 
-		public SurrogatePairsHelper( string text )
+		public SurrogatePairsHelper( string text, bool processSurrogatePairs )
 		{
-			CollectSurrogatePairs( text );
+			ProcessSurrogatePairs = processSurrogatePairs;
+
+			if( processSurrogatePairs )
+			{
+				SurrogatePairs = new List<int>( );
+				CollectSurrogatePairs( text );
+			}
+			else
+			{
+				SurrogatePairs = null;
+			}
 		}
 
 
-		public int GetAlternativeIndex(int index)
+		public int ToTextIndex( int matchIndex )
 		{
-			throw new NotImplementedException( );
+			if( !ProcessSurrogatePairs ) return matchIndex;
+
+			int i = -1;
+			while( ++i < SurrogatePairs.Count )
+			{
+				if( SurrogatePairs[i] >= matchIndex ) break;
+			}
+
+			return matchIndex + i;
+		}
+
+
+		public (int textIndex, int textLength) ToTextIndexAndLength( int matchIndex, int matchLength )
+		{
+			if( !ProcessSurrogatePairs ) return (matchIndex, matchLength);
+
+			var text_index = ToTextIndex( matchIndex );
+			var text_length = ToTextIndex( matchIndex + matchLength ) - text_index;
+
+			return (text_index, text_length);
+		}
+
+
+		public int ToMatchIndex( int textIndex )
+		{
+			if( !ProcessSurrogatePairs ) return textIndex;
+
+			int n = 0;
+			while( n < SurrogatePairs.Count && SurrogatePairs[n] <= textIndex ) ++n;
+
+			Debug.Assert( textIndex - n >= 0 );
+
+			return textIndex - n;
 		}
 
 
 		void CollectSurrogatePairs( string text )
 		{
-			SurrogatePairs.Clear( );
-
-			for( int i = 0; i < text.Length; )
+			int mi = 0;
+			for( int ti = 0; ti < text.Length; )
 			{
-				if( char.IsSurrogatePair( text, i ) )
+				if( char.IsSurrogatePair( text, ti ) )
 				{
-					Debug.Assert( i <= text.Length - 2 );
-					if( i <= text.Length - 2 )
-					{
-						SurrogatePairs.Add( i );
-					}
-					i += 2;
+					SurrogatePairs.Add( mi );
+					ti += 2;
 				}
 				else
 				{
-					++i;
+					++ti;
 				}
+				++mi;
 			}
 		}
 	}

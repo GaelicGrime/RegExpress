@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
+using RegexEngineInfrastructure.SyntaxColouring;
 using RegExpressWPF.Adorners;
 using RegExpressWPF.Code;
 
@@ -239,8 +240,8 @@ namespace RegExpressWPF
 			{
 				if( LastMatches != null )
 				{
-					var old_groups = LastMatches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
-					var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.Index, g.Length, g.Value, g.Name) );
+					var old_groups = LastMatches.Matches.SelectMany( m => m.Groups ).Select( g => (g.TextIndex, g.TextLength, g.Value, g.Name) );
+					var new_groups = matches.Matches.SelectMany( m => m.Groups ).Select( g => (g.TextIndex, g.TextLength, g.Value, g.Name) );
 
 					var old_captures = LastMatches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
 					var new_captures = matches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
@@ -298,7 +299,7 @@ namespace RegExpressWPF
 		}
 
 
-		public IReadOnlyList<Segment> GetUnderlinedSegments( )
+		public UnderlineInfo GetUnderlinedSegments( )
 		{
 			RegexMatches matches;
 
@@ -313,7 +314,7 @@ namespace RegExpressWPF
 				matches == null ||
 				matches.Count == 0 )
 			{
-				return segments;
+				return UnderlineInfo.Empty;
 			}
 
 			TextSelection sel = rtbMatches.Selection;
@@ -338,17 +339,17 @@ namespace RegExpressWPF
 				{
 				case MatchInfo mi:
 					segments.Add( mi.MatchSegment );
-					return segments;
+					return new UnderlineInfo( segments );
 				case GroupInfo gi:
 					if( gi.IsSuccess ) segments.Add( gi.GroupSegment );
-					return segments;
+					return new UnderlineInfo( segments );
 				case CaptureInfo ci:
 					segments.Add( ci.CaptureSegment );
-					return segments;
+					return new UnderlineInfo( segments );
 				}
 			}
 
-			return segments;
+			return new UnderlineInfo( segments );
 		}
 
 
@@ -477,7 +478,7 @@ namespace RegExpressWPF
 			int show_pb_time = unchecked(Environment.TickCount + 333); // (ignore overflow)
 
 			Paragraph previous_para = null;
-			int match_index = -1;
+			int match_number = -1;
 			bool document_has_changed = false;
 
 			int left_width = EvaluateLeftWidth( matches, show_succeeded_groups_only );
@@ -486,7 +487,7 @@ namespace RegExpressWPF
 			{
 				Debug.Assert( match.Success );
 
-				++match_index;
+				++match_number;
 
 				if( cnc.IsCancellationRequested ) break;
 
@@ -499,31 +500,32 @@ namespace RegExpressWPF
 
 				if( cnc.IsCancellationRequested ) break;
 
-				int min_index = ordered_groups.Select( g => g.Success ? g.Index : match.Index ).Concat( new[] { match.Index } ).Min( );
+
+				int min_index = ordered_groups.Select( g => g.Success ? g.TextIndex : match.TextIndex ).Concat( new[] { match.TextIndex } ).Min( );
 				if( show_captures )
 				{
-					min_index = ordered_groups.SelectMany( g => g.Captures ).Select( c => c.Index ).Concat( new[] { min_index } ).Min( );
+					min_index = ordered_groups.SelectMany( g => g.Captures ).Select( c => c.TextIndex ).Concat( new[] { min_index } ).Min( );
 				}
 
 				if( cnc.IsCancellationRequested ) break;
 
-				int left_width_for_match = left_width + ( match.Index - min_index );
+				int left_width_for_match = left_width + ( match.TextIndex - min_index );
 
 				Paragraph para = null;
 				Run run = null;
 				MatchInfo match_info = null;
 				RunBuilder match_run_builder = new RunBuilder( MatchValueSpecialStyleInfo );
 
-				var highlight_style = HighlightStyleInfos[match_index % HighlightStyleInfos.Length];
-				var highlight_light_style = HighlightLightStyleInfos[match_index % HighlightStyleInfos.Length];
+				var highlight_style = HighlightStyleInfos[match_number % HighlightStyleInfos.Length];
+				var highlight_light_style = HighlightLightStyleInfos[match_number % HighlightStyleInfos.Length];
 
 				// show match
 
-				string match_name_text = show_first_only ? "Fɪʀꜱᴛ Mᴀᴛᴄʜ" : $"Mᴀᴛᴄʜ {match_index + 1}";
+				string match_name_text = show_first_only ? "Fɪʀꜱᴛ Mᴀᴛᴄʜ" : $"Mᴀᴛᴄʜ {match_number + 1}";
 
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					pbProgress.Value = match_index;
+					pbProgress.Value = match_number;
 					if( Environment.TickCount >= show_pb_time ) pbProgress.Visibility = Visibility.Visible;
 
 					var span = new Span( );
@@ -553,7 +555,7 @@ namespace RegExpressWPF
 
 					match_info = new MatchInfo
 					{
-						MatchSegment = new Segment( match.Index, match.Length ),
+						MatchSegment = new Segment( match.TextIndex, match.TextLength ),
 						Span = span,
 						ValueInline = value_inline,
 					};
@@ -582,7 +584,7 @@ namespace RegExpressWPF
 					if( cnc.IsCancellationRequested ) break;
 
 					string group_name_text = $" • Gʀᴏᴜᴘ ‹{group.Name}›";
-					int left_width_for_group = left_width_for_match - Math.Max( 0, match.Index - ( group.Success ? group.Index : match.Index ) );
+					int left_width_for_group = left_width_for_match - Math.Max( 0, match.TextIndex - ( group.Success ? group.TextIndex : match.TextIndex ) );
 
 					ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 					{
@@ -608,9 +610,9 @@ namespace RegExpressWPF
 						}
 						else
 						{
-							string left = Utilities.SubstringFromTo( text, match.Index, group.Index );
+							string left = Utilities.SubstringFromTo( text, match.TextIndex, group.TextIndex );
 							string middle = group.Value;
-							string right = Utilities.SubstringFromTo( text, group.Index + group.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
+							string right = Utilities.SubstringFromTo( text, group.TextIndex + group.TextLength, Math.Max( match.TextIndex + match.TextLength, group.TextIndex + group.TextLength ) );
 
 							inl = sibling_run_builder.Build( left, span.ContentEnd );
 							inl.Style( GroupSiblingValueStyleInfo );
@@ -634,7 +636,7 @@ namespace RegExpressWPF
 						{
 							Parent = match_info,
 							IsSuccess = group.Success,
-							GroupSegment = new Segment( group.Index, group.Length ),
+							GroupSegment = new Segment( group.TextIndex, group.TextLength ),
 							Span = span,
 							ValueInline = value_inline,
 						};
@@ -709,17 +711,17 @@ namespace RegExpressWPF
 			string text, IMatch match, IGroup group, StyleInfo highlightStyle,
 			RunBuilder runBuilder, RunBuilder siblingRunBuilder )
 		{
-			int capture_index = -1;
+			int capture_number = -1;
 			foreach( ICapture capture in group.Captures )
 			{
 				if( cnc.IsCancellationRequested ) break;
 
-				++capture_index;
+				++capture_number;
 
 				var span = new Span( );
 
-				string capture_name_text = $"  ◦ Cᴀᴘᴛᴜʀᴇ {capture_index}";
-				int left_width_for_capture = leftWidthForMatch - Math.Max( 0, Math.Max( match.Index - group.Index, match.Index - capture.Index ) );
+				string capture_name_text = $"  ◦ Cᴀᴘᴛᴜʀᴇ {capture_number}";
+				int left_width_for_capture = leftWidthForMatch - Math.Max( 0, Math.Max( match.TextIndex - group.TextIndex, match.TextIndex - capture.TextIndex ) );
 
 				var start_run = new Run( capture_name_text.PadRight( left_width_for_capture, ' ' ), span.ContentEnd );
 				start_run.Style( GroupNameStyleInfo );
@@ -734,9 +736,9 @@ namespace RegExpressWPF
 				}
 				else
 				{
-					string left = Utilities.SubstringFromTo( text, Math.Min( match.Index, group.Index ), capture.Index );
+					string left = Utilities.SubstringFromTo( text, Math.Min( match.TextIndex, group.TextIndex ), capture.TextIndex );
 					string middle = capture.Value;
-					string right = Utilities.SubstringFromTo( text, capture.Index + capture.Length, Math.Max( match.Index + match.Length, group.Index + group.Length ) );
+					string right = Utilities.SubstringFromTo( text, capture.TextIndex + capture.TextLength, Math.Max( match.TextIndex + match.TextLength, group.TextIndex + group.TextLength ) );
 
 					inline = siblingRunBuilder.Build( left, span.ContentEnd );
 					inline.Style( GroupSiblingValueStyleInfo );
@@ -756,7 +758,7 @@ namespace RegExpressWPF
 				var capture_info = new CaptureInfo
 				{
 					Parent = groupInfo,
-					CaptureSegment = new Segment( capture.Index, capture.Length ),
+					CaptureSegment = new Segment( capture.TextIndex, capture.TextLength ),
 					Span = span,
 					ValueInline = value_inline
 				};

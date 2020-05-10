@@ -13,6 +13,12 @@ namespace RegexEngineInfrastructure.Matches
 
 		int Length { get; }
 
+
+		int TextIndex { get; }
+
+		int TextLength { get; }
+
+
 		string Value { get; }
 	}
 

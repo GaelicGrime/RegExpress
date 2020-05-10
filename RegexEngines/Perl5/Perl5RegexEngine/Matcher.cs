@@ -284,7 +284,9 @@ print STDERR qq(<END-ERR\x1F/>\n);
 
 			string results = Regex.Match( output, @"<RESULTS\x1F>(.*?)</RESULTS\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
 
+			var sph = new SurrogatePairsHelper( text, processSurrogatePairs: true );
 			var split_m = results.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );
+
 			foreach( var m in split_m )
 			{
 				SimpleMatch match = null;
@@ -310,10 +312,11 @@ print STDERR qq(<END-ERR\x1F/>\n);
 					{
 						int index = int.Parse( split[1], CultureInfo.InvariantCulture );
 						int length = int.Parse( split[2], CultureInfo.InvariantCulture );
+						var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
 
-						if( match == null ) match = SimpleMatch.Create( index, length, this );
+						if( match == null ) match = SimpleMatch.Create( index, length, text_index, text_length, this );
 
-						match.AddGroup( index, length, true, deduced_name );
+						match.AddGroup( index, length, text_index, text_length, true, deduced_name );
 					}
 				}
 

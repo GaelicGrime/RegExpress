@@ -21,6 +21,15 @@ namespace RegexEngineInfrastructure.Matches.Simple
 		}
 
 
+		internal SimpleGroup( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter,
+			bool success, string name )
+			: base( index, length, textIndex, textLength, textGetter )
+		{
+			Success = success;
+			Name = name;
+		}
+
+
 		#region IGroup
 
 		public bool Success { get; }
@@ -34,6 +43,15 @@ namespace RegexEngineInfrastructure.Matches.Simple
 		public SimpleCapture AddCapture( int index, int length )
 		{
 			var capture = new SimpleCapture( index, length, TextGetter );
+			mCaptures.Add( capture );
+
+			return capture;
+		}
+
+
+		public SimpleCapture AddCapture( int index, int length, int textIndex, int textLength )
+		{
+			var capture = new SimpleCapture( index, length, textIndex, textLength, TextGetter );
 			mCaptures.Add( capture );
 
 			return capture;
