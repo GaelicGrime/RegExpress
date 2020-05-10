@@ -16,12 +16,12 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace Perl5RegexEngineNs
+namespace PerlRegexEngineNs
 {
 	/// <summary>
-	/// Interaction logic for UCPerl5RegexOptions.xaml
+	/// Interaction logic for UCPerlRegexOptions.xaml
 	/// </summary>
-	public partial class UCPerl5RegexOptions : UserControl
+	public partial class UCPerlRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)
@@ -31,7 +31,7 @@ namespace Perl5RegexEngineNs
 		int ChangeCounter = 0;
 
 
-		public UCPerl5RegexOptions( )
+		public UCPerlRegexOptions( )
 		{
 			InitializeComponent( );
 

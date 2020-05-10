@@ -64,9 +64,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SubRegRegexInterop", "Regex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubRegRegexEngine", "RegexEngines\SubReg\SubRegRegexEngine\SubRegRegexEngine.csproj", "{9AA90821-F9E5-44EB-A3C2-E38F2F09FDB0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Perl5", "Perl5", "{9FF2DE2E-924A-48D1-ACEF-886AE11B9C52}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Perl", "Perl", "{9FF2DE2E-924A-48D1-ACEF-886AE11B9C52}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perl5RegexEngine", "RegexEngines\Perl5\Perl5RegexEngine\Perl5RegexEngine.csproj", "{490D9C31-2F47-4164-9465-4611D913A9C0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerlRegexEngine", "RegexEngines\Perl\PerlRegexEngine\PerlRegexEngine.csproj", "{490D9C31-2F47-4164-9465-4611D913A9C0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{D4C5A3D1-AB5E-42BC-9051-1566FC3A6656}"
 EndProject

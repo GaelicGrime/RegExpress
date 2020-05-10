@@ -12,7 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 
-namespace Perl5RegexEngineNs
+namespace PerlRegexEngineNs
 {
 	class Matcher : IMatcher, ISimpleTextGetter
 	{
@@ -76,7 +76,7 @@ namespace Perl5RegexEngineNs
 
 			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
 			string assembly_dir = Path.GetDirectoryName( assembly_location );
-			string perl_dir = Path.Combine( assembly_dir, @"Perl5-min\perl" );
+			string perl_dir = Path.Combine( assembly_dir, @"Perl-min\perl" );
 			string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
 			string arguments = @"-CS -e ""
