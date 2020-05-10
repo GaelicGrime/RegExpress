@@ -66,7 +66,7 @@ namespace RegExpressWPF
 				new OnigurumaRegexEngineNs.OnigurumaRegexEngine(),
 				new IcuRegexEngineNs.IcuRegexEngine(),
 				new SubRegRegexEngineNs.SubRegRegexEngine(),
-				new Perl5RegexEngineNs.Perl5RegexEngine(),
+				new PerlRegexEngineNs.PerlRegexEngine(),
 				new PythonRegexEngineNs.PythonRegexEngine(),
 			};
 

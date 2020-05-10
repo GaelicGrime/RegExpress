@@ -22,9 +22,9 @@ xcopy /D /R /Y "%Prj%\ICU-min\bin64\*.dll" "%TargetDir%\ICU-min\bin64\*"
 
 rem -- Perl 5 --
 
-set Prj=%MainProjectPath%\..\RegexEngines\Perl5\Perl5RegexEngine
+set Prj=%MainProjectPath%\..\RegexEngines\Perl\PerlRegexEngine
 
-xcopy /E /D /R /Y "%Prj%\Perl5-min\*" "%TargetDir%\Perl5-min\*"
+xcopy /E /D /R /Y "%Prj%\Perl-min\*" "%TargetDir%\Perl-min\*"
  
 
 rem -- Python --

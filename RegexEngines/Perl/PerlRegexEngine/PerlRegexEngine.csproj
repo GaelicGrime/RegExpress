@@ -7,8 +7,8 @@
     <ProjectGuid>{490D9C31-2F47-4164-9465-4611D913A9C0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Perl5RegexEngineNs</RootNamespace>
-    <AssemblyName>Perl5RegexEngine</AssemblyName>
+    <RootNamespace>PerlRegexEngineNs</RootNamespace>
+    <AssemblyName>PerlRegexEngine</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -17,7 +17,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>Perl5RegexEngine.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>PerlRegexEngine.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -55,14 +55,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Matcher.cs" />
-    <Compile Include="Perl5RegexEngine.cs" />
+    <Compile Include="PerlRegexEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UCPerl5RegexOptions.xaml.cs">
-      <DependentUpon>UCPerl5RegexOptions.xaml</DependentUpon>
+    <Compile Include="UCPerlRegexOptions.xaml.cs">
+      <DependentUpon>UCPerlRegexOptions.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Perl5RegexEngine.snk" />
+    <None Include="PerlRegexEngine.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
@@ -71,7 +71,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="UCPerl5RegexOptions.xaml">
+    <Page Include="UCPerlRegexOptions.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

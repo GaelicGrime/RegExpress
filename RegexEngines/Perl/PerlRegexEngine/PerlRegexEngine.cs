@@ -14,11 +14,11 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 
 
-namespace Perl5RegexEngineNs
+namespace PerlRegexEngineNs
 {
-	public class Perl5RegexEngine : IRegexEngine
+	public class PerlRegexEngine : IRegexEngine
 	{
-		readonly UCPerl5RegexOptions OptionsControl;
+		readonly UCPerlRegexOptions OptionsControl;
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -28,29 +28,29 @@ namespace Perl5RegexEngineNs
 		static extern bool SetDllDirectory( string lpPathName );
 
 
-		static Perl5RegexEngine( )
+		static PerlRegexEngine( )
 		{
 			Assembly current_assembly = Assembly.GetExecutingAssembly( );
 			string current_assembly_path = Path.GetDirectoryName( current_assembly.Location );
-			string dll_path = Path.Combine( current_assembly_path, @"Perl5-min\perl\bin" );
+			string dll_path = Path.Combine( current_assembly_path, @"Perl-min\perl\bin" );
 
 			bool b = SetDllDirectory( dll_path );
 			if( !b ) throw new ApplicationException( $"SetDllDirectory failed: '{dll_path}'" );
 		}
 
-		public Perl5RegexEngine( )
+		public PerlRegexEngine( )
 		{
-			OptionsControl = new UCPerl5RegexOptions( );
+			OptionsControl = new UCPerlRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 		#region IRegexEngine
 
-		public string Id => "Perl5";
+		public string Id => "Perl";
 
-		public string Name => "Perl5";
+		public string Name => "Perl";
 
-		public string EngineVersion => GetPerl5Version( );
+		public string EngineVersion => GetPerlVersion( );
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures | RegexEngineCapabilityEnum.CombineSurrogatePairs;
 
@@ -218,7 +218,7 @@ namespace Perl5RegexEngineNs
 		static readonly object Locker = new object( );
 
 
-		string GetPerl5Version( )
+		string GetPerlVersion( )
 		{
 			if( PerlVersion == null )
 			{
@@ -228,7 +228,7 @@ namespace Perl5RegexEngineNs
 					{
 						string assembly_location = Assembly.GetExecutingAssembly( ).Location;
 						string assembly_dir = Path.GetDirectoryName( assembly_location );
-						string perl_dir = Path.Combine( assembly_dir, @"Perl5-min\perl" );
+						string perl_dir = Path.Combine( assembly_dir, @"Perl-min\perl" );
 						string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
 						var psi = new ProcessStartInfo( );

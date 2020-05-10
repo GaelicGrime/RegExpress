@@ -169,9 +169,9 @@
       <Project>{b7beb394-9f76-4f5f-b7fb-d88369d98c54}</Project>
       <Name>Pcre2RegexEngine</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RegexEngines\Perl5\Perl5RegexEngine\Perl5RegexEngine.csproj">
+    <ProjectReference Include="..\RegexEngines\Perl\PerlRegexEngine\PerlRegexEngine.csproj">
       <Project>{490d9c31-2f47-4164-9465-4611d913a9c0}</Project>
-      <Name>Perl5RegexEngine</Name>
+      <Name>PerlRegexEngine</Name>
     </ProjectReference>
     <ProjectReference Include="..\RegexEngines\Python\PythonRegexEngine\PythonRegexEngine.csproj">
       <Project>{e0883b07-fae2-4e00-a240-15333d8e88d1}</Project>
