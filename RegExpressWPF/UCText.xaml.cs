@@ -663,10 +663,6 @@ namespace RegExpressWPF
 
 			if( cnc.IsCancellationRequested ) return;
 
-			IReadOnlyList<Segment> adjusted_segments;
-
-			if( cnc.IsCancellationRequested ) return;
-
 			IReadOnlyList<(TextPointer start, TextPointer end)> ranges_to_underline = null;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>

@@ -54,7 +54,9 @@ namespace Re2RegexInterop
 
 				setlocale( LC_ALL, old_locale ); // restore
 
-				String^ err = gcnew String( strerror( error_code ) );
+				char error_text[512];
+				std::string error_code_s = std::to_string( error_code );
+				String^ err = gcnew String( strerror_s( error_text, _countof( error_text ), error_code ) == 0 ? error_text : error_code_s.c_str( ) );
 
 				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
 			}
@@ -110,7 +112,9 @@ namespace Re2RegexInterop
 
 				setlocale( LC_ALL, old_locale ); // restore
 
-				String^ err = gcnew String( strerror( error_code ) );
+				char error_text[512];
+				std::string error_code_s = std::to_string( error_code );
+				String^ err = gcnew String( strerror_s( error_text, _countof( error_text ), error_code ) == 0 ? error_text : error_code_s.c_str( ) );
 
 				throw gcnew Exception( String::Format( "Failed to convert to UTF-8: '{0}'. Source index: {1}.", err, p - start ) );
 			}
