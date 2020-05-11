@@ -309,7 +309,6 @@
   <ItemGroup>
     <None Include="..\..\..\RegExpress.snk" />
     <None Include="re2-min\AUTHORS" />
-    <None Include="re2-min\BUILD" />
     <None Include="re2-min\CONTRIBUTORS" />
     <None Include="re2-min\LICENSE" />
     <None Include="re2-min\README" />
