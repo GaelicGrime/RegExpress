@@ -46,10 +46,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkKeyFile>$(ProjectDir)IcuRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkKeyFile>$(ProjectDir)IcuRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -116,10 +116,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk" />
     <None Include="ICU-min\bin64\icudt66.dll" />
     <None Include="ICU-min\bin64\icuin66.dll" />
     <None Include="ICU-min\bin64\icuuc66.dll" />
-    <None Include="IcuRegexEngine.snk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

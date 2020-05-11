@@ -65,7 +65,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="IcuRegexEngine.snk" />
     <None Include="ICU-min\bin64\icudt66.dll">
       <Filter>ICU\bin64</Filter>
     </None>
@@ -75,5 +74,6 @@
     <None Include="ICU-min\bin64\icuuc66.dll">
       <Filter>ICU\bin64</Filter>
     </None>
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

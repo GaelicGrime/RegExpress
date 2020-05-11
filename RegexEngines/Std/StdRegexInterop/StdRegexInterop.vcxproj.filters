@@ -47,6 +47,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="StdRegexEngine.snk" />
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

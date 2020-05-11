@@ -251,5 +251,6 @@
     <None Include="Oniguruma-min\COPYING">
       <Filter>Oniguruma</Filter>
     </None>
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

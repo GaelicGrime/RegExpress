@@ -46,10 +46,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkKeyFile>Re2RegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkKeyFile>Re2RegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -307,12 +307,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk" />
     <None Include="re2-min\AUTHORS" />
     <None Include="re2-min\BUILD" />
     <None Include="re2-min\CONTRIBUTORS" />
     <None Include="re2-min\LICENSE" />
     <None Include="re2-min\README" />
-    <None Include="Re2RegexEngine.snk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
