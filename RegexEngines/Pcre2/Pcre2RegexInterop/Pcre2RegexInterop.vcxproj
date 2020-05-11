@@ -47,10 +47,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkKeyFile>Pcre2RegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkKeyFile>Pcre2RegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -498,6 +498,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk" />
     <None Include="PCRE2\AUTHORS" />
     <None Include="PCRE2\LICENCE" />
   </ItemGroup>

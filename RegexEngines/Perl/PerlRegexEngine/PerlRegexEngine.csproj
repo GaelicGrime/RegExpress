@@ -17,7 +17,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>PerlRegexEngine.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\..\RegExpress.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -62,9 +62,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="PerlRegexEngine.snk" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\RegexEngineInfrastructure\RegexEngineInfrastructure.csproj">
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
       <Name>RegexEngineInfrastructure</Name>
@@ -75,6 +72,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk">
+      <Link>RegExpress.snk</Link>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

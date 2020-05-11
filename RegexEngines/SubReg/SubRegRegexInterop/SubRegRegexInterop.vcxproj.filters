@@ -65,5 +65,6 @@
     <None Include="SubReg-min\LICENSE">
       <Filter>SubReg</Filter>
     </None>
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

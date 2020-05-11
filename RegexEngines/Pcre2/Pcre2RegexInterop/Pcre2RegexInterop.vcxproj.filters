@@ -167,5 +167,6 @@
     <None Include="PCRE2\LICENCE">
       <Filter>PCRE2</Filter>
     </None>
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

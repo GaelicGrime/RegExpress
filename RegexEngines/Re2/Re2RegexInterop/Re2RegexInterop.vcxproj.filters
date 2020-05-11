@@ -206,7 +206,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Re2RegexEngine.snk" />
     <None Include="re2-min\AUTHORS">
       <Filter>RE2</Filter>
     </None>
@@ -222,5 +221,6 @@
     <None Include="re2-min\README">
       <Filter>RE2</Filter>
     </None>
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>

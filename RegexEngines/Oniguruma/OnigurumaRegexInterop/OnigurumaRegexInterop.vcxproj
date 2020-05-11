@@ -46,10 +46,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkKeyFile>OnigurumaRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkKeyFile>OnigurumaRegexEngine.snk</LinkKeyFile>
+    <LinkKeyFile>../../../RegExpress.snk</LinkKeyFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -425,6 +425,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk" />
     <None Include="Oniguruma-min\AUTHORS" />
     <None Include="Oniguruma-min\COPYING" />
   </ItemGroup>

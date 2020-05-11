@@ -17,7 +17,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>BoostRegexEngine.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\..\RegExpress.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -63,9 +63,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BoostRegexEngine.snk" />
-  </ItemGroup>
-  <ItemGroup>
     <Page Include="UCBoostRegexOptions.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -80,6 +77,11 @@
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
       <Name>RegexEngineInfrastructure</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\RegExpress.snk">
+      <Link>RegExpress.snk</Link>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

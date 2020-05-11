@@ -118,6 +118,6 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BoostRegexEngine.snk" />
+    <None Include="..\..\..\RegExpress.snk" />
   </ItemGroup>
 </Project>
