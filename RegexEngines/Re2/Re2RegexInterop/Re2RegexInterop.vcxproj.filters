@@ -209,9 +209,6 @@
     <None Include="re2-min\AUTHORS">
       <Filter>RE2</Filter>
     </None>
-    <None Include="re2-min\BUILD">
-      <Filter>RE2</Filter>
-    </None>
     <None Include="re2-min\CONTRIBUTORS">
       <Filter>RE2</Filter>
     </None>
@@ -222,5 +219,8 @@
       <Filter>RE2</Filter>
     </None>
     <None Include="..\..\..\RegExpress.snk" />
+    <None Include="re2-min\WORKSPACE">
+      <Filter>RE2</Filter>
+    </None>
   </ItemGroup>
 </Project>
