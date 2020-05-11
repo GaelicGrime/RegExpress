@@ -313,6 +313,7 @@
     <None Include="re2-min\CONTRIBUTORS" />
     <None Include="re2-min\LICENSE" />
     <None Include="re2-min\README" />
+    <None Include="re2-min\WORKSPACE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

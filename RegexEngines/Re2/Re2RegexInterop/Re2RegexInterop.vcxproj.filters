@@ -222,5 +222,8 @@
       <Filter>RE2</Filter>
     </None>
     <None Include="..\..\..\RegExpress.snk" />
+    <None Include="re2-min\WORKSPACE">
+      <Filter>RE2</Filter>
+    </None>
   </ItemGroup>
 </Project>

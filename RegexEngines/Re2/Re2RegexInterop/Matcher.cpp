@@ -206,7 +206,7 @@ namespace Re2RegexInterop
 
 	String^ Matcher::GetRe2Version( )
 	{
-		return L"2020-04-01"; // TODO: use something from sources
+		return L"2020-05-01"; // TODO: use something from sources
 	}
 
 
