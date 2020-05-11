@@ -208,8 +208,9 @@ namespace Pcre2RegexEngineNs
 			if( is_literal ) return EmptyRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
 
-			string key = string.Join( "\u001F", new object[] { is_extended } );
+			string key = string.Join( "\u001F", new object[] { is_extended, allow_empty_class } );
 
 			lock( CachedColouringRegexes )
 			{
@@ -231,8 +232,9 @@ namespace Pcre2RegexEngineNs
 			if( is_literal ) return EmptyRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
 
-			string key = string.Join( "\u001F", new object[] { is_extended } );
+			string key = string.Join( "\u001F", new object[] { is_extended, allow_empty_class } );
 
 			lock( CachedHighlightingRegexes )
 			{
@@ -254,6 +256,7 @@ namespace Pcre2RegexEngineNs
 			if( is_literal ) return EmptyRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
 
 			string escape = "";
 
@@ -289,7 +292,10 @@ namespace Pcre2RegexEngineNs
 
 			string char_group = "";
 
-			char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+			if( allow_empty_class )
+				char_group += @"\[     (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
+			else
+				char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
 
 			char_group = RegexUtilities.EndGroup( char_group, null );
 
@@ -348,6 +354,7 @@ namespace Pcre2RegexEngineNs
 			if( is_literal ) return EmptyRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
+			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
 
 			string pattern = @"";
 
@@ -357,7 +364,10 @@ namespace Pcre2RegexEngineNs
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+			if( allow_empty_class )
+				pattern += @"((?'left_bracket'\[)     ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
+			else
+				pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 
 			pattern = RegexUtilities.EndGroup( pattern, null );
