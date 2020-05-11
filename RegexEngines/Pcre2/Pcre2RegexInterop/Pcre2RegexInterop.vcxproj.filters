@@ -36,19 +36,19 @@
     <ClInclude Include="pch-pcre2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PCRE2\config.h">
+    <ClInclude Include="PCRE2-min\src\config.h">
       <Filter>PCRE2\h</Filter>
     </ClInclude>
-    <ClInclude Include="PCRE2\pcre2.h">
+    <ClInclude Include="PCRE2-min\src\pcre2.h">
       <Filter>PCRE2\h</Filter>
     </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_internal.h">
+    <ClInclude Include="PCRE2-min\src\pcre2_internal.h">
       <Filter>PCRE2\h</Filter>
     </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_intmodedep.h">
+    <ClInclude Include="PCRE2-min\src\pcre2_intmodedep.h">
       <Filter>PCRE2\h</Filter>
     </ClInclude>
-    <ClInclude Include="PCRE2\pcre2_ucp.h">
+    <ClInclude Include="PCRE2-min\src\pcre2_ucp.h">
       <Filter>PCRE2\h</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,88 +59,88 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_auto_possess.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_auto_possess.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_chartables.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_chartables.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_compile.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_compile.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_config.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_config.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_context.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_context.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_convert.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_convert.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_dfa_match.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_dfa_match.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_error.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_error.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_extuni.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_extuni.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_find_bracket.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_find_bracket.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_jit_compile.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_jit_compile.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_maketables.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_maketables.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_match.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_match.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_match_data.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_match_data.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_newline.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_newline.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_ord2utf.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_ord2utf.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_pattern_info.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_pattern_info.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_script_run.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_script_run.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_serialize.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_serialize.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_string_utils.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_string_utils.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_study.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_study.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_substitute.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_substitute.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_substring.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_substring.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_tables.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_tables.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_ucd.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_ucd.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_valid_utf.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_valid_utf.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2_xclass.c">
+    <ClCompile Include="PCRE2-min\src\pcre2_xclass.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
-    <ClCompile Include="PCRE2\pcre2demo.c">
+    <ClCompile Include="PCRE2-min\src\pcre2demo.c">
       <Filter>PCRE2</Filter>
     </ClCompile>
     <ClCompile Include="Matcher.cpp">
@@ -161,12 +161,15 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="PCRE2\AUTHORS">
+    <None Include="PCRE2-min\AUTHORS">
       <Filter>PCRE2</Filter>
     </None>
-    <None Include="PCRE2\LICENCE">
+    <None Include="PCRE2-min\LICENCE">
       <Filter>PCRE2</Filter>
     </None>
     <None Include="..\..\..\RegExpress.snk" />
+    <None Include="PCRE2-min\NON-AUTOTOOLS-BUILD">
+      <Filter>PCRE2</Filter>
+    </None>
   </ItemGroup>
 </Project>
