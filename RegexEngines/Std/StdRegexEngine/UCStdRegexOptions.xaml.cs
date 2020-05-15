@@ -1,6 +1,7 @@
 ﻿using RegexEngineInfrastructure;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -55,7 +56,9 @@ namespace StdRegexEngineNs
 			return cbs
 					.Where( cb => cb.IsChecked == true )
 					.Select( cb => cb.Tag.ToString( ) )
-					.Concat( new[] { ( (ComboBoxItem)cbxGrammar.SelectedItem ).Tag.ToString( ) } )
+					.Append( ( (ComboBoxItem)cbxGrammar.SelectedItem ).Tag.ToString( ) )
+					.Append( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_STACK_COUNT + tbREGEX_MAX_STACK_COUNT.Text )
+					.Append( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_COMPLEXITY_COUNT + tbREGEX_MAX_COMPLEXITY_COUNT.Text )
 					.ToArray( );
 		}
 
@@ -77,6 +80,27 @@ namespace StdRegexEngineNs
 				{
 					cb.IsChecked = options.Contains( cb.Tag.ToString( ) );
 				}
+
+				var msc = options.FirstOrDefault( o => o.StartsWith( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_STACK_COUNT ) );
+				if( msc == null )
+				{
+					tbREGEX_MAX_STACK_COUNT.Text = StdRegexInterop.Matcher.Default_REGEX_MAX_STACK_COUNT.ToString( CultureInfo.InvariantCulture );
+				}
+				else
+				{
+					tbREGEX_MAX_STACK_COUNT.Text = msc.Substring( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_STACK_COUNT.Length );
+				}
+
+				var mcc = options.FirstOrDefault( o => o.StartsWith( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_COMPLEXITY_COUNT ) );
+				if( mcc == null )
+				{
+					tbREGEX_MAX_COMPLEXITY_COUNT.Text = StdRegexInterop.Matcher.Default_REGEX_MAX_COMPLEXITY_COUNT.ToString( CultureInfo.InvariantCulture );
+				}
+				else
+				{
+					tbREGEX_MAX_COMPLEXITY_COUNT.Text = mcc.Substring( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_COMPLEXITY_COUNT.Length );
+				}
+
 			}
 			finally
 			{
@@ -116,6 +140,16 @@ namespace StdRegexEngineNs
 
 
 		private void CheckBox_Changed( object sender, RoutedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( ChangeCounter != 0 ) return;
+
+			CachedOptions = GetSelectedOptions( );
+
+			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
+		}
+
+		private void tbREGEX_MAX_STACK_COUNT_TextChanged( object sender, TextChangedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;

@@ -21,7 +21,7 @@
 //#define _REGEX_MAX_COMPLEXITY_COUNT 10000000L // set to 0 to disable
 //#define _REGEX_MAX_STACK_COUNT 600L // set to 0 to disable
 
-#include <regex>
+//#include <regex>
 
 #include <msclr\marshal_cppstd.h>
 

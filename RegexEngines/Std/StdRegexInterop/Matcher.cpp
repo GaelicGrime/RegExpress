@@ -1,9 +1,11 @@
 #include "pch.h"
 
+#include "NativeMatcher.h"
 #include "Matcher.h"
 
 
 using namespace System::Diagnostics;
+using namespace System::Globalization;
 
 using namespace std;
 using namespace msclr::interop;
@@ -11,6 +13,18 @@ using namespace msclr::interop;
 
 namespace StdRegexInterop
 {
+
+	long Matcher::Default_REGEX_MAX_STACK_COUNT::get( ) { return StdRegexInterop::Default_REGEX_MAX_STACK_COUNT; }
+	long Matcher::Default_REGEX_MAX_COMPLEXITY_COUNT::get( ) { return StdRegexInterop::Default_REGEX_MAX_COMPLEXITY_COUNT; }
+
+
+	static Matcher::Matcher( )
+	{
+		ConstOptionPrefix_REGEX_MAX_STACK_COUNT = "REGEX_MAX_STACK_COUNT:";
+		ConstOptionPrefix_REGEX_MAX_COMPLEXITY_COUNT = "REGEX_MAX_COMPLEXITY_COUNT:";
+		mMutex = gcnew Threading::Mutex;
+	}
+
 
 	Matcher::Matcher( String^ pattern0, cli::array<String^>^ options )
 		: mData( nullptr )
@@ -23,6 +37,9 @@ namespace StdRegexInterop
 			regex_constants::match_flag_type match_flags = regex_constants::match_flag_type::match_default;
 
 			wstring pattern = context.marshal_as<wstring>( pattern0 );
+
+			long lREGEX_MAX_STACK_COUNT = 600L;
+			long lREGEX_MAX_COMPLEXITY_COUNT = 10000000L;
 
 			for each( String ^ o in options )
 			{
@@ -60,25 +77,66 @@ namespace StdRegexInterop
 
 #undef C
 
+				if( o->StartsWith( ConstOptionPrefix_REGEX_MAX_STACK_COUNT ) )
+				{
+					String^ s = o->Substring( ConstOptionPrefix_REGEX_MAX_STACK_COUNT->Length );
+					if( !String::IsNullOrWhiteSpace( s ) )
+					{
+						int v;
+						if( long::TryParse( s,
+							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite | NumberStyles::AllowThousands,
+							CultureInfo::InvariantCulture,
+							v ) )
+						{
+							lREGEX_MAX_STACK_COUNT = v;
+						}
+						else
+						{
+							throw gcnew Exception( String::Format( CultureInfo::InvariantCulture, "Invalid option: ‘REGEX_MAX_STACK_COUNT’. Please enter an integer number, or set to 0 to disable the limit. The default value is {0:#,##0}.", Default_REGEX_MAX_STACK_COUNT ) );
+						}
+					}
+				}
+
+				if( o->StartsWith( ConstOptionPrefix_REGEX_MAX_COMPLEXITY_COUNT ) )
+				{
+					String^ s = o->Substring( ConstOptionPrefix_REGEX_MAX_COMPLEXITY_COUNT->Length );
+					if( !String::IsNullOrWhiteSpace( s ) )
+					{
+						int v;
+						if( long::TryParse( s,
+							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite | NumberStyles::AllowThousands,
+							CultureInfo::InvariantCulture,
+							v ) )
+						{
+							lREGEX_MAX_COMPLEXITY_COUNT = v;
+						}
+						else
+						{
+							throw gcnew Exception( String::Format( CultureInfo::InvariantCulture, "Invalid option: ‘REGEX_MAX_COMPLEXITY_COUNT’. Please enter an integer number, or set to 0 to disable the limit. The default value is {0:#,##0}.", Default_REGEX_MAX_COMPLEXITY_COUNT ) );
+						}
+					}
+				}
+
 			}
 
 			mData = new MatcherData{};
 			mData->mMatchFlags = match_flags;
-
+			mData->mREGEX_MAX_STACK_COUNT = lREGEX_MAX_STACK_COUNT;
+			mData->mREGEX_MAX_COMPLEXITY_COUNT = lREGEX_MAX_COMPLEXITY_COUNT;
 			mData->mRegex.assign( std::move( pattern ), regex_flags );
 		}
-		catch( const regex_error & exc )
+		catch( const regex_error& exc )
 		{
 			//regex_constants::error_type code = exc.code( );
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( what );
 		}
-		catch( const exception & exc )
+		catch( const exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;
@@ -111,7 +169,6 @@ namespace StdRegexInterop
 	}
 
 
-
 	RegexMatches^ Matcher::Matches( String^ text0, ICancellable^ cnc )
 	{
 		try
@@ -124,31 +181,83 @@ namespace StdRegexInterop
 
 			auto* native_text = mData->mText.c_str( );
 
-			wcregex_iterator results_begin( native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags );
-			wcregex_iterator results_end{};
+			std::vector<char> native_error_text;
+			native_error_text.resize( 512 );
 
-			for( auto i = results_begin; i != results_end; ++i )
+			std::vector<NativeMatch> native_matches;
+			native_matches.reserve( 512 );
+
+			// because of shared 'Variable_REGEX_MAX_STACK_COUNT' and 'Variable_REGEX_MAX_COMPLEXITY_COUNT', we have to avoid parallelism
+			if( !mMutex->WaitOne( 45000 ) )
 			{
-				const wcmatch& match = *i;
+				throw gcnew Exception( "Engine does not respond." );
+			}
 
-				auto m = CreateMatch( match );
-				matches->Add( m );
+			try
+			{
+				NativeMatches( &native_matches, mData->mREGEX_MAX_STACK_COUNT, mData->mREGEX_MAX_COMPLEXITY_COUNT, native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags, native_error_text.data( ), native_error_text.size( ) );
+			}
+			finally
+			{
+				mMutex->ReleaseMutex( );
+			}
+
+			if( native_error_text[0] != 0 )
+			{
+				throw gcnew Exception( gcnew String( native_error_text.data( ) ) );
+			}
+
+			SimpleMatch^ match = nullptr;
+			int group_index = 0;
+
+			for( const NativeMatch& nm : native_matches )
+			{
+				switch( nm.Type )
+				{
+				case NativeMatch::TypeEnum::M:
+					match = SimpleMatch::Create( CheckedCast::ToInt32( nm.Index ), CheckedCast::ToInt32( nm.Length ), this );
+					matches->Add( match );
+					group_index = 0;
+					break;
+
+				case NativeMatch::TypeEnum::G:
+					;
+					{
+						String^ group_name = group_index.ToString( CultureInfo::InvariantCulture );
+
+						if( nm.Index < 0 )
+						{
+							match->AddGroup( 0, 0, false, group_name );
+						}
+						else
+						{
+							match->AddGroup( CheckedCast::ToInt32( nm.Index ), CheckedCast::ToInt32( nm.Length ), true, group_name );
+						}
+
+						++group_index;
+					}
+					break;
+
+				default:
+					Debug::Assert( false );
+					break;
+				}
 			}
 
 			return gcnew RegexMatches( matches->Count, matches );
 		}
-		catch( const regex_error & exc )
+		catch( const regex_error& exc )
 		{
 			//regex_constants::error_type code = exc.code( );
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( what );
 		}
-		catch( const exception & exc )
+		catch( const exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
 			throw gcnew Exception( "Error: " + what );
 		}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;
@@ -163,34 +272,6 @@ namespace StdRegexInterop
 	String^ Matcher::GetText( int index, int length )
 	{
 		return gcnew String( mData->mText.c_str( ), index, length );
-	}
-
-
-	IMatch^ Matcher::CreateMatch( const wcmatch& match )
-	{
-		auto m = SimpleMatch::Create( CheckedCast::ToInt32( match.position( ) ), CheckedCast::ToInt32( match.length( ) ), this );
-		int j = 0;
-
-		for( auto i = match.cbegin( ); i != match.cend( ); ++i, ++j )
-		{
-			const std::wcsub_match& submatch = *i;
-
-			String^ group_name = j.ToString( System::Globalization::CultureInfo::InvariantCulture );
-
-			if( !submatch.matched )
-			{
-				m->AddGroup( 0, 0, false, group_name );
-			}
-			else
-			{
-				auto pos = match.position( j );
-				int submatch_index = CheckedCast::ToInt32( pos );
-
-				m->AddGroup( submatch_index, CheckedCast::ToInt32( submatch.length( ) ), true, group_name );
-			}
-		}
-
-		return m;
 	}
 
 }
