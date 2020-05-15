@@ -76,7 +76,7 @@ namespace IcuRegexEngineNs
 			var limit = tbxIterationLimit.Text.Trim( );
 
 			if( !string.IsNullOrWhiteSpace( limit ) && limit != "0" )
-				selected_options = selected_options.Concat( new[] { "limit:" + limit } );
+				selected_options = selected_options.Append( "limit:" + limit );
 
 			return selected_options.ToArray( );
 		}
