@@ -41,6 +41,9 @@ namespace StdRegexInterop
 			}
 		}
 
+		static property long Default_REGEX_MAX_STACK_COUNT { long get( ); }
+		static property long Default_REGEX_MAX_COMPLEXITY_COUNT { long get( ); }
+
 
 		static Matcher( );
 		Matcher( String^ pattern, cli::array<String^>^ options );

@@ -14,6 +14,10 @@ using namespace msclr::interop;
 namespace StdRegexInterop
 {
 
+	long Matcher::Default_REGEX_MAX_STACK_COUNT::get( ) { return StdRegexInterop::Default_REGEX_MAX_STACK_COUNT; }
+	long Matcher::Default_REGEX_MAX_COMPLEXITY_COUNT::get( ) { return StdRegexInterop::Default_REGEX_MAX_COMPLEXITY_COUNT; }
+
+
 	static Matcher::Matcher( )
 	{
 		ConstOptionPrefix_REGEX_MAX_STACK_COUNT = "REGEX_MAX_STACK_COUNT:";
@@ -80,7 +84,7 @@ namespace StdRegexInterop
 					{
 						int v;
 						if( long::TryParse( s,
-							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite,
+							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite | NumberStyles::AllowThousands,
 							CultureInfo::InvariantCulture,
 							v ) )
 						{
@@ -88,7 +92,7 @@ namespace StdRegexInterop
 						}
 						else
 						{
-							throw gcnew Exception( "Invalid option: ‘REGEX_MAX_STACK_COUNT’. Please enter an integer number, or set to 0 to disable the limit." );
+							throw gcnew Exception( String::Format( CultureInfo::InvariantCulture, "Invalid option: ‘REGEX_MAX_STACK_COUNT’. Please enter an integer number, or set to 0 to disable the limit. The default value is {0:#,##0}.", Default_REGEX_MAX_STACK_COUNT ) );
 						}
 					}
 				}
@@ -100,7 +104,7 @@ namespace StdRegexInterop
 					{
 						int v;
 						if( long::TryParse( s,
-							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite,
+							NumberStyles::AllowLeadingSign | NumberStyles::AllowLeadingWhite | NumberStyles::AllowTrailingWhite | NumberStyles::AllowThousands,
 							CultureInfo::InvariantCulture,
 							v ) )
 						{
@@ -108,7 +112,7 @@ namespace StdRegexInterop
 						}
 						else
 						{
-							throw gcnew Exception( "Invalid option: ‘REGEX_MAX_COMPLEXITY_COUNT’. Please enter an integer number, or set to 0 to disable the limit." );
+							throw gcnew Exception( String::Format( CultureInfo::InvariantCulture, "Invalid option: ‘REGEX_MAX_COMPLEXITY_COUNT’. Please enter an integer number, or set to 0 to disable the limit. The default value is {0:#,##0}.", Default_REGEX_MAX_COMPLEXITY_COUNT ) );
 						}
 					}
 				}

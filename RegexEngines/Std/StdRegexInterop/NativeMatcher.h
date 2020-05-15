@@ -21,6 +21,9 @@ namespace StdRegexInterop
 
 	extern long Variable_REGEX_MAX_STACK_COUNT;
 	extern long Variable_REGEX_MAX_COMPLEXITY_COUNT;
+	extern long Default_REGEX_MAX_STACK_COUNT;
+	extern long Default_REGEX_MAX_COMPLEXITY_COUNT;
+
 
 	// Not thread-safe because of shared 'Variable_REGEX_MAX_STACK_COUNT' and 'Variable_REGEX_MAX_COMPLEXITY_COUNT' 
 	void NativeMatches( std::vector<NativeMatch>* matches, long aREGEX_MAX_STACK_COUNT, long aREGEX_MAX_COMPLEXITY_COUNT,

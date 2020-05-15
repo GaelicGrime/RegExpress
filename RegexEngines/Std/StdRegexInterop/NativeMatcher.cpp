@@ -6,8 +6,8 @@
 
 namespace StdRegexInterop
 {
-	long Variable_REGEX_MAX_STACK_COUNT = 600; // TODO: determine the dafault value from header file 
-	long Variable_REGEX_MAX_COMPLEXITY_COUNT = 10000000L; // TODO: determine the dafault value from header file 
+	long Variable_REGEX_MAX_STACK_COUNT = Default_REGEX_MAX_STACK_COUNT;
+	long Variable_REGEX_MAX_COMPLEXITY_COUNT = Default_REGEX_MAX_COMPLEXITY_COUNT;
 
 
 	struct NativeMatcherData
@@ -160,11 +160,9 @@ namespace StdRegexInterop
 
 		*errorText = 0;
 
-		HANDLE h = CreateThread( NULL, 0, &NativeMatchesThreadProc, &data, CREATE_SUSPENDED, NULL );
+		HANDLE hThread = CreateThread( NULL, 0, &NativeMatchesThreadProc, &data, 0, NULL );
 
-		ResumeThread( h );
-
-		switch( WaitForSingleObject( h, 45000 ) )
+		switch( WaitForSingleObject( hThread, 45000 ) )
 		{
 		case WAIT_OBJECT_0:
 			// success
@@ -179,6 +177,8 @@ namespace StdRegexInterop
 			StringCbCopyA( errorText, errorTextSize, "The operation failed. Unknown error." );
 			break;
 		}
+
+		CloseHandle( hThread );
 	}
 
 }
