@@ -117,9 +117,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\RegExpress.snk" />
-    <None Include="ICU-min\bin64\icudt66.dll" />
-    <None Include="ICU-min\bin64\icuin66.dll" />
-    <None Include="ICU-min\bin64\icuuc66.dll" />
+    <None Include="ICU-min\bin64\icudt67.dll" />
+    <None Include="ICU-min\bin64\icuin67.dll" />
+    <None Include="ICU-min\bin64\icuuc67.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
