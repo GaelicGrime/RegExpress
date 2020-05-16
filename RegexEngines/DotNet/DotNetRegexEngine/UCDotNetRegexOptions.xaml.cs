@@ -49,7 +49,7 @@ namespace DotNetRegexEngineNs
 				.OfType<CheckBox>( )
 				.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
 				.Select( cb => cb.Tag.ToString( ) )
-				.Concat( new[] { $"timeout:{CachedTimeout.ToString( "c", CultureInfo.InvariantCulture )}" } )
+				.Append( $"timeout:{CachedTimeout.ToString( "c", CultureInfo.InvariantCulture )}" )
 				.ToArray( );
 		}
 
