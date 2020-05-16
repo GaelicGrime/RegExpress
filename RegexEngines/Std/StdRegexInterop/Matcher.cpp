@@ -22,7 +22,6 @@ namespace StdRegexInterop
 	{
 		ConstOptionPrefix_REGEX_MAX_STACK_COUNT = "REGEX_MAX_STACK_COUNT:";
 		ConstOptionPrefix_REGEX_MAX_COMPLEXITY_COUNT = "REGEX_MAX_COMPLEXITY_COUNT:";
-		mMutex = gcnew Threading::Mutex;
 	}
 
 
@@ -169,6 +168,42 @@ namespace StdRegexInterop
 	}
 
 
+	private ref struct WatchingThreadData
+	{
+		ICancellable^ cnc;
+		Threading::EventWaitHandle^ ev;
+	};
+
+
+	static void WatchCancelRequestThreadProc( Object^ args )
+	{
+		auto d = (WatchingThreadData^)args;
+
+		try
+		{
+			for( ;;)
+			{
+				if( d->cnc->IsCancellationRequested )
+				{
+					d->ev->Set( );
+
+					break;
+				}
+
+				Threading::Thread::Sleep( 222 );
+			}
+		}
+		catch( Threading::ThreadInterruptedException^ )
+		{
+			// ignore
+		}
+		catch( Threading::ThreadAbortException^ )
+		{
+			// ignore
+		}
+	}
+
+
 	RegexMatches^ Matcher::Matches( String^ text0, ICancellable^ cnc )
 	{
 		try
@@ -181,30 +216,43 @@ namespace StdRegexInterop
 
 			auto* native_text = mData->mText.c_str( );
 
-			std::vector<char> native_error_text;
-			native_error_text.resize( 512 );
+			std::string native_error_text;
 
 			std::vector<NativeMatch> native_matches;
 			native_matches.reserve( 512 );
 
-			// because of shared 'Variable_REGEX_MAX_STACK_COUNT' and 'Variable_REGEX_MAX_COMPLEXITY_COUNT', we have to avoid parallelism
-			if( !mMutex->WaitOne( 45000 ) )
-			{
-				throw gcnew Exception( "Engine does not respond." );
-			}
+			auto cancelEvent = gcnew Threading::ManualResetEvent( false );
+			auto watchingThread = gcnew Threading::Thread( gcnew Threading::ParameterizedThreadStart( &WatchCancelRequestThreadProc ) );
+			auto data = gcnew WatchingThreadData;
+			data->cnc = cnc;
+			data->ev = cancelEvent;
+			watchingThread->IsBackground = true;
+			watchingThread->Start( data );
 
 			try
 			{
-				NativeMatches( &native_matches, mData->mREGEX_MAX_STACK_COUNT, mData->mREGEX_MAX_COMPLEXITY_COUNT, native_text, native_text + mData->mText.length( ), mData->mRegex, mData->mMatchFlags, native_error_text.data( ), native_error_text.size( ) );
+				NativeMatches( &native_matches, &native_error_text, mData->mRegex, native_text, mData->mMatchFlags,
+					mData->mREGEX_MAX_STACK_COUNT, mData->mREGEX_MAX_COMPLEXITY_COUNT, (HANDLE)cancelEvent->Handle );
 			}
 			finally
 			{
-				mMutex->ReleaseMutex( );
+				try
+				{
+					watchingThread->Interrupt( );
+					watchingThread->Abort( );
+				}
+				catch( Exception^ )
+				{
+					Debug::Assert( false );
+					// ignore
+				}
 			}
 
-			if( native_error_text[0] != 0 )
+			if( cnc->IsCancellationRequested )  return RegexMatches::Empty;
+
+			if( !native_error_text.empty( ) )
 			{
-				throw gcnew Exception( gcnew String( native_error_text.data( ) ) );
+				throw gcnew Exception( gcnew String( native_error_text.c_str( ) ) );
 			}
 
 			SimpleMatch^ match = nullptr;
@@ -212,6 +260,8 @@ namespace StdRegexInterop
 
 			for( const NativeMatch& nm : native_matches )
 			{
+				if( cnc->IsCancellationRequested )  return RegexMatches::Empty;
+
 				switch( nm.Type )
 				{
 				case NativeMatch::TypeEnum::M:
