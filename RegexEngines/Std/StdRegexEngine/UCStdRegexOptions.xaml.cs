@@ -84,7 +84,7 @@ namespace StdRegexEngineNs
 				var msc = options.FirstOrDefault( o => o.StartsWith( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_STACK_COUNT ) );
 				if( msc == null )
 				{
-					tbREGEX_MAX_STACK_COUNT.Text = StdRegexInterop.Matcher.Default_REGEX_MAX_STACK_COUNT.ToString( CultureInfo.InvariantCulture );
+					tbREGEX_MAX_STACK_COUNT.Text = ""; // StdRegexInterop.Matcher.Default_REGEX_MAX_STACK_COUNT.ToString( CultureInfo.InvariantCulture );
 				}
 				else
 				{
@@ -94,7 +94,7 @@ namespace StdRegexEngineNs
 				var mcc = options.FirstOrDefault( o => o.StartsWith( StdRegexInterop.Matcher.OptionPrefix_REGEX_MAX_COMPLEXITY_COUNT ) );
 				if( mcc == null )
 				{
-					tbREGEX_MAX_COMPLEXITY_COUNT.Text = StdRegexInterop.Matcher.Default_REGEX_MAX_COMPLEXITY_COUNT.ToString( CultureInfo.InvariantCulture );
+					tbREGEX_MAX_COMPLEXITY_COUNT.Text = ""; // StdRegexInterop.Matcher.Default_REGEX_MAX_COMPLEXITY_COUNT.ToString( CultureInfo.InvariantCulture );
 				}
 				else
 				{

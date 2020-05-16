@@ -19,15 +19,14 @@ namespace StdRegexInterop
 		ptrdiff_t Length;
 	};
 
-	extern long Variable_REGEX_MAX_STACK_COUNT;
-	extern long Variable_REGEX_MAX_COMPLEXITY_COUNT;
+
+	extern thread_local long Variable_REGEX_MAX_STACK_COUNT;
+	extern thread_local long Variable_REGEX_MAX_COMPLEXITY_COUNT;
 	extern long Default_REGEX_MAX_STACK_COUNT;
 	extern long Default_REGEX_MAX_COMPLEXITY_COUNT;
 
 
-	// Not thread-safe because of shared 'Variable_REGEX_MAX_STACK_COUNT' and 'Variable_REGEX_MAX_COMPLEXITY_COUNT' 
-	void NativeMatches( std::vector<NativeMatch>* matches, long aREGEX_MAX_STACK_COUNT, long aREGEX_MAX_COMPLEXITY_COUNT,
-		const wchar_t* begin, const wchar_t* end, std::wregex& regex, std::regex_constants::match_flag_type flags,
-		char* errorText, size_t errorTextSize );
+	void NativeMatches( std::vector<NativeMatch>* matches, std::string* error, std::wregex& regex, const std::wstring& text, std::regex_constants::match_flag_type flags,
+		long aREGEX_MAX_STACK_COUNT, long aREGEX_MAX_COMPLEXITY_COUNT, HANDLE cancelEvent );
 
 }

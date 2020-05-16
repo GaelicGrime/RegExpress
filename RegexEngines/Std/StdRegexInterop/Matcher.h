@@ -72,7 +72,6 @@ namespace StdRegexInterop
 		MatcherData* mData;
 		static String^ ConstOptionPrefix_REGEX_MAX_STACK_COUNT;
 		static String^ ConstOptionPrefix_REGEX_MAX_COMPLEXITY_COUNT;
-		static Threading::Mutex^  mMutex;
 	};
 
 }
