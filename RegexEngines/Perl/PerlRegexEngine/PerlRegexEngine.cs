@@ -316,7 +316,8 @@ namespace PerlRegexEngineNs
 			escape += @"\\c[A-Za-z] | "; // control char
 			escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
 			escape += @"\\x\{[0-9a-fA-F]*(\} | $) | "; // hexa, error if empty
-			escape += @"\\N\{(U\+)?[0-9a-fA-F]+(\} | $) | "; // Unicode name or hexa
+			//escape += @"\\N\{(U\+)?[0-9a-fA-F]+(\} | $) | "; // Unicode hexa
+			escape += @"\\N\{.*?(\} | $) | "; // Unicode name or hexa
 			escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
 			escape += @"\\[0-7]{1,3} | "; // octal, three digits
 			escape += @"\\o\{[0-9]+(\} | $) | "; // octal
@@ -361,7 +362,6 @@ namespace PerlRegexEngineNs
 			named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
 			named_group += @"\(\?(?'name''.*?('|$)) | ";
 
-
 			named_group += @"\(\?P(?'name'<.*?(>|$)) | ";
 			named_group += @"\(\?P(?'name'[=>].*?(\)|$)) | ";
 
@@ -399,7 +399,8 @@ namespace PerlRegexEngineNs
 			if( isXorXX ) pattern += @"(\#[^\n]*) | "; // line comment
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			//pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'(?<![xNopPbBgk])\{) \s* (\d+ \s*)? (,\s* (\d+)?)? \s* ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 			pattern += @")";
