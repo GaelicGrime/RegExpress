@@ -360,10 +360,12 @@ namespace Pcre2RegexEngineNs
 
 			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
 			if( is_extended ) pattern += @"(\#[^\n]*) | "; // line comment
+			pattern += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+			pattern += @"\\[oNxupP]\{.*?(\}|$) | "; // (skip)
 
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'\{) \d+ (,\d*)? ((?'right_brace'\})|$) | "; // '{...}'
 			if( allow_empty_class )
 				pattern += @"((?'left_bracket'\[)     ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			else

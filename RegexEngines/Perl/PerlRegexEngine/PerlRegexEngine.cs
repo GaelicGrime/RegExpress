@@ -397,10 +397,12 @@ namespace PerlRegexEngineNs
 			string pattern = "(?nsx)(";
 			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
 			if( isXorXX ) pattern += @"(\#[^\n]*) | "; // line comment
+			pattern += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+			pattern += @"\\[xNopPbBgk]\{.*?(\}|$) | "; // (skip)
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 			//pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"(?'left_brace'(?<![xNopPbBgk])\{) \s* (\d+ \s*)? (,\s* (\d+)?)? \s* ((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'\{) \s* \d+ \s* (,\s*\d*)? \s* ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 			pattern += @")";

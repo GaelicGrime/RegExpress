@@ -293,9 +293,13 @@ namespace Re2RegexEngineNs
 
 			string pattern = "";
 
+			pattern += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+
+			pattern += @"\\[pPx]\{.*?(\}|$) | "; // (skip)
+
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'\{) \d+ (,\d*)* ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | ";
 			pattern += @"\\. | "; // '\...'
 
