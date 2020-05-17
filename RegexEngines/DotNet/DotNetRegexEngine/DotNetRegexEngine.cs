@@ -274,7 +274,7 @@ namespace DotNetRegexEngineNs
 				\\x[0-9A-Fa-f]{1,2} | 
 				\\c[A-Za-z] | 
 				\\u[0-9A-Fa-f]{1,4} | 
-				\\(p|P)\{([A-Za-z]+\})? | 
+				\\(p|P)\{.*?(\}|$) | 
 				\\k<([A-Za-z]+>)? |
 				\\.)";
 
@@ -323,7 +323,7 @@ namespace DotNetRegexEngineNs
 			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pattern += @"(\#[^\n]*) | "; // line comment
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace' (?<!\\[pP]) \{) \d+(,(\d+)?)? ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"(?'left_bracket'\[) \]? (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
 			pattern += @"(\\.)";
 			pattern += @")";

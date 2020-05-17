@@ -391,7 +391,7 @@ namespace BoostRegexEngineNs
 			{
 				pattern += @"(?'left_par'\() | "; // '('
 				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
+				pattern += @"(?'left_brace'(?<!\\[xNpPgk])\{) \s* \d+ \s* (, \s* \d*)? \s* ((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
 			}
 
 			if( is_POSIX_basic )

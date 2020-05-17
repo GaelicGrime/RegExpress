@@ -400,7 +400,7 @@ namespace PerlRegexEngineNs
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 			//pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"(?'left_brace'(?<![xNopPbBgk])\{) \s* (\d+ \s*)? (,\s* (\d+)?)? \s* ((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'(?<!\\[xNopPbBgk])\{) \s* (\d+ \s*)? (,\s* (\d+)?)? \s* ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 			pattern += @")";

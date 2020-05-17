@@ -408,7 +408,7 @@ namespace OnigurumaRegexEngineNs
 					pattern += @"\\[pP]\{.*?(\} | $) | "; // property
 				}
 
-				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pattern += @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$) | "; // '{...}'
 				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
 
 				string posix_bracket = "";
