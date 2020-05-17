@@ -331,7 +331,7 @@ namespace IcuRegexEngineNs
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
 
-			pattern += @"\\[NpPx]\{.*?(\} | $) | "; // named character, property, hex
+			pattern += @"\\[NpPx]\{.*?(\}|$) | "; // (skip)
 
 			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
 

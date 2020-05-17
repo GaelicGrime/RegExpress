@@ -385,13 +385,14 @@ namespace BoostRegexEngineNs
 			if( is_perl || is_POSIX_extended )
 			{
 				pattern += @"\\Q.*?(\\E|$) | "; // skip \Q...\E
+				pattern += @"\\[xNpPgk]\{.*?(\}|$) | "; // (skip)
 			}
 
 			if( is_perl || is_POSIX_extended )
 			{
 				pattern += @"(?'left_par'\() | "; // '('
 				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'left_brace'(?<!\\[xNpPgk])\{) \s* \d+ \s* (, \s* \d*)? \s* ((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
+				pattern += @"(?'left_brace'\{) \s* \d+ \s* (, \s* \d*)? \s* ((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
 			}
 
 			if( is_POSIX_basic )

@@ -291,9 +291,10 @@ namespace PythonRegexEngineNs
 			string pattern = "(?nsx)(";
 			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
 			if( isVerbose ) pattern += @"(\#[^\n]*) | "; // line comment
+			pattern += @"\\[N]\{.*?(\}|$) | "; // (skip)
 			pattern += @"(?'left_par'\() | "; // '('
 			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+			pattern += @"(?'left_brace'\{) (\d+ | \d*,\d*) ((?'right_brace'\})|$) | "; // '{...}'
 			pattern += @"((?'left_bracket'\[) ]? (\\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
 			pattern += @"\\."; // '\...'
 			pattern += @")";
