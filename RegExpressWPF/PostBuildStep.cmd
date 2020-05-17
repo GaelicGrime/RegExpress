@@ -30,6 +30,6 @@ xcopy /E /D /R /Y "%Prj%\Perl-min\*" "%TargetDir%\Perl-min\*"
 rem -- Python --
 
 set Prj=%MainProjectPath%\..\RegexEngines\Python\PythonRegexEngine
-xcopy /E /D /R /Y "%Prj%\python-embed\*" "%TargetDir%\python-embed\*"
+xcopy /E /D /R /Y "%Prj%\Python-embed\*" "%TargetDir%\Python-embed\*"
 
 
