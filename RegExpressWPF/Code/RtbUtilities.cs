@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,6 +23,8 @@ namespace RegExpressWPF.Code
 	{
 #pragma warning disable CA1051 // Do not declare visible instance fields
 
+		private int mLengthInTextElements = -1;
+
 		public readonly string Text; // (lines are separated by EOL specified in the call of 'GetBaseTextData' and 'GetTextData',
 		public readonly string Eol;  //  which is also kept in 'Eol')
 		internal readonly TextPointers TextPointers; // (maps string index of 'Text' to 'TextPointer')
@@ -35,6 +38,27 @@ namespace RegExpressWPF.Code
 			Text = text;
 			Eol = eol;
 			TextPointers = pointers;
+		}
+
+
+		public int LengthInTextElements
+		{
+			get
+			{
+				if( mLengthInTextElements < 0 )
+				{
+					lock( this )
+					{
+						if( mLengthInTextElements < 0 )
+						{
+							var si = new StringInfo( Text );
+							mLengthInTextElements = si.LengthInTextElements;
+						}
+					}
+				}
+
+				return mLengthInTextElements;
+			}
 		}
 	}
 

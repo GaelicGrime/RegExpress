@@ -3,21 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
@@ -690,7 +680,14 @@ namespace RegExpressWPF
 					lblTextInfo.Visibility = lblTextInfo.Visibility == Visibility.Visible || td.Text.Length != 0 ? Visibility.Visible : Visibility.Collapsed;
 					if( lblTextInfo.Visibility == Visibility.Visible )
 					{
-						string s = $"({td.Text.Length:#,##0} character{( td.Text.Length == 1 ? "" : "s" )}";
+						int text_elements = td.LengthInTextElements;
+
+						string s = $"(Length: {td.Text.Length:#,##0}";
+
+						if( text_elements != td.Text.Length )
+						{
+							s += $", Text Elements: {text_elements:#,##0}";
+						}
 
 						if( ucTextHadFocus )
 						{
