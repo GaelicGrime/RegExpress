@@ -64,18 +64,18 @@ namespace SubRegRegexInterop
 
 			try
 			{
-				pattern_bytes = AsciiEncoding->GetBytes( Pattern );
+				pattern_bytes = AsciiEncoding->GetBytes( Pattern == "" ? "\0" : Pattern );
 			}
-			catch( EncoderFallbackException ^ exc )
+			catch( EncoderFallbackException^ exc )
 			{
 				invalid_pattern_index = exc->Index;
 			}
 
 			try
 			{
-				text_bytes = AsciiEncoding->GetBytes( text );
+				text_bytes = AsciiEncoding->GetBytes( text == "" ? "\0" : text );
 			}
-			catch( EncoderFallbackException ^ exc )
+			catch( EncoderFallbackException^ exc )
 			{
 				invalid_text_index = exc->Index;
 			}
@@ -89,7 +89,7 @@ namespace SubRegRegexInterop
 				throw gcnew Exception( msg );
 			}
 
-			pin_ptr<unsigned char> pinned_pattern_bytes = &pattern_bytes[0];
+			pin_ptr<unsigned char> pinned_pattern_bytes = pattern_bytes[0];
 			pin_ptr<unsigned char> pinned_text_bytes = &text_bytes[0];
 
 			const char* native_pattern = (const char*)pinned_pattern_bytes;
@@ -128,7 +128,7 @@ namespace SubRegRegexInterop
 			return gcnew RegexMatches( matches->Count, matches );
 
 		}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;

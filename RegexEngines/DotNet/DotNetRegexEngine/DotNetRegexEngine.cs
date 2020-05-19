@@ -263,54 +263,36 @@ namespace DotNetRegexEngineNs
 
 		static Regex CreateCachedColouringRegex( RegexOptions options )
 		{
-			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
-
 			// (some patterns includes incomplete constructs)
 
-			const string CommentPattern = @"(?'comment'\(\?\#.*?(\)|$))";
-			const string EolCommentPattern = @"(?'eol_comment'\#[^\n]*)";
-			const string EscapesPattern = @"(?'escape'
-				\\[0-7]{2,3} | 
-				\\x[0-9A-Fa-f]{1,2} | 
-				\\c[A-Za-z] | 
-				\\u[0-9A-Fa-f]{1,4} | 
-				\\(p|P)\{.*?(\}|$) | 
-				\\k<([A-Za-z]+>)? |
-				\\.)";
+			var pb = new PatternBuilder( );
 
-			const string CharGroupPattern = @"(\[\]?(" + EscapesPattern + @"|.)*?(\]|$))";
+			pb.AddGroup( "comment", @"\(\?\#.*?(\)|$)" );
 
-			const string NamedGroupPattern =
-				@"\(\?(?'name'<(?![=!]).*?(>|$)) | " + // (balancing groups covered too)
-				@"\(\?(?'name''.*?('|$)) | " +
-				@"(?'name'\\k<.*?(>|$)) | " +
-				@"(?'name'\\k'.*?('|$))";
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.AddGroup( "eol_comment", @"\#[^\n]*" );
 
-			string pattern;
+			var escapes_pb = new PatternBuilder( );
 
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) )
-			{
-				pattern =
-					@"(?nsx)(" + Environment.NewLine +
-						CommentPattern + " |" + Environment.NewLine +
-						EolCommentPattern + " |" + Environment.NewLine +
-						CharGroupPattern + " |" + Environment.NewLine +
-						NamedGroupPattern + " |" + Environment.NewLine +
-						EscapesPattern + " |" + Environment.NewLine +
-					")";
-			}
-			else
-			{
-				pattern =
-					@"(?nsx)(" + Environment.NewLine +
-						CommentPattern + " |" + Environment.NewLine +
-						CharGroupPattern + " |" + Environment.NewLine +
-						NamedGroupPattern + " |" + Environment.NewLine +
-						EscapesPattern + " |" + Environment.NewLine +
-					")";
-			}
+			escapes_pb.BeginGroup( "escape" );
+			escapes_pb.Add( @"\\[0-7]{2,3}" );
+			escapes_pb.Add( @"\\x[0-9A-Fa-f]{1,2}" );
+			escapes_pb.Add( @"\\c[A-Za-z]" );
+			escapes_pb.Add( @"\\u[0-9A-Fa-f]{1,4}" );
+			escapes_pb.Add( @"\\(p|P)\{.*?(\}|$)" );
+			escapes_pb.Add( @"\\k<([A-Za-z]+>)?" );
+			escapes_pb.Add( @"\\." );
+			escapes_pb.EndGroup( );
 
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+			pb.Add( @"\[\]?(" + escapes_pb.ToPattern( ) + @"|.)*?(\]|$)" );
+
+			pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" ); // (balancing groups covered too)
+			pb.Add( @"\(\?(?'name''.*?('|$))" );
+			pb.Add( @"(?'name'\\k<.*?(>|$))" );
+			pb.Add( @"(?'name'\\k'.*?('|$))" );
+
+			pb.Add( escapes_pb.ToPattern( ) );
+
+			var regex = pb.ToRegex( );
 
 			return regex;
 		}
@@ -318,20 +300,18 @@ namespace DotNetRegexEngineNs
 
 		static Regex CreateHighlightingRegex( RegexOptions options )
 		{
-			string pattern = "(?nsx)(";
-			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pattern += @"(\#[^\n]*) | "; // line comment
-			pattern += @"\\[pP]\{.*?(\}|$) | "; // (skip)
-			pattern += @"(?'left_par'\() | "; // '('
-			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{) \d+(,(\d+)?)? ((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"(?'left_bracket'\[) \]? (\\.|.)*? ((?'right_bracket'\])|$) | "; // '[...]'
-			pattern += @"(\\.)";
-			pattern += @")";
+			var pb = new PatternBuilder( );
 
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.Add( @"\#[^\n]*" ); // line comment
+			pb.Add( @"\\[pP]\{.*?(\}|$)" ); // (skip)
+			pb.Add( @"(?'left_par'\()" ); // '('
+			pb.Add( @"(?'right_par'\))" ); // ')'
+			pb.Add( @"(?'left_brace'\{) \d+(,(\d+)?)? ((?'right_brace'\})|$)" ); // '{...}'
+			pb.Add( @"(?'left_bracket'\[) \]? (\\.|.)*? ((?'right_bracket'\])|$)" ); // '[...]'
+			pb.Add( @"\\." ); // (skip)
 
-			return regex;
+			return pb.ToRegex( );
 		}
 	}
 }

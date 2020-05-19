@@ -124,49 +124,27 @@ namespace SubRegRegexEngineNs
 
 		static Regex CreateColouringRegex( )
 		{
-			string escape = "";
+			var pb = new PatternBuilder( );
 
-			escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
-			escape += @"\\. | ";
+			pb
+				.BeginGroup( "escape" )
+				.Add( @"\\x[0-9a-fA-F]+" )
+				.Add( @"\\." )
+				.EndGroup( );
 
-			escape = RegexUtilities.EndGroup( escape, "escape" );
-
-			// that's all
-
-			string[] all = new[]
-			{
-				escape,
-			};
-
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
 		static Regex CreateHighlightingRegex( )
 		{
-			string pattern = "";
+			var pb = new PatternBuilder( );
 
-			pattern += @"(?'left_par'\() | "; // '('
-			pattern += @"(?'right_par'\)) | "; // ')'
+			pb.Add( @"\\." );
+			pb.AddGroup( "left_par", @"(?'left_par'\()" ); // '('
+			pb.AddGroup( "right_par", @"(?'right_par'\))" ); // ')'
 
-			pattern += @"\\. | "; // '\...'
-
-			pattern = RegexUtilities.EndGroup( pattern, null );
-
-			if( string.IsNullOrWhiteSpace( pattern ) )
-				pattern = "(?!)";
-			else
-				pattern = "(?nsx)" + pattern;
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
