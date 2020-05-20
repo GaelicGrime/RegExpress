@@ -48,7 +48,7 @@ namespace RegexEngineInfrastructure
 	{
 		static readonly Regex EndGroupRegex = new Regex( @"(\s*\|\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled );
 
-
+		[Obsolete]
 		public static string EndGroup( string s, string name )
 		{
 			if( string.IsNullOrWhiteSpace( s ) ) return null;

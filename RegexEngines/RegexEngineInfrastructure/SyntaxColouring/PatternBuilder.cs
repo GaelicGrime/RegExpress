@@ -72,8 +72,14 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 			if( LengthBeforeGroup >= 0 ) throw new InvalidOperationException( "Group already in progress" );
 
 			LengthBeforeGroup = Sb.Length;
+
 			if( Sb.Length > Prefix.Length ) Sb.Append( Or );
-			Sb.Append( @"(?'" ).Append( name ).Append( @"'" );
+
+			if( string.IsNullOrEmpty( name ) )
+				Sb.Append( "(" );
+			else
+				Sb.Append( @"(?'" ).Append( name ).Append( @"'" );
+
 			LengthAfterGroupHeader = Sb.Length;
 
 			return this;
