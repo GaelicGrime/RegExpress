@@ -25,6 +25,10 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 		int LengthBeforeGroup;
 		int LengthAfterGroupHeader;
 
+#if DEBUG
+		string dbgCurrentGroup;
+#endif
+
 
 		public PatternBuilder( )
 		{
@@ -69,7 +73,18 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 		public PatternBuilder BeginGroup( string name )
 		{
-			if( LengthBeforeGroup >= 0 ) throw new InvalidOperationException( "Group already in progress" );
+			if( LengthBeforeGroup >= 0 )
+				throw new InvalidOperationException(
+#if DEBUG
+					$"Group '{dbgCurrentGroup}' already in progress."
+#else
+					"Group already in progress."
+#endif
+					);
+
+#if DEBUG
+			dbgCurrentGroup = name;
+#endif
 
 			LengthBeforeGroup = Sb.Length;
 
@@ -105,6 +120,10 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 			LengthBeforeGroup = -1;
 			LengthAfterGroupHeader = -1;
 
+#if DEBUG
+			dbgCurrentGroup = null;
+#endif
+
 			return this;
 		}
 
@@ -117,7 +136,14 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 		public string ToPattern( )
 		{
-			if( LengthBeforeGroup >= 0 ) throw new InvalidOperationException( "Group in progress" );
+			if( LengthBeforeGroup >= 0 )
+				throw new InvalidOperationException(
+#if DEBUG
+					$"Group '{dbgCurrentGroup}' not finished."
+#else
+					"Group already in progress."
+#endif
+					);
 
 			return Sb.Length == Prefix.Length ? AlwaysFalsePattern : ( Sb.ToString( ) + Suffix );
 		}
@@ -128,5 +154,13 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 			return new Regex( ToPattern( ), RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 		}
 
+
+		[Obsolete( "Make sure you do not call accidentally 'ToString' instead of 'ToPattern'" )]
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+		public override string ToString( )
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+		{
+			return base.ToString( );
+		}
 	}
 }

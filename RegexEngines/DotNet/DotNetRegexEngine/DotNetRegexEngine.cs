@@ -121,29 +121,9 @@ namespace DotNetRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// comments, '(?#...)'
+				// comments, '(?#...)' and '#...'
 				{
 					var g = m.Groups["comment"];
-					if( g.Success )
-					{
-						if( cnc.IsCancellationRequested ) return;
-
-						var intersection = Segment.Intersection( visibleSegment, g.Index, g.Length );
-
-						if( !intersection.IsEmpty )
-						{
-							colouredSegments.Comments.Add( intersection );
-						}
-
-						continue;
-					}
-				}
-
-				if( cnc.IsCancellationRequested ) return;
-
-				// end-on-line comments, '#...', only if 'IgnorePatternWhitespace' option is specified
-				{
-					var g = m.Groups["eol_comment"];
 					if( g.Success )
 					{
 						if( cnc.IsCancellationRequested ) return;
@@ -267,9 +247,10 @@ namespace DotNetRegexEngineNs
 
 			var pb = new PatternBuilder( );
 
-			pb.AddGroup( "comment", @"\(\?\#.*?(\)|$)" );
-
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.AddGroup( "eol_comment", @"\#[^\n]*" );
+			pb.BeginGroup( "comment" );
+			pb.Add( @"\(\?\#.*?(\)|$)" );
+			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.Add( @"\#[^\n]*" );
+			pb.EndGroup( );
 
 			var escapes_pb = new PatternBuilder( );
 

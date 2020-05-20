@@ -311,24 +311,16 @@ namespace BoostRegexEngineNs
 			var pb = new PatternBuilder( );
 
 			pb.BeginGroup( "comment" );
-
 			if( is_perl ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 			if( is_perl && modX ) pb.Add( @"\#.*?(\n|$)" ); // line-comment*/
-
 			pb.EndGroup( );
-
-			pb.BeginGroup( "named_group" );
 
 			if( is_perl ) pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$)) | \(\?(?'name''.*?('|$))" );
 			if( is_perl ) pb.Add( @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$))" ); // back reference
 			if( is_perl ) pb.Add( @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$))" ); // back reference
 
-			pb.EndGroup( );
-
 			pb.BeginGroup( null );
-
 			if( is_perl || is_POSIX_extended || is_POSIX_basic ) pb.Add( @"\[ \]? (" + pb_class.ToPattern( ) + " | " + pb_escape.ToPattern( ) + " | . " + @")*? (\]|$)" );
-
 			pb.EndGroup( );
 
 			pb.Add( pb_escape.ToPattern( ) );
