@@ -264,7 +264,7 @@ namespace DotNetRegexEngineNs
 			escapes_pb.Add( @"\\." );
 			escapes_pb.EndGroup( );
 
-			pb.Add( @"\[\]?(" + escapes_pb.ToPattern( ) + @"|.)*?(\]|$)" );
+			pb.AddGroup( null, $@"\[\]?({escapes_pb.ToPattern( )} |.)*?(\]|$)" );
 
 			pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" ); // (balancing groups covered too)
 			pb.Add( @"\(\?(?'name''.*?('|$))" );

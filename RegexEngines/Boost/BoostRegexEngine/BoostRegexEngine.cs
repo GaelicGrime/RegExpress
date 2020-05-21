@@ -106,8 +106,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -131,8 +129,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Comments.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -156,8 +152,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -181,8 +175,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.GroupNames.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 			}
@@ -319,9 +311,8 @@ namespace BoostRegexEngineNs
 			if( is_perl ) pb.Add( @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$))" ); // back reference
 			if( is_perl ) pb.Add( @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$))" ); // back reference
 
-			pb.BeginGroup( null );
-			if( is_perl || is_POSIX_extended || is_POSIX_basic ) pb.Add( @"\[ \]? (" + pb_class.ToPattern( ) + " | " + pb_escape.ToPattern( ) + " | . " + @")*? (\]|$)" );
-			pb.EndGroup( );
+			if( is_perl || is_POSIX_extended || is_POSIX_basic )
+				pb.AddGroup( null, $@"\[ \]? ({pb_class.ToPattern( )} | {pb_escape.ToPattern( )} | . )*? (\]|$)" );
 
 			pb.Add( pb_escape.ToPattern( ) );
 

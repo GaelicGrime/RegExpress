@@ -94,8 +94,6 @@ namespace SubRegRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 

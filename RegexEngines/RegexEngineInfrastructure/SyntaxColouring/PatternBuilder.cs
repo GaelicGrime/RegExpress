@@ -14,7 +14,7 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 #if DEBUG
 		const string Prefix = "(?nsx)(\r\n";
 		const string Or = " |\r\n";
-		const string Suffix = ")";
+		const string Suffix = "\r\n)";
 #else
 		const string Prefix = "(?nsx)(";
 		const string Or = "|";

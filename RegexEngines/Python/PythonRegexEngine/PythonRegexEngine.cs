@@ -111,8 +111,6 @@ namespace PythonRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -136,8 +134,6 @@ namespace PythonRegexEngineNs
 								colouredSegments.Comments.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -161,8 +157,6 @@ namespace PythonRegexEngineNs
 								colouredSegments.GroupNames.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 			}
@@ -227,81 +221,65 @@ namespace PythonRegexEngineNs
 
 		Regex CreateColouringRegex( bool isVerbose )
 		{
-			string escape = "";
+			var pb_escape = new PatternBuilder( );
 
-			escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
+			pb_escape.BeginGroup( "escape" );
 
-			escape += @"\\0[0-7]+ | "; // octal, after '0'
-			escape += @"\\[1-7][0-7]{2,} | "; // octal, three digits
-			escape += @"\\N\{.+?(\} | $) | "; // Unicode name, ex.: \N{DIGIT ONE}
+			pb_escape.Add( @"\\x[0-9a-fA-F]{1,2}" ); // hexa, two digits
+			pb_escape.Add( @"\\0[0-7]+" ); // octal, after '0'
+			pb_escape.Add( @"\\[1-7][0-7]{2,}" ); // octal, three digits
+			pb_escape.Add( @"\\N\{.+?(\} | $)" ); // Unicode name, ex.: \N{DIGIT ONE}
+			pb_escape.Add( @"\\." );
 
-			escape += @"\\. | ";
-
-			escape = RegexUtilities.EndGroup( escape, "escape" );
+			pb_escape.EndGroup( );
 
 			//
 
-			string char_group = "";
+			var pb = new PatternBuilder( );
 
-			char_group += @"\[ \]? .*? (\]|$) | ";
+			pb.BeginGroup( "comment" );
 
-			char_group = RegexUtilities.EndGroup( char_group, null );
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+			if( isVerbose ) pb.Add( @"\#.*?(\n|$)" ); // line-comment*/
+
+			pb.EndGroup( );
+
+			//
+
+			pb.Add( @"\(\?P(?'name'<.*?(>|$))" );
+			pb.Add( @"\(\?P=(?'name'.*?(\)|$))" );
+			pb.Add( @"(?'name'\\[1-9][0-9]?(?![0-9]))" );
+
+			//
+
+			pb.Add( pb_escape.ToPattern( ) );
+
+			//
+
+			string char_group = @"( \[ \]? .*? (\]|$) )";
+
+			pb.Add( char_group );
 
 			// 
 
-			string comment = "";
-
-			comment += @"\(\?\#.*?(\)|$) | "; // comment
-			if( isVerbose ) comment += @"\#.*?(\n|$) | "; // line-comment*/
-
-			comment = RegexUtilities.EndGroup( comment, "comment" );
-
-			//
-
-			string named_group = "";
-
-			named_group += @"\(\?P(?'name'<.*?(>|$)) | ";
-			named_group += @"\(\?P=(?'name'.*?(\)|$)) | ";
-			named_group += @"(?'name'\\[1-9][0-9]?(?![0-9])) | ";
-
-			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
-
-			//
-
-			string[] all = new[]
-			{
-				comment,
-				named_group,
-				escape,
-				char_group,
-			};
-
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
 		Regex CreateHighlightingRegex( bool isVerbose )
 		{
-			string pattern = "(?nsx)(";
-			pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
-			if( isVerbose ) pattern += @"(\#[^\n]*) | "; // line comment
-			pattern += @"\\[N]\{.*?(\}|$) | "; // (skip)
-			pattern += @"(?'left_par'\() | "; // '('
-			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{) (\d+ | \d*,\d*) ((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"((?'left_bracket'\[) ]? (\\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
-			pattern += @"\\."; // '\...'
-			pattern += @")";
+			var pb = new PatternBuilder( );
 
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+			pb.Add( @"(\(\?\#.*?(\)|$))" ); // comment
+			if( isVerbose ) pb.Add( @"(\#[^\n]*)" ); // line comment
+			pb.Add( @"\\[N]\{.*?(\}|$)" ); // (skip)
+			pb.Add( @"(?'left_par'\()" ); // '('
+			pb.Add( @"(?'right_par'\))" ); // ')'
+			pb.Add( @"(?'left_brace'\{) (\d+ | \d*,\d*) ((?'right_brace'\})|$)" ); // '{...}'
+			pb.Add( @"((?'left_bracket'\[) ]? (\\. | .)*? ((?'right_bracket'\])|$) )" ); // [...]
+			pb.Add( @"\\." ); // '\...'
 
-			return regex;
+			return pb.ToRegex( );
 		}
 
 	}
