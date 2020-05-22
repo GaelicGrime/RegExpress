@@ -99,8 +99,6 @@ namespace StdRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -124,8 +122,6 @@ namespace StdRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 			}
@@ -191,71 +187,71 @@ namespace StdRegexEngineNs
 
 		static Regex CreateColouringRegex( GrammarEnum grammar )
 		{
-			string escape = @"(?'escape'";
+			var pb_escape = new PatternBuilder( );
 
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\c[A-Za-z] | ";
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // (two digits required)
-			if( grammar == GrammarEnum.awk ) escape += @"\\[0-7]{1,3} | "; // octal code
-			if( grammar == GrammarEnum.ECMAScript ) escape += @"\\u[0-9A-Fa-f]{1,4} | "; // (four digits required)
+			pb_escape.BeginGroup( "escape" );
+
+			if( grammar == GrammarEnum.ECMAScript ) pb_escape.Add( @"\\c[A-Za-z]" );
+			if( grammar == GrammarEnum.ECMAScript ) pb_escape.Add( @"\\x[0-9A-Fa-f]{1,2}" ); // (two digits required)
+			if( grammar == GrammarEnum.awk ) pb_escape.Add( @"\\[0-7]{1,3}" ); // octal code
+			if( grammar == GrammarEnum.ECMAScript ) pb_escape.Add( @"\\u[0-9A-Fa-f]{1,4}" ); // (four digits required)
 
 			if( grammar == GrammarEnum.basic ||
 				grammar == GrammarEnum.grep )
 			{
-				escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\.";
+				pb_escape.Add( @"(?!\\\( | \\\) | \\\{ | \\\})\\." );
 			}
 			else
 			{
-				escape += @"\\.";
+				pb_escape.Add( @"\\." );
 			}
-			escape += @")";
 
-			string @class = @"(?'class' \[(?'c'[:=.]) .*? (\k<c>\] | $) )";
+			pb_escape.EndGroup( );
 
-			string char_group = @"( \[ (" + @class + " | " + escape + " | . " + @")*? (\]|$) )";
+			//
+
+			var pb_class = new PatternBuilder( ).AddGroup( "class", @"\[(?'c'[:=.]) .*? (\k<c>\] | $)" );
+
+			//
+
+			var pb = new PatternBuilder( );
+
+			pb.Add( pb_escape.ToPattern( ) );
+
+			pb.AddGroup( null, $@"( \[ ({pb_class.ToPattern( )} | {pb_escape.ToPattern( )} | . )*? (\]|$) )" );
 
 			// (group names and comments are not supported by C++ Regex)
 
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				escape + " | " + Environment.NewLine +
-				char_group + " | " + Environment.NewLine +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
 		static Regex CreateHighlightingRegex( GrammarEnum grammar )
 		{
-			string pattern = @"(?nsx)(";
+			var pb = new PatternBuilder( );
 
 			if( grammar == GrammarEnum.extended ||
 				grammar == GrammarEnum.ECMAScript ||
 				grammar == GrammarEnum.egrep ||
 				grammar == GrammarEnum.awk )
 			{
-				pattern += @"(?'left_par'\() | "; // '('
-				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
+				pb.Add( @"(?'left_par'\()" ); // '('
+				pb.Add( @"(?'right_par'\))" ); // ')'
+				pb.Add( @"(?'left_brace'\{).*?((?'right_brace'\})|$)" ); // '{...}'
 			}
 
 			if( grammar == GrammarEnum.basic ||
 				grammar == GrammarEnum.grep )
 			{
-				pattern += @"(?'left_par'\\\() | "; // '\)'
-				pattern += @"(?'right_par'\\\)) | "; // '\('
-				pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
+				pb.Add( @"(?'left_par'\\\()" ); // '\)'
+				pb.Add( @"(?'right_par'\\\))" ); // '\('
+				pb.Add( @"(?'left_brace'\\{).*?((?'right_brace'\\})|$)" ); // '\{...\}'
 			}
 
-			pattern += @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
-			pattern += @"\\.";  // '\...'
+			pb.Add( @"((?'left_bracket'\[) ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) )" ); // [...]
+			pb.Add( @"\\." );  // '\...'
 
-			pattern += @")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 	}
 }

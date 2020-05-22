@@ -244,121 +244,73 @@ namespace IcuRegexEngineNs
 
 		Regex CreateColouringRegex( bool UREGEX_COMMENTS )
 		{
-			string escape = "";
+			var pb_escape = new PatternBuilder( );
 
-			escape += @"\\c[A-Za-z] | "; // \cx control char
-			escape += @"\\[NpP]\{.*?(\} | $) | "; // named character, property
-			escape += @"\\[uUx][0-9a-fA-F]+ | "; // hexadecimal char
-			escape += @"\\x\{[0-9a-fA-F]+(\}|$) | "; // hexadecimal char
-			escape += @"\\0[0-7]+ | "; // octal
-			escape += @"\\. | "; // \.
+			pb_escape.BeginGroup( "escape" );
+			pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
+			pb_escape.Add( @"\\[NpP]\{.*?(\} | $)" ); // named character, property
+			pb_escape.Add( @"\\[uUx][0-9a-fA-F]+" ); // hexadecimal char
+			pb_escape.Add( @"\\x\{[0-9a-fA-F]+(\}|$)" ); // hexadecimal char
+			pb_escape.Add( @"\\0[0-7]+" ); // octal
+			pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted part
+			pb_escape.Add( @"\\." ); // \.
+			pb_escape.EndGroup( );
 
-			escape = RegexUtilities.EndGroup( escape, "escape" );
+			var pb = new PatternBuilder( );
 
-			//
+			pb.BeginGroup( "comment" );
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+			if( UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			pb.EndGroup( );
 
-			string named_group = "";
+			pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" );
+			pb.Add( @"(?'name'\\k<.*?(>|$))" );
 
-			named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
-			named_group += @"(?'name'\\k<.*?(>|$)) | ";
+			string posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
 
-			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
-
-			//
-
-			string quote = "";
-
-			quote = @"\\Q.*?(\\E|$) | "; // quoted part
-
-			quote = RegexUtilities.EndGroup( quote, "escape" ); // use 'escape' name to take its colour
-
-			//
-
-			string char_group = "";
-			string posix_bracket = @"(?'escape'\[:.*?(:\]|$)) |"; // [:...:], use escape colour
-
-			char_group = $@"
+			pb.Add( $@"
 						\[
 						\]?
-						(?> {posix_bracket} \[(?<c>) | ({escape} | [^\[\]])+ | \](?<-c>))*
+						(?> {posix_bracket} | \[(?<c>) | ({pb_escape.ToPattern( )} | [^\[\]])+ | \](?<-c>))*
 						(?(c)(?!))
 						\]
-						";
+						" );
 
-			char_group = RegexUtilities.EndGroup( char_group, null );
+			pb.Add( pb_escape.ToPattern( ) );
 
-			//
-
-			string comment = "";
-
-			comment += @"\(\?\#.*?(\)|$) | "; // comment
-
-			if( UREGEX_COMMENTS ) comment += @"\#.*?(\n|$) | "; // line-comment
-
-			comment = RegexUtilities.EndGroup( comment, "comment" );
-
-			//
-
-			string[] all = new[]
-			{
-				// (order is important)
-				comment,
-				quote,
-				named_group,
-				char_group,
-				escape,
-			};
-
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
 		Regex CreateHighlightingRegex( bool UREGEX_COMMENTS )
 		{
-			string pattern = "";
+			var pb = new PatternBuilder( );
 
-			pattern += @"\(\?\#.*?(\)|$) | "; // comment
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 
-			if( UREGEX_COMMENTS ) pattern += @"\#.*?(\n|$) | "; // line-comment
-			pattern += @"\\Q.*?(\\E|$) | "; // quoted part
+			if( UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
 
-			pattern += @"(?'left_par'\() | "; // '('
-			pattern += @"(?'right_par'\)) | "; // ')'
+			pb.Add( @"(?'left_par'\()" ); // '('
+			pb.Add( @"(?'right_par'\))" ); // ')'
+			pb.Add( @"\\[NpPx]\{.*?(\}|$)" ); // (skip)
+			pb.Add( @"(?'left_brace'\{).*?((?'right_brace'\})|$)" ); // '{...}'
 
-			pattern += @"\\[NpPx]\{.*?(\}|$) | "; // (skip)
+			string posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
 
-			pattern += @"(?'left_brace'\{).*?((?'right_brace'\})|$) | "; // '{...}'
-
-			string posix_bracket = @"(\[:.*?(:\]|$)) | "; // [:...:]
-
-			pattern += $@"
+			pb.Add( $@"
 						(?'left_bracket'\[)
 						\]?
-						(?> {posix_bracket} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
+						(?> {posix_bracket} | (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
 						(?(c)(?!))
 						(?'right_bracket'\])?
 						|
 						(?'right_bracket'\])
-						| ";
+						" );
 
-			pattern += @"\\. | "; // '\...'
+			pb.Add( @"\\." ); // '\...'
 
-			pattern = RegexUtilities.EndGroup( pattern, null );
-
-			if( string.IsNullOrWhiteSpace( pattern ) )
-				return EmptyRegex;
-			else
-				pattern = "(?nsx)" + pattern;
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 	}

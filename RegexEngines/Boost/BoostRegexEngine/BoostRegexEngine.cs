@@ -106,8 +106,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -131,8 +129,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Comments.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -156,8 +152,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -181,8 +175,6 @@ namespace BoostRegexEngineNs
 								colouredSegments.GroupNames.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 			}
@@ -280,77 +272,51 @@ namespace BoostRegexEngineNs
 				grammar == GrammarEnum.emacs;
 
 
-			string escape = "";
+			var pb_escape = new PatternBuilder( );
 
-			if( is_perl || is_POSIX_extended || is_POSIX_basic ) escape += @"\\[1-9] | "; // back reference
+			pb_escape.BeginGroup( "escape" );
 
-			if( is_perl || is_POSIX_extended ) escape += @"\\c[A-Za-z] | "; // ASCII escape
-			if( is_perl || is_POSIX_extended ) escape += @"\\x[0-9A-Fa-f]{1,2} | "; // hex, two digits
-			if( is_perl || is_POSIX_extended ) escape += @"\\x\{[0-9A-Fa-f]+(\}|$) | "; // hex, four digits
-			if( is_perl || is_POSIX_extended ) escape += @"\\0[0-7]{1,3} | "; // octal, three digits
-			if( is_perl || is_POSIX_extended ) escape += @"\\N\{.*?(\}|$) | "; // symbolic name
-			if( is_perl || is_POSIX_extended ) escape += @"\\[pP]\{.*?(\}|$) | "; // property
-			if( is_perl || is_POSIX_extended ) escape += @"\\[pP]. | "; // property, short name
-			if( is_perl || is_POSIX_extended ) escape += @"\\Q.*?(\\E|$) | "; // quoted sequence
-			if( is_emacs ) escape += @"\\[sS]. | "; // syntax group
+			if( is_perl || is_POSIX_extended || is_POSIX_basic ) pb_escape.Add( @"\\[1-9]" ); // back reference
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\c[A-Za-z]" ); // ASCII escape
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\x[0-9A-Fa-f]{1,2}" ); // hex, two digits
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\x\{[0-9A-Fa-f]+(\}|$)" ); // hex, four digits
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\0[0-7]{1,3}" ); // octal, three digits
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\N\{.*?(\}|$)" ); // symbolic name
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\[pP]\{.*?(\}|$)" ); // property
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\[pP]." ); // property, short name
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\Q.*?(\\E|$)" ); ; // quoted sequence
+			if( is_emacs ) pb_escape.Add( @"\\[sS]." ); // syntax group
+			if( is_perl || is_POSIX_extended ) pb_escape.Add( @"\\." ); // various
+			if( is_POSIX_basic ) pb_escape.Add( @"(?!\\\( | \\\) | \\\{ | \\\})\\." ); // various
 
-			if( is_perl || is_POSIX_extended ) escape += @"\\. | "; // various
-			if( is_POSIX_basic ) escape += @"(?!\\\( | \\\) | \\\{ | \\\})\\. | "; // various
+			pb_escape.EndGroup( );
 
-			escape = RegexUtilities.EndGroup( escape, "escape" );
+			var pb_class = new PatternBuilder( );
 
-			// 
+			pb_class.BeginGroup( "class" );
 
-			string comment = "";
+			if( is_perl || is_POSIX_extended || is_POSIX_basic ) pb_class.Add( @"\[(?'c'[:=.]) .*? (\k<c>\] | $)" );
 
-			if( is_perl ) comment += @"\(\?\#.*?(\)|$) | "; // comment
-			if( is_perl && modX ) comment += @"\#.*?(\n|$) | "; // line-comment*/
+			pb_class.EndGroup( );
 
-			comment = RegexUtilities.EndGroup( comment, "comment" );
 
-			// 
+			var pb = new PatternBuilder( );
 
-			string @class = "";
+			pb.BeginGroup( "comment" );
+			if( is_perl ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+			if( is_perl && modX ) pb.Add( @"\#.*?(\n|$)" ); // line-comment*/
+			pb.EndGroup( );
 
-			if( is_perl || is_POSIX_extended || is_POSIX_basic ) @class += @"\[(?'c'[:=.]) .*? (\k<c>\] | $) | ";
+			if( is_perl ) pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$)) | \(\?(?'name''.*?('|$))" );
+			if( is_perl ) pb.Add( @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$))" ); // back reference
+			if( is_perl ) pb.Add( @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$))" ); // back reference
 
-			@class = RegexUtilities.EndGroup( @class, "class" );
+			if( is_perl || is_POSIX_extended || is_POSIX_basic )
+				pb.AddGroup( null, $@"\[ \]? ({pb_class.ToPattern( )} | {pb_escape.ToPattern( )} | . )*? (\]|$)" );
 
-			//
+			pb.Add( pb_escape.ToPattern( ) );
 
-			string char_group = "";
-
-			if( is_perl || is_POSIX_extended || is_POSIX_basic ) char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | ";
-
-			char_group = RegexUtilities.EndGroup( char_group, null );
-
-			//
-
-			string named_group = "";
-
-			if( is_perl ) named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | \(\?(?'name''.*?('|$)) | ";
-			if( is_perl ) named_group += @"(?'name'\\g-?[1-9]) | (?'name'\\g\{.*?(\}|$)) | "; // back reference
-			if( is_perl ) named_group += @"(?'name'\\[gk]<.*?(>|$)) | (?'name'\\[gk]'.*?('|$)) | "; // back reference
-
-			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
-
-			// 
-
-			string[] all = new[]
-			{
-				comment,
-				named_group,
-				char_group,
-				escape,
-			};
-
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
@@ -377,47 +343,39 @@ namespace BoostRegexEngineNs
 			bool is_emacs =
 				grammar == GrammarEnum.emacs;
 
-			string pattern = "";
 
-			if( is_perl ) pattern += @"(\(\?\#.*?(\)|$)) | "; // comment
-			if( is_perl && modX ) pattern += @"(\#[^\n]*) | "; // line comment
+			var pb = new PatternBuilder( );
+
+			if( is_perl ) pb.Add( @"(\(\?\#.*?(\)|$))" ); // comment
+			if( is_perl && modX ) pb.Add( @"(\#[^\n]*)" ); // line comment
 
 			if( is_perl || is_POSIX_extended )
 			{
-				pattern += @"\\Q.*?(\\E|$) | "; // skip \Q...\E
-				pattern += @"\\[xNpPgk]\{.*?(\}|$) | "; // (skip)
+				pb.Add( @"\\Q.*?(\\E|$)" ); // skip \Q...\E
+				pb.Add( @"\\[xNpPgk]\{.*?(\}|$)" ); // (skip)
 			}
 
 			if( is_perl || is_POSIX_extended )
 			{
-				pattern += @"(?'left_par'\() | "; // '('
-				pattern += @"(?'right_par'\)) | "; // ')'
-				pattern += @"(?'left_brace'\{) \s* \d+ \s* (, \s* \d*)? \s* ((?'right_brace'\})|$) | "; // '{...}' (spaces are allowed)
+				pb.AddGroup( "left_par", @"\(" ); // '('
+				pb.AddGroup( "right_par", @"\)" ); // ')'
+				pb.Add( @"(?'left_brace'\{) \s* \d+ \s* (, \s* \d*)? \s* ((?'right_brace'\})|$)" ); // '{...}' (spaces are allowed)
 			}
 
 			if( is_POSIX_basic )
 			{
-				pattern += @"(?'left_par'\\\() | "; // '\('
-				pattern += @"(?'right_par'\\\)) | "; // '\)'
-				pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
+				pb.AddGroup( "left_par", @"\\\(" ); // '\('
+				pb.AddGroup( "right_par", @"\\\)" ); // '\)'
+				pb.Add( @"(?'left_brace'\\{).*?((?'right_brace'\\})|$)" ); // '\{...\}'
 			}
 
 			if( is_perl || is_POSIX_extended || is_POSIX_basic )
 			{
-				pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | "; // [...]
-				pattern += @"\\. | "; // '\...'
+				pb.Add( @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) )" ); // [...]
+				pb.Add( @"\\." ); // '\...'
 			}
 
-			pattern = RegexUtilities.EndGroup( pattern, null );
-
-			if( string.IsNullOrWhiteSpace( pattern ) )
-				pattern = "(?!)";
-			else
-				pattern = "(?nsx)" + pattern;
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 	}

@@ -99,8 +99,6 @@ namespace Re2RegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -124,8 +122,6 @@ namespace Re2RegexEngineNs
 								colouredSegments.Escapes.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 
@@ -149,8 +145,6 @@ namespace Re2RegexEngineNs
 								colouredSegments.GroupNames.Add( intersection );
 							}
 						}
-
-						continue;
 					}
 				}
 			}
@@ -225,63 +219,40 @@ namespace Re2RegexEngineNs
 
 			if( is_literal ) return EmptyRegex;
 
-			string escape = "";
+			var pb_escape = new PatternBuilder( );
 
-			escape += @"\\[pP][A-Za-z] | "; // Unicode character class (one-letter name)
-			escape += @"\\[pP]\{.*?(\}|$) | "; // Unicode character class
+			pb_escape.BeginGroup( "escape" );
 
-			escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
-			escape += @"\\[0-7]{1,3} | "; // octal, three digits
+			pb_escape.Add( @"\\[pP][A-Za-z]" ); // Unicode character class (one-letter name)
+			pb_escape.Add( @"\\[pP]\{.*?(\}|$)" ); // Unicode character class
+			pb_escape.Add( @"\\0[0-7]{1,2}" ); // octal, two digits after 0
+			pb_escape.Add( @"\\[0-7]{1,3}" ); // octal, three digits
+			pb_escape.Add( @"\\x[0-9a-fA-F]{1,2}" ); // hexa, two digits
+			pb_escape.Add( @"\\x\{[0-9a-fA-F]*(\}|$)" ); // hexa, error if empty
+			pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted sequence, \Q...\E
+			pb_escape.Add( @"\\." );
 
-			escape += @"\\x[0-9a-fA-F]{1,2} | "; // hexa, two digits
-			escape += @"\\x\{[0-9a-fA-F]*(\}|$) | "; // hexa, error if empty
-
-			escape += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
-
-			escape += @"\\. | ";
-
-			escape = RegexUtilities.EndGroup( escape, "escape" );
-
-			// 
-
-			string @class = "";
-
-			@class += @"\[(?'c'[:]) .*? (\k<c>\] | $) | "; // only [: :], no [= =], no [. .]
-
-			@class = RegexUtilities.EndGroup( @class, "class" );
+			pb_escape.EndGroup( );
 
 			//
 
-			string char_group = "";
+			var pb_class = new PatternBuilder( ).AddGroup( "class", @"\[(?'c'[:]) .*? (\k<c>\] | $)" ); // only [: :], no [= =], no [. .]
 
-			char_group += @"\[ \]? (" + @class + " | " + escape + " | . " + @")*? (\]|$) | "; // TODO: check 'escape' part
+			//
 
-			char_group = RegexUtilities.EndGroup( char_group, null );
+			var pb = new PatternBuilder( );
 
-			// 
+			pb.Add( pb_escape.ToPattern( ) );
 
-			string named_group = "";
+			//
 
-			named_group += @"\(\?P(?'name'<.*?>) | ";
-
-			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
+			pb.AddGroup( null, $@"\[ \]? ({pb_class.ToPattern( )} | {pb_escape.ToPattern( )} | . )*? (\]|$)" ); // TODO: check 'escape' part
 
 			// 
 
-			string[] all = new[]
-			{
-				escape,
-				char_group,
-				named_group,
-			};
+			pb.Add( @"\(\?P(?'name'<.*?>)" );
 
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 
@@ -291,28 +262,17 @@ namespace Re2RegexEngineNs
 
 			if( is_literal ) return EmptyRegex;
 
-			string pattern = "";
+			var pb = new PatternBuilder( );
 
-			pattern += @"\\Q.*?(\\E|$) | "; // quoted sequence, \Q...\E
+			pb.Add( @"\\Q.*?(\\E|$)" ); // quoted sequence, \Q...\E
+			pb.Add( @"\\[pPx]\{.*?(\}|$)" ); // (skip)
+			pb.Add( @"(?'left_par'\()" ); // '('
+			pb.Add( @"(?'right_par'\))" ); // ')'
+			pb.Add( @"(?'left_brace'\{) \d+ (,\d*)* ((?'right_brace'\})|$)" ); // '{...}'
+			pb.Add( @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) )" );
+			pb.Add( @"\\." ); // '\...'
 
-			pattern += @"\\[pPx]\{.*?(\}|$) | "; // (skip)
-
-			pattern += @"(?'left_par'\() | "; // '('
-			pattern += @"(?'right_par'\)) | "; // ')'
-			pattern += @"(?'left_brace'\{) \d+ (,\d*)* ((?'right_brace'\})|$) | "; // '{...}'
-			pattern += @"((?'left_bracket'\[) \]? ((\[:.*? (:\]|$)) | \\. | .)*? ((?'right_bracket'\])|$) ) | ";
-			pattern += @"\\. | "; // '\...'
-
-			pattern = RegexUtilities.EndGroup( pattern, null );
-
-			if( string.IsNullOrWhiteSpace( pattern ) )
-				pattern = "(?!)";
-			else
-				pattern = "(?nsx)" + pattern;
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 	}

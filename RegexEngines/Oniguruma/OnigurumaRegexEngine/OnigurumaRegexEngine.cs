@@ -214,232 +214,182 @@ namespace OnigurumaRegexEngineNs
 
 		Regex CreateColouringRegex( OnigurumaRegexInterop.OnigurumaHelper helper )
 		{
-			string normal = "";
+			var pb_escape = new PatternBuilder( );
 
-			if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
-			{
-				normal += @"\\\( | \\\) | ";
-			}
-
-			if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
-			{
-				normal += @"\\\{ | \\\} | ";
-			}
-
-			normal = RegexUtilities.EndGroup( normal, null );
-
-			//
-
-			string escape = "";
+			pb_escape.BeginGroup( "escape" );
 
 			if( !helper.IsONIG_SYNTAX_ASIS )
 			{
-				escape += @"\\0[0-7]{1,2} | "; // octal, two digits after 0
-				escape += @"\\[0-7]{1,3} | "; // octal, three digits
+				pb_escape.Add( @"\\0[0-7]{1,2}" ); // octal, two digits after 0
+				pb_escape.Add( @"\\[0-7]{1,3}" ); // octal, three digits
 
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) escape += @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$) | "; // \o{17777777777 ...} wide octal chars
+				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb_escape.Add( @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$)" ); // \o{17777777777 ...} wide octal chars
 
-				escape += @"\\u[0-9a-fA-F]+ | "; // \uHHHH wide hexadecimal char
-				if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) escape += @"\\x[0-9a-fA-F]+ | "; // \xHH hexadecimal char 
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) escape += @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$) | "; // \x{7HHHHHHH ...} wide hexadecimal chars
+				pb_escape.Add( @"\\u[0-9a-fA-F]+" ); // \uHHHH wide hexadecimal char
+				if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) pb_escape.Add( @"\\x[0-9a-fA-F]+" ); // \xHH hexadecimal char 
+				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb_escape.Add( @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
 
 				if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
 				{
-					escape += @"\\c[A-Za-z] | "; // \cx control char
-					escape += @"\\C-([A-Za-z])? | "; // \C-x control char
+					pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
+					pb_escape.Add( @"\\C-([A-Za-z])?" ); // \C-x control char
 				}
 
-				escape += @"\\M-([A-Za-z])? | "; // \M-x meta  (x|0x80)
-				escape += @"\\M-(\\C-([A-Za-z])?)? | "; // \M-x meta control char
-
-				escape += @"\\[pP]\{.*?(\} | $) | "; // property
+				pb_escape.Add( @"\\M-([A-Za-z])?" ); // \M-x meta  (x|0x80)
+				pb_escape.Add( @"\\M-(\\C-([A-Za-z])?)?" ); // \M-x meta control char
+				pb_escape.Add( @"\\[pP]\{.*?(\} | $)" ); // property
 
 				/*
 				Probably not useful
 
 				if( helper.IsONIG_SYN_OP_ESC_ASTERISK_ZERO_INF )
 				{
-					escape += @"(?!\\\*)";
+					pb_escape.Add( @"(?!\\\*)");
 				}
 
 				if( helper.IsONIG_SYN_OP_ESC_PLUS_ONE_INF )
 				{
-					escape += @"(?!\\\+)";
+					pb_escape.Add( @"(?!\\\+)");
 				}
 
 				if( helper.IsONIG_SYN_OP_ESC_QMARK_ZERO_ONE )
 				{
-					escape += @"(?!\\\?)";
+					pb_escape.Add( @"(?!\\\?)");
 				}
 
 				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
 				{
-					escape += @"(?!\\[{}])";
+					pb_escape.Add( @"(?!\\[{}])");
 				}
 				*/
 
-				escape += @"\\. | ";
+				pb_escape.Add( @"\\." );
 			}
-
-			escape = RegexUtilities.EndGroup( escape, "escape" );
-
-			//
-
-			string quote = "";
 
 			if( !helper.IsONIG_SYNTAX_ASIS && helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE )
 			{
-
-				quote = @"\\Q.*?(\\E|$) | "; // quoted part
+				pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted part; use 'escape' name to take its colour
 			}
 
-			quote = RegexUtilities.EndGroup( quote, "escape" ); // use 'escape' name to take its colour
+			pb_escape.EndGroup( );
 
-			// (nested groups: https://stackoverflow.com/questions/546433/regular-expression-to-match-balanced-parentheses)
+			var pb = new PatternBuilder( );
 
-			string char_group = "";
-			string posix_bracket = "";
-			if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(?'escape'\[:.*?(:\]|$)) |"; // [:...:], use escape colour
-
+			pb.BeginGroup( "comment" );
 			if( !helper.IsONIG_SYNTAX_ASIS )
 			{
-				char_group = $@"
-						\[ 
-						\]?
-						(?> {posix_bracket} \[(?<c>) | ({escape} | [^\[\]])+ | \](?<-c>))*
-						(?(c)(?!))
-						\]
-						";
+				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 			}
-
-			char_group = RegexUtilities.EndGroup( char_group, null );
-
-			//
-
-			string comment = "";
-
-			if( !helper.IsONIG_SYNTAX_ASIS )
-			{
-				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) comment += @"\(\?\#.*?(\)|$) | "; // comment
-			}
-
-			if( helper.IsONIG_OPTION_EXTEND ) comment += @"\#.*?(\n|$) | "; // line-comment
-
-			comment = RegexUtilities.EndGroup( comment, "comment" );
-
-			//
-
-			string named_group = "";
+			if( helper.IsONIG_OPTION_EXTEND ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			pb.EndGroup( );
 
 			if( helper.IsONIG_SYN_OP2_QMARK_LT_NAMED_GROUP )
 			{
-				named_group += @"\(\?(?'name'<(?![=!]).*?(>|$)) | ";
-				named_group += @"\(\?(?'name''.*?('|$)) | ";
+				pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" );
+				pb.Add( @"\(\?(?'name''.*?('|$))" );
 			}
 			if( helper.IsONIG_SYN_OP2_ATMARK_CAPTURE_HISTORY )
 			{
-				named_group += @"\(\?@(?'name'<.*?(>|$)) | ";
-				named_group += @"\(\?@(?'name''.*?('|$)) | ";
+				pb.Add( @"\(\?@(?'name'<.*?(>|$))" );
+				pb.Add( @"\(\?@(?'name''.*?('|$))" );
 			}
 			if( helper.IsONIG_SYN_OP2_ESC_K_NAMED_BACKREF )
 			{
-				named_group += @"(?'name'\\k<.*?(>|$)) | ";
-				named_group += @"(?'name'\\k'.*?('|$)) | ";
+				pb.Add( @"(?'name'\\k<.*?(>|$))" );
+				pb.Add( @"(?'name'\\k'.*?('|$))" ); ;
 			}
 			if( helper.IsONIG_SYN_OP2_ESC_G_SUBEXP_CALL )
 			{
-				named_group += @"(?'name'\\g<.*?(>|$)) | ";
-				named_group += @"(?'name'\\g'.*?('|$)) | ";
+				pb.Add( @"(?'name'\\g<.*?(>|$))" );
+				pb.Add( @"(?'name'\\g'.*?('|$))" );
 			}
 
-			named_group = RegexUtilities.EndGroup( named_group, "named_group" );
+			// (nested groups: https://stackoverflow.com/questions/546433/regular-expression-to-match-balanced-parentheses)
 
-			//
+			string posix_bracket = "";
+			if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
 
-			string[] all = new[]
+			if( !helper.IsONIG_SYNTAX_ASIS )
 			{
-				// (order is important)
-				comment,
-				quote,
-				named_group,
-				char_group,
-				normal,
-				escape,
-			};
+				pb.Add( $@"
+						\[ 
+						\]?
+						(?> {posix_bracket}{( posix_bracket.Length == 0 ? "" : " |" )} \[(?<c>) | ({pb_escape.ToPattern( )} | [^\[\]])+ | \](?<-c>))*
+						(?(c)(?!))
+						\]
+						" );
+			}
 
-			string pattern = @"(?nsx)(" + Environment.NewLine +
-				string.Join( " | " + Environment.NewLine, all.Where( s => !string.IsNullOrWhiteSpace( s ) ) ) +
-				")";
+			if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
+			{
+				pb.Add( @"\\\( | \\\)" ); // (skip)
+			}
 
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
+			if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
+			{
+				pb.Add( @"\\\{ | \\\}" ); // (skip)
+			}
 
-			return regex;
+			pb.Add( pb_escape.ToPattern( ) );
+
+			return pb.ToRegex( );
 		}
 
 
 		Regex CreateHighlightingRegex( OnigurumaRegexInterop.OnigurumaHelper helper )
 		{
-			string pattern = "";
+			var pb = new PatternBuilder( );
 
 			if( !helper.IsONIG_SYNTAX_ASIS )
 			{
-				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pattern += @"\(\?\#.*?(\)|$) | "; // comment
+				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 
-				if( helper.IsONIG_OPTION_EXTEND ) pattern += @"\#.*?(\n|$) | "; // line-comment
-				if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE ) pattern += @"\\Q.*?(\\E|$) | "; // quoted part
+				if( helper.IsONIG_OPTION_EXTEND ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+				if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE ) pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
 
 				if( helper.IsONIG_SYN_OP_LPAREN_SUBEXP )
 				{
-					pattern += @"(?'left_par'\() | "; // '('
-					pattern += @"(?'right_par'\)) | "; // ')'
+					pb.Add( @"(?'left_par'\()" ); // '('
+					pb.Add( @"(?'right_par'\))" ); // ')'
 				}
 
 				if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
 				{
-					pattern += @"(?'left_par'\\\() | "; // '\('
-					pattern += @"(?'right_par'\\\)) | "; // '\)'
+					pb.Add( @"(?'left_par'\\\()" ); // '\('
+					pb.Add( @"(?'right_par'\\\))" ); // '\)'
 				}
 
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pattern += @"\\o\{.*?(\}|$) | "; // \o{17777777777 ...} wide octal chars
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pattern += @"\\x\{.*?(\}|$) | "; // \x{7HHHHHHH ...} wide hexadecimal chars
+				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb.Add( @"\\o\{.*?(\}|$)" ); // \o{17777777777 ...} wide octal chars
+				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb.Add( @"\\x\{.*?(\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
 
 				if( helper.IsONIG_SYN_OP2_ESC_P_BRACE_CHAR_PROPERTY || helper.IsONIG_SYN_OP2_ESC_P_BRACE_CIRCUMFLEX_NOT )
 				{
-					pattern += @"\\[pP]\{.*?(\} | $) | "; // property
+					pb.Add( @"\\[pP]\{.*?(\} | $)" ); // property
 				}
 
-				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pattern += @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$) | "; // '{...}'
-				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pattern += @"(?'left_brace'\\{).*?((?'right_brace'\\})|$) | "; // '\{...\}'
+				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$)" ); // '{...}'
+				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\\{).*?((?'right_brace'\\})|$)" ); // '\{...\}'
 
 				string posix_bracket = "";
-				if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(\[:.*?(:\]|$)) |"; // [:...:]
+				if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
 
 				if( helper.IsONIG_SYN_OP_BRACKET_CC )
 				{
-					pattern += $@"
+					pb.Add( $@"
 						(?'left_bracket'\[)
 						\]?
-						(?> {posix_bracket} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
+						(?> {posix_bracket}{( posix_bracket.Length == 0 ? "" : " |" )} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
 						(?(c)(?!))
 						(?'right_bracket'\])?
 						|
 						(?'right_bracket'\])
-						| ";
+						" );
 				}
 
-				pattern += @"\\. | "; // '\...'
+				pb.Add( @"\\." ); // '\...'
 			}
 
-			pattern = RegexUtilities.EndGroup( pattern, null );
-
-			if( string.IsNullOrWhiteSpace( pattern ) )
-				pattern = "(?!)";
-			else
-				pattern = "(?nsx)" + pattern;
-
-			var regex = new Regex( pattern, RegexOptions.Compiled | RegexOptions.ExplicitCapture );
-
-			return regex;
+			return pb.ToRegex( );
 		}
 
 	}

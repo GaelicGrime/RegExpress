@@ -61,12 +61,14 @@ namespace SubRegRegexInterop
 			cli::array<unsigned char>^ text_bytes;
 			int invalid_pattern_index = -1;
 			int invalid_text_index = -1;
+			cli::array<unsigned char>^ zero_byte = { 0 };
 
 			try
 			{
 				pattern_bytes = AsciiEncoding->GetBytes( Pattern );
+				if( pattern_bytes->Length == 0 ) pattern_bytes = zero_byte;
 			}
-			catch( EncoderFallbackException ^ exc )
+			catch( EncoderFallbackException^ exc )
 			{
 				invalid_pattern_index = exc->Index;
 			}
@@ -74,8 +76,9 @@ namespace SubRegRegexInterop
 			try
 			{
 				text_bytes = AsciiEncoding->GetBytes( text );
+				if( text_bytes->Length == 0 ) text_bytes = zero_byte;
 			}
-			catch( EncoderFallbackException ^ exc )
+			catch( EncoderFallbackException^ exc )
 			{
 				invalid_text_index = exc->Index;
 			}
@@ -88,6 +91,7 @@ namespace SubRegRegexInterop
 
 				throw gcnew Exception( msg );
 			}
+
 
 			pin_ptr<unsigned char> pinned_pattern_bytes = &pattern_bytes[0];
 			pin_ptr<unsigned char> pinned_text_bytes = &text_bytes[0];
@@ -128,7 +132,7 @@ namespace SubRegRegexInterop
 			return gcnew RegexMatches( matches->Count, matches );
 
 		}
-		catch( Exception ^ exc )
+		catch( Exception^ exc )
 		{
 			UNREFERENCED_PARAMETER( exc );
 			throw;
