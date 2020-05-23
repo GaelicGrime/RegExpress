@@ -1,5 +1,5 @@
 # RegExpress
-Tester for Regular Expressions.
+Unpretentious tester for Regular Expressions.
 
 A .NET desktop application made in C#, based on Windows Presentation Foundation (WPF).
 
@@ -11,10 +11,10 @@ It includes several Regular Expression engines:
 * **PCRE2** Open Source Regex Library 10.35 \[[link](https://pcre.org/)\]
 * **RE2** C++ Library 2020-05-01 from Google \[[link](https://github.com/google/re2)\]
 * **Oniguruma** Regular Expression Library 6.9.5 revised 1 \[[link](https://github.com/kkos/oniguruma)\]
-* **ICU Regular Expressions** 66.1 \[[link](http://site.icu-project.org/)\]
+* **ICU Regular Expressions** 67.1 \[[link](http://site.icu-project.org/)\]
 * **SubReg** 2020-01-04 \[[link](https://github.com/mattbucknall/subreg)\]
 * **Perl** 5.30.2 \[[link](http://strawberryperl.com/)\]
-* **Python** 3.8.2 \[[link](https://www.python.org/)\]
+* **Python** 3.8.3 \[[link](https://www.python.org/)\]
 
 <br/>
 
