@@ -39,6 +39,7 @@ namespace RegExpressWPF
 		public static readonly RoutedUICommand NewTabCommand = new RoutedUICommand( );
 		public static readonly RoutedUICommand CloseTabCommand = new RoutedUICommand( );
 		public static readonly RoutedUICommand DuplicateTabCommand = new RoutedUICommand( );
+		public static readonly RoutedUICommand GoToOptionsCommand = new RoutedUICommand( );
 
 
 		public MainWindow( )
@@ -179,6 +180,18 @@ namespace RegExpressWPF
 		private void DuplicateTabCommand_Execute( object sender, ExecutedRoutedEventArgs e )
 		{
 			DuplicateTab( );
+		}
+
+
+		private void GoToOptionsCommand_CanExecute( object sender, CanExecuteRoutedEventArgs e )
+		{
+			e.CanExecute = true;
+		}
+
+
+		private void GoToOptionsCommand_Execute( object sender, ExecutedRoutedEventArgs e )
+		{
+			GoToOptions( );
 		}
 
 
@@ -461,6 +474,30 @@ namespace RegExpressWPF
 			else
 			{
 				NewTab( null );
+			}
+		}
+
+
+		void GoToOptions( )
+		{
+			var uc_main = GetSingleModeControl( );
+			if( uc_main == null )
+			{
+				TabItem selected_tab_item = tabControlMain.IsVisible ? tabControlMain.SelectedItem as TabItem : null;
+
+				if( selected_tab_item != null && selected_tab_item.Content is UCMain )
+				{
+					uc_main = (UCMain)selected_tab_item.Content;
+				}
+			}
+
+			if(uc_main == null)
+			{
+				Debug.Assert( false );
+			}
+			else
+			{
+				uc_main.GoToOptions( );
 			}
 		}
 

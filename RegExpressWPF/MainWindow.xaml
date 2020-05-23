@@ -21,12 +21,14 @@
         <CommandBinding Command="{x:Static local:MainWindow.NewTabCommand}" CanExecute="NewTabCommand_CanExecute" Executed="NewTabCommand_Execute"/>
         <CommandBinding Command="{x:Static local:MainWindow.CloseTabCommand}" CanExecute="CloseTabCommand_CanExecute" Executed="CloseTabCommand_Execute"/>
         <CommandBinding Command="{x:Static local:MainWindow.DuplicateTabCommand}" CanExecute="DuplicateTabCommand_CanExecute" Executed="DuplicateTabCommand_Execute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.GoToOptionsCommand}" CanExecute="GoToOptionsCommand_CanExecute" Executed="GoToOptionsCommand_Execute"/>
     </Window.CommandBindings>
 
     <Window.InputBindings>
         <KeyBinding Command="{x:Static local:MainWindow.NewTabCommand}" Modifiers="Ctrl" Key="N"/>
         <KeyBinding Command="{x:Static local:MainWindow.CloseTabCommand}" Modifiers="Ctrl" Key="F4"/>
         <KeyBinding Command="{x:Static local:MainWindow.DuplicateTabCommand}" Modifiers="Ctrl" Key="D" />
+        <KeyBinding Command="{x:Static local:MainWindow.GoToOptionsCommand}" Modifiers="" Key="F4" />
     </Window.InputBindings>
 
 

@@ -19,7 +19,6 @@ namespace Re2RegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 
 		public Re2RegexEngine( )
@@ -175,7 +174,7 @@ namespace Re2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			string key = string.Join( "\u001F", new object[] { "" } ); // (no variants yet)
 
@@ -196,7 +195,7 @@ namespace Re2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			string key = string.Join( "\u001F", new object[] { "" } ); // (no variants yet)
 
@@ -217,7 +216,7 @@ namespace Re2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			var pb_escape = new PatternBuilder( );
 
@@ -260,7 +259,7 @@ namespace Re2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsOptionSelected( "literal" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			var pb = new PatternBuilder( );
 

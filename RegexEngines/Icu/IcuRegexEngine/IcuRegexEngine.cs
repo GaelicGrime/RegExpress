@@ -22,7 +22,6 @@ namespace IcuRegexEngineNs
 
 		static readonly Dictionary<object, Regex> CachedColouringRegexes = new Dictionary<object, Regex>( );
 		static readonly Dictionary<object, Regex> CachedHighlightingRegexes = new Dictionary<object, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 
 		[DllImport( "kernel32", CharSet = CharSet.Unicode, SetLastError = true )]
@@ -199,7 +198,7 @@ namespace IcuRegexEngineNs
 			string[] selected_options = OptionsControl.CachedOptions;
 
 			bool UREGEX_LITERAL = selected_options.Contains( "UREGEX_LITERAL" );
-			if( UREGEX_LITERAL ) return EmptyRegex;
+			if( UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool UREGEX_COMMENTS = selected_options.Contains( "UREGEX_COMMENTS" );
 
@@ -223,7 +222,7 @@ namespace IcuRegexEngineNs
 			string[] selected_options = OptionsControl.CachedOptions;
 
 			bool UREGEX_LITERAL = selected_options.Contains( "UREGEX_LITERAL" );
-			if( UREGEX_LITERAL ) return EmptyRegex;
+			if( UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool UREGEX_COMMENTS = selected_options.Contains( "UREGEX_COMMENTS" );
 

@@ -214,59 +214,58 @@ namespace OnigurumaRegexEngineNs
 
 		Regex CreateColouringRegex( OnigurumaRegexInterop.OnigurumaHelper helper )
 		{
+			if( helper.IsONIG_SYNTAX_ASIS ) return PatternBuilder.AlwaysFailsRegex;
+
 			var pb_escape = new PatternBuilder( );
 
 			pb_escape.BeginGroup( "escape" );
 
-			if( !helper.IsONIG_SYNTAX_ASIS )
+			pb_escape.Add( @"\\0[0-7]{1,2}" ); // octal, two digits after 0
+			pb_escape.Add( @"\\[0-7]{1,3}" ); // octal, three digits
+
+			if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb_escape.Add( @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$)" ); // \o{17777777777 ...} wide octal chars
+
+			pb_escape.Add( @"\\u[0-9a-fA-F]+" ); // \uHHHH wide hexadecimal char
+			if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) pb_escape.Add( @"\\x[0-9a-fA-F]+" ); // \xHH hexadecimal char 
+			if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb_escape.Add( @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
+
+			if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
 			{
-				pb_escape.Add( @"\\0[0-7]{1,2}" ); // octal, two digits after 0
-				pb_escape.Add( @"\\[0-7]{1,3}" ); // octal, three digits
-
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb_escape.Add( @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$)" ); // \o{17777777777 ...} wide octal chars
-
-				pb_escape.Add( @"\\u[0-9a-fA-F]+" ); // \uHHHH wide hexadecimal char
-				if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) pb_escape.Add( @"\\x[0-9a-fA-F]+" ); // \xHH hexadecimal char 
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb_escape.Add( @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
-
-				if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
-				{
-					pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
-					pb_escape.Add( @"\\C-([A-Za-z])?" ); // \C-x control char
-				}
-
-				pb_escape.Add( @"\\M-([A-Za-z])?" ); // \M-x meta  (x|0x80)
-				pb_escape.Add( @"\\M-(\\C-([A-Za-z])?)?" ); // \M-x meta control char
-				pb_escape.Add( @"\\[pP]\{.*?(\} | $)" ); // property
-
-				/*
-				Probably not useful
-
-				if( helper.IsONIG_SYN_OP_ESC_ASTERISK_ZERO_INF )
-				{
-					pb_escape.Add( @"(?!\\\*)");
-				}
-
-				if( helper.IsONIG_SYN_OP_ESC_PLUS_ONE_INF )
-				{
-					pb_escape.Add( @"(?!\\\+)");
-				}
-
-				if( helper.IsONIG_SYN_OP_ESC_QMARK_ZERO_ONE )
-				{
-					pb_escape.Add( @"(?!\\\?)");
-				}
-
-				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
-				{
-					pb_escape.Add( @"(?!\\[{}])");
-				}
-				*/
-
-				pb_escape.Add( @"\\." );
+				pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
+				pb_escape.Add( @"\\C-([A-Za-z])?" ); // \C-x control char
 			}
 
-			if( !helper.IsONIG_SYNTAX_ASIS && helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE )
+			pb_escape.Add( @"\\M-([A-Za-z])?" ); // \M-x meta  (x|0x80)
+			pb_escape.Add( @"\\M-(\\C-([A-Za-z])?)?" ); // \M-x meta control char
+			pb_escape.Add( @"\\[pP]\{.*?(\} | $)" ); // property
+
+			/*
+			Probably not useful
+
+			if( helper.IsONIG_SYN_OP_ESC_ASTERISK_ZERO_INF )
+			{
+				pb_escape.Add( @"(?!\\\*)");
+			}
+
+			if( helper.IsONIG_SYN_OP_ESC_PLUS_ONE_INF )
+			{
+				pb_escape.Add( @"(?!\\\+)");
+			}
+
+			if( helper.IsONIG_SYN_OP_ESC_QMARK_ZERO_ONE )
+			{
+				pb_escape.Add( @"(?!\\\?)");
+			}
+
+			if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
+			{
+				pb_escape.Add( @"(?!\\[{}])");
+			}
+			*/
+
+			pb_escape.Add( @"\\." );
+
+			if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE )
 			{
 				pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted part; use 'escape' name to take its colour
 			}
@@ -276,11 +275,10 @@ namespace OnigurumaRegexEngineNs
 			var pb = new PatternBuilder( );
 
 			pb.BeginGroup( "comment" );
-			if( !helper.IsONIG_SYNTAX_ASIS )
-			{
-				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
-			}
+
+			if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 			if( helper.IsONIG_OPTION_EXTEND ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+
 			pb.EndGroup( );
 
 			if( helper.IsONIG_SYN_OP2_QMARK_LT_NAMED_GROUP )
@@ -309,16 +307,13 @@ namespace OnigurumaRegexEngineNs
 			string posix_bracket = "";
 			if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
 
-			if( !helper.IsONIG_SYNTAX_ASIS )
-			{
-				pb.Add( $@"
+			pb.Add( $@"
 						\[ 
 						\]?
 						(?> {posix_bracket}{( posix_bracket.Length == 0 ? "" : " |" )} \[(?<c>) | ({pb_escape.ToPattern( )} | [^\[\]])+ | \](?<-c>))*
 						(?(c)(?!))
 						\]
 						" );
-			}
 
 			if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
 			{
@@ -338,44 +333,44 @@ namespace OnigurumaRegexEngineNs
 
 		Regex CreateHighlightingRegex( OnigurumaRegexInterop.OnigurumaHelper helper )
 		{
+			if( helper.IsONIG_SYNTAX_ASIS ) return PatternBuilder.AlwaysFailsRegex;
+
 			var pb = new PatternBuilder( );
 
-			if( !helper.IsONIG_SYNTAX_ASIS )
+			if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+
+			if( helper.IsONIG_OPTION_EXTEND ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE ) pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
+
+			if( helper.IsONIG_SYN_OP_LPAREN_SUBEXP )
 			{
-				if( helper.IsONIG_SYN_OP2_QMARK_GROUP_EFFECT ) pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
+				pb.Add( @"(?'left_par'\()" ); // '('
+				pb.Add( @"(?'right_par'\))" ); // ')'
+			}
 
-				if( helper.IsONIG_OPTION_EXTEND ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
-				if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE ) pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
+			if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
+			{
+				pb.Add( @"(?'left_par'\\\()" ); // '\('
+				pb.Add( @"(?'right_par'\\\))" ); // '\)'
+			}
 
-				if( helper.IsONIG_SYN_OP_LPAREN_SUBEXP )
-				{
-					pb.Add( @"(?'left_par'\()" ); // '('
-					pb.Add( @"(?'right_par'\))" ); // ')'
-				}
+			if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb.Add( @"\\o\{.*?(\}|$)" ); // \o{17777777777 ...} wide octal chars
+			if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb.Add( @"\\x\{.*?(\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
 
-				if( helper.IsONIG_SYN_OP_ESC_LPAREN_SUBEXP )
-				{
-					pb.Add( @"(?'left_par'\\\()" ); // '\('
-					pb.Add( @"(?'right_par'\\\))" ); // '\)'
-				}
+			if( helper.IsONIG_SYN_OP2_ESC_P_BRACE_CHAR_PROPERTY || helper.IsONIG_SYN_OP2_ESC_P_BRACE_CIRCUMFLEX_NOT )
+			{
+				pb.Add( @"\\[pP]\{.*?(\} | $)" ); // property
+			}
 
-				if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb.Add( @"\\o\{.*?(\}|$)" ); // \o{17777777777 ...} wide octal chars
-				if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb.Add( @"\\x\{.*?(\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
+			if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$)" ); // '{...}'
+			if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\\{).*?((?'right_brace'\\})|$)" ); // '\{...\}'
 
-				if( helper.IsONIG_SYN_OP2_ESC_P_BRACE_CHAR_PROPERTY || helper.IsONIG_SYN_OP2_ESC_P_BRACE_CIRCUMFLEX_NOT )
-				{
-					pb.Add( @"\\[pP]\{.*?(\} | $)" ); // property
-				}
+			string posix_bracket = "";
+			if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
 
-				if( helper.IsONIG_SYN_OP_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$)" ); // '{...}'
-				if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL ) pb.Add( @"(?'left_brace'\\{).*?((?'right_brace'\\})|$)" ); // '\{...\}'
-
-				string posix_bracket = "";
-				if( helper.IsONIG_SYN_OP_POSIX_BRACKET ) posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
-
-				if( helper.IsONIG_SYN_OP_BRACKET_CC )
-				{
-					pb.Add( $@"
+			if( helper.IsONIG_SYN_OP_BRACKET_CC )
+			{
+				pb.Add( $@"
 						(?'left_bracket'\[)
 						\]?
 						(?> {posix_bracket}{( posix_bracket.Length == 0 ? "" : " |" )} (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
@@ -384,10 +379,9 @@ namespace OnigurumaRegexEngineNs
 						|
 						(?'right_bracket'\])
 						" );
-				}
-
-				pb.Add( @"\\." ); // '\...'
 			}
+
+			pb.Add( @"\\." ); // '\...'
 
 			return pb.ToRegex( );
 		}

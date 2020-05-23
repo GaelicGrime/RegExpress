@@ -193,6 +193,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void GoToOptions( )
+		{
+			cbxEngine.Focus( );
+		}
+
+
 		private void UserControl_IsVisibleChanged( object sender, DependencyPropertyChangedEventArgs e )
 		{
 			Debug.Assert( !IsInChange );

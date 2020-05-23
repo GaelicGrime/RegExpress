@@ -20,7 +20,8 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 		const string Or = "|";
 		const string Suffix = ")";
 #endif
-		const string AlwaysFalsePattern = "(?!)";
+		const string AlwaysFailsPattern = "(?!)";
+		public static readonly Regex AlwaysFailsRegex;
 
 		int LengthBeforeGroup;
 		int LengthAfterGroupHeader;
@@ -29,6 +30,10 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 		string dbgCurrentGroup;
 #endif
 
+		static PatternBuilder( )
+		{
+			AlwaysFailsRegex = new Regex( AlwaysFailsPattern, RegexOptions.Compiled );
+		}
 
 		public PatternBuilder( )
 		{
@@ -145,7 +150,7 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 #endif
 					);
 
-			return Sb.Length == Prefix.Length ? AlwaysFalsePattern : ( Sb.ToString( ) + Suffix );
+			return Sb.Length == Prefix.Length ? AlwaysFailsPattern : ( Sb.ToString( ) + Suffix );
 		}
 
 

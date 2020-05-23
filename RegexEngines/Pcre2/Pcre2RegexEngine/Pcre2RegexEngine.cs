@@ -19,7 +19,6 @@ namespace Pcre2RegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
-		static readonly Regex EmptyRegex = new Regex( "(?!)", RegexOptions.Compiled | RegexOptions.ExplicitCapture );
 
 
 		public Pcre2RegexEngine( )
@@ -197,7 +196,7 @@ namespace Pcre2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
 			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
@@ -221,7 +220,7 @@ namespace Pcre2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
 			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
@@ -245,7 +244,7 @@ namespace Pcre2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
 			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
@@ -328,7 +327,7 @@ namespace Pcre2RegexEngineNs
 		{
 			bool is_literal = OptionsControl.IsCompileOptionSelected( "PCRE2_LITERAL" );
 
-			if( is_literal ) return EmptyRegex;
+			if( is_literal ) return PatternBuilder.AlwaysFailsRegex;
 
 			bool is_extended = OptionsControl.IsCompileOptionSelected( "PCRE2_EXTENDED" );
 			bool allow_empty_class = OptionsControl.IsCompileOptionSelected( "PCRE2_ALLOW_EMPTY_CLASS" );
