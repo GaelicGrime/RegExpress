@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 
+#include <locale.h>
 #include <uchar.h>
 
 #include "pch-re2.h"
