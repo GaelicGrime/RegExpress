@@ -268,12 +268,10 @@ namespace StdRegexInterop
 		data->addref( ); // 2
 		assert( data->dbg_refcount( ) == 2 );
 
-		//HANDLE hThread = CreateThread( NULL, 0, &NativeMatchesThreadProc0, data, 0, NULL );
 		auto thread = _beginthreadex( nullptr, 0, &NativeMatchesThreadProc, data, 0, nullptr );
 		HANDLE hThread = (HANDLE)thread;
 
 		HANDLE handles[] = { hThread, cancelEvent };
-
 
 		switch( WaitForMultipleObjects( _countof( handles ), handles, FALSE, 60000 ) )
 		{

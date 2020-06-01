@@ -23,7 +23,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static string SubstringFromTo( string text, int from, int toExcluding ) // TODO: move to utilities
+		public static string SubstringFromTo( string text, int from, int toExcluding )
 		{
 			from = Math.Max( 0, from );
 			toExcluding = Math.Min( text.Length, toExcluding );
