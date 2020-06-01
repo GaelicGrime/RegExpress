@@ -236,7 +236,7 @@ except:
 					{
 						p.Kill( );
 					}
-					catch( Exception _ )
+					catch( Exception )
 					{
 						if( Debugger.IsAttached ) Debugger.Break( );
 

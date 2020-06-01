@@ -240,7 +240,7 @@ print STDERR qq(<END-ERR\x1F/>\n);
 					{
 						p.Kill( );
 					}
-					catch( Exception _ )
+					catch( Exception )
 					{
 						if( Debugger.IsAttached ) Debugger.Break( );
 
