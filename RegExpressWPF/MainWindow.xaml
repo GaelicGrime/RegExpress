@@ -34,7 +34,7 @@
 
     <Grid x:Name="gridMain" Margin="0 1 0 0">
 
-        <TabControl x:Name="tabControlMain">
+        <TabControl x:Name="tabControlMain" SelectionChanged="tabControlMain_SelectionChanged">
 
             <TabControl.Resources>
 

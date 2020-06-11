@@ -15,17 +15,17 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="33"/>
             <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="222" MinWidth="33"/>
+            <ColumnDefinition x:Name="RightColumn" Width="222" MinWidth="33"/>
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="73" MinHeight="33" />
+                <RowDefinition x:Name="TopRow" Height="73" MinHeight="33" />
                 <RowDefinition Height="5" />
                 <RowDefinition Height="*" MinHeight="33" />
                 <RowDefinition Height="5" />
-                <RowDefinition Height="276" MinHeight="33" />
+                <RowDefinition x:Name="BottomRow" Height="276" MinHeight="33" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="0 0 0 1">
