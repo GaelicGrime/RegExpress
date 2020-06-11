@@ -30,4 +30,18 @@ namespace RegExpressWPF.Code
 
 #pragma warning restore CA1051 // Do not declare visible instance fields
 	}
+
+
+	public class TabMetrics
+	{
+#pragma warning disable CA1051 // Do not declare visible instance fields
+
+		public double
+			RightColumnWidth,
+			TopRowHeight,
+			BottomRowHeight;
+
+#pragma warning restore CA1051 // Do not declare visible instance fields
+
+	}
 }

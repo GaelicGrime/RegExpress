@@ -92,6 +92,7 @@ namespace RegExpressWPF
 			}
 
 			TrySwitchToSingleMode( );
+			TryRestoreLayout( );
 
 			IsFullyLoaded = true;
 		}
@@ -355,6 +356,24 @@ namespace RegExpressWPF
 		}
 
 
+		UCMain GetActiveUCMain( )
+		{
+			var uc_main = GetSingleModeControl( );
+
+			if( uc_main == null )
+			{
+				TabItem selected_tab_item = tabControlMain.IsVisible ? tabControlMain.SelectedItem as TabItem : null;
+
+				if( selected_tab_item != null && selected_tab_item.Content is UCMain )
+				{
+					uc_main = (UCMain)selected_tab_item.Content;
+				}
+			}
+
+			return uc_main;
+		}
+
+
 		void TrySwitchToSingleMode( )
 		{
 			var main_tabs = tabControlMain.Items.OfType<TabItem>( ).Where( t => t.Content is UCMain );
@@ -480,18 +499,9 @@ namespace RegExpressWPF
 
 		void GoToOptions( )
 		{
-			var uc_main = GetSingleModeControl( );
+			var uc_main = GetActiveUCMain( );
+
 			if( uc_main == null )
-			{
-				TabItem selected_tab_item = tabControlMain.IsVisible ? tabControlMain.SelectedItem as TabItem : null;
-
-				if( selected_tab_item != null && selected_tab_item.Content is UCMain )
-				{
-					uc_main = (UCMain)selected_tab_item.Content;
-				}
-			}
-
-			if(uc_main == null)
 			{
 				Debug.Assert( false );
 			}
@@ -521,6 +531,16 @@ namespace RegExpressWPF
 				else
 				{
 					Properties.Settings.Default.RestoreBounds = new Rect( Left, Top, ActualWidth, ActualHeight );
+				}
+
+				var uc_main = GetActiveUCMain( );
+				if( uc_main != null )
+				{
+					TabMetrics metrics = uc_main.GetMetrics( );
+
+					Properties.Settings.Default.McsRightWidth = metrics.RightColumnWidth;
+					Properties.Settings.Default.McsTopHeight = metrics.TopRowHeight;
+					Properties.Settings.Default.McsBottomHeight = metrics.BottomRowHeight;
 				}
 
 				Properties.Settings.Default.Save( );
@@ -606,6 +626,40 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
+		void TryRestoreLayout( )
+		{
+			try
+			{
+				var uc_main = GetActiveUCMain( );
+
+				if( uc_main != null )
+				{
+					if( Properties.Settings.Default.McsRightWidth > 20 &&
+					   Properties.Settings.Default.McsTopHeight > 20 &&
+					   Properties.Settings.Default.McsBottomHeight > 20 )
+					{
+						TabMetrics metrics = new TabMetrics
+						{
+							RightColumnWidth = Properties.Settings.Default.McsRightWidth,
+							TopRowHeight = Properties.Settings.Default.McsTopHeight,
+							BottomRowHeight = Properties.Settings.Default.McsBottomHeight
+						};
+
+						uc_main.ApplyMetrics( metrics );
+					}
+				}
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				// ignore
+			}
+		}
+
+
 		void RestoreMaximisedState( )
 		{
 			// restore the Maximised state; this works for secondary monitors as well;
@@ -627,6 +681,26 @@ namespace RegExpressWPF
 				if( !name.Equals( tab.Header ) ) tab.Header = name;
 			}
 		}
+
+
+		private void tabControlMain_SelectionChanged( object sender, SelectionChangedEventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+
+			TabItem old_tab_item = e.RemovedItems?.AsQueryable( ).OfType<TabItem>( ).SingleOrDefault( );
+			UCMain old_uc_main = old_tab_item?.Content as UCMain;
+
+			TabItem new_tab_item = e.AddedItems?.AsQueryable( ).OfType<TabItem>( ).SingleOrDefault( );
+			UCMain new_uc_main = new_tab_item?.Content as UCMain;
+
+			if( old_uc_main != null &&
+				new_uc_main != null )
+			{
+				var old_metrics = old_uc_main.GetMetrics( );
+				new_uc_main.ApplyMetrics( old_metrics );
+			}
+		}
+
 
 		#region IDisposable Support
 

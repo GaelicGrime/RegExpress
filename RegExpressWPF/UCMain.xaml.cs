@@ -152,6 +152,28 @@ namespace RegExpressWPF
 		}
 
 
+		[SuppressMessage( "Design", "CA1024:Use properties where appropriate", Justification = "<Pending>" )]
+		public TabMetrics GetMetrics( )
+		{
+			var metrics = new TabMetrics
+			{
+				RightColumnWidth = RightColumn.ActualWidth,
+				TopRowHeight = TopRow.ActualHeight,
+				BottomRowHeight = BottomRow.ActualHeight
+			};
+
+			return metrics;
+		}
+
+
+		public void ApplyMetrics( TabMetrics metrics )
+		{
+			if( metrics.RightColumnWidth > 0 ) RightColumn.Width = new GridLength( metrics.RightColumnWidth );
+			if( metrics.TopRowHeight > 0 ) TopRow.Height = new GridLength( metrics.TopRowHeight );
+			if( metrics.BottomRowHeight > 0 ) BottomRow.Height = new GridLength( metrics.BottomRowHeight );
+		}
+
+
 		public void ShowNewTabButton( bool yes )
 		{
 			btnNewTab.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
