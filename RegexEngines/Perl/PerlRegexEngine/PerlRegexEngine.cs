@@ -251,6 +251,7 @@ namespace PerlRegexEngineNs
 						else
 						{
 							PerlVersion = output.Substring( "V=".Length );
+							if( PerlVersion.StartsWith( "v" ) ) PerlVersion = PerlVersion.Substring( 1 );
 						}
 					}
 				}
