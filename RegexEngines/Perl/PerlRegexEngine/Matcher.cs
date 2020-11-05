@@ -264,6 +264,13 @@ print STDERR qq(<END-ERR\x1F/>\n);
 				throw new Exception( $"Perl error: {error_message}" );
 			}
 
+			//if( !string.IsNullOrWhiteSpace( error ) )
+			//{
+			//	string error_message = error;
+
+			//	throw new Exception( $"Perl error: {error_message}" );
+			//}
+
 			// try figuring out the names and their numbers
 
 			var numbered_names = new List<string>( );

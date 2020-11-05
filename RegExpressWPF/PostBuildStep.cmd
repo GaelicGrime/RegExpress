@@ -20,7 +20,7 @@ set Prj=%MainProjectPath%\..\RegexEngines\Icu\IcuRegexInterop
 xcopy /D /R /Y "%Prj%\ICU-min\bin64\*.dll" "%TargetDir%\ICU-min\bin64\*"
 
 
-rem -- Perl 5 --
+rem -- Perl --
 
 set Prj=%MainProjectPath%\..\RegexEngines\Perl\PerlRegexEngine
 
@@ -31,5 +31,4 @@ rem -- Python --
 
 set Prj=%MainProjectPath%\..\RegexEngines\Python\PythonRegexEngine
 xcopy /E /D /R /Y "%Prj%\Python-embed\*" "%TargetDir%\Python-embed\*"
-
 
