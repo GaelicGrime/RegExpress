@@ -267,7 +267,7 @@ __pycache__/
 !RegexEngines/Icu/IcuRegexInterop/ICU-min/**
 !RegexEngines/Oniguruma/OnigurumaRegexInterop/Oniguruma-min/**
 !RegexEngines/Pcre2/Pcre2RegexInterop/PCRE2/**
-!RegexEngines/Perl5/Perl5RegexEngine/Perl5-min/**
+!RegexEngines/Perl/PerlRegexEngine/Perl-min/**
 !RegexEngines/Re2/Re2RegexInterop/re2-min/**
 !RegexEngines/SubReg/SubRegRegexInterop/SubReg-min/**
 !RegexEngines/Python/PythonRegexEngine/Python-embed/**
