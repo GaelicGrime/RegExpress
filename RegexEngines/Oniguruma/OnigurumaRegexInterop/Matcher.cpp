@@ -627,8 +627,11 @@ namespace OnigurumaRegexInterop
 
 		list = gcnew List<OptionInfo^>( );
 
-		C( ONIG_OPTION_NOTBOL, "string head( str ) isn't considered as begin of line" );
-		C( ONIG_OPTION_NOTEOL, "string end( end ) isn't considered as end of line" );
+		C( ONIG_OPTION_NOTBOL, "string head isn't considered as begin of line and begin of string" );
+		C( ONIG_OPTION_NOTEOL, "string end isn't considered as end of line and end of string" );
+		C( ONIG_OPTION_NOT_BEGIN_STRING, "string head isn't considered as begin of string (* fail \\A)" );
+		C( ONIG_OPTION_NOT_END_STRING, "string end isn't considered as end of string (* fail \\z, \\Z)" );
+		C( ONIG_OPTION_NOT_BEGIN_POSITION, "string head isn't considered as start position of search (* fail \\G)" );
 		//C( ONIG_OPTION_POSIX_REGION, "region argument is regmatch_t[] of POSIX API" );
 
 		mSearchOptions = list;

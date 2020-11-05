@@ -71,9 +71,9 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </StackPanel.LayoutTransform>
-                <Label Content="REGEX__MAX__STACK__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_STACK_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 5 0 1" Padding="0"/>
+                <Label Content="__REGEX__MAX__STACK__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_STACK_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 5 0 1" Padding="0"/>
                 <TextBox x:Name="tbREGEX_MAX_STACK_COUNT" Width="150" HorizontalAlignment="Left" TextChanged="tbREGEX_MAX_STACK_COUNT_TextChanged"  />
-                <Label Content="REGEX__MAX__COMPLEXITY__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_COMPLEXITY_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 3 0 1" Padding="0"/>
+                <Label Content="__REGEX__MAX__COMPLEXITY__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_COMPLEXITY_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 3 0 1" Padding="0"/>
                 <TextBox x:Name="tbREGEX_MAX_COMPLEXITY_COUNT" Width="150" HorizontalAlignment="Left" TextChanged="tbREGEX_MAX_STACK_COUNT_TextChanged"  />
             </StackPanel>
         </StackPanel>
