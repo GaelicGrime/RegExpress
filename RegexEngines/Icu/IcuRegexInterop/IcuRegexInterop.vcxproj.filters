@@ -65,13 +65,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ICU-min\bin64\icudt67.dll">
+    <None Include="ICU-min\bin64\icudt68.dll">
       <Filter>ICU\bin64</Filter>
     </None>
-    <None Include="ICU-min\bin64\icuin67.dll">
+    <None Include="ICU-min\bin64\icuin68.dll">
       <Filter>ICU\bin64</Filter>
     </None>
-    <None Include="ICU-min\bin64\icuuc67.dll">
+    <None Include="ICU-min\bin64\icuuc68.dll">
       <Filter>ICU\bin64</Filter>
     </None>
     <None Include="..\..\..\RegExpress.snk" />
