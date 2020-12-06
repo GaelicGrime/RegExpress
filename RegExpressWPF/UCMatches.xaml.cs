@@ -365,7 +365,11 @@ namespace RegExpressWPF
 		{
 			if( AlreadyLoaded ) return;
 
-			rtbMatches.Document.MinPageWidth = Utilities.ToPoints( "21cm" );
+			var w1 = Utilities.ToPoints( $"{SystemParameters.WorkArea.Width}px" );
+			var w2 = Utilities.ToPoints( "42cm" );
+			var w = Math.Max( w1, w2 );
+
+			rtbMatches.Document.MinPageWidth = w;
 
 			var adorner_layer = AdornerLayer.GetAdornerLayer( rtbMatches );
 			adorner_layer.Add( LocalUnderliningAdorner );
