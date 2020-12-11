@@ -8,6 +8,7 @@
         Title="RegExpress" 
         Width="800"
         Height="600" 
+        Icon="RegExpress.ico"
         Initialized="Window_Initialized"
         Loaded="Window_Loaded" 
         Closing="Window_Closing" SourceInitialized="Window_SourceInitialized" 

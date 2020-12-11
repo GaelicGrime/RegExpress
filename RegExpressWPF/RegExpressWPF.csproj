@@ -203,6 +203,9 @@
       <Name>SubRegRegexEngine</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="RegExpress.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>@call "$(ProjectDir)PostBuildStep.cmd" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)"
