@@ -6,15 +6,15 @@ A .NET desktop application made in C#, based on Windows Presentation Foundation 
 It includes several Regular Expression engines:
 
 * **_Regex_** class from .NET Framework 4.8 \[[link](https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=netframework-4.8)\]
-* **_wregex_** class from Standard Template Library, MSVC 14.27.29110 \[[link](https://docs.microsoft.com/en-us/cpp/standard-library/regex)\]
-* **Boost.Regex** from Boost C++ Libraries 1.73.0 \[[link](https://www.boost.org/doc/libs/1_73_0/libs/regex/doc/html/index.html)\]
-* **PCRE2** Open Source Regex Library 10.35 \[[link](https://pcre.org/)\]
+* **_wregex_** class from Standard Template Library, MSVC 14.28.29333 \[[link](https://docs.microsoft.com/en-us/cpp/standard-library/regex)\]
+* **Boost.Regex** from Boost C++ Libraries 1.73.0 \[[link](https://www.boost.org/doc/libs/1_75_0/libs/regex/doc/html/index.html)\]
+* **PCRE2** Open Source Regex Library 10.36 \[[link](https://pcre.org/)\]
 * **RE2** C++ Library 2020-11-01 from Google \[[link](https://github.com/google/re2)\]
 * **Oniguruma** Regular Expression Library 6.9.6 \[[link](https://github.com/kkos/oniguruma)\]
 * **ICU Regular Expressions** 68.1 \[[link](http://site.icu-project.org/)\]
 * **SubReg** 2020-01-04 \[[link](https://github.com/mattbucknall/subreg)\]
 * **Perl** 5.32.0.1 \[[link](http://strawberryperl.com/)\]
-* **Python** 3.9.0 \[[link](https://www.python.org/)\]
+* **Python** 3.9.1 \[[link](https://www.python.org/)\]
 
 <br/>
 
