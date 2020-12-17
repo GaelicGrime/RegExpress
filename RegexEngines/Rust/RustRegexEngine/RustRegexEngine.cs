@@ -14,6 +14,9 @@ namespace RustRegexEngineNs
 	public class RustRegexEngine : IRegexEngine
 	{
 		readonly UCRustRegexOptions OptionsControl;
+		static readonly object RustVersionLocker = new object( );
+		static string RustVersion = null;
+
 
 		public RustRegexEngine( )
 		{
@@ -30,7 +33,28 @@ namespace RustRegexEngineNs
 
 		public string EngineVersion
 		{
-			get { return "1.48.0"; }
+			get
+			{
+				if( RustVersion == null )
+				{
+					lock( RustVersionLocker )
+					{
+						if( RustVersion == null )
+						{
+							try
+							{
+								RustVersion = RustMatcher.GetRustVersion( NonCancellable.Instance );
+							}
+							catch
+							{
+								RustVersion = "Unknown Version";
+							}
+						}
+					}
+				}
+
+				return RustVersion;
+			}
 		}
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;

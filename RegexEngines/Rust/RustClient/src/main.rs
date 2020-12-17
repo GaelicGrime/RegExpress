@@ -1,20 +1,36 @@
 #![allow(non_snake_case)]
-//#![allow(unused_imports)]
+#![allow(unused_imports)]
 //#![allow(unused_variables)]
-
+#![allow(unreachable_code)]
 
 use std::io;
 use url::Url;
 use regex::Regex;
 use std::collections::HashMap;
-use std::error::Error;
+use rustc_version_runtime::version;
 
 
-fn main() //-> io::Result<()>
+fn main()
 {
 	let mut query = String::new();
 
-	io::stdin().read_line( & mut query ).expect("Failed to read line from 'stdin'");
+	let r = io::stdin().read_line( & mut query );
+
+	if r.is_err()
+	{
+		let err = r.unwrap_err();
+
+		eprintln!("Failed to read line from 'stdin'");
+		eprintln!("{}", err);
+	}
+
+	if query.trim() == "v"
+	{
+		let v = rustc_version_runtime::version();
+		println!("{}.{}.{}", v.major, v.minor, v.patch);
+
+		return;
+	}
 
 	let mut url_to_parse = "http://unused.com?".to_owned();
 	url_to_parse.push_str(&query);
@@ -25,11 +41,8 @@ fn main() //-> io::Result<()>
 	let pattern = map.get("p").unwrap();
 	let text = map.get("t").unwrap();
 
-//let pattern = r".(?P<n1>.)(x)?(?P<n2>.).";
-//let text = "abxefghjk";
-
-//println!("Pattern: {}", pattern);
-//println!("Text: {}", text);
+	//println!("Pattern: {}", pattern);
+	//println!("Text: {}", text);
 
 	let re = Regex::new(pattern);
 
@@ -37,6 +50,7 @@ fn main() //-> io::Result<()>
 	{
 		let err = re.unwrap_err();
 
+		//eprintln!("Failed to parse the pattern.");
 		eprintln!("{}", err);
 
 		return;
