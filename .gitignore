@@ -262,7 +262,7 @@ __pycache__/
 
 
 
-#
+# My exceptions
 !RegexEngines/CppBoostRegexInterop/boost_1_72_0_min/**
 !RegexEngines/Icu/IcuRegexInterop/ICU-min/**
 !RegexEngines/Oniguruma/OnigurumaRegexInterop/Oniguruma-min/**
@@ -271,4 +271,13 @@ __pycache__/
 !RegexEngines/Re2/Re2RegexInterop/re2-min/**
 !RegexEngines/SubReg/SubRegRegexInterop/SubReg-min/**
 !RegexEngines/Python/PythonRegexEngine/Python-embed/**
+!RegexEngines/Rust/RustClient/**
+
+RegexEngines/Rust/RustClient/Cargo.lock
+RegexEngines/Rust/RustClient/target/*.*
+RegexEngines/Rust/RustClient/target/rls
+RegexEngines/Rust/RustClient/target/debug/*
+!RegexEngines/Rust/RustClient/target/debug/*.exe
+RegexEngines/Rust/RustClient/target/release/*
+!RegexEngines/Rust/RustClient/target/release/*.exe
 

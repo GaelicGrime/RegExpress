@@ -740,7 +740,7 @@ namespace RegExpressWPF
 			// GC.SuppressFinalize(this);
 		}
 
-		#endregion
+		#endregion IDisposable Support
 
 	}
 }

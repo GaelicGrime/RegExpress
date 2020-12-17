@@ -38,7 +38,7 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		public IEnumerable<ICapture> Captures => mCaptures;
 
-		#endregion
+		#endregion IGroup
 
 		public SimpleCapture AddCapture( int index, int length )
 		{

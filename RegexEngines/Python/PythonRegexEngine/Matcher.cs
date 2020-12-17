@@ -343,14 +343,14 @@ except:
 
 		#endregion IMatcher
 
-		#region ISimpleTextGettetr
+		#region ISimpleTextGetter
 
 		public string GetText( int index, int length )
 		{
 			return Text.Substring( index, length );
 		}
 
-		#endregion
+		#endregion ISimpleTextGetter
 
 
 		public static IReadOnlyList<FlagInfo> GetOptionInfoList( ) => FlagInfoList;

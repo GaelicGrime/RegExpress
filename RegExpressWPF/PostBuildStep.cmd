@@ -30,5 +30,12 @@ xcopy /E /D /R /Y "%Prj%\Perl-min\*" "%TargetDir%\Perl-min\*"
 rem -- Python --
 
 set Prj=%MainProjectPath%\..\RegexEngines\Python\PythonRegexEngine
+
 xcopy /E /D /R /Y "%Prj%\Python-embed\*" "%TargetDir%\Python-embed\*"
 
+
+rem -- Rust --
+
+set Prj=%MainProjectPath%\..\RegexEngines\Rust\RustClient
+
+xcopy /D /R /Y "%Prj%\target\debug\RustClient.exe" "%TargetDir%\*.bin"

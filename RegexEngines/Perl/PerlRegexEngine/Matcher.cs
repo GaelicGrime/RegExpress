@@ -335,14 +335,14 @@ print STDERR qq(<END-ERR\x1F/>\n);
 
 		#endregion IMatcher
 
-		#region ISimpleTextGettetr
+		#region ISimpleTextGetter
 
 		public string GetText( int index, int length )
 		{
 			return Text.Substring( index, length );
 		}
 
-		#endregion
+		#endregion ISimpleTextGetter
 
 
 		public static IReadOnlyList<ModifierInfo> GetOptionInfoList( ) => ModifierInfoList;
