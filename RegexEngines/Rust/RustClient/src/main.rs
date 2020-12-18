@@ -32,25 +32,47 @@ fn main()
 		return;
 	}
 
+println!("D: '{:?}'", query); //
+
 	let mut url_to_parse = "http://unused.com?".to_owned();
 	url_to_parse.push_str(&query);
 
 	let url = Url::parse(&url_to_parse).unwrap();
 	let map: HashMap<String, String> = url.query_pairs().into_owned().collect();
 
-	let pattern = map.get("p").unwrap();
-	let text = map.get("t").unwrap();
+	let empty = String::from("");
 
-	//println!("Pattern: {}", pattern);
-	//println!("Text: {}", text);
+	let pattern = map.get("p").unwrap_or(&empty);
+	let text = map.get("t").unwrap_or(&empty);
+	let structure = map.get("s").unwrap_or(&empty);
+	let options = map.get("o").unwrap_or(&empty);
 
-	let mut reb : regex::RegexBuilder = regex::RegexBuilder::new(pattern);
-	//reb.case_insensitive(true);
+	let re; //: std::result::Result<regex::Regex, regex::Error>;
 
-	let re = reb.build();
+	if structure == "" || structure == "Regex"
+	{
+		re = regex::Regex::new(pattern);
+	}
+	else if structure == "RegexBuilder"
+	{
+		let mut reb : regex::RegexBuilder = regex::RegexBuilder::new(pattern);
 
+		reb.case_insensitive(options.find('i').is_some());
+		reb.multi_line(options.find('m').is_some());
+		reb.dot_matches_new_line (options.find('s').is_some());
+		reb.swap_greed(options.find('S').is_some());
+		reb.ignore_whitespace (options.find('x').is_some());
+		reb.unicode(options.find('U').is_some());
+		reb.octal(options.find('O').is_some());
+	
+		re = reb.build();
+	}
+	else
+	{
+		eprintln!("Invalid 's': {:?}", structure);
 
-	//let re = regex::Regex::new(pattern);
+		return;
+	}
 
 	if re.is_err()
 	{

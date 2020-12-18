@@ -4,8 +4,10 @@ using RegexEngineInfrastructure.SyntaxColouring;
 using RustRegexEngineNs.Matches;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -71,23 +73,52 @@ namespace RustRegexEngineNs
 		}
 
 
+		const string JsonRustRegexOptionsPrefix = "JsonRustRegexOptions:";
+
+
 		public string[] ExportOptions( )
 		{
-			return OptionsControl.ExportOptions( );
+			RustRegexOptions options = OptionsControl.ExportOptions( );
+
+			var json = JsonSerializer.Serialize( options );
+
+			return new[] { JsonRustRegexOptionsPrefix + json };
 		}
 
 
 		public void ImportOptions( string[] options )
 		{
-			OptionsControl.ImportOptions( options );
+			string json = options.FirstOrDefault( o => o.StartsWith( JsonRustRegexOptionsPrefix ) )?.Substring( JsonRustRegexOptionsPrefix.Length );
+
+			RustRegexOptions rust_regex_options;
+
+			if( string.IsNullOrWhiteSpace( json ) )
+			{
+				rust_regex_options = new RustRegexOptions( );
+			}
+			else
+			{
+				try
+				{
+					rust_regex_options = JsonSerializer.Deserialize<RustRegexOptions>( json );
+				}
+				catch( Exception exc )
+				{
+					if( Debugger.IsAttached ) Debugger.Break( );
+
+					rust_regex_options = new RustRegexOptions( );
+				}
+			}
+
+			OptionsControl.ImportOptions( rust_regex_options );
 		}
 
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			string[] selected_options = OptionsControl.CachedOptions;
+			RustRegexOptions options = OptionsControl.CachedOptions;
 
-			return new RustMatcher( pattern, selected_options );
+			return new RustMatcher( pattern, options );
 		}
 
 

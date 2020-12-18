@@ -16,6 +16,7 @@ namespace RegexEngineInfrastructure
 		public bool PreferImmediateReaction;
 	}
 
+
 	public delegate void RegexEngineOptionsChanged( IRegexEngine sender, RegexEngineOptionsChangedArgs args );
 
 

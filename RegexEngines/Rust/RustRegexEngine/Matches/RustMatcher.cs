@@ -18,14 +18,14 @@ namespace RustRegexEngineNs.Matches
 	{
 		static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
 
-		readonly string[] SelectedOptions;
+		readonly RustRegexOptions Options;
 		readonly string Pattern;
 		string Text;
 		byte[] TextUtf8Bytes;
 
-		public RustMatcher( string pattern, string[] selectedOptions )
+		public RustMatcher( string pattern, RustRegexOptions options )
 		{
-			SelectedOptions = selectedOptions;
+			Options = options;
 			Pattern = pattern;
 		}
 
@@ -168,27 +168,25 @@ namespace RustRegexEngineNs.Matches
 					sw.Write( "&p=" );
 					sw.Write( Uri.EscapeDataString( Pattern ) );
 					sw.Write( "&t=" );
-					sw.WriteLine( Uri.EscapeDataString( text ) );
-
-					string @struct = SelectedOptions.Select( o => Regex.Match( o, @"struct:\s*(.*)" ) )?.FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "";
+					sw.Write( Uri.EscapeDataString( text ) );
 
 					sw.Write( "&s=" );
-					sw.Write( Uri.EscapeDataString( @struct ) );
+					sw.Write( Uri.EscapeDataString( Options.@struct ) );
 
-					StringBuilder options = new StringBuilder();
+					StringBuilder options = new StringBuilder( );
 
-					if( SelectedOptions.Contains( "case_insensitive" ) ) options.Append( "i" );
-					if( SelectedOptions.Contains( "multi_line" ) ) options.Append( "m" );
-					if( SelectedOptions.Contains( "dot_matches_new_line" ) ) options.Append( "s" );
-					if( SelectedOptions.Contains( "swap_greed" ) ) options.Append( "S" );
-					if( SelectedOptions.Contains( "ignore_whitespace" ) ) options.Append( "x" );
-					if( SelectedOptions.Contains( "unicode" ) ) options.Append( "U" );
-					if( SelectedOptions.Contains( "octal" ) ) options.Append( "O" );
+					if( Options.case_insensitive ) options.Append( "i" );
+					if( Options.multi_line ) options.Append( "m" );
+					if( Options.dot_matches_new_line ) options.Append( "s" );
+					if( Options.swap_greed ) options.Append( "S" );
+					if( Options.ignore_whitespace ) options.Append( "x" );
+					if( Options.unicode ) options.Append( "U" );
+					if( Options.octal ) options.Append( "O" );
 
 					sw.Write( "&o=" );
-					sw.Write( Uri.EscapeDataString( options.ToString() ) );
+					sw.Write( Uri.EscapeDataString( options.ToString( ) ) );
 
-
+					sw.WriteLine( );
 				}
 
 				// TODO: use timeout
@@ -253,6 +251,12 @@ namespace RustRegexEngineNs.Matches
 
 				while( ( line = sr.ReadLine( ) ) != null )
 				{
+					if( line.StartsWith( "D:" ) )
+					{
+						// (for debugging)
+						continue;
+					}
+
 					if( line.StartsWith( "N: " ) )
 					{
 						names.Add( line.Substring( 2 ).Trim( ) );

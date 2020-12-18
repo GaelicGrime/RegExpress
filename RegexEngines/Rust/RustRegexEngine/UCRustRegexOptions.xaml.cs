@@ -24,7 +24,7 @@ namespace RustRegexEngineNs
 	public partial class UCRustRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
-		internal string[] CachedOptions; // (accessible from threads)
+		internal RustRegexOptions CachedOptions; // (accessible from threads)
 
 
 		bool IsFullyLoaded = false;
@@ -37,61 +37,63 @@ namespace RustRegexEngineNs
 		}
 
 
-		internal string[] ExportOptions( )
+		internal RustRegexOptions ExportOptions( )
 		{
 			return GetSelectedOptions( );
 		}
 
 
-		internal void ImportOptions( string[] options )
+		internal void ImportOptions( RustRegexOptions options )
 		{
 			SetSelectedOptions( options );
 		}
 
 
-		internal string[] GetSelectedOptions( )
+		internal RustRegexOptions GetSelectedOptions( )
 		{
-			var options = new List<string>( );
+			var options = new RustRegexOptions( );
 
-			options.Add( "struct:" + ( (ComboBoxItem)cbxStruct.SelectedItem ).Tag );
+			options.@struct = ( (ComboBoxItem)cbxStruct.SelectedItem )?.Tag?.ToString( );
 
-			if( chb_case_insensitive.IsChecked == true ) options.Add( "case_insensitive" );
-			if( chb_multi_line.IsChecked == true ) options.Add( "multi_line" );
-			if( chb_dot_matches_new_line.IsChecked == true ) options.Add( "dot_matches_new_line" );
-			if( chb_swap_greed.IsChecked == true ) options.Add( "swap_greed" );
-			if( chb_ignore_whitespace.IsChecked == true ) options.Add( "ignore_whitespace" );
-			if( chb_unicode.IsChecked == true ) options.Add( "unicode" );
-			if( chb_octal.IsChecked == true ) options.Add( "octal" );
+			options.case_insensitive = chb_case_insensitive.IsChecked == true;
+			options.multi_line = chb_multi_line.IsChecked == true;
+			options.dot_matches_new_line = chb_dot_matches_new_line.IsChecked == true;
+			options.swap_greed = chb_swap_greed.IsChecked == true;
+			options.ignore_whitespace = chb_ignore_whitespace.IsChecked == true;
+			options.unicode = chb_unicode.IsChecked == true;
+			options.octal = chb_octal.IsChecked == true;
 
-			options.Add( "size_limit:" + tbx_size_limit.Text );
-			options.Add( "dfa_size_limit:" + tbx_dfa_size_limit.Text );
-			options.Add( "nest_limit:" + tbx_nest_limit.Text );
+			options.size_limit = tbx_size_limit.Text;
+			options.dfa_size_limit = tbx_dfa_size_limit.Text;
+			options.nest_limit = tbx_nest_limit.Text;
 
-			return options.ToArray( );
+			return options;
 		}
 
-		internal void SetSelectedOptions( string[] options )
+		internal void SetSelectedOptions( RustRegexOptions options )
 		{
 			try
 			{
 				++ChangeCounter;
 
-				options = options ?? new string[] { };
+				options = options ?? new RustRegexOptions( );
 
-				if( options.Any( o => Regex.IsMatch( o, @"struct:\s*RegexBuilder" ) ) ) cbiRegexBuilder.IsSelected = true;
-				else cbiRegex.IsSelected = true;
+				if( options.@struct == "RegexBuilder" )
+					cbiRegexBuilder.IsSelected = true;
+				else
+					cbiRegex.IsSelected = true;
 
-				chb_case_insensitive.IsChecked = options.Contains( "case_insensitive" );
-				chb_multi_line.IsChecked = options.Contains( "multi_line" );
-				chb_dot_matches_new_line.IsChecked = options.Contains( "dot_matches_new_line" );
-				chb_swap_greed.IsChecked = options.Contains( "swap_greed" );
-				chb_ignore_whitespace.IsChecked = options.Contains( "ignore_whitespace" );
-				chb_unicode.IsChecked = options.Contains( "unicode" );
-				chb_octal.IsChecked = options.Contains( "octal" );
+				chb_case_insensitive.IsChecked = options.case_insensitive;
+				chb_multi_line.IsChecked = options.multi_line;
+				chb_dot_matches_new_line.IsChecked = options.dot_matches_new_line;
+				chb_swap_greed.IsChecked = options.swap_greed;
+				chb_ignore_whitespace.IsChecked = options.ignore_whitespace;
+				chb_unicode.IsChecked = options.unicode;
+				chb_octal.IsChecked = options.octal;
 
-				tbx_size_limit.Text = options.Select( o => Regex.Match( o, @"size_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
-				tbx_dfa_size_limit.Text = options.Select( o => Regex.Match( o, @"dfa_size_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
-				tbx_nest_limit.Text = options.Select( o => Regex.Match( o, @"nest_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
+				tbx_size_limit.Text = options.size_limit;
+				tbx_dfa_size_limit.Text = options.dfa_size_limit;
+				tbx_nest_limit.Text = options.nest_limit;
 
 				UpdateControls( );
 			}
