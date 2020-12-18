@@ -5,7 +5,7 @@
 
 use std::io;
 use url::Url;
-use regex::Regex;
+//use regex::Regex;
 use std::collections::HashMap;
 use rustc_version_runtime::version;
 
@@ -44,7 +44,13 @@ fn main()
 	//println!("Pattern: {}", pattern);
 	//println!("Text: {}", text);
 
-	let re = Regex::new(pattern);
+	let mut reb : regex::RegexBuilder = regex::RegexBuilder::new(pattern);
+	//reb.case_insensitive(true);
+
+	let re = reb.build();
+
+
+	//let re = regex::Regex::new(pattern);
 
 	if re.is_err()
 	{
