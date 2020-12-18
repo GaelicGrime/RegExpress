@@ -74,7 +74,7 @@
                 <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="0" />
                 <Label Grid.Column="0" Grid.Row="1" Content="dfa__size__limit:" Target="{Binding ElementName=tbx_dfa_size_limit}" />
                 <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="0" />
-                <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_size_limit}" />
+                <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_limit}" />
                 <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="0" />
             </Grid>
 

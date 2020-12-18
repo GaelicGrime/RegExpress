@@ -89,9 +89,9 @@ namespace RustRegexEngineNs
 				chb_unicode.IsChecked = options.Contains( "unicode" );
 				chb_octal.IsChecked = options.Contains( "octal" );
 
-				tbx_size_limit.Text = options.Select( o => Regex.Match( o, @"size_limit:(.*)" ) ).Where( m => m.Success ).Select( m => m.Groups[1].Value.Trim( ) ).FirstOrDefault( ) ?? "0";
-				tbx_dfa_size_limit.Text = options.Select( o => Regex.Match( o, @"dfa_size_limit:(.*)" ) ).Where( m => m.Success ).Select( m => m.Groups[1].Value.Trim( ) ).FirstOrDefault( ) ?? "0";
-				tbx_nest_limit.Text = options.Select( o => Regex.Match( o, @"nest_limit:(.*)" ) ).Where( m => m.Success ).Select( m => m.Groups[1].Value.Trim( ) ).FirstOrDefault( ) ?? "0";
+				tbx_size_limit.Text = options.Select( o => Regex.Match( o, @"size_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
+				tbx_dfa_size_limit.Text = options.Select( o => Regex.Match( o, @"dfa_size_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
+				tbx_nest_limit.Text = options.Select( o => Regex.Match( o, @"nest_limit:(.*)" ) ).FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "0";
 
 				UpdateControls( );
 			}

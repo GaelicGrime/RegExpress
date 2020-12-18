@@ -18,12 +18,14 @@ namespace RustRegexEngineNs.Matches
 	{
 		static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
 
+		readonly string[] SelectedOptions;
 		readonly string Pattern;
 		string Text;
 		byte[] TextUtf8Bytes;
 
-		public RustMatcher( string pattern, string[] selected_options )
+		public RustMatcher( string pattern, string[] selectedOptions )
 		{
+			SelectedOptions = selectedOptions;
 			Pattern = pattern;
 		}
 
@@ -163,10 +165,30 @@ namespace RustRegexEngineNs.Matches
 
 				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
 				{
-					sw.Write( "p=" );
+					sw.Write( "&p=" );
 					sw.Write( Uri.EscapeDataString( Pattern ) );
 					sw.Write( "&t=" );
 					sw.WriteLine( Uri.EscapeDataString( text ) );
+
+					string @struct = SelectedOptions.Select( o => Regex.Match( o, @"struct:\s*(.*)" ) )?.FirstOrDefault( m => m.Success )?.Groups[1].Value.Trim( ) ?? "";
+
+					sw.Write( "&s=" );
+					sw.Write( Uri.EscapeDataString( @struct ) );
+
+					StringBuilder options = new StringBuilder();
+
+					if( SelectedOptions.Contains( "case_insensitive" ) ) options.Append( "i" );
+					if( SelectedOptions.Contains( "multi_line" ) ) options.Append( "m" );
+					if( SelectedOptions.Contains( "dot_matches_new_line" ) ) options.Append( "s" );
+					if( SelectedOptions.Contains( "swap_greed" ) ) options.Append( "S" );
+					if( SelectedOptions.Contains( "ignore_whitespace" ) ) options.Append( "x" );
+					if( SelectedOptions.Contains( "unicode" ) ) options.Append( "U" );
+					if( SelectedOptions.Contains( "octal" ) ) options.Append( "O" );
+
+					sw.Write( "&o=" );
+					sw.Write( Uri.EscapeDataString( options.ToString() ) );
+
+
 				}
 
 				// TODO: use timeout

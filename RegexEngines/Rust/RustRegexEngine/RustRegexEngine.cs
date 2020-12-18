@@ -30,7 +30,7 @@ namespace RustRegexEngineNs
 
 		public string Id => "RustRegex";
 
-		public string Name => "Rust Regex";
+		public string Name => "Rust";
 
 		public string EngineVersion
 		{
