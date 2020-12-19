@@ -20,6 +20,7 @@ namespace RustRegexEngineNs
 		static readonly object RustVersionLocker = new object( );
 		static string RustVersion = null;
 
+		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 
 		public RustRegexEngine( )
 		{
@@ -116,7 +117,7 @@ namespace RustRegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			RustRegexOptions options = OptionsControl.CachedOptions;
+			RustRegexOptions options = OptionsControl.GetCachedOptions( );
 
 			return new RustMatcher( pattern, options );
 		}
@@ -124,7 +125,89 @@ namespace RustRegexEngineNs
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
+			Regex regex = GetCachedColouringRegex( );
 
+			foreach( Match m in regex.Matches( pattern ) )
+			{
+				Debug.Assert( m.Success );
+
+				if( cnc.IsCancellationRequested ) return;
+
+				// escapes, '\...'
+				{
+					var g = m.Groups["escape"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Escapes.Add( intersection );
+							}
+						}
+
+						continue;
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return;
+
+				//................
+
+				// comments, '(?#...)', '#...'
+				{
+					var g = m.Groups["comment"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Comments.Add( intersection );
+							}
+						}
+
+						continue;
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return;
+
+				// named groups and back references
+				{
+					var g = m.Groups["name"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.GroupNames.Add( intersection );
+							}
+						}
+
+						continue;
+					}
+				}
+			}
 		}
 
 
@@ -142,73 +225,100 @@ namespace RustRegexEngineNs
 		}
 
 
-#if false
-		Regex CreateColouringRegex( )
+		Regex GetCachedColouringRegex( )
 		{
+			RustRegexOptions options = OptionsControl.GetCachedOptions( );
+			string key = options.@struct + "\x1F" + options.octal + "\x1F" + options.unicode + '\x1F' + options.ignore_whitespace;
+
+			lock( CachedColouringRegexes )
+			{
+				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
+
+				regex = CreateColouringRegex( options );
+
+				CachedColouringRegexes.Add( key, regex );
+
+				return regex;
+			}
+		}
+
+
+		Regex CreateColouringRegex( RustRegexOptions options )
+		{
+			bool is_regex_builder = options.@struct == "RegexBuilder";
+
 			var pb_escape = new PatternBuilder( );
 
 			pb_escape.BeginGroup( "escape" );
 
-			pb_escape.Add( @"\\x[0-9a-fA-F]{1,2}" ); // \x7F hexadecimal char 
-			pb_escape.Add( @"\\x\{[0-9a-fA-F]+(\}|$)" ); // \x{10FFFF} wide hexadecimal chars
-
-
-
-
-
-
-
-			pb_escape.Add( @"\\0[0-7]{1,2}" ); // octal, two digits after 0
-			pb_escape.Add( @"\\[0-7]{1,3}" ); // octal, three digits
-
-			if( helper.IsONIG_SYN_OP_ESC_O_BRACE_OCTAL ) pb_escape.Add( @"\\o\{[0-7]+ (\s+ [0-7]+)* (\}|$)" ); // \o{17777777777 ...} wide octal chars
-
-			pb_escape.Add( @"\\u[0-9a-fA-F]+" ); // \uHHHH wide hexadecimal char
-			if( helper.IsONIG_SYN_OP_ESC_X_HEX2 ) pb_escape.Add( @"\\x[0-9a-fA-F]+" ); // \xHH hexadecimal char 
-			if( helper.IsONIG_SYN_OP_ESC_X_BRACE_HEX8 ) pb_escape.Add( @"\\x\{[0-9a-fA-F]+ (\s+ [0-9a-fA-F]+)* (\}|$)" ); // \x{7HHHHHHH ...} wide hexadecimal chars
-
-			if( helper.IsONIG_SYN_OP_ESC_C_CONTROL )
+			if( is_regex_builder && options.unicode )
 			{
-				pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
-				pb_escape.Add( @"\\C-([A-Za-z])?" ); // \C-x control char
+				pb_escape.Add( @"\\[pP]\{.*?(\} | $)" ); // Unicode character class (general category or script)
+				pb_escape.Add( @"\\[pP].?" ); // One-letter name Unicode character class
 			}
 
-			pb_escape.Add( @"\\M-([A-Za-z])?" ); // \M-x meta  (x|0x80)
-			pb_escape.Add( @"\\M-(\\C-([A-Za-z])?)?" ); // \M-x meta control char
-			pb_escape.Add( @"\\[pP]\{.*?(\} | $)" ); // property
-
-			/*
-			Probably not useful
-
-			if( helper.IsONIG_SYN_OP_ESC_ASTERISK_ZERO_INF )
+			if( is_regex_builder && options.octal )
 			{
-				pb_escape.Add( @"(?!\\\*)");
+				pb_escape.Add( @"\\[0-7]{1,3}" ); // octal character code (up to three digits) (when enabled)
 			}
 
-			if( helper.IsONIG_SYN_OP_ESC_PLUS_ONE_INF )
+			pb_escape.Add( @"\\x[0-9a-fA-F]{1,2}" ); // hex character code (exactly two digits)
+			pb_escape.Add( @"\\x\{[0-9a-fA-F]+(\}|$)" ); // any hex character code corresponding to a Unicode code point
+
+			if( is_regex_builder && options.unicode )
 			{
-				pb_escape.Add( @"(?!\\\+)");
+				pb_escape.Add( @"\\u[0-9a-fA-F]{0,4}" ); // hex character code (exactly four digits)
+				pb_escape.Add( @"\\u\{[0-9a-fA-F]+(\}|$)" ); // any hex character code corresponding to a Unicode code point
+				pb_escape.Add( @"\\U[0-9a-fA-F]{0,8}" ); // hex character code (exactly eight digits)
+				pb_escape.Add( @"\\U\{[0-9a-fA-F]+(\}|$)" ); // any hex character code corresponding to a Unicode code point
 			}
 
-			if( helper.IsONIG_SYN_OP_ESC_QMARK_ZERO_ONE )
+			if( is_regex_builder && options.octal )
 			{
-				pb_escape.Add( @"(?!\\\?)");
+				pb_escape.Add( @"\\." );
 			}
-
-			if( helper.IsONIG_SYN_OP_ESC_BRACE_INTERVAL )
+			else
 			{
-				pb_escape.Add( @"(?!\\[{}])");
-			}
-			*/
-
-			pb_escape.Add( @"\\." );
-
-			if( helper.IsONIG_SYN_OP2_ESC_CAPITAL_Q_QUOTE )
-			{
-				pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted part; use 'escape' name to take its colour
+				pb_escape.Add( @"\\[^0-9pPuU]" );
 			}
 
 			pb_escape.EndGroup( );
+
+
+			var pb = new PatternBuilder( );
+
+			pb.BeginGroup( "comment" );
+
+			if( is_regex_builder && options.ignore_whitespace )
+			{
+				pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			}
+
+			pb.EndGroup( );
+
+			pb.Add( @"\(\?P(?'name'<.*?(>|$))" );
+
+			{
+				// (nested groups: https://stackoverflow.com/questions/546433/regular-expression-to-match-balanced-parentheses)
+
+				string posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
+
+				pb.Add( $@"
+						\[ 
+						\]?
+						(?> {posix_bracket}{( posix_bracket.Length == 0 ? "" : " |" )} \[(?<c>) | ({pb_escape.ToPattern( )} | [^\[\]])+ | \](?<-c>))*
+						(?(c)(?!))
+						\]
+						" );
+
+			}
+
+			pb.Add( pb_escape.ToPattern( ) );
+
+			return pb.ToRegex( );
+
+#if false
+
 
 			var pb = new PatternBuilder( );
 
@@ -266,8 +376,10 @@ namespace RustRegexEngineNs
 			pb.Add( pb_escape.ToPattern( ) );
 
 			return pb.ToRegex( );
-		}
 #endif
+
+
+		}
 
 	}
 }

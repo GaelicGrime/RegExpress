@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,8 @@ namespace RustRegexEngineNs
 		public bool dot_matches_new_line { get; set; }
 		public bool swap_greed { get; set; }
 		public bool ignore_whitespace { get; set; }
-		public bool unicode { get; set; }
+		[DefaultValue( true )]
+		public bool unicode { get; set; } = true;
 		public bool octal { get; set; }
 
 

@@ -24,7 +24,7 @@ namespace RustRegexEngineNs
 	public partial class UCRustRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
-		internal RustRegexOptions CachedOptions; // (accessible from threads)
+		private RustRegexOptions CachedOptions; // (accessible from threads)
 
 
 		bool IsFullyLoaded = false;
@@ -49,7 +49,13 @@ namespace RustRegexEngineNs
 		}
 
 
-		internal RustRegexOptions GetSelectedOptions( )
+		internal RustRegexOptions GetCachedOptions( )
+		{
+			return CachedOptions;
+		}
+
+
+		private RustRegexOptions GetSelectedOptions( )
 		{
 			var options = new RustRegexOptions( );
 
