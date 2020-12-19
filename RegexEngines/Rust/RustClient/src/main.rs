@@ -64,7 +64,46 @@ println!("D: '{:?}'", query); //
 		reb.ignore_whitespace (options.find('x').is_some());
 		reb.unicode(options.find('U').is_some());
 		reb.octal(options.find('O').is_some());
+
+		let s = map.get("sl").unwrap_or(&empty);
+		if s != ""
+		{
+			let n = s.parse::<usize>();
+			if n.is_err()
+			{
+				eprintln!("Invalid 'size_limit': '{}'", s);
+				return;
+			}
+
+			reb.size_limit( n.unwrap());
+		}
 	
+		let s = map.get("dsl").unwrap_or(&empty);
+		if s != ""
+		{
+			let n = s.parse::<usize>();
+			if n.is_err()
+			{
+				eprintln!("Invalid 'dfa_size_limit': '{}'", s);
+				return;
+			}
+
+			reb.dfa_size_limit( n.unwrap());
+		}
+
+		let s = map.get("nl").unwrap_or(&empty);
+		if s != ""
+		{
+			let n = s.parse::<u32>();
+			if n.is_err()
+			{
+				eprintln!("Invalid 'nest_limit': '{}'", s);
+				return;
+			}
+
+			reb.nest_limit( n.unwrap());
+		}
+
 		re = reb.build();
 	}
 	else

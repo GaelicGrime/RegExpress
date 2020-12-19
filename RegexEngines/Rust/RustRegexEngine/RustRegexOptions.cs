@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace RustRegexEngineNs
 {
+	[System.Diagnostics.CodeAnalysis.SuppressMessage( "Style", "IDE1006:Naming Styles", Justification = "<Pending>" )]
 	sealed class RustRegexOptions
 	{
 		public string @struct { get; set; }
@@ -18,6 +19,7 @@ namespace RustRegexEngineNs
 		public bool ignore_whitespace { get; set; }
 		public bool unicode { get; set; }
 		public bool octal { get; set; }
+
 
 		public string size_limit { get; set; }
 		public string dfa_size_limit { get; set; }

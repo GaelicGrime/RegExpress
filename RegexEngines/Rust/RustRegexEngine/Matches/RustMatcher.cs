@@ -4,6 +4,7 @@ using RegexEngineInfrastructure.Matches.Simple;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -186,6 +187,24 @@ namespace RustRegexEngineNs.Matches
 					sw.Write( "&o=" );
 					sw.Write( Uri.EscapeDataString( options.ToString( ) ) );
 
+					if( !string.IsNullOrWhiteSpace( Options.size_limit ) )
+					{
+						sw.Write( "&sl=" );
+						sw.Write( Uri.EscapeDataString( Options.size_limit.Trim( ) ) );
+					}
+
+					if( !string.IsNullOrWhiteSpace( Options.dfa_size_limit ) )
+					{
+						sw.Write( "&dsl=" );
+						sw.Write( Uri.EscapeDataString( Options.dfa_size_limit.Trim( ) ) );
+					}
+
+					if( !string.IsNullOrWhiteSpace( Options.nest_limit ) )
+					{
+						sw.Write( "&nl=" );
+						sw.Write( Uri.EscapeDataString( Options.nest_limit.Trim( ) ) );
+					}
+
 					sw.WriteLine( );
 				}
 
@@ -289,7 +308,12 @@ namespace RustRegexEngineNs.Matches
 							match = SimpleMatch.Create( char_start, char_end - char_start, this );
 						}
 
-						match.AddGroup( char_start, char_end - char_start, true, names[group_index] );
+						Debug.Assert( group_index < names.Count );
+
+						string name = names[group_index];
+						if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
+
+						match.AddGroup( char_start, char_end - char_start, true, name );
 						++group_index;
 
 						continue;
