@@ -18,8 +18,7 @@ namespace RustRegexEngineNs
 		public bool dot_matches_new_line { get; set; }
 		public bool swap_greed { get; set; }
 		public bool ignore_whitespace { get; set; }
-		[DefaultValue( true )]
-		public bool unicode { get; set; } = true;
+		public bool unicode { get; set; }
 		public bool octal { get; set; }
 
 

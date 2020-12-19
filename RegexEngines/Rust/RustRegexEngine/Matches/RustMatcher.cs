@@ -179,9 +179,9 @@ namespace RustRegexEngineNs.Matches
 					if( Options.case_insensitive ) options.Append( "i" );
 					if( Options.multi_line ) options.Append( "m" );
 					if( Options.dot_matches_new_line ) options.Append( "s" );
-					if( Options.swap_greed ) options.Append( "S" );
+					if( Options.swap_greed ) options.Append( "U" );
 					if( Options.ignore_whitespace ) options.Append( "x" );
-					if( Options.unicode ) options.Append( "U" );
+					if( Options.unicode ) options.Append( "u" );
 					if( Options.octal ) options.Append( "O" );
 
 					sw.Write( "&o=" );

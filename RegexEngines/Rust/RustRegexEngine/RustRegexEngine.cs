@@ -159,9 +159,7 @@ namespace RustRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				//................
-
-				// comments, '(?#...)', '#...'
+				// comment, '#...'
 				{
 					var g = m.Groups["comment"];
 					if( g.Success )
@@ -186,7 +184,7 @@ namespace RustRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// named groups and back references
+				// named groups
 				{
 					var g = m.Groups["name"];
 					if( g.Success )
@@ -269,15 +267,16 @@ namespace RustRegexEngineNs
 
 		Regex CreateColouringRegex( RustRegexOptions options )
 		{
+			bool is_regex = options.@struct == "Regex";
 			bool is_regex_builder = options.@struct == "RegexBuilder";
 
 			var pb_escape = new PatternBuilder( );
 
 			pb_escape.BeginGroup( "escape" );
 
-			if( is_regex_builder && options.unicode )
+			if( is_regex || ( is_regex_builder && options.unicode ) )
 			{
-				pb_escape.Add( @"\\[pP]\{.*?(\}|$)?" ); // Unicode character class (general category or script)
+				pb_escape.Add( @"\\[pP]\{.*?(\}|$)" ); // Unicode character class (general category or script)
 				pb_escape.Add( @"\\[pP].?" ); // One-letter name Unicode character class
 			}
 
@@ -289,24 +288,20 @@ namespace RustRegexEngineNs
 			pb_escape.Add( @"\\x\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
 			pb_escape.Add( @"\\x[0-9a-fA-F]{0,2}" ); // hex character code (exactly two digits)
 
-			//if( is_regex_builder && options.unicode )
-			{
-				// (only 2 digits if no 'options.unicode'
-				pb_escape.Add( @"\\u\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
-				pb_escape.Add( @"\\u[0-9a-fA-F]*" ); // hex character code (exactly four digits)
-				pb_escape.Add( @"\\U\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
-				pb_escape.Add( @"\\U[0-9a-fA-F]*" ); // hex character code (exactly eight digits)
-			}
+			// (only 2 digits if no 'options.unicode'
+			pb_escape.Add( @"\\u\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
+			pb_escape.Add( @"\\u[0-9a-fA-F]{0,4}" ); // hex character code (exactly four digits)
+			pb_escape.Add( @"\\U\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
+			pb_escape.Add( @"\\U[0-9a-fA-F]{0,8}" ); // hex character code (exactly eight digits)
 
-			//........
-			//if( is_regex_builder && options.octal )
-			//{
-			//	pb_escape.Add( @"\\." );
-			//}
-			//else
-			//{
-			//	pb_escape.Add( @"\\[^0-9pPuUx]" );
-			//}
+			string any_esc = "";
+
+			if( !( is_regex || ( is_regex_builder && options.unicode ) ) ) any_esc += @"(?!\\[pP])";
+			if( !( is_regex_builder && options.octal ) ) any_esc += @"(?!\\[0-7])";
+
+			any_esc += @"\\.";
+
+			pb_escape.Add( any_esc );
 
 			pb_escape.EndGroup( );
 

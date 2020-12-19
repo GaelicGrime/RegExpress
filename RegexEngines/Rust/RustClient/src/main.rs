@@ -60,9 +60,9 @@ println!("D: '{:?}'", query); //
 		reb.case_insensitive(options.find('i').is_some());
 		reb.multi_line(options.find('m').is_some());
 		reb.dot_matches_new_line (options.find('s').is_some());
-		reb.swap_greed(options.find('S').is_some());
+		reb.swap_greed(options.find('U').is_some());
 		reb.ignore_whitespace (options.find('x').is_some());
-		reb.unicode(options.find('U').is_some());
+		reb.unicode(options.find('u').is_some());
 		reb.octal(options.find('O').is_some());
 
 		let s = map.get("sl").unwrap_or(&empty);

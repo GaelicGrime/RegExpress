@@ -43,7 +43,7 @@
                 </StackPanel>
                 <StackPanel>
                     <CheckBox x:Name="chb_swap_greed">swap__greed</CheckBox>
-                    <CheckBox x:Name="chb_unicode">unicode</CheckBox>
+                    <CheckBox x:Name="chb_unicode" IsChecked="True">unicode</CheckBox>
                     <CheckBox x:Name="chb_octal">octal</CheckBox>
                 </StackPanel>
             </StackPanel>
