@@ -3,28 +3,31 @@
 //#![allow(unused_variables)]
 #![allow(unreachable_code)]
 
-use std::io;
-use url::Url;
-//use regex::Regex;
+use std::io::Read;
 use std::collections::HashMap;
-use rustc_version_runtime::version;
 
 
 fn main()
 {
-	let mut query = String::new();
+	let mut input = String::new();
 
-	let r = io::stdin().read_line( & mut query );
+	let r = std::io::stdin().read_to_string( & mut input );
 
 	if r.is_err()
 	{
 		let err = r.unwrap_err();
 
-		eprintln!("Failed to read line from 'stdin'");
+		eprintln!("Failed to read from 'stdin'");
 		eprintln!("{}", err);
+
+		return;
 	}
 
-	if query.trim() == "v"
+	let input = input.trim();
+
+//println!("D: Input '{}'", input);
+
+	if input == "v"
 	{
 		let v = rustc_version_runtime::version();
 		println!("{}.{}.{}", v.major, v.minor, v.patch);
@@ -32,20 +35,35 @@ fn main()
 		return;
 	}
 
-println!("D: '{:?}'", query); //
+	let parsed = json::parse(&input);
 
-	let mut url_to_parse = "http://unused.com?".to_owned();
-	url_to_parse.push_str(&query);
+	if parsed.is_err()
+	{
+		let err = parsed.unwrap_err();
 
-	let url = Url::parse(&url_to_parse).unwrap();
-	let map: HashMap<String, String> = url.query_pairs().into_owned().collect();
+		eprintln!("Failed to parse input: {}", err);
+		eprintln!("Input: '{}'", input);
 
-	let empty = String::from("");
+		return;
+	}
 
-	let pattern = map.get("p").unwrap_or(&empty);
-	let text = map.get("t").unwrap_or(&empty);
-	let structure = map.get("s").unwrap_or(&empty);
-	let options = map.get("o").unwrap_or(&empty);
+	let parsed = parsed.unwrap();
+
+	println!("D: JSon: '{:?}'", parsed);
+
+	if ! parsed.is_object()
+	{
+		eprintln!("Bad json: {}", input);
+
+		return;
+	}
+
+	let structure = parsed["s"].as_str().unwrap_or("");
+	let pattern = parsed["p"].as_str().unwrap_or("");
+	let text = parsed["t"].as_str().unwrap_or("");
+	let options = parsed["o"].as_str().unwrap_or("");
+
+println!("D: pattern {:?}", pattern);
 
 	let re; //: std::result::Result<regex::Regex, regex::Error>;
 
@@ -65,7 +83,9 @@ println!("D: '{:?}'", query); //
 		reb.unicode(options.find('u').is_some());
 		reb.octal(options.find('O').is_some());
 
-		let s = map.get("sl").unwrap_or(&empty);
+
+		let s = parsed["sl"].as_str().unwrap_or("");
+
 		if s != ""
 		{
 			let n = s.parse::<usize>();
@@ -77,8 +97,9 @@ println!("D: '{:?}'", query); //
 
 			reb.size_limit( n.unwrap());
 		}
-	
-		let s = map.get("dsl").unwrap_or(&empty);
+
+		let s = parsed["dsl"].as_str().unwrap_or("");
+
 		if s != ""
 		{
 			let n = s.parse::<usize>();
@@ -91,7 +112,8 @@ println!("D: '{:?}'", query); //
 			reb.dfa_size_limit( n.unwrap());
 		}
 
-		let s = map.get("nl").unwrap_or(&empty);
+		let s = parsed["nl"].as_str().unwrap_or("");
+
 		if s != ""
 		{
 			let n = s.parse::<u32>();
@@ -147,7 +169,6 @@ println!("D: '{:?}'", query); //
 			{
 				println!();
 			}
-
 		}
 	}
 }

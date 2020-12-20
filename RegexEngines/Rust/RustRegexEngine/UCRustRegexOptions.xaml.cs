@@ -164,16 +164,8 @@ namespace RustRegexEngineNs
 
 				bool is_builder = @struct == "RegexBuilder";
 
-				chb_case_insensitive.IsEnabled =
-					chb_multi_line.IsEnabled =
-					chb_dot_matches_new_line.IsEnabled =
-					chb_swap_greed.IsEnabled =
-					chb_ignore_whitespace.IsEnabled =
-					chb_unicode.IsEnabled =
-					chb_octal.IsEnabled =
-					tbx_size_limit.IsEnabled =
-					tbx_dfa_size_limit.IsEnabled =
-					tbx_nest_limit.IsEnabled = is_builder;
+				pnlRegexBuilderOptions.IsEnabled = is_builder;
+				pnlRegexBuilderOptions.Opacity = pnlRegexBuilderOptions.IsEnabled ? 1 : 0.75;
 			}
 			finally
 			{

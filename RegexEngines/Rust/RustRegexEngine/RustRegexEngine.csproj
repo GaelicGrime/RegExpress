@@ -81,7 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RustRegexOptions.cs" />
-    <Compile Include="Matches\RustMatcher.cs" />
+    <Compile Include="RustMatcher.cs" />
     <Compile Include="RustRegexEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UCRustRegexOptions.xaml.cs">

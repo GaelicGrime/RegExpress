@@ -34,56 +34,60 @@
                 </ComboBox>
             </StackPanel>
 
-            <StackPanel Margin="0 0 0 6" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
-                <StackPanel Margin="0 0 12 0">
-                    <CheckBox x:Name="chb_case_insensitive">case__insensitive</CheckBox>
-                    <CheckBox x:Name="chb_multi_line">multi__line</CheckBox>
-                    <CheckBox x:Name="chb_dot_matches_new_line">dot__matches__new__line</CheckBox>
-                    <CheckBox x:Name="chb_ignore_whitespace">ignore__whitespace</CheckBox>
-                </StackPanel>
-                <StackPanel>
-                    <CheckBox x:Name="chb_swap_greed">swap__greed</CheckBox>
-                    <CheckBox x:Name="chb_unicode" IsChecked="True">unicode</CheckBox>
-                    <CheckBox x:Name="chb_octal">octal</CheckBox>
-                </StackPanel>
-            </StackPanel>
+            <StackPanel x:Name="pnlRegexBuilderOptions">
 
-            <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
-                <Grid.LayoutTransform>
-                    <TransformGroup>
-                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
-                        <SkewTransform/>
-                        <RotateTransform/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </Grid.LayoutTransform>
-                <Grid.Resources>
-                    <Style TargetType="Label">
-                        <Setter Property="VerticalAlignment" Value="Center"/>
-                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                        <Setter Property="Padding" Value="0 2 4 2"/>
-                    </Style>
-                    <Style TargetType="TextBox">
-                        <Setter Property="VerticalAlignment" Value="Center"/>
-                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                    </Style>
-                </Grid.Resources>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="77"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Label Grid.Column="0" Grid.Row="0" Content="size__limit:" Target="{Binding ElementName=tbx_size_limit}"/>
-                <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="" />
-                <Label Grid.Column="0" Grid.Row="1" Content="dfa__size__limit:" Target="{Binding ElementName=tbx_dfa_size_limit}" />
-                <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="" />
-                <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_limit}" />
-                <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="" />
-            </Grid>
+                <StackPanel Margin="0 0 0 6" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+                    <StackPanel Margin="0 0 12 0">
+                        <CheckBox x:Name="chb_case_insensitive">case__insensitive</CheckBox>
+                        <CheckBox x:Name="chb_multi_line">multi__line</CheckBox>
+                        <CheckBox x:Name="chb_dot_matches_new_line">dot__matches__new__line</CheckBox>
+                        <CheckBox x:Name="chb_ignore_whitespace">ignore__whitespace</CheckBox>
+                    </StackPanel>
+                    <StackPanel Margin="0 0 4 0">
+                        <CheckBox x:Name="chb_swap_greed">swap__greed</CheckBox>
+                        <CheckBox x:Name="chb_unicode" IsChecked="True">unicode</CheckBox>
+                        <CheckBox x:Name="chb_octal">octal</CheckBox>
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid.LayoutTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Grid.LayoutTransform>
+                    <Grid.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="0 2 4 2"/>
+                        </Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        </Style>
+                    </Grid.Resources>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="77"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Grid.Row="0" Content="size__limit:" Target="{Binding ElementName=tbx_size_limit}"/>
+                    <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <Label Grid.Column="0" Grid.Row="1" Content="dfa__size__limit:" Target="{Binding ElementName=tbx_dfa_size_limit}" />
+                    <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_limit}" />
+                    <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="" />
+                </Grid>
+
+            </StackPanel>
 
         </StackPanel>
 

@@ -13,9 +13,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
-namespace RustRegexEngineNs.Matches
+namespace RustRegexEngineNs
 {
-	class RustMatcher : IMatcher, ISimpleTextGetter
+	sealed class RustMatcher : IMatcher, ISimpleTextGetter
 	{
 		static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
 
@@ -166,46 +166,30 @@ namespace RustRegexEngineNs.Matches
 
 				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
 				{
-					sw.Write( "&p=" );
-					sw.Write( Uri.EscapeDataString( Pattern ) );
-					sw.Write( "&t=" );
-					sw.Write( Uri.EscapeDataString( text ) );
+					StringBuilder o = new StringBuilder( );
 
-					sw.Write( "&s=" );
-					sw.Write( Uri.EscapeDataString( Options.@struct ) );
+					if( Options.case_insensitive ) o.Append( "i" );
+					if( Options.multi_line ) o.Append( "m" );
+					if( Options.dot_matches_new_line ) o.Append( "s" );
+					if( Options.swap_greed ) o.Append( "U" );
+					if( Options.ignore_whitespace ) o.Append( "x" );
+					if( Options.unicode ) o.Append( "u" );
+					if( Options.octal ) o.Append( "O" );
 
-					StringBuilder options = new StringBuilder( );
-
-					if( Options.case_insensitive ) options.Append( "i" );
-					if( Options.multi_line ) options.Append( "m" );
-					if( Options.dot_matches_new_line ) options.Append( "s" );
-					if( Options.swap_greed ) options.Append( "U" );
-					if( Options.ignore_whitespace ) options.Append( "x" );
-					if( Options.unicode ) options.Append( "u" );
-					if( Options.octal ) options.Append( "O" );
-
-					sw.Write( "&o=" );
-					sw.Write( Uri.EscapeDataString( options.ToString( ) ) );
-
-					if( !string.IsNullOrWhiteSpace( Options.size_limit ) )
+					var obj = new
 					{
-						sw.Write( "&sl=" );
-						sw.Write( Uri.EscapeDataString( Options.size_limit.Trim( ) ) );
-					}
+						s = Options.@struct,
+						p = Pattern,
+						t = Text,
+						o = o.ToString( ),
+						sl = Options.size_limit?.Trim( ) ?? "",
+						dsl = Options.dfa_size_limit?.Trim( ) ?? "",
+						nl = Options.nest_limit?.Trim( ) ?? "",
+					};
 
-					if( !string.IsNullOrWhiteSpace( Options.dfa_size_limit ) )
-					{
-						sw.Write( "&dsl=" );
-						sw.Write( Uri.EscapeDataString( Options.dfa_size_limit.Trim( ) ) );
-					}
+					var json = System.Text.Json.JsonSerializer.Serialize( obj, obj.GetType( ) );
 
-					if( !string.IsNullOrWhiteSpace( Options.nest_limit ) )
-					{
-						sw.Write( "&nl=" );
-						sw.Write( Uri.EscapeDataString( Options.nest_limit.Trim( ) ) );
-					}
-
-					sw.WriteLine( );
+					sw.WriteLine( json );
 				}
 
 				// TODO: use timeout
@@ -308,8 +292,6 @@ namespace RustRegexEngineNs.Matches
 							match = SimpleMatch.Create( char_start, char_end - char_start, this );
 						}
 
-						Debug.Assert( group_index < names.Count );
-
 						string name = names[group_index];
 						if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
 
@@ -322,7 +304,10 @@ namespace RustRegexEngineNs.Matches
 					m = Regex.Match( line, @"^\s*G:\s*$" );
 					if( m.Success )
 					{
-						match.AddGroup( 0, 0, false, names[group_index] );
+						string name = names[group_index];
+						if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
+
+						match.AddGroup( 0, 0, false, name );
 						++group_index;
 
 						continue;

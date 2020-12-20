@@ -1,7 +1,6 @@
 ﻿using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
-using RustRegexEngineNs.Matches;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
