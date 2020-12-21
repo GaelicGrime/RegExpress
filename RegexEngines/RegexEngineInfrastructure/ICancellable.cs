@@ -11,4 +11,26 @@ namespace RegexEngineInfrastructure
 	{
 		bool IsCancellationRequested { get; }
 	}
+
+
+	public sealed class NonCancellable : ICancellable
+	{
+		public static readonly ICancellable Instance = new NonCancellable( );
+
+		private NonCancellable( )
+		{
+
+		}
+
+		#region ICancellable
+		public bool IsCancellationRequested
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		#endregion ICancellable
+	}
 }

@@ -157,7 +157,7 @@ namespace RegexEngineInfrastructure
 			return unchecked(Index ^ Length);
 		}
 
-		#endregion
+		#endregion Object
 
 
 		// Recommended overloads for structures

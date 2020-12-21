@@ -53,6 +53,9 @@
   <PropertyGroup>
     <ApplicationIcon>RegExpress.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -188,6 +191,10 @@
     <ProjectReference Include="..\RegexEngines\Re2\Re2RegexEngine\Re2RegexEngine.csproj">
       <Project>{573aaf62-0e02-46b1-9879-c5a8dbc4a266}</Project>
       <Name>Re2RegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\Rust\RustRegexEngine\RustRegexEngine.csproj">
+      <Project>{79c4940b-d335-4299-a1a1-eda4a35ad6fc}</Project>
+      <Name>RustRegexEngine</Name>
     </ProjectReference>
     <ProjectReference Include="..\RegexEngines\Std\StdRegexEngine\StdRegexEngine.csproj">
       <Project>{1bc5cc50-c0f6-4598-934f-e772938da825}</Project>

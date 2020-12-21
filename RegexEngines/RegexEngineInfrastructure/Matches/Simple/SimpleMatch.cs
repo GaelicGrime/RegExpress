@@ -44,7 +44,7 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		public string Name { get; } // TODO: reconsider the inheritance
 
-		#endregion
+		#endregion IMatch
 
 
 		#region IGroup
@@ -59,7 +59,7 @@ namespace RegexEngineInfrastructure.Matches.Simple
 			}
 		}
 
-		#endregion
+		#endregion IGroup
 
 
 		public SimpleGroup AddGroup( int index, int length, bool success, string name )

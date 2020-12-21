@@ -226,9 +226,11 @@ namespace RegExpressWPF.Code
 				return GetStatus( 0 ) != Status.None;
 			}
 		}
+
 		#endregion ICancellable
 
 		#region IDisposable Support
+
 		private bool disposedValue = false; // To detect redundant calls
 
 		void Dispose( bool disposing )
@@ -265,27 +267,8 @@ namespace RegExpressWPF.Code
 			// TODO: uncomment the following line if the finalizer is overridden above.
 			// GC.SuppressFinalize(this);
 		}
-		#endregion
+
+		#endregion IDisposable Support
 	}
 
-
-	sealed class NonCancellable : ICancellable
-	{
-		public static readonly ICancellable Instance = new NonCancellable( );
-
-		private NonCancellable( )
-		{
-
-		}
-
-		#region ICancellable
-		public bool IsCancellationRequested
-		{
-			get
-			{
-				return false;
-			}
-		}
-		#endregion ICancellable
-	}
 }

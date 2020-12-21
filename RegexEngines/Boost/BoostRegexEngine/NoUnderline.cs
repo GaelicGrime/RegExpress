@@ -31,6 +31,6 @@ namespace BoostRegexEngineNs
 			return value.ToString( ).Replace( "__", "_" );
 		}
 
-		#endregion
+		#endregion IValueConverter
 	}
 }

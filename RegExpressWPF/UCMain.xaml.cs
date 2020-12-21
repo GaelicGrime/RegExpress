@@ -58,6 +58,7 @@ namespace RegExpressWPF
 				new SubRegRegexEngineNs.SubRegRegexEngine(),
 				new PerlRegexEngineNs.PerlRegexEngine(),
 				new PythonRegexEngineNs.PythonRegexEngine(),
+				new RustRegexEngineNs.RustRegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
@@ -859,6 +860,6 @@ namespace RegExpressWPF
 			// GC.SuppressFinalize(this);
 		}
 
-		#endregion
+		#endregion IDisposable Support
 	}
 }

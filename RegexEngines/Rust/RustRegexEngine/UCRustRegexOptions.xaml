@@ -1,0 +1,95 @@
+﻿<UserControl x:Class="RustRegexEngineNs.UCRustRegexOptions"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RustRegexEngineNs"
+             mc:Ignorable="d" 
+             d:DesignHeight="175.333" d:DesignWidth="264.667" Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <Style TargetType="CheckBox">
+            <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
+            <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0 0 0 6" >
+                <StackPanel.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                        <SkewTransform/>
+                        <RotateTransform/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </StackPanel.LayoutTransform>
+
+                <Label Content="Struct:" Target="{Binding ElementName=cbxStruct}" VerticalAlignment="Center"/>
+                <ComboBox x:Name="cbxStruct" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxStruct_SelectionChanged" SelectedIndex="0">
+                    <ComboBoxItem x:Name="cbiRegex" Tag="Regex" Content="Regex"/>
+                    <ComboBoxItem x:Name="cbiRegexBuilder" Tag="RegexBuilder" Content="RegexBuilder"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel x:Name="pnlRegexBuilderOptions">
+
+                <StackPanel Margin="0 0 0 6" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+                    <StackPanel Margin="0 0 12 0">
+                        <CheckBox x:Name="chb_case_insensitive">case__insensitive</CheckBox>
+                        <CheckBox x:Name="chb_multi_line">multi__line</CheckBox>
+                        <CheckBox x:Name="chb_dot_matches_new_line">dot__matches__new__line</CheckBox>
+                        <CheckBox x:Name="chb_ignore_whitespace">ignore__whitespace</CheckBox>
+                    </StackPanel>
+                    <StackPanel Margin="0 0 4 0">
+                        <CheckBox x:Name="chb_swap_greed">swap__greed</CheckBox>
+                        <CheckBox x:Name="chb_unicode" IsChecked="True">unicode</CheckBox>
+                        <CheckBox x:Name="chb_octal">octal</CheckBox>
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Grid.LayoutTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
+                            <SkewTransform/>
+                            <RotateTransform/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Grid.LayoutTransform>
+                    <Grid.Resources>
+                        <Style TargetType="Label">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="0 2 4 2"/>
+                        </Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        </Style>
+                    </Grid.Resources>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="77"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Grid.Row="0" Content="size__limit:" Target="{Binding ElementName=tbx_size_limit}"/>
+                    <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <Label Grid.Column="0" Grid.Row="1" Content="dfa__size__limit:" Target="{Binding ElementName=tbx_dfa_size_limit}" />
+                    <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_limit}" />
+                    <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="" />
+                </Grid>
+
+            </StackPanel>
+
+        </StackPanel>
+
+    </Grid>
+</UserControl>

@@ -112,7 +112,7 @@ namespace SubRegRegexEngineNs
 			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
-		#endregion
+		#endregion IRegexEngine
 
 		private void OptionsControl_Changed( object sender, RegexEngineOptionsChangedArgs args )
 		{
