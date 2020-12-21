@@ -3,6 +3,7 @@
 //#![allow(unused_variables)]
 #![allow(unreachable_code)]
 
+use std::io;
 use std::io::Read;
 use std::collections::HashMap;
 
@@ -27,14 +28,6 @@ fn main()
 
 //println!("D: Input '{}'", input);
 
-	if input == "v"
-	{
-		let v = rustc_version_runtime::version();
-		println!("{}.{}.{}", v.major, v.minor, v.patch);
-
-		return;
-	}
-
 	let parsed = json::parse(&input);
 
 	if parsed.is_err()
@@ -49,11 +42,36 @@ fn main()
 
 	let parsed = parsed.unwrap();
 
-	println!("D: JSon: '{:?}'", parsed);
-
 	if ! parsed.is_object()
 	{
 		eprintln!("Bad json: {}", input);
+
+		return;
+	}
+
+	let command = parsed["c"].as_str().unwrap_or("");
+
+	if command == "v"
+	{
+		let v = rustc_version_runtime::version();
+		let output = json::object!
+		{
+			version: std::format!("{}.{}.{}", v.major, v.minor, v.patch)
+		};
+	
+		let output_json = json::stringify(output);
+	
+		println!("{}", output_json);
+	
+		return;
+	
+
+		return;
+	}
+
+	if ! (command == "" || command == "m")
+	{
+		eprintln!("Bad command: '{}'", command);
 
 		return;
 	}
@@ -63,9 +81,7 @@ fn main()
 	let text = parsed["t"].as_str().unwrap_or("");
 	let options = parsed["o"].as_str().unwrap_or("");
 
-println!("D: pattern {:?}", pattern);
-
-	let re; //: std::result::Result<regex::Regex, regex::Error>;
+	let re;
 
 	if structure == "" || structure == "Regex"
 	{
@@ -83,7 +99,6 @@ println!("D: pattern {:?}", pattern);
 		reb.unicode(options.find('u').is_some());
 		reb.octal(options.find('O').is_some());
 
-
 		let s = parsed["sl"].as_str().unwrap_or("");
 
 		if s != ""
@@ -92,6 +107,7 @@ println!("D: pattern {:?}", pattern);
 			if n.is_err()
 			{
 				eprintln!("Invalid 'size_limit': '{}'", s);
+
 				return;
 			}
 
@@ -106,6 +122,7 @@ println!("D: pattern {:?}", pattern);
 			if n.is_err()
 			{
 				eprintln!("Invalid 'dfa_size_limit': '{}'", s);
+
 				return;
 			}
 
@@ -120,6 +137,7 @@ println!("D: pattern {:?}", pattern);
 			if n.is_err()
 			{
 				eprintln!("Invalid 'nest_limit': '{}'", s);
+
 				return;
 			}
 
@@ -147,28 +165,46 @@ println!("D: pattern {:?}", pattern);
 
 	let re = re.unwrap();
 
+	let mut names = json::JsonValue::new_array();
+	let mut matches = json::JsonValue::new_array();
+
 	for name in re.capture_names()
 	{
-		println!("N: {}", name.unwrap_or(""));
+		names.push(name.unwrap_or("")).unwrap();
 	}
 
 	for cap in re.captures_iter(text) 
 	{
-		println!("--M--");
-		//println!("C: {:?}", cap);
+		let mut groups = json::JsonValue::new_array();
 
 		for g in cap.iter()
 		{
-			print!("   G:");
+			let group;
 			if g.is_some()
 			{
 				let g = g.unwrap();
-				println!(" {} {}", g.start(), g.end());
+				group = json::array![ g.start(), g.end() ];
 			}
 			else
 			{
-				println!();
+				group = json::array![ ];
 			}
+
+			groups.push(group).unwrap();
 		}
+
+		matches.push(groups).unwrap();
 	}
+
+	let output = json::object!
+	{
+		names: names,
+		matches: matches
+	};
+
+	let output_json = json::stringify(output);
+
+	println!("{}", output_json);
+
+	return;
 }

@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -33,95 +34,19 @@ namespace RustRegexEngineNs
 
 		public static string GetRustVersion( ICancellable cnc )
 		{
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
+			string stdout_contents;
+			string stderr_contents;
 
-			using( Process p = new Process( ) )
+			if( !InvokeRustClient( cnc, "{\"c\":\"v\"}", out stdout_contents, out stderr_contents ) ) return null;
+
+			if( !string.IsNullOrWhiteSpace( stderr_contents ) )
 			{
-				p.StartInfo.FileName = GetRustClientExePath( );
-				//p.StartInfo.Arguments = arguments;
-
-				p.StartInfo.UseShellExecute = false;
-				p.StartInfo.CreateNoWindow = true;
-				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-
-				p.StartInfo.RedirectStandardInput = true;
-				p.StartInfo.RedirectStandardOutput = true;
-				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-				p.OutputDataReceived += ( s, a ) =>
-				{
-					output_sb.AppendLine( a.Data );
-				};
-
-				p.ErrorDataReceived += ( s, a ) =>
-				{
-					error_sb.AppendLine( a.Data );
-				};
-
-				p.Start( );
-				p.BeginOutputReadLine( );
-				p.BeginErrorReadLine( );
-
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
-				{
-					sw.WriteLine( "v" );
-				}
-
-				// TODO: use timeout
-
-				bool cancel = false;
-				bool done = false;
-
-				for(; ; )
-				{
-					cancel = cnc.IsCancellationRequested;
-					if( cancel ) break;
-
-					done = p.WaitForExit( 444 );
-					if( done )
-					{
-						// another 'WaitForExit' required to finish the processing of streams;
-						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
-						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
-
-						p.WaitForExit( );
-
-						break;
-					}
-				}
-
-				if( cancel )
-				{
-					try
-					{
-						p.Kill( );
-					}
-					catch( Exception )
-					{
-						if( Debugger.IsAttached ) Debugger.Break( );
-
-						// ignore
-					}
-
-					return null;
-				}
-
-				Debug.Assert( done );
+				throw new Exception( stderr_contents );
 			}
 
-			string error = error_sb.ToString( );
+			var v = JsonSerializer.Deserialize<RustClientVersionResponse>( stdout_contents );
 
-			if( !string.IsNullOrWhiteSpace( error ) )
-			{
-				throw new Exception( error );
-			}
-
-			string output = output_sb.ToString( );
-
-			return output.Trim( );
+			return v.version;
 		}
 
 
@@ -132,198 +57,88 @@ namespace RustRegexEngineNs
 			Text = text;
 			TextUtf8Bytes = Utf8Encoding.GetBytes( text );
 
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
+			string stdout_contents;
+			string stderr_contents;
 
-			using( Process p = new Process( ) )
+			StringBuilder o = new StringBuilder( );
+
+			if( Options.case_insensitive ) o.Append( "i" );
+			if( Options.multi_line ) o.Append( "m" );
+			if( Options.dot_matches_new_line ) o.Append( "s" );
+			if( Options.swap_greed ) o.Append( "U" );
+			if( Options.ignore_whitespace ) o.Append( "x" );
+			if( Options.unicode ) o.Append( "u" );
+			if( Options.octal ) o.Append( "O" );
+
+			var obj = new
 			{
-				p.StartInfo.FileName = GetRustClientExePath( );
-				//p.StartInfo.Arguments = arguments;
+				s = Options.@struct,
+				p = Pattern,
+				t = Text,
+				o = o.ToString( ),
+				sl = Options.size_limit?.Trim( ) ?? "",
+				dsl = Options.dfa_size_limit?.Trim( ) ?? "",
+				nl = Options.nest_limit?.Trim( ) ?? "",
+			};
 
-				p.StartInfo.UseShellExecute = false;
-				p.StartInfo.CreateNoWindow = true;
-				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+			string json = JsonSerializer.Serialize( obj );
 
-				p.StartInfo.RedirectStandardInput = true;
-				p.StartInfo.RedirectStandardOutput = true;
-				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-				p.OutputDataReceived += ( s, a ) =>
-				{
-					output_sb.AppendLine( a.Data );
-				};
-
-				p.ErrorDataReceived += ( s, a ) =>
-				{
-					error_sb.AppendLine( a.Data );
-				};
-
-				p.Start( );
-				p.BeginOutputReadLine( );
-				p.BeginErrorReadLine( );
-
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
-				{
-					StringBuilder o = new StringBuilder( );
-
-					if( Options.case_insensitive ) o.Append( "i" );
-					if( Options.multi_line ) o.Append( "m" );
-					if( Options.dot_matches_new_line ) o.Append( "s" );
-					if( Options.swap_greed ) o.Append( "U" );
-					if( Options.ignore_whitespace ) o.Append( "x" );
-					if( Options.unicode ) o.Append( "u" );
-					if( Options.octal ) o.Append( "O" );
-
-					var obj = new
-					{
-						s = Options.@struct,
-						p = Pattern,
-						t = Text,
-						o = o.ToString( ),
-						sl = Options.size_limit?.Trim( ) ?? "",
-						dsl = Options.dfa_size_limit?.Trim( ) ?? "",
-						nl = Options.nest_limit?.Trim( ) ?? "",
-					};
-
-					var json = System.Text.Json.JsonSerializer.Serialize( obj, obj.GetType( ) );
-
-					sw.WriteLine( json );
-				}
-
-				// TODO: use timeout
-
-				bool cancel = false;
-				bool done = false;
-
-				for(; ; )
-				{
-					cancel = cnc.IsCancellationRequested;
-					if( cancel ) break;
-
-					done = p.WaitForExit( 444 );
-					if( done )
-					{
-						// another 'WaitForExit' required to finish the processing of streams;
-						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
-						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
-
-						p.WaitForExit( );
-
-						break;
-					}
-				}
-
-				if( cancel )
-				{
-					try
-					{
-						p.Kill( );
-					}
-					catch( Exception )
-					{
-						if( Debugger.IsAttached ) Debugger.Break( );
-
-						// ignore
-					}
-
-					return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
-				}
-
-				Debug.Assert( done );
+			if( !InvokeRustClient( cnc, json, out stdout_contents, out stderr_contents ) )
+			{
+				return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
 			}
 
-			string error = error_sb.ToString( );
-
-			if( !string.IsNullOrWhiteSpace( error ) )
+			if( !string.IsNullOrWhiteSpace( stderr_contents ) )
 			{
-				throw new Exception( error );
+				throw new Exception( stderr_contents );
 			}
 
-			string output = output_sb.ToString( );
+			var rcr = JsonSerializer.Deserialize<RustClientMatchesResponse>( stdout_contents );
 
-			var names = new List<string>( );
 			var matches = new List<IMatch>( );
 
-			using( var sr = new StringReader( output ) )
+			foreach( var m in rcr.matches )
 			{
-				string line;
 				SimpleMatch match = null;
-				int group_index = 0;
 
-				while( ( line = sr.ReadLine( ) ) != null )
+				for( int group_index = 0; group_index < m.Length; group_index++ )
 				{
-					if( line.StartsWith( "D:" ) )
+					int[] g = m[group_index];
+					bool success = g.Length == 2;
+
+					int byte_start = success ? g[0] : 0;
+					int byte_end = success ? g[1] : 0;
+
+					int char_start = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_start );
+					int char_end = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_end );
+					int char_length = char_end - char_start;
+
+					if( group_index == 0 )
 					{
-						// (for debugging)
-						continue;
+						Debug.Assert( match == null );
+						Debug.Assert( success );
+
+						match = SimpleMatch.Create( char_start, char_end - char_start, this );
 					}
 
-					if( line.StartsWith( "N: " ) )
+					Debug.Assert( match != null );
+
+					string name = rcr.names[group_index];
+					if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
+
+					if( success )
 					{
-						names.Add( line.Substring( 2 ).Trim( ) );
-						continue;
+						match.AddGroup( char_start, char_length, true, name );
 					}
-
-					if( line == "--M--" )
+					else
 					{
-						if( match != null )
-						{
-							matches.Add( match );
-							match = null;
-							group_index = 0;
-						}
-						continue;
-					}
-
-					var m = Regex.Match( line, @"^\s*G:\s*(\d+)\s+(\d+)\s*$" );
-					if( m.Success )
-					{
-						int byte_start = int.Parse( m.Groups[1].Value );
-						int byte_end = int.Parse( m.Groups[2].Value );
-
-						int char_start = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_start );
-						int char_end = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_end );
-
-						if( match == null )
-						{
-							Debug.Assert( group_index == 0 );
-							match = SimpleMatch.Create( char_start, char_end - char_start, this );
-						}
-
-						string name = names[group_index];
-						if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
-
-						match.AddGroup( char_start, char_end - char_start, true, name );
-						++group_index;
-
-						continue;
-					}
-
-					m = Regex.Match( line, @"^\s*G:\s*$" );
-					if( m.Success )
-					{
-						string name = names[group_index];
-						if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
-
 						match.AddGroup( 0, 0, false, name );
-						++group_index;
-
-						continue;
 					}
-
-					if( string.IsNullOrWhiteSpace( line ) ) continue;
-
-					throw new Exception( "Unrecognised response:\r\n" + output );
 				}
 
-				if( match != null )
-				{
-					matches.Add( match );
-					match = null;
-					group_index = 0;
-				}
+				Debug.Assert( match != null );
+
+				matches.Add( match );
 			}
 
 			return new RegexMatches( matches.Count, matches );
@@ -342,7 +157,6 @@ namespace RustRegexEngineNs
 		#endregion ISimpleTextGetter
 
 
-
 		static string GetRustClientExePath( )
 		{
 			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
@@ -353,7 +167,108 @@ namespace RustRegexEngineNs
 		}
 
 
+		static bool InvokeRustClient( ICancellable cnc, string stdinContents, out string stdoutContents, out string stderrContents )
+		{
+			var output_sb = new StringBuilder( );
+			var error_sb = new StringBuilder( );
 
+			using( Process p = new Process( ) )
+			{
+				p.StartInfo.FileName = GetRustClientExePath( );
+				//p.StartInfo.Arguments = arguments;
+
+				p.StartInfo.UseShellExecute = false;
+				p.StartInfo.CreateNoWindow = true;
+				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+
+				p.StartInfo.RedirectStandardInput = true;
+				p.StartInfo.RedirectStandardOutput = true;
+				p.StartInfo.RedirectStandardError = true;
+				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+
+				p.OutputDataReceived += ( s, a ) =>
+				{
+					output_sb.AppendLine( a.Data );
+				};
+
+				p.ErrorDataReceived += ( s, a ) =>
+				{
+					error_sb.AppendLine( a.Data );
+				};
+
+				p.Start( );
+				p.BeginOutputReadLine( );
+				p.BeginErrorReadLine( );
+
+				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
+				{
+					sw.WriteLine( stdinContents );
+				}
+
+				// TODO: use timeout
+
+				bool cancel = false;
+				bool done = false;
+
+				for(; ; )
+				{
+					cancel = cnc.IsCancellationRequested;
+					if( cancel ) break;
+
+					done = p.WaitForExit( 444 );
+					if( done )
+					{
+						// another 'WaitForExit' required to finish the processing of streams;
+						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
+						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
+
+						p.WaitForExit( );
+
+						break;
+					}
+				}
+
+				if( cancel )
+				{
+					try
+					{
+						p.Kill( );
+					}
+					catch( Exception )
+					{
+						if( Debugger.IsAttached ) Debugger.Break( );
+
+						// ignore
+					}
+
+					stdoutContents = null;
+					stderrContents = null;
+
+					return false;
+				}
+
+				Debug.Assert( done );
+			}
+
+			stderrContents = error_sb.ToString( );
+			stdoutContents = output_sb.ToString( );
+
+			return true;
+		}
 
 	}
+}
+
+
+class RustClientVersionResponse
+{
+	public string version { get; set; }
+}
+
+
+class RustClientMatchesResponse
+{
+	public string[] names { get; set; }
+	public int[][][] matches { get; set; }
 }
