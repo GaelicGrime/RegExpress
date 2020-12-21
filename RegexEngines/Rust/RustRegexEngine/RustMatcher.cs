@@ -258,17 +258,18 @@ namespace RustRegexEngineNs
 		}
 
 	}
-}
 
 
-class RustClientVersionResponse
-{
-	public string version { get; set; }
-}
+	class RustClientVersionResponse
+	{
+		public string version { get; set; }
+	}
 
 
-class RustClientMatchesResponse
-{
-	public string[] names { get; set; }
-	public int[][][] matches { get; set; }
+	class RustClientMatchesResponse
+	{
+		public string[] names { get; set; }
+		public int[][][] matches { get; set; }
+	}
+
 }
