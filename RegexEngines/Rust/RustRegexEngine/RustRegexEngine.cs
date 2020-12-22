@@ -74,22 +74,19 @@ namespace RustRegexEngineNs
 		}
 
 
-		const string JsonRustRegexOptionsPrefix = "JsonRustRegexOptions:";
-
-
 		public string[] ExportOptions( )
 		{
 			RustRegexOptions options = OptionsControl.ExportOptions( );
 
 			var json = JsonSerializer.Serialize( options );
 
-			return new[] { JsonRustRegexOptionsPrefix + json };
+			return new[] { $"json:{json}" };
 		}
 
 
 		public void ImportOptions( string[] options )
 		{
-			string json = options.FirstOrDefault( o => o.StartsWith( JsonRustRegexOptionsPrefix ) )?.Substring( JsonRustRegexOptionsPrefix.Length );
+			string json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
 
 			RustRegexOptions rust_regex_options;
 

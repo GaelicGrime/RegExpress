@@ -1,11 +1,9 @@
 #![allow(non_snake_case)]
-#![allow(unused_imports)]
+//#![allow(unused_imports)]
 //#![allow(unused_variables)]
-#![allow(unreachable_code)]
+//#![allow(unreachable_code)]
 
-use std::io;
 use std::io::Read;
-use std::collections::HashMap;
 
 
 fn main()
@@ -63,9 +61,6 @@ fn main()
 	
 		println!("{}", output_json);
 	
-		return;
-	
-
 		return;
 	}
 

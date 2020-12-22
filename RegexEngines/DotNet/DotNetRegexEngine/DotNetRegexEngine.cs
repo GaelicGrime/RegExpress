@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -84,28 +85,41 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		public RegexOptions RegexOptions => OptionsControl.CachedRegexOptions;
-
-
 		public string[] ExportOptions( )
 		{
-			return OptionsControl.ExportOptions( );
+			DotNetRegexOptions options = OptionsControl.GetSelectedOptions( );
+			var json = JsonSerializer.Serialize( options );
+
+			return new[] { $"json:{json}" };
 		}
 
 
 		public void ImportOptions( string[] options )
 		{
-			OptionsControl.ImportOptions( options );
+			var json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
+
+			DotNetRegexOptions options_obj;
+			if( string.IsNullOrWhiteSpace( json ) )
+			{
+				options_obj = new DotNetRegexOptions( );
+			}
+			else
+			{
+				options_obj = JsonSerializer.Deserialize<DotNetRegexOptions>( json );
+			}
+
+			OptionsControl.SetSelectedOptions( options_obj );
 		}
 
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			RegexOptions selected_options = OptionsControl.CachedRegexOptions;
-			TimeSpan timeout = OptionsControl.CachedTimeout;
+			DotNetRegexOptions options = OptionsControl.GetSelectedOptions( );
+			RegexOptions regex_native_options = options.NativeOptions;
+			TimeSpan timeout = TimeSpan.FromMilliseconds( options.TimeoutMs );
 			if( timeout <= TimeSpan.Zero ) timeout = TimeSpan.FromSeconds( 10 );
 
-			var regex = new Regex( pattern, selected_options, timeout );
+			var regex = new Regex( pattern, regex_native_options, timeout );
 
 			return new DotNetMatcher( regex );
 		}
@@ -113,7 +127,7 @@ namespace DotNetRegexEngineNs
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
-			Regex regex = GetCachedColouringRegex( OptionsControl.CachedRegexOptions );
+			Regex regex = GetCachedColouringRegex( OptionsControl.GetSelectedOptions( ).NativeOptions );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -193,7 +207,7 @@ namespace DotNetRegexEngineNs
 			int par_size = 1;
 			int bracket_size = 1;
 
-			Regex regex = GetCachedHighlightingRegex( OptionsControl.CachedRegexOptions );
+			Regex regex = GetCachedHighlightingRegex( OptionsControl.GetSelectedOptions( ).NativeOptions );
 
 			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}

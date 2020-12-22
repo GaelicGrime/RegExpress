@@ -5,29 +5,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DotNetRegexEngineNs"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" 
+             d:DesignHeight="223" d:DesignWidth="194.333" 
              Loaded="UserControl_Loaded">
     <Grid>
         <StackPanel>
-            <StackPanel x:Name="pnl">
+            <StackPanel>
                 <StackPanel.Resources>
                     <Style TargetType="CheckBox">
                         <EventSetter Event="Checked" Handler="CbOption_CheckedChanged"/>
                         <EventSetter Event="Unchecked" Handler="CbOption_CheckedChanged"/>
                     </Style>
                 </StackPanel.Resources>
-                <CheckBox Tag="CultureInvariant">CultureInvariant</CheckBox>
-                <CheckBox Tag="ECMAScript">ECMAScript</CheckBox>
-                <CheckBox Tag="ExplicitCapture">ExplicitCapture</CheckBox>
-                <CheckBox Tag="IgnoreCase">IgnoreCase</CheckBox>
-                <CheckBox Tag="IgnorePatternWhitespace">IgnorePatternWhitespace</CheckBox>
-                <CheckBox Tag="Multiline">
+                <CheckBox IsChecked="{Binding CultureInvariant}">CultureInvariant</CheckBox>
+                <CheckBox IsChecked="{Binding ECMAScript}">ECMAScript</CheckBox>
+                <CheckBox IsChecked="{Binding ExplicitCapture}">ExplicitCapture</CheckBox>
+                <CheckBox IsChecked="{Binding IgnoreCase}">IgnoreCase</CheckBox>
+                <CheckBox IsChecked="{Binding IgnorePatternWhitespace}">IgnorePatternWhitespace</CheckBox>
+                <CheckBox IsChecked="{Binding Multiline}">
                     <TextBlock>
                         Multiline <Italic>(‘^’, ‘$’ at ‘\n’ too)</Italic>
                     </TextBlock>
                 </CheckBox>
-                <CheckBox Tag="RightToLeft">RightToLeft</CheckBox>
-                <CheckBox Tag="Singleline">
+                <CheckBox IsChecked="{Binding RightToLeft}">RightToLeft</CheckBox>
+                <CheckBox IsChecked="{Binding Singleline}">
                     <TextBlock>
                         Singleline <Italic>(‘.’ matches ‘\n’ too)</Italic>
                     </TextBlock>
@@ -38,13 +38,13 @@
                     <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
                 </StackPanel.LayoutTransform>
                 <Label Content="Timeout:" Target="{Binding ElementName=cbxTimeout}"/>
-                <ComboBox x:Name="cbxTimeout" VerticalAlignment="Center" SelectionChanged="cbxTimeout_SelectionChanged" MinWidth="44" Margin="3 0 0 0">
-                    <ComboBoxItem Tag="00:00:01" Content="1 s"/>
-                    <ComboBoxItem Tag="00:00:02" Content="2 s"/>
-                    <ComboBoxItem Tag="00:00:05" Content="5 s"/>
-                    <ComboBoxItem Tag="00:00:10" Content="10 s" IsSelected="True"/>
-                    <ComboBoxItem Tag="00:00:15" Content="15 s"/>
-                    <ComboBoxItem Tag="00:00:30" Content="30 s"/>
+                <ComboBox x:Name="cbxTimeout" SelectedValuePath="Tag" SelectedValue="{Binding TimeoutMs}" VerticalAlignment="Center" SelectionChanged="cbxTimeout_SelectionChanged" MinWidth="44" Margin="3 0 0 0">
+                    <ComboBoxItem Tag="1000" Content="1 s"/>
+                    <ComboBoxItem Tag="2000" Content="2 s"/>
+                    <ComboBoxItem Tag="5000" Content="5 s"/>
+                    <ComboBoxItem Tag="10000" Content="10 s" IsSelected="True"/>
+                    <ComboBoxItem Tag="15000" Content="15 s"/>
+                    <ComboBoxItem Tag="30000" Content="30 s"/>
                 </ComboBox>
             </StackPanel>
         </StackPanel>

@@ -262,14 +262,14 @@ namespace RustRegexEngineNs
 
 	class RustClientVersionResponse
 	{
-		public string version { get; set; }
+		public string version;
 	}
 
 
 	class RustClientMatchesResponse
 	{
-		public string[] names { get; set; }
-		public int[][][] matches { get; set; }
+		public string[] names;
+		public int[][][] matches;
 	}
 
 }

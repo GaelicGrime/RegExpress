@@ -26,49 +26,30 @@ namespace DotNetRegexEngineNs
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 
-		// (accessible from threads)
-		internal RegexOptions CachedRegexOptions;
-		internal TimeSpan CachedTimeout;
-
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
-		static readonly string[] RegexOptionsNames = Enum.GetNames( typeof( RegexOptions ) );
+		static readonly string[] RegexOptionsNames = Enum.GetNames( typeof( RegexOptions ) ); //.........
 
+		DotNetRegexOptions Options = new DotNetRegexOptions( );
 
 
 		public UCDotNetRegexOptions( )
 		{
 			InitializeComponent( );
+
+			DataContext = Options;
 		}
 
 
-		internal string[] ExportOptions( )
+		/*
+		internal DotNetRegexOptions ExportOptions( )
 		{
-			return pnl
-				.Children
-				.OfType<CheckBox>( )
-				.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
-				.Select( cb => cb.Tag.ToString( ) )
-				.Append( $"timeout:{CachedTimeout.ToString( "c", CultureInfo.InvariantCulture )}" )
-				.ToArray( );
+			return Options;
 		}
 
 
-		internal void ImportOptions( string[] options0 )
+		internal void ImportOptions( DotNetRegexOptions options )
 		{
-			if( options0.Length == 1 && options0[0].StartsWith( "OldRegexOptionsEnum:" ) )
-			{
-				// special backward-compatibility case; convert a number (treated as 'RegexOptions') to array of names
-
-				string number_s = options0[0].Substring( "OldRegexOptionsEnum:".Length );
-				if( int.TryParse( number_s, out int number ) )
-				{
-					RegexOptions opt = (RegexOptions)number;
-
-					options0 = Enum.Format( typeof( RegexOptions ), opt, "G" ).Split( ',' ).Select( s => s.Trim( ) ).ToArray( );
-				}
-			}
-
 			RegexOptions options = RegexOptions.None;
 			TimeSpan timeout = TimeSpan.FromSeconds( 10 );
 
@@ -88,38 +69,27 @@ namespace DotNetRegexEngineNs
 			SetSelectedOptions( options );
 			SetTimeout( timeout );
 		}
+		*/
 
 
-		internal RegexOptions GetSelectedOptions( )
+		internal DotNetRegexOptions GetSelectedOptions( )
 		{
-			return
-				pnl
-					.Children
-					.OfType<CheckBox>( )
-					.Where( cb => cb.IsChecked == true && RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) )
-					.Select( cb => (RegexOptions)Enum.Parse( typeof( RegexOptions ), cb.Tag.ToString( ) ) )
-					.Aggregate( RegexOptions.None, ( o, v ) => o | v );
+			if( Dispatcher.CheckAccess( ) )
+				return Options;
+			else
+				return Options.Clone( );
 		}
 
 
-		internal void SetSelectedOptions( RegexOptions options )
+		internal void SetSelectedOptions( DotNetRegexOptions options )
 		{
 			try
 			{
-				++ChangeCounter;
+				++ChangeCounter; //............
 
-				var cbs =
-						pnl
-							.Children
-							.OfType<CheckBox>( )
-							.Where( cb => RegexOptionsNames.Contains( cb.Tag?.ToString( ) ) );
-
-				foreach( var cb in cbs )
-				{
-					cb.IsChecked = options.HasFlag( (RegexOptions)Enum.Parse( typeof( RegexOptions ), cb.Tag.ToString( ) ) );
-				}
-
-				CachedRegexOptions = options;
+				//pnl.DataContext = null;
+				Options = options.Clone( );
+				DataContext = Options;
 			}
 			finally
 			{
@@ -127,38 +97,16 @@ namespace DotNetRegexEngineNs
 			}
 		}
 
-
-		internal TimeSpan GetTimeout( )
-		{
-			return TimeSpan.Parse( ( (ComboBoxItem)cbxTimeout.SelectedItem ).Tag.ToString( ), CultureInfo.InvariantCulture );
-		}
-
-
-		internal void SetTimeout( TimeSpan timeout )
-		{
-			try
-			{
-				++ChangeCounter;
-
-				CachedTimeout = timeout;
-
-				var s = timeout.ToString( "c", CultureInfo.InvariantCulture );
-				var item = cbxTimeout.Items.OfType<ComboBoxItem>( ).SingleOrDefault( i => s.Equals( i.Tag ) );
-				if( item != null ) item.IsSelected = true;
-			}
-			finally
-			{
-				--ChangeCounter;
-			}
-		}
+		//.........
+		//internal TimeSpan GetTimeout( ) //..........
+		//{
+		//	return TimeSpan.Parse( ( (ComboBoxItem)cbxTimeout.SelectedItem ).Tag.ToString( ), CultureInfo.InvariantCulture );
+		//}
 
 
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;
-
-			CachedRegexOptions = GetSelectedOptions( );
-			CachedTimeout = GetTimeout( );
 
 			IsFullyLoaded = true;
 		}
@@ -169,8 +117,6 @@ namespace DotNetRegexEngineNs
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
 
-			CachedRegexOptions = GetSelectedOptions( );
-
 			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
@@ -180,10 +126,11 @@ namespace DotNetRegexEngineNs
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
 
-			if( TimeSpan.TryParse( ( (ComboBoxItem)cbxTimeout.SelectedItem ).Tag.ToString( ), CultureInfo.InvariantCulture, out TimeSpan t ) )
-			{
-				CachedTimeout = t;
-			}
+			//............
+			//if( TimeSpan.TryParse( ( (ComboBoxItem)cbxTimeout.SelectedItem ).Tag.ToString( ), CultureInfo.InvariantCulture, out TimeSpan t ) )
+			//{
+			//	CachedTimeout = t;
+			//}
 
 			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
