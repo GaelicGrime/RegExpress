@@ -118,9 +118,8 @@ namespace RegExpressWPF
 
 				tabData.Pattern = InitialTabData.Pattern;
 				tabData.Text = InitialTabData.Text;
-				tabData.RegexEngineId = InitialTabData.RegexEngineId;
-				tabData.RegexOptions = InitialTabData.RegexOptions;
-				tabData.InactiveRegexOptions = InitialTabData.InactiveRegexOptions;
+				tabData.ActiveRegexEngineId = InitialTabData.ActiveRegexEngineId;
+				tabData.AllRegexOptions = InitialTabData.AllRegexOptions ?? new Dictionary<string, string[]>( );
 				tabData.ShowFirstMatchOnly = InitialTabData.ShowFirstMatchOnly;
 				tabData.ShowSucceededGroupsOnly = InitialTabData.ShowSucceededGroupsOnly;
 				tabData.ShowCaptures = InitialTabData.ShowCaptures;
@@ -131,23 +130,18 @@ namespace RegExpressWPF
 			{
 				tabData.Pattern = ucPattern.GetBaseTextData( "\n" ).Text;
 				tabData.Text = ucText.GetBaseTextData( "\n" ).Text;
-				tabData.RegexEngineId = CurrentRegexEngine.Id;
-				tabData.RegexOptions = CurrentRegexEngine.ExportOptions( );
+				tabData.ActiveRegexEngineId = CurrentRegexEngine.Id;
 				tabData.ShowFirstMatchOnly = cbShowFirstOnly.IsChecked == true;
 				tabData.ShowSucceededGroupsOnly = cbShowSucceededGroupsOnly.IsChecked == true;
 				tabData.ShowCaptures = cbShowCaptures.IsChecked == true;
 				tabData.ShowWhiteSpaces = cbShowWhitespaces.IsChecked == true;
 				tabData.Eol = GetEolOption( );
 
-				// also save options of inactive engines
-
-				tabData.InactiveRegexOptions = new Dictionary<string, string[]>( );
+				// save options of active and inactive engines
 
 				foreach( var engine in RegexEngines )
 				{
-					if( object.ReferenceEquals( engine, CurrentRegexEngine ) ) continue;
-
-					tabData.InactiveRegexOptions[engine.Id] = engine.ExportOptions( );
+					tabData.AllRegexOptions[engine.Id] = engine.ExportOptions( );
 				}
 			}
 		}
@@ -453,43 +447,20 @@ namespace RegExpressWPF
 
 			try
 			{
-				IRegexEngine engine = RegexEngines.SingleOrDefault( n => n.Id == tabData.RegexEngineId );
+				IRegexEngine engine = RegexEngines.SingleOrDefault( n => n.Id == tabData.ActiveRegexEngineId );
 				if( engine == null ) engine = DefaultRegexEngine;
 
 				CurrentRegexEngine = engine;
 				SetEngineOption( engine );
 
-				// some backward-compatibility stuff, when 'tabData.RegexOptions' was a number
-
-				string[] options = tabData.RegexOptions as string[];
-
-				if( options == null )
-				{
-					if( tabData.RegexOptions is int )
-					{
-						options = new string[] { $"OldRegexOptionsEnum:{tabData.RegexOptions}" };
-					}
-					else
-					{
-						if( tabData.RegexOptions is object[] )
-						{
-							options = ( (object[])tabData.RegexOptions ).Select( o => o.ToString( ) ).ToArray( );
-						}
-					}
-				}
-
-				if( options == null ) options = new string[] { };
-
-				engine.ImportOptions( options );
-
-				// also set options of inactive engines
+				// set options of active and inactive engines
 				foreach( var eng in RegexEngines )
 				{
-					if( object.ReferenceEquals( eng, engine ) ) continue;
-					string[] inactive_options = null;
-					if( tabData.InactiveRegexOptions?.TryGetValue( eng.Id, out inactive_options ) == true )
+					string[] options = null;
+
+					if( tabData.AllRegexOptions?.TryGetValue( eng.Id, out options ) == true )
 					{
-						eng.ImportOptions( inactive_options );
+						eng.ImportOptions( options );
 					}
 				}
 
