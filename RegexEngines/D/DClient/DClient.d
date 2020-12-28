@@ -45,9 +45,11 @@ void main()
 
 			auto re = regex(pattern, flags);
 
+			JSONValue[] names;
+
 			foreach(name; re.namedCaptures)
 			{
-				writeln(name);
+				names ~= JSONValue(name);
 			}
 
 			JSONValue[] matches;
@@ -78,12 +80,35 @@ void main()
 					}
 				}
 
-				matches ~= JSONValue( groups);
+				JSONValue[] named_groups;
+
+				foreach(name; re.namedCaptures)
+				{
+					if( match[name].empty) 
+					{
+						named_groups ~= JSONValue(-1);
+					}
+					else
+					{
+						named_groups ~= JSONValue(match[name].ptr - text.ptr);
+					}
+				}
+
+				matches ~= JSONValue(
+					[ 
+						"g": groups,
+						"n": named_groups 
+					]);
 			}
 
-			JSONValue result = [ "matches": matches ];
+			JSONValue result = 
+				[ 
+					"n": names, 
+					"m": matches
+				];
 
-			writeln(result.toString());
+
+			writeln(toJSON(result, /*pretty:=*/ false));
 
 			return;
 		}

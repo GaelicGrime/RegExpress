@@ -28,7 +28,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCPattern.xaml
 	/// </summary>
-	public partial class UCPattern : UserControl, IDisposable
+	partial class UCPattern : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
 

@@ -1,10 +1,8 @@
 ﻿using RegexEngineInfrastructure;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,23 +15,22 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace DotNetRegexEngineNs
+namespace DRegexEngineNs
 {
 	/// <summary>
-	/// Interaction logic for UCDotNetRegexOptions.xaml
+	/// Interaction logic for UCDRegexOptions.xaml
 	/// </summary>
-	partial class UCDotNetRegexOptions : UserControl
+	partial class UCDRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
-		static readonly string[] RegexOptionsNames = Enum.GetNames( typeof( RegexOptions ) ); //.........
 
-		DotNetRegexOptions Options = new DotNetRegexOptions( );
+		DRegexOptions Options = new DRegexOptions( );
 
 
-		public UCDotNetRegexOptions( )
+		public UCDRegexOptions( )
 		{
 			InitializeComponent( );
 
@@ -41,7 +38,7 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		internal DotNetRegexOptions GetSelectedOptions( )
+		internal DRegexOptions GetSelectedOptions( )
 		{
 			if( Dispatcher.CheckAccess( ) )
 				return Options;
@@ -50,7 +47,7 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		internal void SetSelectedOptions( DotNetRegexOptions options )
+		internal void SetSelectedOptions( DRegexOptions options )
 		{
 			try
 			{
@@ -73,22 +70,12 @@ namespace DotNetRegexEngineNs
 			IsFullyLoaded = true;
 		}
 
-
-		private void CbOption_CheckedChanged( object sender, RoutedEventArgs e )
+		private void CheckBox_Changed( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
 
 			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
-		}
-
-
-		private void cbxTimeout_SelectionChanged( object sender, SelectionChangedEventArgs e )
-		{
-			if( !IsFullyLoaded ) return;
-			if( ChangeCounter != 0 ) return;
-
-			Changed?.Invoke( this, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = true } );
 		}
 	}
 }

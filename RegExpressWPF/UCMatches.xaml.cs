@@ -29,7 +29,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCMatches.xaml
 	/// </summary>
-	public partial class UCMatches : UserControl, IDisposable
+	partial class UCMatches : UserControl, IDisposable
 	{
 		readonly UnderliningAdorner LocalUnderliningAdorner;
 		readonly UnderliningAdorner ExternalUnderliningAdorner;

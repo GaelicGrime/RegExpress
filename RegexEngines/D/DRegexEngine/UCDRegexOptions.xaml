@@ -1,0 +1,53 @@
+﻿<UserControl x:Class="DRegexEngineNs.UCDRegexOptions"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DRegexEngineNs"
+             mc:Ignorable="d" 
+             d:DesignHeight="133.388" d:DesignWidth="568.98" Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <Style TargetType="CheckBox">
+            <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
+            <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+
+        <StackPanel>
+            <CheckBox IsChecked="{Binding i}">
+                <TextBlock>i <Italic>
+                    <Italic.Foreground>
+                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                    </Italic.Foreground>
+                    — Case insensitive matching</Italic></TextBlock>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding m}">
+                <TextBlock>m <Italic>
+                    <Italic.Foreground>
+                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                    </Italic.Foreground>
+                    — Multi-line mode, match ^, $ on start and end line separators as well as start and end of input</Italic></TextBlock>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding s}">
+                <TextBlock>s <Italic>
+                    <Italic.Foreground>
+                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                    </Italic.Foreground>
+                    — Single-line mode, makes . match '\n' and '\r' as well</Italic></TextBlock>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding x}">
+                <TextBlock>x <Italic>
+                    <Italic.Foreground>
+                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                    </Italic.Foreground>
+                    — Free-form syntax, ignores whitespace in pattern, useful for formatting complex regular expressions
+                </Italic></TextBlock>
+                
+            </CheckBox>
+        </StackPanel>
+
+    </Grid>
+</UserControl>

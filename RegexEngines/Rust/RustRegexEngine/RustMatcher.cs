@@ -18,8 +18,6 @@ namespace RustRegexEngineNs
 {
 	sealed class RustMatcher : IMatcher, ISimpleTextGetter
 	{
-		static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
-
 		readonly RustRegexOptions Options;
 		readonly string Pattern;
 		string Text;
@@ -55,7 +53,7 @@ namespace RustRegexEngineNs
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
 			Text = text;
-			TextUtf8Bytes = Utf8Encoding.GetBytes( text );
+			TextUtf8Bytes = Encoding.UTF8.GetBytes( text );
 
 			string stdout_contents;
 			string stderr_contents;
@@ -109,8 +107,8 @@ namespace RustRegexEngineNs
 					int byte_start = success ? g[0] : 0;
 					int byte_end = success ? g[1] : 0;
 
-					int char_start = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_start );
-					int char_end = Utf8Encoding.GetCharCount( TextUtf8Bytes, 0, byte_end );
+					int char_start = Encoding.UTF8.GetCharCount( TextUtf8Bytes, 0, byte_start );
+					int char_end = Encoding.UTF8.GetCharCount( TextUtf8Bytes, 0, byte_end );
 					int char_length = char_end - char_start;
 
 					if( group_index == 0 )
@@ -169,92 +167,7 @@ namespace RustRegexEngineNs
 
 		static bool InvokeRustClient( ICancellable cnc, string stdinContents, out string stdoutContents, out string stderrContents )
 		{
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
-
-			using( Process p = new Process( ) )
-			{
-				p.StartInfo.FileName = GetRustClientExePath( );
-				//p.StartInfo.Arguments = arguments;
-
-				p.StartInfo.UseShellExecute = false;
-				p.StartInfo.CreateNoWindow = true;
-				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-
-				p.StartInfo.RedirectStandardInput = true;
-				p.StartInfo.RedirectStandardOutput = true;
-				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-				p.OutputDataReceived += ( s, a ) =>
-				{
-					output_sb.AppendLine( a.Data );
-				};
-
-				p.ErrorDataReceived += ( s, a ) =>
-				{
-					error_sb.AppendLine( a.Data );
-				};
-
-				p.Start( );
-				p.BeginOutputReadLine( );
-				p.BeginErrorReadLine( );
-
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
-				{
-					sw.WriteLine( stdinContents );
-				}
-
-				// TODO: use timeout
-
-				bool cancel = false;
-				bool done = false;
-
-				for(; ; )
-				{
-					cancel = cnc.IsCancellationRequested;
-					if( cancel ) break;
-
-					done = p.WaitForExit( 444 );
-					if( done )
-					{
-						// another 'WaitForExit' required to finish the processing of streams;
-						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
-						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
-
-						p.WaitForExit( );
-
-						break;
-					}
-				}
-
-				if( cancel )
-				{
-					try
-					{
-						p.Kill( );
-					}
-					catch( Exception )
-					{
-						if( Debugger.IsAttached ) Debugger.Break( );
-
-						// ignore
-					}
-
-					stdoutContents = null;
-					stderrContents = null;
-
-					return false;
-				}
-
-				Debug.Assert( done );
-			}
-
-			stderrContents = error_sb.ToString( );
-			stdoutContents = output_sb.ToString( );
-
-			return true;
+			return ProcessUtilities.InvokeExe( cnc, null, GetRustClientExePath( ), stdinContents, out stdoutContents, out stderrContents );
 		}
 
 	}

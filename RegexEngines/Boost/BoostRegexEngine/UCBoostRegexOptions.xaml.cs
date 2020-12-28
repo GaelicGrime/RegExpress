@@ -20,7 +20,7 @@ namespace BoostRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCBoostRegexOptions.xaml
 	/// </summary>
-	public partial class UCBoostRegexOptions : UserControl
+	partial class UCBoostRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

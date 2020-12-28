@@ -29,7 +29,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCText.xaml
 	/// </summary>
-	public partial class UCText : UserControl, IDisposable
+	partial class UCText : UserControl, IDisposable
 	{
 		readonly WhitespaceAdorner WhitespaceAdorner;
 		readonly UnderliningAdorner LocalUnderliningAdorner;

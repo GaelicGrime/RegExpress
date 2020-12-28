@@ -19,7 +19,7 @@ namespace SubRegRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCSubRegRegexOptions.xaml
 	/// </summary>
-	public partial class UCSubRegRegexOptions : UserControl
+	partial class UCSubRegRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

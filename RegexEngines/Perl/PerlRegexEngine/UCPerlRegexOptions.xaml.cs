@@ -21,7 +21,7 @@ namespace PerlRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCPerlRegexOptions.xaml
 	/// </summary>
-	public partial class UCPerlRegexOptions : UserControl
+	partial class UCPerlRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

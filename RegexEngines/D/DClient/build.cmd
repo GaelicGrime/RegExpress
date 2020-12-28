@@ -1,1 +1,1 @@
-dmd DClient.d -O -release -inline -m64
+dmd DClient.d -O -release -inline -m64 -w -wi
