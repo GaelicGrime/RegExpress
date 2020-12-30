@@ -172,90 +172,21 @@ print STDERR qq(<END-ERR\x1F/>\n);
 .Replace( "[*MODIFIERS*]", selected_modifiers )
 .Replace( "[*USE RE STRICT*]", SelectedOptions.Contains( "strict" ) ? "use re 'strict';" : "" );
 
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
+			string stdout_contents;
+			string stderr_contents;
 
-			using( Process p = new Process( ) )
-			{
-				p.StartInfo.FileName = perl_exe;
-				p.StartInfo.Arguments = arguments;
-
-				p.StartInfo.UseShellExecute = false;
-				p.StartInfo.CreateNoWindow = true;
-				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-
-				p.StartInfo.RedirectStandardInput = true;
-				p.StartInfo.RedirectStandardOutput = true;
-				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-				p.OutputDataReceived += ( s, a ) =>
-				{
-					output_sb.AppendLine( a.Data );
-				};
-
-				p.ErrorDataReceived += ( s, a ) =>
-				{
-					error_sb.AppendLine( a.Data );
-				};
-
-				p.Start( );
-				p.BeginOutputReadLine( );
-				p.BeginErrorReadLine( );
-
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, new UTF8Encoding( encoderShouldEmitUTF8Identifier: false ) ) )
+			if( !ProcessUtilities.InvokeExe( cnc, perl_exe, arguments,
+					sw =>
 				{
 					sw.WriteLine( PrepareString( Pattern ) );
 					sw.WriteLine( PrepareString( text ) );
-				}
-
-				// TODO: use timeout
-				// TODO: implement "cancelisation" in more places
-
-				bool cancel = false;
-				bool done = false;
-
-				for(; ; )
-				{
-					cancel = cnc.IsCancellationRequested;
-					if( cancel ) break;
-
-					done = p.WaitForExit( 444 );
-					if( done )
-					{
-						// another 'WaitForExit' required to finish the processing of streams;
-						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
-						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
-
-						p.WaitForExit( );
-
-						break;
-					}
-				}
-
-				if( cancel )
-				{
-					try
-					{
-						p.Kill( );
-					}
-					catch( Exception )
-					{
-						if( Debugger.IsAttached ) Debugger.Break( );
-
-						// ignore
-					}
-
-					return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
-				}
-
-				Debug.Assert( done );
+				}, out stdout_contents, out stderr_contents ) )
+			{
+				return RegexMatches.Empty;
 			}
 
-			string error = error_sb.ToString( );
-			string debug_parse = Regex.Match( error, @"<DEBUG-PARSE\x1F>(.*?)</DEBUG-PARSE\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
-			string error_text = Regex.Match( error, @"<ERR\x1F>(.*?)</ERR\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
+			string debug_parse = Regex.Match( stderr_contents, @"<DEBUG-PARSE\x1F>(.*?)</DEBUG-PARSE\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
+			string error_text = Regex.Match( stderr_contents, @"<ERR\x1F>(.*?)</ERR\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
 
 			if( !string.IsNullOrWhiteSpace( error_text ) )
 			{
@@ -287,9 +218,7 @@ print STDERR qq(<END-ERR\x1F/>\n);
 				numbered_names[number] = name;
 			}
 
-			string output = output_sb.ToString( );
-
-			string results = Regex.Match( output, @"<RESULTS\x1F>(.*?)</RESULTS\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
+			string results = Regex.Match( stdout_contents, @"<RESULTS\x1F>(.*?)</RESULTS\x1F>", RegexOptions.Singleline | RegexOptions.Compiled ).Groups[1].Value.Trim( );
 
 			var sph = new SurrogatePairsHelper( text, processSurrogatePairs: true );
 			var split_m = results.Split( new[] { 'M' }, StringSplitOptions.RemoveEmptyEntries );

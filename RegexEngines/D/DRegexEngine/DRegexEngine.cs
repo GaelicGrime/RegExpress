@@ -14,6 +14,8 @@ namespace DRegexEngineNs
 	public class DRegexEngine : IRegexEngine
 	{
 		readonly UCDRegexOptions OptionsControl;
+		static readonly object DVersionLocker = new object( );
+		static string DVersion = null;
 
 		public DRegexEngine( )
 		{
@@ -33,7 +35,25 @@ namespace DRegexEngineNs
 		{
 			get
 			{
-				return "?.?"; //.............
+				if( DVersion == null )
+				{
+					lock( DVersionLocker )
+					{
+						if( DVersion == null )
+						{
+							try
+							{
+								DVersion = DMatcher.GetDVersion( NonCancellable.Instance );
+							}
+							catch
+							{
+								DVersion = "Unknown Version";
+							}
+						}
+					}
+				}
+
+				return DVersion;
 			}
 		}
 

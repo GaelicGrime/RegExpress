@@ -25,7 +25,7 @@ void main()
 		{
 			string v = format("%s.%s", version_major, version_minor);
 
-			JSONValue result = JSONValue(["v" : v]);
+			JSONValue result = JSONValue(["version" : v]);
 
 			writeln(result.toString());
 
@@ -53,6 +53,8 @@ void main()
 			}
 
 			JSONValue[] matches;
+			JSONValue[] empty_array0;
+			JSONValue empty_array = JSONValue(empty_array0);
 
 			foreach(match; std.regex.matchAll(text, re))
 			{
@@ -66,16 +68,15 @@ void main()
 				{
 					// ( 'capture' is 'string')
 
-					if( capture.empty) 
+					if( capture == null) // failed?
 					{
-						groups ~= JSONValue([-1, 0]);
+						groups ~= empty_array;
 					}
 					else
 					{
 //writeln("  Cap:", capture);
 //writeln("  Position:", capture.ptr - text.ptr);
 //writeln("  Length:", capture.length);
-
 						groups ~= JSONValue([capture.ptr - text.ptr, capture.length]);
 					}
 				}
@@ -96,6 +97,7 @@ void main()
 
 				matches ~= JSONValue(
 					[ 
+						"p": JSONValue(match.pre), //......................
 						"g": groups,
 						"n": named_groups 
 					]);
@@ -103,8 +105,8 @@ void main()
 
 			JSONValue result = 
 				[ 
-					"n": names, 
-					"m": matches
+					"names": names, 
+					"matches": matches
 				];
 
 
@@ -114,6 +116,10 @@ void main()
 		}
 
 		stderr.writefln("Unsupported command: '%s'", command);
+	}
+	catch (RegexException exc)
+	{
+		stderr.writeln(exc.message());
 	}
 	catch (Exception exc)
 	{

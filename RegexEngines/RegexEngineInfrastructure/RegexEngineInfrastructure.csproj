@@ -79,6 +79,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ProcessUtilities.cs" />
     <Compile Include="ICancellable.cs" />
     <Compile Include="Matches\IMatcher.cs" />
     <Compile Include="Matches\ICapture.cs" />
@@ -100,7 +101,7 @@
     <Compile Include="SyntaxColouring\HighlightHelper.cs" />
     <Compile Include="SyntaxColouring\PatternBuilder.cs" />
     <Compile Include="SyntaxColouring\UnderlineInfo.cs" />
-    <Compile Include="Utilities.cs" />
+    <Compile Include="CheckedCast.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\RegExpress.snk">

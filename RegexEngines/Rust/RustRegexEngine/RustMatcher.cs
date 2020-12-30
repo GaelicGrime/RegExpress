@@ -21,7 +21,6 @@ namespace RustRegexEngineNs
 		readonly RustRegexOptions Options;
 		readonly string Pattern;
 		string Text;
-		byte[] TextUtf8Bytes;
 
 		public RustMatcher( string pattern, RustRegexOptions options )
 		{
@@ -42,9 +41,9 @@ namespace RustRegexEngineNs
 				throw new Exception( stderr_contents );
 			}
 
-			var v = JsonSerializer.Deserialize<RustClientVersionResponse>( stdout_contents );
+			var r = JsonSerializer.Deserialize<RustClientVersionResponse>( stdout_contents );
 
-			return v.version;
+			return r.version;
 		}
 
 
@@ -53,12 +52,9 @@ namespace RustRegexEngineNs
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
 			Text = text;
-			TextUtf8Bytes = Encoding.UTF8.GetBytes( text );
+			byte[] text_utf8_bytes = Encoding.UTF8.GetBytes( text );
 
-			string stdout_contents;
-			string stderr_contents;
-
-			StringBuilder o = new StringBuilder( );
+			var o = new StringBuilder( );
 
 			if( Options.case_insensitive ) o.Append( "i" );
 			if( Options.multi_line ) o.Append( "m" );
@@ -80,10 +76,12 @@ namespace RustRegexEngineNs
 			};
 
 			string json = JsonSerializer.Serialize( obj );
+			string stdout_contents;
+			string stderr_contents;
 
 			if( !InvokeRustClient( cnc, json, out stdout_contents, out stderr_contents ) )
 			{
-				return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
+				return RegexMatches.Empty;
 			}
 
 			if( !string.IsNullOrWhiteSpace( stderr_contents ) )
@@ -91,11 +89,11 @@ namespace RustRegexEngineNs
 				throw new Exception( stderr_contents );
 			}
 
-			var rcr = JsonSerializer.Deserialize<RustClientMatchesResponse>( stdout_contents );
+			var response = JsonSerializer.Deserialize<RustClientMatchesResponse>( stdout_contents );
 
 			var matches = new List<IMatch>( );
 
-			foreach( var m in rcr.matches )
+			foreach( var m in response.matches )
 			{
 				SimpleMatch match = null;
 
@@ -107,8 +105,8 @@ namespace RustRegexEngineNs
 					int byte_start = success ? g[0] : 0;
 					int byte_end = success ? g[1] : 0;
 
-					int char_start = Encoding.UTF8.GetCharCount( TextUtf8Bytes, 0, byte_start );
-					int char_end = Encoding.UTF8.GetCharCount( TextUtf8Bytes, 0, byte_end );
+					int char_start = Encoding.UTF8.GetCharCount( text_utf8_bytes, 0, byte_start );
+					int char_end = Encoding.UTF8.GetCharCount( text_utf8_bytes, 0, byte_end );
 					int char_length = char_end - char_start;
 
 					if( group_index == 0 )
@@ -121,7 +119,7 @@ namespace RustRegexEngineNs
 
 					Debug.Assert( match != null );
 
-					string name = rcr.names[group_index];
+					string name = response.names[group_index];
 					if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
 
 					if( success )
@@ -167,7 +165,7 @@ namespace RustRegexEngineNs
 
 		static bool InvokeRustClient( ICancellable cnc, string stdinContents, out string stdoutContents, out string stderrContents )
 		{
-			return ProcessUtilities.InvokeExe( cnc, null, GetRustClientExePath( ), stdinContents, out stdoutContents, out stderrContents );
+			return ProcessUtilities.InvokeExe( cnc, GetRustClientExePath( ), null, stdinContents, out stdoutContents, out stderrContents );
 		}
 
 	}
