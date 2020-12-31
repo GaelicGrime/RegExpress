@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
+
 namespace RustRegexEngineNs
 {
 	public class RustRegexEngine : IRegexEngine
@@ -21,6 +22,7 @@ namespace RustRegexEngineNs
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
+
 
 		public RustRegexEngine( )
 		{

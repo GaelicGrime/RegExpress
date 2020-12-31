@@ -95,6 +95,16 @@ namespace DRegexEngineNs
 					int[] g = m.groups[group_index];
 					bool success = g.Length == 2;
 
+					if( group_index == 0 && !success )
+					{
+						// if pattern is "()", which matches any position, 'std.regex' does not return captures, 
+						// even the main one (all are null); however the match object contains the valid index;
+						// this is a workaround:
+
+						success = true;
+						g = new[] { m.index, 0 };
+					}
+
 					int byte_start = success ? g[0] : 0;
 					int byte_end = byte_start + ( success ? g[1] : 0 );
 
@@ -112,7 +122,21 @@ namespace DRegexEngineNs
 
 					Debug.Assert( match != null );
 
-					string name = null;//.......... response.names[group_index];
+					string name;
+
+					var np = m.named_positions
+						.Where( _ => group_index != 0 )
+						.Select( ( p, j ) => new { p, j } )
+						.FirstOrDefault( z => z.p == byte_start && !match.Groups.Any( q => q.Name == response.names[z.j] ) );
+					if( np == null )
+					{
+						name = null;
+					}
+					else
+					{
+						name = response.names[np.j];
+					}
+
 					if( string.IsNullOrWhiteSpace( name ) ) name = group_index.ToString( CultureInfo.InvariantCulture );
 
 					if( success )
@@ -178,6 +202,8 @@ namespace DRegexEngineNs
 
 	public class DClientOneMatch
 	{
+		[JsonPropertyName( "i" )]
+		public int index { get; set; }
 		[JsonPropertyName( "g" )]
 		public int[][] groups { get; set; }
 		[JsonPropertyName( "n" )]

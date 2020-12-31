@@ -3,8 +3,8 @@ import std.format;
 import std.stdio;
 import std.json;
 import std.regex;
-import std.range; //?
-import std.algorithm; //?
+import std.range;
+//import std.algorithm;
 
 
 void main()
@@ -81,34 +81,35 @@ void main()
 					}
 				}
 
-				JSONValue[] named_groups;
+				long[] named_groups;
 
 				foreach(name; re.namedCaptures)
 				{
 					if( match[name].empty) 
 					{
-						named_groups ~= JSONValue(-1);
+						named_groups ~= -1;
 					}
 					else
 					{
-						named_groups ~= JSONValue(match[name].ptr - text.ptr);
+						named_groups ~= match[name].ptr - text.ptr;
 					}
 				}
 
-				matches ~= JSONValue(
-					[ 
-						"p": JSONValue(match.pre), //......................
-						"g": groups,
-						"n": named_groups 
-					]);
-			}
+				auto const i = match.hit.ptr - text.ptr;
 
-			JSONValue result = 
-				[ 
-					"names": names, 
-					"matches": matches
+				JSONValue one = [ 
+					"i": JSONValue(i),
+					"g": JSONValue(groups),
+					"n": JSONValue(named_groups)
 				];
 
+				matches ~= one;
+			}
+
+			JSONValue result = [
+				"names": names,
+				"matches": matches
+			];
 
 			writeln(toJSON(result, /*pretty:=*/ false));
 
