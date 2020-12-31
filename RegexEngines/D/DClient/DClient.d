@@ -11,6 +11,15 @@ void main()
 {
 	try
 	{
+		debug 
+		{ 
+			const bool is_debug = true; 
+		}
+		else
+		{
+			const bool is_debug = false;
+		}
+
 		string s;
 		stdin.readf("%s", s);
 
@@ -18,8 +27,6 @@ void main()
 
 		const(JSONValue*) command_j = "c" in json_value;
 		const string command = command_j == null ? "" : command_j.str;
-
-//writef("Command: %s", command);
 
 		if( command == "v")
 		{
@@ -38,10 +45,6 @@ void main()
 			const string text = json_value["t"].str;
 			const(JSONValue*) flags_j = "f" in json_value;
 			const string flags = flags_j == null ? "" : flags_j.str;
-
-//writefln("Pattern: '%s'", pattern);
-//writefln("Text: '%s'", text);
-//writefln("Flags: '%s'", flags);
 
 			auto re = regex(pattern, flags);
 
@@ -74,24 +77,25 @@ void main()
 					}
 					else
 					{
-//writeln("  Cap:", capture);
-//writeln("  Position:", capture.ptr - text.ptr);
-//writeln("  Length:", capture.length);
+						// See: https://forum.dlang.org/post/xdvjbcgvnnoxbryekawn@forum.dlang.org
+
 						groups ~= JSONValue([capture.ptr - text.ptr, capture.length]);
 					}
 				}
 
-				long[] named_groups;
+				JSONValue[] named_groups;
 
 				foreach(name; re.namedCaptures)
 				{
-					if( match[name].empty) 
+					auto val = match[name];
+
+					if( val.empty) 
 					{
-						named_groups ~= -1;
+						named_groups ~= JSONValue([ -1, 0 ]);
 					}
 					else
 					{
-						named_groups ~= match[name].ptr - text.ptr;
+						named_groups ~= JSONValue([ val.ptr - text.ptr, val.length ]);
 					}
 				}
 
@@ -111,7 +115,7 @@ void main()
 				"matches": matches
 			];
 
-			writeln(toJSON(result, /*pretty:=*/ false));
+			writeln(toJSON(result, /*pretty:=*/ is_debug ));
 
 			return;
 		}

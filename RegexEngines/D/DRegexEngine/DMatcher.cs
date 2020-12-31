@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+
 namespace DRegexEngineNs
 {
 	sealed class DMatcher : IMatcher, ISimpleTextGetter
@@ -107,6 +108,7 @@ namespace DRegexEngineNs
 
 					int byte_start = success ? g[0] : 0;
 					int byte_end = byte_start + ( success ? g[1] : 0 );
+					int byte_length = byte_end - byte_start;
 
 					int char_start = Encoding.UTF8.GetCharCount( text_utf8_bytes, 0, byte_start );
 					int char_end = Encoding.UTF8.GetCharCount( text_utf8_bytes, 0, byte_end );
@@ -122,12 +124,17 @@ namespace DRegexEngineNs
 
 					Debug.Assert( match != null );
 
+					// try to identify the named group by index and length;
+					// cannot be done univocally in situations like "(?P<name1>(?P<name2>(.))", when index and length are the same
+
 					string name;
 
-					var np = m.named_positions
+					var np = m.named_groups
 						.Where( _ => group_index != 0 )
-						.Select( ( p, j ) => new { p, j } )
-						.FirstOrDefault( z => z.p == byte_start && !match.Groups.Any( q => q.Name == response.names[z.j] ) );
+						.Select( ( ng, j ) => new { ng, j } )
+						.Where( p => p.ng[0] >= 0 )
+						.FirstOrDefault( z => z.ng[0] == byte_start && z.ng[1] == byte_length && !match.Groups.Any( q => q.Name == response.names[z.j] ) );
+
 					if( np == null )
 					{
 						name = null;
@@ -203,11 +210,11 @@ namespace DRegexEngineNs
 	public class DClientOneMatch
 	{
 		[JsonPropertyName( "i" )]
-		public int index { get; set; }
+		public int index { get; set; } // byte-index of the whole match
 		[JsonPropertyName( "g" )]
-		public int[][] groups { get; set; }
+		public int[][] groups { get; set; } // [byte-index, byte-length], or [-1, 0] if failed
 		[JsonPropertyName( "n" )]
-		public int[] named_positions { get; set; }
+		public int[][] named_groups { get; set; } // [byte-index, byte-length], or [-1, 0] if failed
 	}
 
 }
