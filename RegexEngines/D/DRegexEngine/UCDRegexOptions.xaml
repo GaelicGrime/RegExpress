@@ -18,33 +18,33 @@
 
         <StackPanel>
             <CheckBox IsChecked="{Binding i}">
-                <TextBlock>i <Italic>
-                    <Italic.Foreground>
+                <TextBlock>i <Run>
+                    <Run.Foreground>
                         <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Italic.Foreground>
-                    — Case insensitive matching</Italic></TextBlock>
+                    </Run.Foreground>
+                    – Case insensitive matching</Run></TextBlock>
             </CheckBox>
             <CheckBox IsChecked="{Binding m}">
-                <TextBlock>m <Italic>
-                    <Italic.Foreground>
+                <TextBlock>m <Run>
+                    <Run.Foreground>
                         <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Italic.Foreground>
-                    — Multi-line mode, match ^, $ on start and end line separators as well as start and end of input</Italic></TextBlock>
+                    </Run.Foreground>
+                    – Multi-line mode, match ^, $ on start and end line separators as well as start and end of input</Run></TextBlock>
             </CheckBox>
             <CheckBox IsChecked="{Binding s}">
-                <TextBlock>s <Italic>
-                    <Italic.Foreground>
+                <TextBlock>s <Run>
+                    <Run.Foreground>
                         <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Italic.Foreground>
-                    — Single-line mode, makes . match '\n' and '\r' as well</Italic></TextBlock>
+                    </Run.Foreground>
+                    – Single-line mode, makes . match '\n' and '\r' as well</Run></TextBlock>
             </CheckBox>
             <CheckBox IsChecked="{Binding x}">
-                <TextBlock>x <Italic>
-                    <Italic.Foreground>
+                <TextBlock>x <Run>
+                    <Run.Foreground>
                         <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Italic.Foreground>
-                    — Free-form syntax, ignores whitespace in pattern, useful for formatting complex regular expressions
-                </Italic></TextBlock>
+                    </Run.Foreground>
+                    – Free-form syntax, ignores whitespace in pattern, useful for formatting complex regular expressions
+                </Run></TextBlock>
                 
             </CheckBox>
         </StackPanel>
