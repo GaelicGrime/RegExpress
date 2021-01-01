@@ -167,7 +167,6 @@ namespace Re2RegexInterop
 			mData = new MatcherData{};
 
 			mData->mRe = std::move( re );
-
 			mData->mAnchor = RE2::Anchor::UNANCHORED;
 
 			if( Array::IndexOf( options, "ANCHOR_START" ) >= 0 )
@@ -229,7 +228,7 @@ namespace Re2RegexInterop
 
 			//auto utf8 = System::Text::Encoding::UTF8->GetBytes( text0 );
 
-			re2::StringPiece const full_text( text.data( ), text.size( ) );
+			re2::StringPiece const full_text( text.data( ), text.size( ) - 1 ); // (excluding zero-terminator; otherwise '$' etc. does not match)
 
 			int number_of_capturing_groups = mData->mRe->NumberOfCapturingGroups( );
 
@@ -244,7 +243,7 @@ namespace Re2RegexInterop
 			while( mData->mRe->Match(
 				full_text,
 				start_pos,
-				full_text.size( ) - 1,
+				full_text.size( ),
 				mData->mAnchor,
 				found_groups.data( ),
 				CheckedCast::ToInt32( found_groups.size( ) ) )
