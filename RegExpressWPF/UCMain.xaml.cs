@@ -19,7 +19,7 @@ namespace RegExpressWPF
 	/// <summary>
 	/// Interaction logic for UCMain.xaml
 	/// </summary>
-	public partial class UCMain : UserControl, IDisposable
+	partial class UCMain : UserControl, IDisposable
 	{
 		readonly ResumableLoop FindMatchesLoop;
 		readonly ResumableLoop UpdateWhitespaceWarningLoop;
@@ -59,6 +59,7 @@ namespace RegExpressWPF
 				new PerlRegexEngineNs.PerlRegexEngine(),
 				new PythonRegexEngineNs.PythonRegexEngine(),
 				new RustRegexEngineNs.RustRegexEngine(),
+				new DRegexEngineNs.DRegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;

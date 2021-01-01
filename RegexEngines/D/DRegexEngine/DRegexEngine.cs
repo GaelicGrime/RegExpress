@@ -12,56 +12,58 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 
 
-namespace RustRegexEngineNs
+namespace DRegexEngineNs
 {
-	public class RustRegexEngine : IRegexEngine
+	public class DRegexEngine : IRegexEngine
 	{
-		readonly UCRustRegexOptions OptionsControl;
-		static readonly object RustVersionLocker = new object( );
-		static string RustVersion = null;
+		readonly UCDRegexOptions OptionsControl;
+		static readonly object DVersionLocker = new object( );
+		static string DVersion = null;
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
 
 
-		public RustRegexEngine( )
+		public DRegexEngine( )
 		{
-			OptionsControl = new UCRustRegexOptions( );
+			OptionsControl = new UCDRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 
 		#region IRegexEngine
 
-		public string Id => "RustRegex";
+		public string Id => "DRegex";
 
-		public string Name => "Rust";
+		public string Name => "D";
+
 
 		public string EngineVersion
 		{
 			get
 			{
-				if( RustVersion == null )
+				if( DVersion == null )
 				{
-					lock( RustVersionLocker )
+					lock( DVersionLocker )
 					{
-						if( RustVersion == null )
+						if( DVersion == null )
 						{
 							try
 							{
-								RustVersion = RustMatcher.GetRustVersion( NonCancellable.Instance );
+								DVersion = DMatcher.GetDVersion( NonCancellable.Instance );
 							}
 							catch
 							{
-								RustVersion = "Unknown Version";
+								DVersion = "Unknown Version";
 							}
 						}
 					}
 				}
 
-				return RustVersion;
+				return DVersion;
 			}
 		}
+
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -78,8 +80,7 @@ namespace RustRegexEngineNs
 
 		public string[] ExportOptions( )
 		{
-			RustRegexOptions options = OptionsControl.ExportOptions( );
-
+			DRegexOptions options = OptionsControl.GetSelectedOptions( );
 			var json = JsonSerializer.Serialize( options );
 
 			return new[] { $"json:{json}" };
@@ -88,37 +89,27 @@ namespace RustRegexEngineNs
 
 		public void ImportOptions( string[] options )
 		{
-			string json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
+			var json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
 
-			RustRegexOptions rust_regex_options;
-
+			DRegexOptions options_obj;
 			if( string.IsNullOrWhiteSpace( json ) )
 			{
-				rust_regex_options = new RustRegexOptions( );
+				options_obj = new DRegexOptions( );
 			}
 			else
 			{
-				try
-				{
-					rust_regex_options = JsonSerializer.Deserialize<RustRegexOptions>( json );
-				}
-				catch( Exception exc )
-				{
-					if( Debugger.IsAttached ) Debugger.Break( );
-
-					rust_regex_options = new RustRegexOptions( );
-				}
+				options_obj = JsonSerializer.Deserialize<DRegexOptions>( json );
 			}
 
-			OptionsControl.ImportOptions( rust_regex_options );
+			OptionsControl.SetSelectedOptions( options_obj );
 		}
 
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
+			DRegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			return new RustMatcher( pattern, options );
+			return new DMatcher( pattern, options );
 		}
 
 
@@ -157,7 +148,7 @@ namespace RustRegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// comment, '#...'
+				// comment, '(?#...)'
 				{
 					var g = m.Groups["comment"];
 					if( g.Success )
@@ -229,8 +220,8 @@ namespace RustRegexEngineNs
 
 		Regex GetCachedColouringRegex( )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
-			string key = $"{options.@struct}\x1F{options.octal}\x1F{options.unicode}\x1F{options.ignore_whitespace}";
+			DRegexOptions options = OptionsControl.GetSelectedOptions( );
+			string key = "";
 
 			lock( CachedColouringRegexes )
 			{
@@ -247,8 +238,8 @@ namespace RustRegexEngineNs
 
 		Regex GetCachedHighlightingRegex( )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
-			string key = $"{options.@struct}\x1F{options.unicode}\x1F{options.ignore_whitespace}";
+			DRegexOptions options = OptionsControl.GetSelectedOptions( );
+			string key = "";
 
 			lock( CachedHighlightingRegexes )
 			{
@@ -263,64 +254,36 @@ namespace RustRegexEngineNs
 		}
 
 
-		Regex CreateColouringRegex( RustRegexOptions options )
+		Regex CreateColouringRegex( DRegexOptions options )
 		{
-			bool is_regex = options.@struct == "Regex";
-			bool is_regex_builder = options.@struct == "RegexBuilder";
-
 			var pb_escape = new PatternBuilder( );
 
 			pb_escape.BeginGroup( "escape" );
 
-			if( is_regex || ( is_regex_builder && options.unicode ) )
-			{
-				pb_escape.Add( @"\\[pP]\{.*?(\}|$)" ); // Unicode character class (general category or script)
-				pb_escape.Add( @"\\[pP].?" ); // One-letter name Unicode character class
-			}
+			pb_escape.Add( @"\\c[A-Za-z]" ); // Matches the control character corresponding to letter C
+			pb_escape.Add( @"\\x[0-9a-fA-F]{0,2}" ); // Matches a character with hexadecimal value of XX.
+			pb_escape.Add( @"\\u[0-9a-fA-F]{0,4}" ); // Matches a character with hexadecimal value of XXXX.
+			pb_escape.Add( @"\\U[0-9a-fA-F]{0,8}" ); // Matches a character with hexadecimal value of YYYYYY.
 
-			if( is_regex_builder && options.octal )
-			{
-				pb_escape.Add( @"\\[0-7]{1,3}" ); // octal character code (up to three digits) (when enabled)
-			}
+			pb_escape.Add( @"\\[pP]\{.*?(\}|$)" );
+			pb_escape.Add( @"\\[pP].?" );
 
-			pb_escape.Add( @"\\x\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
-			pb_escape.Add( @"\\x[0-9a-fA-F]{0,2}" ); // hex character code (exactly two digits)
-
-			// (only 2 digits if no 'options.unicode'
-			pb_escape.Add( @"\\u\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
-			pb_escape.Add( @"\\u[0-9a-fA-F]{0,4}" ); // hex character code (exactly four digits)
-			pb_escape.Add( @"\\U\{[0-9a-fA-F]*(\}|$)?" ); // any hex character code corresponding to a Unicode code point
-			pb_escape.Add( @"\\U[0-9a-fA-F]{0,8}" ); // hex character code (exactly eight digits)
-
-			string any_esc = "";
-
-			if( !( is_regex || ( is_regex_builder && options.unicode ) ) ) any_esc += @"(?!\\[pP])";
-			if( !( is_regex_builder && options.octal ) ) any_esc += @"(?!\\[0-7])";
-
-			any_esc += @"\\.";
-
-			pb_escape.Add( any_esc );
+			pb_escape.Add( @"\\." );
 
 			pb_escape.EndGroup( );
-
 
 			var pb = new PatternBuilder( );
 
 			pb.BeginGroup( "comment" );
-
-			if( is_regex_builder && options.ignore_whitespace )
-			{
-				pb.Add( @"\#.*?(\n|$)" ); // line-comment
-			}
-
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // An inline comment that is ignored while matching.
 			pb.EndGroup( );
 
-			pb.Add( @"\(\?P(?'name'<.*?(>|$))" );
+			pb.Add( @"\(\?P(?'name'<.*?(>|$))" ); // Matches named subexpression regex labeling it with name 'name'. 
 
 			{
 				// (nested groups: https://stackoverflow.com/questions/546433/regular-expression-to-match-balanced-parentheses)
 
-				string posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
+				string posix_bracket = ""; // Not supported: @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
 
 				pb.Add( $@"
 						\[ 
@@ -335,27 +298,24 @@ namespace RustRegexEngineNs
 			pb.Add( pb_escape.ToPattern( ) );
 
 			return pb.ToRegex( );
+
 		}
 
 
-		Regex CreateHighlightingRegex( RustRegexOptions options )
+		Regex CreateHighlightingRegex( DRegexOptions options )
 		{
-			bool is_regex_builder = options.@struct == "RegexBuilder";
-
 			var pb = new PatternBuilder( );
 
-			if( is_regex_builder && options.ignore_whitespace ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			pb.Add( @"\(\?\#.*?(\)|$)" ); // inline comment
 
 			pb.Add( @"(?'left_par'\()" ); // '('
 			pb.Add( @"(?'right_par'\))" ); // ')'
 
-			pb.Add( @"\\[xuU]\{.*?(\}|$)" ); // \x{7HHHHHHH ...} etc.
-
-			if( is_regex_builder && options.unicode ) pb.Add( @"\\[pP]\{.*?(\} | $)" ); // property
+			pb.Add( @"\\[pP]\{.*?(\} | $)" ); // property
 
 			pb.Add( @"(?'left_brace'\{) (\d+(,\d*)? | ,\d+) ((?'right_brace'\})|$)" ); // '{...}'
 
-			string posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
+			string posix_bracket = ""; // Not supported: @"(\[:.*?(:\]|$))"; // [:...:]
 
 			pb.Add( $@"
 						(?'left_bracket'\[)

@@ -13,8 +13,6 @@ namespace Pcre2RegexInterop
 
 	static Matcher::Matcher( )
 	{
-		mEmptyEnumeration = gcnew List<IMatch^>( 0 );
-
 		BuildOptions( );
 	}
 
@@ -192,7 +190,7 @@ namespace Pcre2RegexInterop
 				{
 				case PCRE2_ERROR_NOMATCH:
 					// no matches
-					return gcnew RegexMatches( 0, mEmptyEnumeration );
+					return RegexMatches::Empty;
 				default:
 				{
 					PCRE2_UCHAR buffer[256];

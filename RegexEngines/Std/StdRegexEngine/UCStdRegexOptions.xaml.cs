@@ -21,7 +21,7 @@ namespace StdRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCStdRegexOptions.xaml
 	/// </summary>
-	public partial class UCStdRegexOptions : UserControl
+	partial class UCStdRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

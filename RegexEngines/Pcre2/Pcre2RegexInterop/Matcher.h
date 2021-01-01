@@ -126,8 +126,6 @@ namespace Pcre2RegexInterop
 		static List<OptionInfo^>^ mExtraCompileOptions;
 		static List<OptionInfo^>^ mMatchOptions;
 
-		static IEnumerable<IMatch^>^ mEmptyEnumeration;
-
 		IMatch^ CreateMatch( pcre2_code* re, PCRE2_SIZE* ovector, int rc );
 		static void BuildOptions( );
 	};

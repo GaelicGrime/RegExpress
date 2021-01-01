@@ -21,7 +21,7 @@ namespace RustRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCRustRegexOptions.xaml
 	/// </summary>
-	public partial class UCRustRegexOptions : UserControl
+	partial class UCRustRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		private RustRegexOptions CachedOptions; // (accessible from threads)

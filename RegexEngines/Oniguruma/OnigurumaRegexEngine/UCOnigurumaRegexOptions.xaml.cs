@@ -20,7 +20,7 @@ namespace OnigurumaRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCOnigurumaRegexOptions.xaml
 	/// </summary>
-	public partial class UCOnigurumaRegexOptions : UserControl
+	partial class UCOnigurumaRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

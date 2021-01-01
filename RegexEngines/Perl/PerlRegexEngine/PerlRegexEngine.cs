@@ -223,34 +223,20 @@ namespace PerlRegexEngineNs
 						string perl_dir = Path.Combine( assembly_dir, @"Perl-min\perl" );
 						string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
 
-						var psi = new ProcessStartInfo( );
+						string stdout_contents;
+						string stderr_contents;
 
-						psi.FileName = perl_exe;
-						psi.Arguments = @"-CS -e ""print 'V=', $^V""";
-
-						psi.UseShellExecute = false;
-						psi.RedirectStandardInput = true;
-						psi.RedirectStandardOutput = true;
-						psi.StandardOutputEncoding = Encoding.UTF8;
-						psi.CreateNoWindow = true;
-						psi.WindowStyle = ProcessWindowStyle.Hidden;
-
-						string output;
-
-						using( Process p = Process.Start( psi ) )
-						{
-							output = p.StandardOutput.ReadToEnd( );
-						}
-
-						if( !output.StartsWith( "V=" ) )
+						if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, perl_exe, @"-CS -e ""print 'V=', $^V""", "", out stdout_contents, out stderr_contents ) ||
+							!stdout_contents.StartsWith( "V=" ) )
 						{
 							if( Debugger.IsAttached ) Debugger.Break( );
-							Debug.WriteLine( "Unknown Perl Get-Version: '{0}'", output );
+							Debug.WriteLine( "Unknown Perl Get-Version: '{0}', '{1}'", stdout_contents, stderr_contents );
 							PerlVersion = "unknown version";
 						}
 						else
 						{
-							PerlVersion = output.Substring( "V=".Length );
+							stdout_contents = stdout_contents.Trim( );
+							PerlVersion = stdout_contents.Substring( "V=".Length );
 							if( PerlVersion.StartsWith( "v" ) ) PerlVersion = PerlVersion.Substring( 1 );
 						}
 					}

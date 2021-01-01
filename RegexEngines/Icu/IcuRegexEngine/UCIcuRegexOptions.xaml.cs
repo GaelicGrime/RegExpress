@@ -20,7 +20,7 @@ namespace IcuRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCIcuRegexOptions.xaml
 	/// </summary>
-	public partial class UCIcuRegexOptions : UserControl
+	partial class UCIcuRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

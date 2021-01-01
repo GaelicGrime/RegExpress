@@ -70,38 +70,31 @@ namespace PythonRegexEngineNs
 				{
 					if( PythonVersion == null )
 					{
-						string python_exe = GetPythonExePath( );
+						string stdout_contents;
+						string stderr_contents;
 
-						var psi = new ProcessStartInfo( );
-
-						psi.FileName = python_exe;
-						psi.Arguments = @"-V";
-
-						psi.UseShellExecute = false;
-						psi.RedirectStandardInput = true;
-						psi.RedirectStandardOutput = true;
-						psi.StandardOutputEncoding = Encoding.UTF8;
-						psi.CreateNoWindow = true;
-						psi.WindowStyle = ProcessWindowStyle.Hidden;
-
-						string output;
-
-						using( Process p = Process.Start( psi ) )
-						{
-							output = p.StandardOutput.ReadToEnd( );
-						}
-
-						string v = Regex.Match( output, @"^Python (\d+(\.\d+)*)" ).Groups[1].Value;
-
-						if( string.IsNullOrWhiteSpace( v ) )
+						if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, GetPythonExePath( ), @"-V", "", out stdout_contents, out stderr_contents ) )
 						{
 							if( Debugger.IsAttached ) Debugger.Break( );
-							Debug.WriteLine( "Unknown Python version: '{0}'", output );
+							Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
 							PythonVersion = "unknown version";
 						}
 						else
 						{
-							PythonVersion = v;
+							stdout_contents = stdout_contents.Trim( );
+
+							string v = Regex.Match( stdout_contents, @"^Python (\d+(\.\d+)*)" ).Groups[1].Value;
+
+							if( string.IsNullOrWhiteSpace( v ) )
+							{
+								if( Debugger.IsAttached ) Debugger.Break( );
+								Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
+								PythonVersion = "unknown version";
+							}
+							else
+							{
+								PythonVersion = v;
+							}
 						}
 					}
 				}
@@ -169,101 +162,25 @@ except:
 			arguments = arguments.Replace( "[*FLAGS*]",
 				selected_flags.Any( ) ? string.Join( "|", selected_flags.Select( f => "re." + f ) ) : "0" );
 
-			var output_sb = new StringBuilder( );
-			var error_sb = new StringBuilder( );
+			string stdout_contents;
+			string stderr_contents;
 
-			using( Process p = new Process( ) )
-			{
-				p.StartInfo.FileName = GetPythonExePath( );
-				p.StartInfo.Arguments = arguments;
-
-				p.StartInfo.UseShellExecute = false;
-				p.StartInfo.CreateNoWindow = true;
-				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-
-				p.StartInfo.RedirectStandardInput = true;
-				p.StartInfo.RedirectStandardOutput = true;
-				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-				p.OutputDataReceived += ( s, a ) =>
-				{
-					output_sb.AppendLine( a.Data );
-				};
-
-				p.ErrorDataReceived += ( s, a ) =>
-				{
-					error_sb.AppendLine( a.Data );
-				};
-
-				p.Start( );
-				p.BeginOutputReadLine( );
-				p.BeginErrorReadLine( );
-
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, new UTF8Encoding( encoderShouldEmitUTF8Identifier: false ) ) )
+			if( !ProcessUtilities.InvokeExe( cnc, GetPythonExePath( ), arguments,
+				sw =>
 				{
 					sw.WriteLine( PrepareString( Pattern ) );
 					sw.WriteLine( PrepareString( text ) );
-				}
-
-				// TODO: use timeout
-
-				bool cancel = false;
-				bool done = false;
-
-				for(; ; )
-				{
-					cancel = cnc.IsCancellationRequested;
-					if( cancel ) break;
-
-					done = p.WaitForExit( 444 );
-					if( done )
-					{
-						// another 'WaitForExit' required to finish the processing of streams;
-						// see: https://stackoverflow.com/questions/9533070/how-to-read-to-end-process-output-asynchronously-in-c,
-						// https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit
-
-						p.WaitForExit( );
-
-						break;
-					}
-				}
-
-				if( cancel )
-				{
-					try
-					{
-						p.Kill( );
-					}
-					catch( Exception )
-					{
-						if( Debugger.IsAttached ) Debugger.Break( );
-
-						// ignore
-					}
-
-					return new RegexMatches( 0, Enumerable.Empty<IMatch>( ) );
-				}
-
-				Debug.Assert( done );
-			}
-
-			string error = error_sb.ToString( );
-
-			if( !string.IsNullOrWhiteSpace( error ) )
+				}, out stdout_contents, out stderr_contents ) )
 			{
-				throw new Exception( "Python error: " + error );
+				return RegexMatches.Empty;
 			}
-
-			string output = output_sb.ToString( );
 
 			SimpleMatch match = null;
 			int group_i = 0;
 			var names = new Dictionary<int, string>( );
 			var sph = new SurrogatePairsHelper( text, processSurrogatePairs: true );
 
-			using( var sr = new StringReader( output ) )
+			using( var sr = new StringReader( stdout_contents ) )
 			{
 				string line;
 
@@ -284,50 +201,50 @@ except:
 						switch( m.Groups["t"].Value )
 						{
 						case "N":
-						{
-							int index = int.Parse( m.Groups["i"].Value, CultureInfo.InvariantCulture );
-							string name = m.Groups["n"].Value;
+							{
+								int index = int.Parse( m.Groups["i"].Value, CultureInfo.InvariantCulture );
+								string name = m.Groups["n"].Value;
 
-							Debug.Assert( !names.ContainsKey( index ) );
+								Debug.Assert( !names.ContainsKey( index ) );
 
-							names[index] = name;
-						}
-						break;
+								names[index] = name;
+							}
+							break;
 						case "M":
-						{
-							int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
-							int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
-							int length = end - index;
+							{
+								int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
+								int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
+								int length = end - index;
 
-							Debug.Assert( index >= 0 && end >= 0 );
+								Debug.Assert( index >= 0 && end >= 0 );
 
-							var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
+								var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
 
-							match = SimpleMatch.Create( index, length, text_index, text_length, this );
-							matches.Add( match );
+								match = SimpleMatch.Create( index, length, text_index, text_length, this );
+								matches.Add( match );
 
-							group_i = 0;
-						}
-						break;
+								group_i = 0;
+							}
+							break;
 						case "G":
-						{
-							int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
-							int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
-							int length = end - index;
-							bool success = index >= 0;
+							{
+								int index = int.Parse( m.Groups["s"].Value, CultureInfo.InvariantCulture );
+								int end = int.Parse( m.Groups["e"].Value, CultureInfo.InvariantCulture );
+								int length = end - index;
+								bool success = index >= 0;
 
-							Debug.Assert( match != null );
+								Debug.Assert( match != null );
 
-							var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
+								var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
 
-							string name;
-							if( !names.TryGetValue( group_i, out name ) ) name = group_i.ToString( CultureInfo.InvariantCulture );
+								string name;
+								if( !names.TryGetValue( group_i, out name ) ) name = group_i.ToString( CultureInfo.InvariantCulture );
 
-							match.AddGroup( index, length, text_index, text_length, success, name );
+								match.AddGroup( index, length, text_index, text_length, success, name );
 
-							++group_i;
-						}
-						break;
+								++group_i;
+							}
+							break;
 						default:
 							if( Debugger.IsAttached ) Debugger.Break( );
 

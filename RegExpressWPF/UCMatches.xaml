@@ -28,7 +28,7 @@
         <RichTextBox x:Name="rtbNoMatches" Style="{StaticResource NoMatches}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
             <FlowDocument>
                 <Paragraph>
-                    No matches
+                    No match
                 </Paragraph>
             </FlowDocument>
         </RichTextBox>

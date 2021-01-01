@@ -39,3 +39,11 @@ rem -- Rust --
 set Prj=%MainProjectPath%\..\RegexEngines\Rust\RustClient
 
 xcopy /D /R /Y "%Prj%\target\release\RustClient.exe" "%TargetDir%\*.bin"
+
+
+rem -- D --
+
+set Prj=%MainProjectPath%\..\RegexEngines\D\DClient
+
+xcopy /D /R /Y "%Prj%\DClient.exe" "%TargetDir%\*.bin"
+

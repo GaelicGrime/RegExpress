@@ -20,7 +20,7 @@ namespace PythonRegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCPythonRegexOptions.xaml
 	/// </summary>
-	public partial class UCPythonRegexOptions : UserControl
+	partial class UCPythonRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)

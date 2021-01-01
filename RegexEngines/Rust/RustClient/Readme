@@ -1,0 +1,24 @@
+In order to rebuild RustClient:
+
+- Edit the "src\main.rs" file if required.
+
+- Download and install "Rust" from https://www.rust-lang.org/tools/install. 
+  Use the recommended "rustup". Select the 64-bit installer.
+
+  It should include the Rust compiler and Cargo package manager. 
+  To check, run from command line:
+
+  	rustc --version
+  	cargo --version
+
+- Run this command:
+
+	cargo build --release
+
+  It will generate "target\release\RustClient.exe"
+
+- Rebuild ("Rebuild All") the main Visual Studio solution. A Custom build step 
+  will copy 'RustClient.exe' to output folder as 'RustClient.bin'.
+
+- Commit and push the changes to Git (including 'RustClient.exe').
+

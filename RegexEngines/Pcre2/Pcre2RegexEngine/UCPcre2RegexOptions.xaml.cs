@@ -21,7 +21,7 @@ namespace Pcre2RegexEngineNs
 	/// <summary>
 	/// Interaction logic for UCCppPcreRegexOptions.xaml
 	/// </summary>
-	public partial class UCPcre2RegexOptions : UserControl
+	partial class UCPcre2RegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
 		internal string[] CachedOptions; // (accessible from threads)
