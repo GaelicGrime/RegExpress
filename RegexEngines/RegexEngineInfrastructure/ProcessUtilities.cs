@@ -9,16 +9,19 @@ namespace RegexEngineInfrastructure
 	public static class ProcessUtilities
 	{
 
-		static readonly UTF8Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
+		static readonly Encoding Utf8Encoding = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
+		static readonly Encoding UnicodeEncoding = new UnicodeEncoding( bigEndian: false, byteOrderMark: false, throwOnInvalidBytes: true );
 
 
-		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<StreamWriter> stdinWriter, out string stdoutContents, out string stderrContents )
+		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<StreamWriter> stdinWriter, out string stdoutContents, out string stderrContents, bool unicode = false )
 		{
 			var output_sb = new StringBuilder( );
 			var error_sb = new StringBuilder( );
 
 			using( Process p = new Process( ) )
 			{
+				var encoding = unicode ? UnicodeEncoding : Utf8Encoding;
+
 				p.StartInfo.FileName = exePath;
 				p.StartInfo.Arguments = arguments;
 
@@ -29,24 +32,24 @@ namespace RegexEngineInfrastructure
 				p.StartInfo.RedirectStandardInput = true;
 				p.StartInfo.RedirectStandardOutput = true;
 				p.StartInfo.RedirectStandardError = true;
-				p.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-				p.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+				p.StartInfo.StandardOutputEncoding = encoding;
+				p.StartInfo.StandardErrorEncoding = encoding;
 
 				p.OutputDataReceived += ( s, a ) =>
 				{
-					output_sb.AppendLine( a.Data );
+					output_sb.Append( a.Data );
 				};
 
 				p.ErrorDataReceived += ( s, a ) =>
 				{
-					error_sb.AppendLine( a.Data );
+					error_sb.Append( a.Data );
 				};
 
 				p.Start( );
 				p.BeginOutputReadLine( );
 				p.BeginErrorReadLine( );
 
-				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, Utf8Encoding ) )
+				using( StreamWriter sw = new StreamWriter( p.StandardInput.BaseStream, encoding ) ) // ('leaveOpen' must be false)
 				{
 					stdinWriter( sw );
 				}
@@ -103,9 +106,9 @@ namespace RegexEngineInfrastructure
 		}
 
 
-		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, string stdinContents, out string stdoutContents, out string stderrContents )
+		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, string stdinContents, out string stdoutContents, out string stderrContents, bool unicode = false )
 		{
-			return InvokeExe( cnc, exePath, arguments, ( sw ) => sw.WriteLine( stdinContents ), out stdoutContents, out stderrContents );
+			return InvokeExe( cnc, exePath, arguments, ( sw ) => sw.Write( stdinContents ), out stdoutContents, out stderrContents, unicode );
 		}
 
 	}

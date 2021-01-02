@@ -52,7 +52,7 @@ namespace IcuRegexEngineNs
 
 		public string Name => "ICU";
 
-		public string EngineVersion => IcuRegexInterop.Matcher.GetVersion( );
+		public string EngineVersion => IcuMatcher.GetIcuVersion( NonCancellable.Instance );
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 

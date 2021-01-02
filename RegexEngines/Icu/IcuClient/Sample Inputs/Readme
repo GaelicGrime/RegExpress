@@ -1,0 +1,8 @@
+Sample text files for debugging IcuClient in Visual Studio.
+
+Must be encoded using Unicode (UTF-16 Little Endian, Codepage 1200), without BOM signature.
+
+In Visual Studio, Project Properties, Debugging, Command Arguments, enter something like this:
+
+	< "$(ProjectDir)\Sample Inputs\get-version.dat"
+
