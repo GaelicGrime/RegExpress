@@ -39,12 +39,12 @@ namespace RegexEngineInfrastructure
 
 				p.OutputDataReceived += ( s, a ) =>
 				{
-					output_sb.Append( a.Data );
+					output_sb.AppendLine( a.Data );
 				};
 
 				p.ErrorDataReceived += ( s, a ) =>
 				{
-					error_sb.Append( a.Data );
+					error_sb.AppendLine( a.Data );
 				};
 
 				p.Start( );
@@ -87,6 +87,7 @@ namespace RegexEngineInfrastructure
 					}
 					catch( Exception exc )
 					{
+						_ = exc;
 						if( Debugger.IsAttached ) Debugger.Break( );
 
 						// ignore
@@ -132,7 +133,7 @@ namespace RegexEngineInfrastructure
 
 				p.ErrorDataReceived += ( s, a ) =>
 				{
-					error_sb.Append( a.Data );
+					error_sb.AppendLine( a.Data );
 				};
 
 				p.Start( );
@@ -234,8 +235,9 @@ namespace RegexEngineInfrastructure
 				if( !thread.Join( 11 ) ) thread.Abort( );
 				thread.Join( 11 );
 			}
-			catch
+			catch( Exception exc )
 			{
+				_ = exc;
 				//?
 				// ignore
 			}

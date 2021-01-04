@@ -17,7 +17,7 @@ public:
 
 	unsigned __int8 ReadByte( ) const;
 
-	__int32 ReadInt( ) const;
+	__int32 ReadInt32( ) const;
 
 	std::wstring ReadString( ) const;
 

@@ -24,6 +24,12 @@ namespace IcuRegexEngineNs
 		public IcuMatcher( string pattern, IcuRegexOptions options )
 		{
 			Options = options;
+
+			if( !string.IsNullOrWhiteSpace( options.Limit ) && !int.TryParse( options.Limit, out var limit ) )
+			{
+				throw new ApplicationException( "Invalid limit. Please enter an integer number." );
+			}
+
 			Pattern = pattern;
 		}
 
@@ -64,6 +70,20 @@ namespace IcuRegexEngineNs
 			MemoryStream stdout_contents;
 			string stderr_contents;
 
+			int limit;
+			if( !int.TryParse( Options.Limit, out limit ) ) limit = 0;
+
+			uint flags = 0;
+			if( Options.UREGEX_CANON_EQ ) flags |= 1 << 0;
+			if( Options.UREGEX_CASE_INSENSITIVE ) flags |= 1 << 1;
+			if( Options.UREGEX_COMMENTS ) flags |= 1 << 2;
+			if( Options.UREGEX_DOTALL ) flags |= 1 << 3;
+			if( Options.UREGEX_LITERAL ) flags |= 1 << 4;
+			if( Options.UREGEX_MULTILINE ) flags |= 1 << 5;
+			if( Options.UREGEX_UNIX_LINES ) flags |= 1 << 6;
+			if( Options.UREGEX_UWORD ) flags |= 1 << 7;
+			if( Options.UREGEX_ERROR_ON_UNKNOWN_ESCAPES ) flags |= 1 << 8;
+
 #if DEBUG
 			{
 				// For debugging
@@ -74,6 +94,8 @@ namespace IcuRegexEngineNs
 						bw.Write( "m" );
 						bw.Write( Pattern );
 						bw.Write( Text );
+						bw.Write( flags );
+						bw.Write( limit );
 					}
 				}
 			}
@@ -86,6 +108,8 @@ namespace IcuRegexEngineNs
 					bw.Write( "m" );
 					bw.Write( Pattern );
 					bw.Write( Text );
+					bw.Write( flags );
+					bw.Write( limit );
 				}
 			};
 
@@ -122,7 +146,7 @@ namespace IcuRegexEngineNs
 				for(; ; )
 				{
 					int group_count = br.ReadInt32( );
-					if( group_count <= 0 ) break;
+					if( group_count < 0 ) break;
 
 					SimpleMatch match = null; ;
 

@@ -83,9 +83,19 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 		{
 			std::wstring pattern = inbr.ReadString( );
 			std::wstring text = inbr.ReadString( );
-			//std::wstring flags = inbr.ReadString( );
+			__int32 remote_flags = inbr.ReadInt32( );
+			__int32 limit = inbr.ReadInt32( );
 
-			uint32_t flags = 0; //............
+			uint32_t flags = 0;
+			if( remote_flags & ( 1 << 0 ) ) flags |= UREGEX_CANON_EQ;
+			if( remote_flags & ( 1 << 1 ) ) flags |= UREGEX_CASE_INSENSITIVE;
+			if( remote_flags & ( 1 << 2 ) ) flags |= UREGEX_COMMENTS;
+			if( remote_flags & ( 1 << 3 ) ) flags |= UREGEX_DOTALL;
+			if( remote_flags & ( 1 << 4 ) ) flags |= UREGEX_LITERAL;
+			if( remote_flags & ( 1 << 5 ) ) flags |= UREGEX_MULTILINE;
+			if( remote_flags & ( 1 << 6 ) ) flags |= UREGEX_UNIX_LINES;
+			if( remote_flags & ( 1 << 7 ) ) flags |= UREGEX_UWORD;
+			if( remote_flags & ( 1 << 8 ) ) flags |= UREGEX_ERROR_ON_UNKNOWN_ESCAPES;
 
 			UErrorCode status = U_ZERO_ERROR;
 			UParseError parse_error{};
@@ -153,9 +163,8 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 			icu::RegexMatcher* icu_matcher = icu_pattern->matcher( us_text, status );
 			Check( status );
 
-			//..............
-			// TODO: implement
-			//icu_matcher->setTimeLimit( )
+			icu_matcher->setTimeLimit( limit, status );
+			Check( status );
 
 			for( ;; )
 			{

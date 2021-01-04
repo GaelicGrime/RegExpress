@@ -16,7 +16,7 @@ unsigned __int8 BinaryReader::ReadByte( ) const
 }
 
 
-__int32 BinaryReader::ReadInt( ) const
+__int32 BinaryReader::ReadInt32( ) const
 {
 	__int32 i;
 	DWORD n;
