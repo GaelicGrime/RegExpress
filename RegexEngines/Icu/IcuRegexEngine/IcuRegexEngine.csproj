@@ -84,6 +84,7 @@
   <ItemGroup>
     <Compile Include="IcuMatcher.cs" />
     <Compile Include="IcuRegexEngine.cs" />
+    <Compile Include="IcuRegexOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UCIcuRegexOptions.xaml.cs">
       <DependentUpon>UCIcuRegexOptions.xaml</DependentUpon>

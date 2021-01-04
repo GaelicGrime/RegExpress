@@ -637,8 +637,9 @@ namespace RegExpressWPF
 			{
 				// ignore
 			}
-			catch( Exception )
+			catch( Exception exc )
 			{
+				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
 
 				// ignore
@@ -654,8 +655,9 @@ namespace RegExpressWPF
 				indeterminateProgressThread.Join( 333 );
 				indeterminateProgressThread.Abort( );
 			}
-			catch( Exception )
+			catch( Exception exc )
 			{
+				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
 
 				// ignore

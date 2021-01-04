@@ -5,146 +5,22 @@
 #include "framework.h"
 #include "IcuClient.h"
 
-
-class Writer
-{
-public:
-
-	Writer( HANDLE h )
-		: mHandle( h )
-	{
-		assert( h != INVALID_HANDLE_VALUE );
-		// (probably 0 is a valid handle)
-	}
+#include "BinaryReader.h"
+#include "BinaryWriter.h"
+#include "StreamWriter.h"
 
 
-	void WriteString( const char* buffer, size_t size ) const
-	{
-		DWORD count;
-		WriteFile( mHandle, buffer, size, &count, NULL );
-	}
-
-
-	void WriteString( LPCWSTR text ) const
-	{
-		WriteString( (const char*)text, lstrlenW( text ) * sizeof( WCHAR ) );
-	}
-
-
-	void __cdecl WriteString256( LPCWSTR format, ... ) const
-	{
-		wchar_t buffer[256];
-
-		va_list argptr;
-		va_start( argptr, format );
-
-		StringCbVPrintfW( buffer, sizeof( buffer ), format, argptr );
-
-		WriteString( buffer );
-
-		va_end( argptr );
-	}
-
-private:
-
-	HANDLE const mHandle;
-};
-
-
-struct Token
-{
-	LPCWSTR start; // null if no token
-	size_t size;
-
-	Token( )
-	{
-		start = nullptr;
-		size = 0;
-	}
-};
-
-
-class TokenReader final
-{
-public:
-
-	TokenReader( LPCWSTR start, size_t size )
-		: mStart( start ), mSize( size )
-	{
-		assert( mStart != nullptr );
-		assert( mSize >= 0 );
-
-		mCurrent = mSize == 0 ? nullptr : mStart;
-		mRemained = mSize;
-	}
-
-
-	bool Read( Token* token ) const
-	{
-		assert( token != nullptr );
-		assert( mRemained >= 0 );
-
-		if( mRemained <= 0 )
-		{
-			token->start = nullptr;
-			token->size = 0;
-
-			return false;
-		}
-		else
-		{
-			assert( mRemained > 0 );
-
-			token->start = mCurrent;
-
-			LPCWSTR found_separator = (LPCWSTR)wmemchr( mCurrent, L'\0', mRemained );
-
-			if( found_separator == nullptr )
-			{
-				token->size = mRemained;
-
-				mRemained = 0;
-			}
-			else
-			{
-				assert( found_separator[0] == L'\0' );
-
-				token->size = found_separator - mCurrent;
-
-				assert( token->size >= 0 );
-
-				mRemained -= token->size + 1;
-				mCurrent = found_separator + 1;
-
-				assert( mRemained >= 0 );
-			}
-
-			return true;
-		}
-	}
-
-private:
-
-	LPCWSTR const mStart;
-	size_t const mSize;
-
-	LPCWSTR mutable mCurrent;
-	size_t mutable mRemained;
-};
-
-
-static bool Check( const Writer& errWriter, UErrorCode status )
+static void Check( UErrorCode status )
 {
 	if( U_FAILURE( status ) )
 	{
 		LPCSTR error_name = u_errorName( status );
+		wchar_t buffer[256];
 
-		errWriter.WriteString256( L"Error %hs (%u)", error_name, (unsigned)status );
+		StringCbPrintfW( buffer, sizeof( buffer ), L"Error %hs (%u)", error_name, (unsigned)status );
 
-		return false;
+		throw buffer;
 	}
-
-	return true;
 }
 
 
@@ -163,7 +39,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 		return 1;
 	}
 
-	Writer const errwr( herr );
+	StreamWriter const errwr( herr );
 
 	auto hin = GetStdHandle( STD_INPUT_HANDLE );
 	if( hin == INVALID_HANDLE_VALUE )
@@ -181,223 +57,164 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 		return 3;
 	}
 
-	Writer const outwr( hout );
-
-	static char buffer[8 * 1024];
-	char* inputB = NULL;
-	size_t sizeB = 0;
-
-	for( ;;)
+	try
 	{
-		DWORD count = 0;
+		BinaryWriter outbw( hout );
+		BinaryReader inbr( hin );
 
-		if( !ReadFile( hin, buffer, sizeof( buffer ), &count, NULL ) )
+		std::wstring command = inbr.ReadString( );
+
+		// 
+
+		if( command == L"v" )
 		{
-			if( GetLastError( ) == ERROR_BROKEN_PIPE ) break;
+			// get version
 
-			errwr.WriteString( L"Cannot read STDIN" );
+			auto v = L"" U_ICU_VERSION;
 
-			return 4;
+			outbw.Write( v );
+
+			return 0;
 		}
 
-		if( count == 0 ) break;
+		//
 
-		auto old = inputB;
-		inputB = (char*)realloc( old, sizeB + count );
-
-		if( inputB == NULL )
+		if( command == L"m" )
 		{
-			errwr.WriteString( L"Cannot realloc" );
+			std::wstring pattern = inbr.ReadString( );
+			std::wstring text = inbr.ReadString( );
+			//std::wstring flags = inbr.ReadString( );
 
-			return 5;
-		}
+			uint32_t flags = 0; //............
 
-		memcpy( inputB + sizeB, buffer, count );
+			UErrorCode status = U_ZERO_ERROR;
+			UParseError parse_error{};
 
-		sizeB += count;
-	}
+			icu::UnicodeString us_pattern( pattern.c_str( ), pattern.length( ) );
 
-	if( ( sizeB % 2 ) != 0 )
-	{
-		errwr.WriteString( L"Invalid input length" );
+			icu::RegexPattern* icu_pattern = icu::RegexPattern::compile( us_pattern, flags, parse_error, status );
 
-		return 6;
-	}
+			if( U_FAILURE( status ) )
+			{
+				LPCSTR error_name = u_errorName( status );
 
-	//{
-	//	auto old = inputB;
-	//	inputB = (char*)realloc( old, sizeB + 2 );
-	//	inputB[sizeB] = 0;
-	//	inputB[sizeB + 1] = 0;
-	//	sizeB += 2;
-	//}
+				errwr.WriteString256( L"Invalid pattern at line %i, column %i.\r\n\r\n(%hs, %u)",
+					parse_error.line, parse_error.offset, error_name, (unsigned)status );
 
+				return 9;
+			}
 
-	size_t sizeW = sizeB / 2;
-	LPCWSTR inputW = (LPCWSTR)inputB;
-
-	TokenReader reader( inputW, sizeW );
-
-	Token command_token;
-
-	if( !reader.Read( &command_token ) )
-	{
-		errwr.WriteString( L"Cannot read command" );
-
-		return 6;
-	}
-
-
-	if( command_token.size == 1 && command_token.start[0] == L'v' )
-	{
-		// get version
-
-		auto v = L"" U_ICU_VERSION;
-
-		outwr.WriteString( v );
-
-		return 0;
-	}
-
-
-	if( command_token.size == 1 && command_token.start[0] == L'm' )
-	{
-		// find matches
-
-		Token pattern_token;
-
-		if( !reader.Read( &pattern_token ) )
-		{
-			errwr.WriteString( L"Cannot read pattern" );
-
-			return 7;
-		}
-
-		Token text_token;
-
-		if( !reader.Read( &text_token ) )
-		{
-			errwr.WriteString( L"Cannot read text" );
-
-			return 8;
-		}
-
-		Token options_token;
-		reader.Read( &options_token );
-
-		Token timelimit_token;
-		reader.Read( &timelimit_token );
-
-		uint32_t icu_options = 0;
-
-		UErrorCode status = U_ZERO_ERROR;
-		UParseError parse_error{};
-
-		icu::UnicodeString pattern( pattern_token.start, pattern_token.size );
-
-		icu::RegexPattern* icu_pattern = icu::RegexPattern::compile( pattern, icu_options, parse_error, status );
-
-		if( U_FAILURE( status ) )
-		{
-			LPCSTR error_name = u_errorName( status );
-
-			errwr.WriteString256( L"Invalid pattern at line %i, column %i.\r\n\r\n(%hs, %u)",
-				parse_error.line, parse_error.offset, error_name, (unsigned)status );
-
-			return 9;
-		}
-
-		{
 			// try identifying named groups; (ICU does not seem to offer such feature)
+			{
+				icu::UnicodeString up( LR"REGEX(\(\?<(?![=!])(?<n>.*?)>)REGEX" );
+				icu::RegexPattern* p = icu::RegexPattern::compile( up, 0, parse_error, status );
+				if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
 
-			icu::UnicodeString up( LR"REGEX(\(\?<(?![=!])(?<n>.*?)>)REGEX" );
-			icu::RegexPattern* p = icu::RegexPattern::compile( up, 0, parse_error, status );
-			if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+				icu::RegexMatcher* m = p->matcher( us_pattern, status );
+				if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
 
-			icu::RegexMatcher* m = icu_pattern->matcher( pattern, status );
-			if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+				for( ;; )
+				{
+					status = U_ZERO_ERROR;
+
+					if( !m->find( status ) )
+					{
+						if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+
+						break;
+					}
+
+					int32_t start = m->start( 1, status );
+					if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+
+					int32_t end = m->end( 1, status );
+					if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+
+					icu::UnicodeString possible_name;
+					us_pattern.extract( start, end - start, possible_name );
+					if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+
+					__int32 group_number = icu_pattern->groupNumberFromName( possible_name, status );
+					// TODO: detect and show errors
+					if( !U_FAILURE( status ) )
+					{
+						outbw.Write( group_number );
+						outbw.Write( (LPCWSTR)possible_name.getBuffer( ), possible_name.length( ) );
+					}
+				}
+
+				outbw.Write( (__int32)-1 ); // end of names
+			}
+
+			// find matches
+
+			icu::UnicodeString us_text( text.c_str( ), text.length( ) );
+
+			icu::RegexMatcher* icu_matcher = icu_pattern->matcher( us_text, status );
+			Check( status );
+
+			//..............
+			// TODO: implement
+			//icu_matcher->setTimeLimit( )
 
 			for( ;; )
 			{
-				if( !m->find( status ) )
+				if( !icu_matcher->find( status ) )
 				{
-					if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+					Check( status );
 
 					break;
 				}
 
-				int32_t start = m->start( status );
-				if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+				int group_count = icu_matcher->groupCount( );
 
-				int32_t end = m->end( status );
-				if( U_FAILURE( status ) ) { errwr.WriteString( L"Internal error" ); return 11; }
+				outbw.Write( group_count );
 
-				icu::UnicodeString possible_name = pattern.tempSubString( start, end - start );
-
-				int group_number = p->groupNumberFromName( possible_name, status );
-				// TODO: detect and show errors
-				if( !U_FAILURE( status ) )
+				for( int i = 0; i <= group_count; ++i )
 				{
+					int32_t start = icu_matcher->start( i, status );
+					Check( status );
+					outbw.Write( start );
 
+					if( start >= 0 )
+					{
+						int32_t end = icu_matcher->end( i, status );
+						Check( status );
+						outbw.Write( end );
+					}
 				}
-
-				//UnicodeString n( up.)
 			}
 
+			outbw.Write( -1 );
+
+			return 0;
 		}
 
-		icu::RegexMatcher* icu_matcher = icu_pattern->matcher( pattern, status );
+		errwr.WriteString256( L"Unsupported command: '%s'", command.c_str( ) );
 
-		if( !Check( herr, status ) ) return 10;
+		return 1;
+	}
+	catch( LPCWSTR msg )
+	{
+		errwr.WriteString( msg );
 
+		return 10;
+	}
+	catch( const std::exception& exc )
+	{
+		std::wstring m;
+		for( const char* p = exc.what( ); *p != '\0'; ++p ) m.push_back( *p );
 
-		//..............
-		// TODO: implement
-		//icu_matcher->setTimeLimit( )
+		errwr.WriteString( m.c_str( ) );
 
-		bool is_not_first = false;
+		return 11;
+	}
+	catch( ... )
+	{
+		errwr.WriteString( L"Internal error" );
 
-		for( ;; is_not_first = true )
-		{
-			if( !icu_matcher->find( status ) )
-			{
-				if( !Check( herr, status ) ) return 10;
-
-				break;
-			}
-
-			int32_t start = icu_matcher->start( status );
-			if( !Check( herr, status ) ) return 10;
-
-			int32_t end = icu_matcher->end( status );
-			if( !Check( herr, status ) ) return 10;
-
-			if( is_not_first ) outwr.WriteString( L", " );
-
-			outwr.WriteString256( L"[ [%i, %i]", start, end );
-
-			int32_t group_count = icu_matcher->groupCount( );
-
-			for( int32_t gr = 1; gr <= group_count; ++gr )
-			{
-				int32_t group_start = icu_matcher->start( gr, status );
-				if( !Check( herr, status ) ) return 10;
-
-				int32_t group_end = 0;
-
-				if( group_start >= 0 )
-				{
-					group_end = icu_matcher->end( gr, status );
-					if( !Check( herr, status ) ) return 10;
-				}
-
-				outwr.WriteString256( L", [%i, %i]", group_start, group_end );
-			}
-
-			outwr.WriteString( L" ]" );
-		}
+		return 11;
 	}
 
-	return 0;
 }
 

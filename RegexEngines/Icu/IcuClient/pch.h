@@ -15,6 +15,7 @@
 #include <strsafe.h>
 
 #include <cassert>
+#include <string>
 
 
 #include "unicode/regex.h"

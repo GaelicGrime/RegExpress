@@ -84,7 +84,8 @@ namespace IcuRegexEngineNs
 		{
 			string[] selected_options = OptionsControl.CachedOptions;
 
-			return new IcuRegexInterop.Matcher( pattern, selected_options );
+			//return new IcuRegexInterop.Matcher( pattern, selected_options );
+			return new IcuMatcher( pattern, new IcuRegexOptions( ) ); //...............
 		}
 
 

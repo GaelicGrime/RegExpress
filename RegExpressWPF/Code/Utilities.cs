@@ -67,8 +67,9 @@ namespace RegExpressWPF.Code
 					r.Save( fs, DataFormats.Xaml, true );
 				}
 			}
-			catch( Exception )
+			catch( Exception exc)
 			{
+				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
 			}
 		}
@@ -86,8 +87,9 @@ namespace RegExpressWPF.Code
 					r.Load( fs, DataFormats.Xaml );
 				}
 			}
-			catch( Exception )
+			catch( Exception exc )
 			{
+				_ = exc;
 				if( Debugger.IsAttached ) Debugger.Break( );
 			}
 		}
