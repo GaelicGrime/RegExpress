@@ -226,9 +226,15 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowIndeterminateProgress( bool yes )
+		public void ShowIndeterminateProgress( bool yes, bool alsoShowBusyWarning = false )
 		{
 			pbProgressIndeterminate.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
+
+			if( yes && alsoShowBusyWarning )
+			{
+				ShowOne( rtbError );
+				runError.Text = "The engine is busy. Please wait...";
+			}
 		}
 
 
@@ -246,7 +252,8 @@ namespace RegExpressWPF
 					var old_captures = LastMatches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
 					var new_captures = matches.Matches.SelectMany( m => m.Groups ).SelectMany( g => g.Captures ).Select( c => c.Value );
 
-					if( showFirstOnly == LastShowFirstOnly &&
+					if( rtbMatches.IsVisible &&
+						showFirstOnly == LastShowFirstOnly &&
 						showSucceededGroupsOnly == LastShowSucceededGroupsOnly &&
 						showCaptures == LastShowCaptures &&
 						new_groups.SequenceEqual( old_groups ) &&
@@ -915,44 +922,44 @@ namespace RegExpressWPF
 				case 0:
 					return new Span( (Inline)null, at );
 				case 1:
-				{
-					var r = runs[0];
-					var run = new Run( r.text, at );
-					if( r.isSpecial )
 					{
-						Debug.Assert( specialStyleInfo != null );
-
-						run.Style( specialStyleInfo );
-					}
-					return run;
-				}
-				default:
-				{
-					var r = runs[0];
-					var run = new Run( r.text );
-					if( r.isSpecial )
-					{
-						Debug.Assert( specialStyleInfo != null );
-
-						run.Style( specialStyleInfo );
-					}
-
-					var span = new Span( run, at );
-
-					for( int i = 1; i < runs.Count; ++i )
-					{
-						r = runs[i];
-						run = new Run( r.text, span.ContentEnd );
+						var r = runs[0];
+						var run = new Run( r.text, at );
 						if( r.isSpecial )
 						{
 							Debug.Assert( specialStyleInfo != null );
 
 							run.Style( specialStyleInfo );
 						}
+						return run;
 					}
+				default:
+					{
+						var r = runs[0];
+						var run = new Run( r.text );
+						if( r.isSpecial )
+						{
+							Debug.Assert( specialStyleInfo != null );
 
-					return span;
-				}
+							run.Style( specialStyleInfo );
+						}
+
+						var span = new Span( run, at );
+
+						for( int i = 1; i < runs.Count; ++i )
+						{
+							r = runs[i];
+							run = new Run( r.text, span.ContentEnd );
+							if( r.isSpecial )
+							{
+								Debug.Assert( specialStyleInfo != null );
+
+								run.Style( specialStyleInfo );
+							}
+						}
+
+						return span;
+					}
 				}
 			}
 

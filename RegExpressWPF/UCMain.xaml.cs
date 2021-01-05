@@ -626,7 +626,7 @@ namespace RegExpressWPF
 				UITaskHelper.Invoke( this, CancellationToken.None,
 						( ) =>
 						{
-							ucMatches.ShowIndeterminateProgress( true );
+							ucMatches.ShowIndeterminateProgress( true, alsoShowBusyWarning: true );
 						} );
 			}
 			catch( ThreadInterruptedException )
