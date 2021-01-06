@@ -56,8 +56,6 @@ namespace RegexEngineInfrastructure
 					stdinWriter( sw );
 				}
 
-				// TODO: use timeout
-
 				bool cancel = false;
 				bool done = false;
 
@@ -153,8 +151,6 @@ namespace RegexEngineInfrastructure
 				reading_thread.IsBackground = true;
 				reading_thread.Start( );
 
-
-				// TODO: use timeout
 
 				bool cancel = false;
 				bool done = false;

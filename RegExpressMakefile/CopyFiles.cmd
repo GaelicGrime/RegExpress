@@ -15,7 +15,7 @@ rem echo %TargetDir%
 
 rem -- ICU --
 
-set Prj=%SolutionDir%\RegexEngines\Icu\IcuRegexInterop
+set Prj=%SolutionDir%\RegexEngines\Icu\IcuClient
 
 xcopy /D /R /Y "%Prj%\ICU-min\bin64\*.dll" "%TargetDir%\ICU-min\bin64\*"
 xcopy /D /R /Y "%Prj%\ICU-min\bin64\*.dll" "%SolutionDir%\x64\%ConfigurationName%\ICU-min\bin64\*"

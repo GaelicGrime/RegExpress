@@ -19,17 +19,17 @@ void BinaryWriter::Write( LPCWSTR s, int charlen )
 }
 
 
-void BinaryWriter::WriteBytes( const void* buffer0, DWORD bytelen )
+void BinaryWriter::WriteBytes( const void* buffer0, DWORD size )
 {
 	const char* buffer = (const char*)buffer0;
-	DWORD to_write = bytelen;
+	DWORD to_write = size;
 	DWORD written;
 
 	for( ;;)
 	{
 		if( !WriteFile( mHandle, buffer, to_write, &written, NULL ) )
 		{
-			throw L"Failed to write";
+			throw L"Failed to write bytes";
 		}
 
 		to_write -= written;

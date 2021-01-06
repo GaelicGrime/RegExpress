@@ -13,11 +13,13 @@ public:
 	}
 
 
-	void WriteString( const char* buffer, size_t size ) const;
+	void WriteBytes( const void* buffer, size_t size ) const;
 
 	void WriteString( LPCWSTR text ) const;
 
-	void __cdecl WriteString256( LPCWSTR format, ... ) const; //..........
+	void __cdecl WriteStringF( LPCWSTR format, ... ) const;
+
+	static std::wstring Printf( LPCWSTR format, ... );
 
 private:
 

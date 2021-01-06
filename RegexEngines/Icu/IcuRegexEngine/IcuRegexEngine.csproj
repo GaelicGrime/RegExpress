@@ -95,10 +95,6 @@
       <Project>{862f8d21-c7d3-4aec-a802-5431063c9f49}</Project>
       <Name>RegexEngineInfrastructure</Name>
     </ProjectReference>
-    <ProjectReference Include="..\IcuRegexInterop\IcuRegexInterop.vcxproj">
-      <Project>{5d810660-1d65-41e6-a1b7-80f06a08c4cc}</Project>
-      <Name>IcuRegexInterop</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Page Include="UCIcuRegexOptions.xaml">

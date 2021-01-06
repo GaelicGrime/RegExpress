@@ -108,7 +108,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 			{
 				LPCSTR error_name = u_errorName( status );
 
-				errwr.WriteString256( L"Invalid pattern at line %i, column %i.\r\n\r\n(%hs, %u)",
+				errwr.WriteStringF( L"Invalid pattern at line %i, column %i.\r\n\r\n(%hs, %u)",
 					parse_error.line, parse_error.offset, error_name, (unsigned)status );
 
 				return 9;
@@ -199,7 +199,7 @@ int APIENTRY wWinMain( _In_ HINSTANCE hInstance,
 			return 0;
 		}
 
-		errwr.WriteString256( L"Unsupported command: '%s'", command.c_str( ) );
+		errwr.WriteStringF( L"Unsupported command: '%s'", command.c_str( ) );
 
 		return 1;
 	}

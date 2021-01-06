@@ -30,7 +30,7 @@ public:
 	void Write( LPCWSTR s );
 	void Write( LPCWSTR s, int charlen );
 
-	void WriteBytes( const void* buffer0, DWORD bytelen );
+	void WriteBytes( const void* buffer0, DWORD size );
 
 
 private:

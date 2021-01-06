@@ -21,6 +21,8 @@ public:
 
 	std::wstring ReadString( ) const;
 
+	void ReadBytes( void* buffer, size_t size ) const;
+
 private:
 
 	HANDLE const mHandle;

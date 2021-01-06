@@ -62,7 +62,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <DelayLoadDLLs>icudt68.dll;icuin68.dll;icuuc68.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>icuin68.dll;icuuc68.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -82,7 +82,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <DelayLoadDLLs>icudt68.dll;icuin68.dll;icuuc68.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>icuin68.dll;icuuc68.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

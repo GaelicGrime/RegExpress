@@ -19,12 +19,8 @@ unsigned __int8 BinaryReader::ReadByte( ) const
 __int32 BinaryReader::ReadInt32( ) const
 {
 	__int32 i;
-	DWORD n;
 
-	if( !ReadFile( mHandle, &i, sizeof( i ), &n, NULL ) )
-	{
-		throw L"Failed to read int32";
-	}
+	ReadBytes( &i, sizeof( i ) );
 
 	return i;
 }
@@ -42,18 +38,36 @@ std::wstring BinaryReader::ReadString( ) const
 
 	s.resize( bytelen / sizeof( s[0] ) );
 
-	DWORD n;
-	if( !ReadFile( mHandle, &s.front( ), bytelen, &n, NULL ) )
-	{
-		throw L"Failed to read string";
-	}
-
-	if( n != bytelen )
-	{
-		throw L"Failed to read string";
-	}
+	ReadBytes( &s.front( ), bytelen );
 
 	return s;
+}
+
+
+void BinaryReader::ReadBytes( void* buffer0, size_t size ) const
+{
+	char* dest = (char*)buffer0;
+	size_t to_read = size;
+
+	for( ;;)
+	{
+		DWORD n;
+		if( !ReadFile( mHandle, dest, to_read, &n, NULL ) )
+		{
+			throw L"Failed to read bytes (1)";
+		}
+
+		if( n == 0 && to_read != 0 )
+		{
+			throw L"Failed to read bytes (2)";
+		}
+
+		to_read -= n;
+
+		if( to_read == 0 ) break;
+
+		dest += n;
+	}
 }
 
 

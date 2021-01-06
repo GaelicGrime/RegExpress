@@ -104,6 +104,7 @@ namespace RustRegexEngineNs
 				}
 				catch( Exception exc )
 				{
+					_ = exc;
 					if( Debugger.IsAttached ) Debugger.Break( );
 
 					rust_regex_options = new RustRegexOptions( );
