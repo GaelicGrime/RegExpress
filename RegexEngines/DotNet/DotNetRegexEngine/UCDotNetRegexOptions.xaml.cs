@@ -28,7 +28,6 @@ namespace DotNetRegexEngineNs
 
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
-		static readonly string[] RegexOptionsNames = Enum.GetNames( typeof( RegexOptions ) ); //.........
 
 		DotNetRegexOptions Options = new DotNetRegexOptions( );
 

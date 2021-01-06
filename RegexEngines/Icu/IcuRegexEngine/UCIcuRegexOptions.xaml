@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:IcuRegexEngineNs"
              mc:Ignorable="d" 
-             d:DesignHeight="150" d:DesignWidth="200" 
+             d:DesignHeight="208.667" d:DesignWidth="354.667" 
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
@@ -13,15 +13,76 @@
             <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
             <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
         </Style>
+
+        <Style x:Key="Comment" TargetType="TextBlock">
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="3 0 0 0"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
 
         <StackPanel>
+            <CheckBox IsChecked="{Binding UREGEX_CANON_EQ}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_CANON_EQ"/>
+                    <TextBlock Text="– Forces normalization of pattern and strings. Not implemented yet, just a placeholder, hence draft." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_CASE_INSENSITIVE}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_CASE_INSENSITIVE"/>
+                    <TextBlock Text="– Enable case insensitive matching." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_COMMENTS}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_COMMENTS"/>
+                    <TextBlock Text="– Allow white space and comments within patterns." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_DOTALL}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_DOTALL"/>
+                    <TextBlock Text="– If set, '.' matches line terminators, otherwise '.' matching stops at line end." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_LITERAL}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_LITERAL"/>
+                    <TextBlock Text="– If set, treat the entire pattern as a literal string. Metacharacters or escape sequences in the input sequence will be given no special meaning." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_MULTILINE}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_MULTILINE"/>
+                    <TextBlock Text="– Control behavior of &quot;$&quot; and &quot;^&quot; If set, recognize line terminators within string, otherwise, match only at start and end of input string." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_UNIX_LINES}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_UNIX_LINES"/>
+                    <TextBlock Text="– Unix-only line endings. When this mode is enabled, only \\u000a is recognized as a line ending in the behavior of ., ^, and $." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_UWORD}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_UWORD"/>
+                    <TextBlock Text="– Unicode word boundaries. If set, uses the Unicode TR 29 definition of word boundaries." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding UREGEX_ERROR_ON_UNKNOWN_ESCAPES}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="UREGEX_ERROR_ON_UNKNOWN_ESCAPES"/>
+                    <TextBlock Text="– Error on Unrecognized backslash escapes. If set, fail with an error on patterns that contain backslash - escaped ASCII letters without a known special meaning.If this flag is not set, these escaped letters represent themselves." Style="{StaticResource Comment}"/>
+                </StackPanel>
+            </CheckBox>
 
-            <StackPanel x:Name="pnlOptions"/>
-
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
                 <StackPanel.LayoutTransform>
                     <TransformGroup>
                         <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
@@ -32,9 +93,10 @@
                 </StackPanel.LayoutTransform>
 
                 <Label Content="Limit:" Target="{Binding ElementName=tbxIterationLimit}" VerticalAlignment="Center"/>
-                <TextBox x:Name="tbxIterationLimit" Width="55" VerticalAlignment="Center" TextChanged="tbxIterationLimit_TextChanged" Text="0" />
+                <TextBox x:Name="tbxIterationLimit" Width="55" VerticalAlignment="Center" TextChanged="tbxIterationLimit_TextChanged" Text="{Binding Limit, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBlock VerticalAlignment="Center" Text="steps" Margin="4 0 0 0"/>
             </StackPanel>
+
         </StackPanel>
 
     </Grid>

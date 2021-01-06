@@ -1,0 +1,12 @@
+Sample binary files for debugging IcuClient in Visual Studio.
+
+Strings must be encoded using Unicode (UTF-16 Little Endian, Codepage 1200), without BOM signature.
+
+In Visual Studio, Project Properties, Debugging, Command Arguments, enter something like this:
+
+	< "$(ProjectDir)\Sample Inputs\get-version.dat"
+
+In particular, "get-version.dat" has the next contents:
+	
+	- 02 -- one byte, the length of the command (next), in bytes
+	- 76 00 -- Unicode letter "v", which is the "Get ICU Version" command.

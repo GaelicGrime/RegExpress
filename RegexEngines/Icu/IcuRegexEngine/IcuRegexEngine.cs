@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -52,7 +53,7 @@ namespace IcuRegexEngineNs
 
 		public string Name => "ICU";
 
-		public string EngineVersion => IcuRegexInterop.Matcher.GetVersion( );
+		public string EngineVersion => IcuMatcher.GetIcuVersion( NonCancellable.Instance );
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -70,21 +71,36 @@ namespace IcuRegexEngineNs
 
 		public string[] ExportOptions( )
 		{
-			return OptionsControl.ExportOptions( );
+			IcuRegexOptions options = OptionsControl.GetSelectedOptions( );
+			var json = JsonSerializer.Serialize( options );
+
+			return new[] { $"json:{json}" };
 		}
 
 
 		public void ImportOptions( string[] options )
 		{
-			OptionsControl.ImportOptions( options );
+			var json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
+
+			IcuRegexOptions options_obj;
+			if( string.IsNullOrWhiteSpace( json ) )
+			{
+				options_obj = new IcuRegexOptions( );
+			}
+			else
+			{
+				options_obj = JsonSerializer.Deserialize<IcuRegexOptions>( json );
+			}
+
+			OptionsControl.SetSelectedOptions( options_obj );
 		}
 
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			string[] selected_options = OptionsControl.CachedOptions;
+			IcuRegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			return new IcuRegexInterop.Matcher( pattern, selected_options );
+			return new IcuMatcher( pattern, options );
 		}
 
 
@@ -195,20 +211,17 @@ namespace IcuRegexEngineNs
 
 		Regex GetCachedColouringRegex( )
 		{
-			string[] selected_options = OptionsControl.CachedOptions;
+			IcuRegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			bool UREGEX_LITERAL = selected_options.Contains( "UREGEX_LITERAL" );
-			if( UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
+			if( options.UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
 
-			bool UREGEX_COMMENTS = selected_options.Contains( "UREGEX_COMMENTS" );
-
-			object key = UREGEX_COMMENTS;
+			object key = options.UREGEX_COMMENTS;
 
 			lock( CachedColouringRegexes )
 			{
 				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				regex = CreateColouringRegex( UREGEX_COMMENTS );
+				regex = CreateColouringRegex( options );
 
 				CachedColouringRegexes.Add( key, regex );
 
@@ -219,20 +232,17 @@ namespace IcuRegexEngineNs
 
 		Regex GetCachedHighlightingRegex( )
 		{
-			string[] selected_options = OptionsControl.CachedOptions;
+			IcuRegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			bool UREGEX_LITERAL = selected_options.Contains( "UREGEX_LITERAL" );
-			if( UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
+			if( options.UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
 
-			bool UREGEX_COMMENTS = selected_options.Contains( "UREGEX_COMMENTS" );
-
-			object key = UREGEX_COMMENTS;
+			object key = options.UREGEX_COMMENTS;
 
 			lock( CachedHighlightingRegexes )
 			{
 				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
-				regex = CreateHighlightingRegex( UREGEX_COMMENTS );
+				regex = CreateHighlightingRegex( options );
 
 				CachedHighlightingRegexes.Add( key, regex );
 
@@ -241,7 +251,7 @@ namespace IcuRegexEngineNs
 		}
 
 
-		Regex CreateColouringRegex( bool UREGEX_COMMENTS )
+		Regex CreateColouringRegex( IcuRegexOptions options )
 		{
 			var pb_escape = new PatternBuilder( );
 
@@ -259,7 +269,7 @@ namespace IcuRegexEngineNs
 
 			pb.BeginGroup( "comment" );
 			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
-			if( UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			if( options.UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
 			pb.EndGroup( );
 
 			pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" );
@@ -281,13 +291,13 @@ namespace IcuRegexEngineNs
 		}
 
 
-		Regex CreateHighlightingRegex( bool UREGEX_COMMENTS )
+		Regex CreateHighlightingRegex( IcuRegexOptions options )
 		{
 			var pb = new PatternBuilder( );
 
 			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
 
-			if( UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
+			if( options.UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
 			pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
 
 			pb.Add( @"(?'left_par'\()" ); // '('

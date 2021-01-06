@@ -251,11 +251,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>@call "$(ProjectDir)PostBuildStep.cmd" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)"
-
-
-
-
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -8,21 +8,23 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#include "framework.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <strsafe.h>
+
+#include <cassert>
+#include <string>
 
 
-#pragma unmanaged
-
-#include <unicode/regex.h>
+#include "unicode/regex.h"
 
 #pragma comment(lib, "ICU-min\\lib64\\icuin.lib")
 //#pragma comment(lib, "ICU-min\\lib64\\icuio.lib")
 //#pragma comment(lib, "ICU-min\\lib64\\icutu.lib")
 #pragma comment(lib, "ICU-min\\lib64\\icuuc.lib")
 
-#pragma managed
-
-
-#include <msclr\marshal_cppstd.h>
 
 
 #endif //PCH_H

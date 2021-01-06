@@ -23,82 +23,38 @@ namespace IcuRegexEngineNs
 	partial class UCIcuRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
-		internal string[] CachedOptions; // (accessible from threads)
-
 
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
+
+		IcuRegexOptions Options = new IcuRegexOptions( );
 
 
 		public UCIcuRegexOptions( )
 		{
 			InitializeComponent( );
 
-
-			// insert checkboxes
-
-			{
-				List<IcuRegexInterop.OptionInfo> compile_options = IcuRegexInterop.Matcher.GetOptions( );
-
-				foreach( var o in compile_options )
-				{
-					var cb = new CheckBox
-					{
-						Tag = o.FlagName,
-						Content = CreateTextBlock( o.FlagName, o.Note )
-					};
-
-					pnlOptions.Children.Add( cb );
-				}
-			}
+			DataContext = Options;
 		}
 
 
-		internal string[] ExportOptions( )
+		public IcuRegexOptions GetSelectedOptions( )
 		{
-			return GetSelectedOptions( );
+			if( Dispatcher.CheckAccess( ) )
+				return Options;
+			else
+				return Options.Clone( );
 		}
 
 
-		internal void ImportOptions( string[] options )
-		{
-			SetSelectedOptions( options );
-		}
-
-
-		internal string[] GetSelectedOptions( )
-		{
-			var selected_options =
-				pnlOptions.Children.OfType<CheckBox>( )
-					.Where( cb => cb.IsChecked == true )
-					.Select( cb => cb.Tag.ToString( ) );
-
-			var limit = tbxIterationLimit.Text.Trim( );
-
-			if( !string.IsNullOrWhiteSpace( limit ) && limit != "0" )
-				selected_options = selected_options.Append( "limit:" + limit );
-
-			return selected_options.ToArray( );
-		}
-
-
-		internal void SetSelectedOptions( string[] options )
+		internal void SetSelectedOptions( IcuRegexOptions options )
 		{
 			try
 			{
 				++ChangeCounter;
 
-				options = options ?? new string[] { };
-
-				foreach( var cb in pnlOptions.Children.OfType<CheckBox>( ) )
-				{
-					cb.IsChecked = options.Contains( cb.Tag );
-				}
-
-				var limit = options.FirstOrDefault( o => o.StartsWith( "limit:" ) );
-				if( limit != null ) limit = limit.Substring( "limit:".Length );
-				if( string.IsNullOrWhiteSpace( limit ) ) limit = "0";
-				tbxIterationLimit.Text = limit;
+				Options = options.Clone( );
+				DataContext = Options;
 			}
 			finally
 			{
@@ -111,8 +67,6 @@ namespace IcuRegexEngineNs
 		{
 			if( IsFullyLoaded ) return;
 
-			CachedOptions = GetSelectedOptions( );
-
 			IsFullyLoaded = true;
 		}
 
@@ -121,8 +75,6 @@ namespace IcuRegexEngineNs
 		{
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
-
-			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
@@ -133,23 +85,7 @@ namespace IcuRegexEngineNs
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
 
-			CachedOptions = GetSelectedOptions( );
-
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
-		}
-
-
-		static TextBlock CreateTextBlock( string text, string note )
-		{
-			var tb = new TextBlock( );
-			new Run( text, tb.ContentEnd );
-			if( !string.IsNullOrWhiteSpace( note ) )
-			{
-				new Run( " – " + note, tb.ContentEnd )
-					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
-			}
-
-			return tb;
 		}
 
 	}
