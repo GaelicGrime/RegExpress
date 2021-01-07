@@ -219,7 +219,7 @@ namespace RegExpressWPF.Code
 						}
 					}
 
-					if( status == Status.Terminate ) break; ;
+					if( status == Status.Terminate ) break;
 
 					IsRedoAsapRequestDetected = false;
 
