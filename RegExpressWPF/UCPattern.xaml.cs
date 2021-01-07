@@ -86,6 +86,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void Shutdown( )
+		{
+			TerminateAll( );
+		}
+
+
 		public BaseTextData GetBaseTextData( string eol )
 		{
 			return rtb.GetBaseTextData( eol );
@@ -139,10 +145,15 @@ namespace RegExpressWPF
 
 		public void StopAll( )
 		{
-			// TODO: stop threads
-
 			RecolouringLoop.SendStop( );
 			HighlightingLoop.SendStop( );
+		}
+
+
+		public void TerminateAll( )
+		{
+			RecolouringLoop.Terminate( );
+			HighlightingLoop.Terminate( );
 		}
 
 

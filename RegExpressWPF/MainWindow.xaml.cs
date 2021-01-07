@@ -237,15 +237,15 @@ namespace RegExpressWPF
 					switch( tab_item.Content )
 					{
 					case UCMain uc_main:
-					{
-						var tab_data = new TabData( );
+						{
+							var tab_data = new TabData( );
 
-						tab_data.Name = tab_item.Header as string; //
-						uc_main.ExportTabData( tab_data );
+							tab_data.Name = tab_item.Header as string; //
+							uc_main.ExportTabData( tab_data );
 
-						all_tab_data.Add( tab_data );
-					}
-					break;
+							all_tab_data.Add( tab_data );
+						}
+						break;
 					}
 				}
 			}
@@ -422,6 +422,10 @@ namespace RegExpressWPF
 
 			if( r != MessageBoxResult.OK ) return;
 
+			UCMain uc_main = (UCMain)tabItem.Content;
+
+			uc_main.Shutdown( );
+
 			tabControlMain.Items.Remove( tabItem );
 
 			if( tabControlMain.Items[index] == tabNew ) --index;
@@ -445,7 +449,7 @@ namespace RegExpressWPF
 			TabItem new_tab_item = null;
 			var tab_data = new TabData( );
 
-			var uc_main = GetSingleModeControl( );
+			UCMain uc_main = GetSingleModeControl( );
 			if( uc_main != null )
 			{
 				uc_main.ExportTabData( tab_data );

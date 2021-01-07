@@ -96,6 +96,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void Shutdown( )
+		{
+			TerminateAll( );
+		}
+
+
 		public BaseTextData GetBaseTextData( string eol )
 		{
 			return rtb.GetBaseTextData( eol );
@@ -228,6 +234,14 @@ namespace RegExpressWPF
 			RecolouringLoop.SendStop( );
 			LocalUnderliningLoop.SendStop( );
 			ExternalUnderliningLoop.SendStop( );
+		}
+
+
+		public void TerminateAll( )
+		{
+			RecolouringLoop.Terminate( );
+			LocalUnderliningLoop.Terminate( );
+			ExternalUnderliningLoop.Terminate( );
 		}
 
 

@@ -89,6 +89,27 @@ namespace RegExpressWPF
 
 				cbxEngine.Items.Add( cbxi );
 			}
+
+			// because 'Unloaded' event is not always called
+			// (https://stackoverflow.com/questions/14479038/how-to-fire-unload-event-of-usercontrol-in-a-wpf-window)
+
+			Dispatcher.ShutdownStarted += HandleShutdownStarted;
+		}
+
+
+		private void HandleShutdownStarted( object sender, EventArgs e )
+		{
+			Shutdown( );
+		}
+
+
+		public void Shutdown( )
+		{
+			TerminateAll( );
+
+			ucPattern.Shutdown( );
+			ucText.Shutdown( );
+			ucMatches.Shutdown( );
 		}
 
 
@@ -176,6 +197,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void GoToOptions( )
+		{
+			cbxEngine.Focus( );
+		}
+
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;
@@ -211,9 +238,9 @@ namespace RegExpressWPF
 		}
 
 
-		public void GoToOptions( )
+		private void UserControl_Unloaded( object sender, RoutedEventArgs e )
 		{
-			cbxEngine.Focus( );
+			//TerminateAll( );
 		}
 
 
@@ -506,6 +533,14 @@ namespace RegExpressWPF
 			FindMatchesLoop.SendRestart( );
 			ShowTextInfoLoop.SendRestart( );
 			UpdateWhitespaceWarningLoop.SendRestart( );
+		}
+
+
+		private void TerminateAll( )
+		{
+			FindMatchesLoop.Terminate( );
+			UpdateWhitespaceWarningLoop.Terminate( );
+			ShowTextInfoLoop.Terminate( );
 		}
 
 
@@ -835,5 +870,6 @@ namespace RegExpressWPF
 		}
 
 		#endregion IDisposable Support
+
 	}
 }

@@ -159,6 +159,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void Shutdown()
+		{
+			StopAll( );
+		}
+
+
 		public void ShowInfo( string text, bool delayed = false )
 		{
 			TimerShowInfo.Stop( ); //
