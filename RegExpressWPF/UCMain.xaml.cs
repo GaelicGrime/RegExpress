@@ -382,7 +382,7 @@ namespace RegExpressWPF
 
 			if( object.ReferenceEquals( sender, CurrentRegexEngine ) )
 			{
-				HandleOptionsChange( args?.PreferImmediateReaction == true );
+				HandleOptionsChange( preferImmediateReaction: args?.PreferImmediateReaction == true );
 			}
 			else
 			{
@@ -406,7 +406,7 @@ namespace RegExpressWPF
 
 			if( preferImmediateReaction )
 			{
-				ucMatches.ShowInfo( "Matching…", delayed: false );
+				ucMatches.ShowInfo( "Matching…" );
 				lblMatches.Text = "Matches";
 
 				FindMatchesLoop.SendRedoAsap( );
@@ -661,7 +661,8 @@ namespace RegExpressWPF
 				UITaskHelper.Invoke( this, CancellationToken.None,
 						( ) =>
 						{
-							ucMatches.ShowIndeterminateProgress( true, alsoShowBusyWarning: true );
+							ucMatches.ShowIndeterminateProgress( true );
+							ucMatches.ShowInfo( "The engine is busy, please wait…" );
 						} );
 			}
 			catch( ThreadInterruptedException )

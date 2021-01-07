@@ -51,9 +51,6 @@ namespace RegExpressWPF
 		readonly StyleInfo GroupValueStyleInfo;
 		readonly StyleInfo GroupFailedStyleInfo;
 
-		readonly DispatcherTimer TimerShowInfo;
-		string InfoText;
-
 		bool AlreadyLoaded = false;
 
 		const int MIN_LEFT_WIDTH = 24;
@@ -116,9 +113,6 @@ namespace RegExpressWPF
 			LocalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 			ExternalUnderliningAdorner = new UnderliningAdorner( rtbMatches );
 
-			TimerShowInfo = new DispatcherTimer { Interval = TimeSpan.FromSeconds( 1 ), IsEnabled = false };
-			TimerShowInfo.Tick += TimerShowInfo_Tick;
-
 			ChangeEventHelper = new ChangeEventHelper( rtbMatches );
 
 			HighlightStyleInfos = new[]
@@ -159,35 +153,22 @@ namespace RegExpressWPF
 		}
 
 
-		public void Shutdown()
+		public void Shutdown( )
 		{
 			StopAll( );
 		}
 
 
-		public void ShowInfo( string text, bool delayed = false )
+		public void ShowInfo( string text )
 		{
-			TimerShowInfo.Stop( ); //
-			InfoText = null;
-
-			if( delayed )
-			{
-				InfoText = text;
-				TimerShowInfo.Start( );
-			}
-			else
-			{
-				runInfo.Text = text;
-				rtbInfo.ScrollToHome( );
-				rtbInfo.Visibility = Visibility.Visible;
-			}
+			runInfo.Text = text;
+			rtbInfo.ScrollToHome( );
+			rtbInfo.Visibility = Visibility.Visible;
 		}
 
 
 		private void CancelInfo( )
 		{
-			TimerShowInfo.Stop( );
-			InfoText = null;
 			rtbInfo.Visibility = Visibility.Hidden;
 		}
 
@@ -232,15 +213,9 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowIndeterminateProgress( bool yes, bool alsoShowBusyWarning = false )
+		public void ShowIndeterminateProgress( bool yes )
 		{
 			pbProgressIndeterminate.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
-
-			if( yes && alsoShowBusyWarning )
-			{
-				ShowOne( rtbError );
-				runError.Text = "The engine is busy. Please wait...";
-			}
 		}
 
 
@@ -427,14 +402,6 @@ namespace RegExpressWPF
 		private void rtbMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
 			LocalUnderliningLoop.SendRestart( );
-		}
-
-
-		private void TimerShowInfo_Tick( object sender, EventArgs e )
-		{
-			TimerShowInfo.Stop( );
-
-			ShowInfo( InfoText, delayed: false );
 		}
 
 
