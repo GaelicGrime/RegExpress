@@ -15,16 +15,19 @@ namespace RegExpressWPF.Code
 		enum Status
 		{
 			None,
+			Terminate,
 			Stop,
 			Restart,
 			RedoAsap,
 		}
 
+		readonly AutoResetEvent TerminateEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent StopEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent RestartEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent RedoAsapEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent[] Events;
 
+		bool IsTerminateRequestDetected;
 		bool IsStopRequestDetected;
 		bool IsRestartRequestDetected;
 		bool IsRedoAsapRequestDetected;
@@ -39,9 +42,17 @@ namespace RegExpressWPF.Code
 			if( timeout2 <= 0 ) timeout2 = timeout1;
 			if( timeout3 <= 0 ) timeout3 = timeout2;
 
-			Events = new[] { StopEvent, RestartEvent, RedoAsapEvent };
+			Events = new[] { TerminateEvent, StopEvent, RestartEvent, RedoAsapEvent };
 
 			StartWorker( action, timeout1, timeout2, timeout3 );
+		}
+
+
+		public bool Terminate( int timeoutMs = 333 )
+		{
+			TerminateEvent.Set( );
+
+			return TheThread.Join( timeoutMs );
 		}
 
 
@@ -81,6 +92,7 @@ namespace RegExpressWPF.Code
 			{
 				IsBackground = true,
 				Priority = ThreadPriority.BelowNormal,
+				Name = nameof( ResumableLoop )
 			};
 
 			TheThread.Start( );
@@ -89,14 +101,39 @@ namespace RegExpressWPF.Code
 
 		Status GetStatus( int timeoutMs )
 		{
-			if( IsStopRequestDetected ) return Status.Stop;
+			if( IsTerminateRequestDetected ) return Status.Terminate;
+
+			if( IsStopRequestDetected )
+			{
+				if( TerminateEvent.WaitOne( 0 ) ) // since 'terminate' has higher priority
+				{
+					IsTerminateRequestDetected = true;
+					IsStopRequestDetected = false;
+					IsRestartRequestDetected = false;
+					IsRedoAsapRequestDetected = false;
+
+					return Status.Terminate;
+				}
+
+				return Status.Stop;
+			}
 
 			if( IsRestartRequestDetected || IsRedoAsapRequestDetected )
 			{
-				if( StopEvent.WaitOne( 0 ) ) // since 'stop' has priority over 'restart'
+				if( TerminateEvent.WaitOne( 0 ) ) // since 'terminate' has higher priority
 				{
-					IsStopRequestDetected = true;
+					IsTerminateRequestDetected = true;
+					IsStopRequestDetected = false;
+					IsRestartRequestDetected = false;
+					IsRedoAsapRequestDetected = false;
 
+					return Status.Terminate;
+				}
+
+				if( StopEvent.WaitOne( 0 ) ) // since 'stop' has higher priority over 'restart'
+				{
+					Debug.Assert( !IsTerminateRequestDetected );
+					IsStopRequestDetected = true;
 					IsRestartRequestDetected = false;
 					IsRedoAsapRequestDetected = false;
 
@@ -111,12 +148,15 @@ namespace RegExpressWPF.Code
 			switch( n )
 			{
 			case 0:
+				IsTerminateRequestDetected = true;
+				return Status.Terminate;
+			case 1:
 				IsStopRequestDetected = true;
 				return Status.Stop;
-			case 1:
+			case 2:
 				IsRestartRequestDetected = true;
 				return Status.Restart;
-			case 2:
+			case 3:
 				IsRedoAsapRequestDetected = true;
 				return Status.RedoAsap;
 			case WaitHandle.WaitTimeout:
@@ -130,7 +170,6 @@ namespace RegExpressWPF.Code
 		}
 
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		void ThreadProc( Action<ICancellable> action, int timeout1, int timeout2, int timeout3 )
 		{
 			Debug.Assert( timeout1 > 0 );
@@ -144,11 +183,15 @@ namespace RegExpressWPF.Code
 
 			try
 			{
+				IsTerminateRequestDetected = false;
+
 				for(; ; )
 				{
 					IsStopRequestDetected = false;
 
 					var status = GetStatus( -1 );
+
+					if( status == Status.Terminate ) break;
 
 					if( status == Status.Stop ) continue;
 					if( status != Status.Restart && status != Status.RedoAsap ) { Debug.Assert( false ); continue; }
@@ -167,13 +210,16 @@ namespace RegExpressWPF.Code
 
 							status = GetStatus( timeouts[i] );
 
-							if( status == Status.Stop ) { Debug.Assert( IsStopRequestDetected ); break; }
+							if( status == Status.Terminate ) break;
+							if( status == Status.Stop ) break;
 							if( status == Status.Restart ) continue;
 							if( status == Status.RedoAsap ) { Debug.Assert( IsRedoAsapRequestDetected ); break; }
 							if( status == Status.None ) break; // (i.e. timeout, "silence")
 							Debug.Assert( false );
 						}
 					}
+
+					if( status == Status.Terminate ) break; ;
 
 					IsRedoAsapRequestDetected = false;
 
