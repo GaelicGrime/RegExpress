@@ -16,6 +16,7 @@ namespace StdRegexEngineNs
 	public class StdRegexEngine : IRegexEngine
 	{
 		readonly UCStdRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<GrammarEnum, Regex> CachedColouringRegexes = new Dictionary<GrammarEnum, Regex>( );
 		static readonly Dictionary<GrammarEnum, Regex> CachedHighlightingRegexes = new Dictionary<GrammarEnum, Regex>( );
@@ -34,7 +35,7 @@ namespace StdRegexEngineNs
 
 		public string Name => "std::wregex";
 
-		public string EngineVersion => StdRegexInterop.Matcher.GetCRTVersion( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -252,6 +253,22 @@ namespace StdRegexEngineNs
 			pb.Add( @"\\." );  // '\...'
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return StdRegexInterop.Matcher.GetCRTVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 	}
 }

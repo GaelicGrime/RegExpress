@@ -16,6 +16,7 @@ namespace Pcre2RegexEngineNs
 	public class Pcre2RegexEngine : IRegexEngine
 	{
 		readonly UCPcre2RegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -35,7 +36,7 @@ namespace Pcre2RegexEngineNs
 
 		public string Name => "PCRE2";
 
-		public string EngineVersion => Pcre2RegexInterop.Matcher.GetPcre2Version( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -349,6 +350,22 @@ namespace Pcre2RegexEngineNs
 			pb.Add( @"\\." ); // '\...'
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return Pcre2RegexInterop.Matcher.GetPcre2Version( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 
 	}

@@ -17,6 +17,7 @@ namespace PythonRegexEngineNs
 	public class PythonRegexEngine : IRegexEngine
 	{
 		readonly UCPythonRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -49,7 +50,7 @@ namespace PythonRegexEngineNs
 
 		public string Name => "Python";
 
-		public string EngineVersion => Matcher.GetPythonVersion( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures | RegexEngineCapabilityEnum.CombineSurrogatePairs;
 
@@ -282,5 +283,20 @@ namespace PythonRegexEngineNs
 			return pb.ToRegex( );
 		}
 
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return Matcher.GetPythonVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }

@@ -16,10 +16,13 @@ namespace SubRegRegexInterop
 		static Matcher( );
 
 	public:
+
 		Matcher( String^ pattern, cli::array<String^>^ options );
 
 		~Matcher( );
 		!Matcher( );
+
+		static String^ GetVersion( );
 
 #pragma region IMatcher
 

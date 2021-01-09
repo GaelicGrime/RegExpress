@@ -16,6 +16,7 @@ namespace Re2RegexEngineNs
 	public class Re2RegexEngine : IRegexEngine
 	{
 		readonly UCRe2RegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -35,7 +36,7 @@ namespace Re2RegexEngineNs
 
 		public string Name => "RE2";
 
-		public string EngineVersion => Re2RegexInterop.Matcher.GetRe2Version( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -274,5 +275,20 @@ namespace Re2RegexEngineNs
 			return pb.ToRegex( );
 		}
 
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return Re2RegexInterop.Matcher.GetRe2Version( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }

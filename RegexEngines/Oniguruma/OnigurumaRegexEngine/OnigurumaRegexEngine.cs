@@ -16,6 +16,7 @@ namespace OnigurumaRegexEngineNs
 	public class OnigurumaRegexEngine : IRegexEngine
 	{
 		readonly UCOnigurumaRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -34,7 +35,7 @@ namespace OnigurumaRegexEngineNs
 
 		public string Name => "Oniguruma";
 
-		public string EngineVersion => OnigurumaRegexInterop.Matcher.GetVersion( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
@@ -386,5 +387,20 @@ namespace OnigurumaRegexEngineNs
 			return pb.ToRegex( );
 		}
 
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return OnigurumaRegexInterop.Matcher.GetVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }

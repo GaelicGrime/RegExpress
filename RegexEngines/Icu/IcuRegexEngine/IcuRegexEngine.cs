@@ -20,6 +20,7 @@ namespace IcuRegexEngineNs
 	public class IcuRegexEngine : IRegexEngine
 	{
 		readonly UCIcuRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<object, Regex> CachedColouringRegexes = new Dictionary<object, Regex>( );
 		static readonly Dictionary<object, Regex> CachedHighlightingRegexes = new Dictionary<object, Regex>( );
@@ -53,7 +54,7 @@ namespace IcuRegexEngineNs
 
 		public string Name => "ICU";
 
-		public string EngineVersion => IcuMatcher.GetIcuVersion( NonCancellable.Instance );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -322,5 +323,20 @@ namespace IcuRegexEngineNs
 			return pb.ToRegex( );
 		}
 
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return IcuMatcher.GetIcuVersion( NonCancellable.Instance );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }
