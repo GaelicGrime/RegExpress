@@ -19,6 +19,7 @@ namespace DotNetRegexEngineNs
 	public class DotNetRegexEngine : IRegexEngine
 	{
 		readonly UCDotNetRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<RegexOptions, Regex> CachedColouringRegexes = new Dictionary<RegexOptions, Regex>( );
 		static readonly Dictionary<RegexOptions, Regex> CachedHighlightingRegexes = new Dictionary<RegexOptions, Regex>( );
@@ -42,35 +43,7 @@ namespace DotNetRegexEngineNs
 
 		public string Name => ".NET Regex";
 
-		public string EngineVersion
-		{
-			get
-			{
-				try
-				{
-					// see: https://stackoverflow.com/questions/19096841
-
-					System.Runtime.Versioning.TargetFrameworkAttribute target_framework_attribute =
-						(System.Runtime.Versioning.TargetFrameworkAttribute)
-						Assembly
-							.GetExecutingAssembly( )
-							.GetCustomAttributes( typeof( System.Runtime.Versioning.TargetFrameworkAttribute ), false )
-							.SingleOrDefault( );
-
-					if( target_framework_attribute == null ) return null;
-
-					return Regex.Match( target_framework_attribute.FrameworkName, @"\d+(\.\d+)*", RegexOptions.ExplicitCapture | RegexOptions.Compiled ).Value;
-				}
-				catch( Exception exc )
-				{
-					_ = exc;
-					if( Debugger.IsAttached ) Debugger.Break( );
-
-					return null;
-				}
-			}
-		}
-
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
@@ -307,6 +280,33 @@ namespace DotNetRegexEngineNs
 			pb.Add( @"\\." ); // (skip)
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				// see: https://stackoverflow.com/questions/19096841
+
+				System.Runtime.Versioning.TargetFrameworkAttribute target_framework_attribute =
+					(System.Runtime.Versioning.TargetFrameworkAttribute)
+					Assembly
+						.GetExecutingAssembly( )
+						.GetCustomAttributes( typeof( System.Runtime.Versioning.TargetFrameworkAttribute ), false )
+						.SingleOrDefault( );
+
+				if( target_framework_attribute == null ) return null;
+
+				return Regex.Match( target_framework_attribute.FrameworkName, @"\d+(\.\d+)*", RegexOptions.ExplicitCapture | RegexOptions.Compiled ).Value;
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 	}
 }

@@ -17,8 +17,7 @@ namespace DRegexEngineNs
 	public class DRegexEngine : IRegexEngine
 	{
 		readonly UCDRegexOptions OptionsControl;
-		static readonly object DVersionLocker = new object( );
-		static string DVersion = null;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -37,33 +36,7 @@ namespace DRegexEngineNs
 
 		public string Name => "D";
 
-
-		public string EngineVersion
-		{
-			get
-			{
-				if( DVersion == null )
-				{
-					lock( DVersionLocker )
-					{
-						if( DVersion == null )
-						{
-							try
-							{
-								DVersion = DMatcher.GetDVersion( NonCancellable.Instance );
-							}
-							catch
-							{
-								DVersion = "Unknown Version";
-							}
-						}
-					}
-				}
-
-				return DVersion;
-			}
-		}
-
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -330,6 +303,22 @@ namespace DRegexEngineNs
 			pb.Add( @"\\." ); // '\...'
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return DMatcher.GetDVersion( NonCancellable.Instance );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 	}
 }

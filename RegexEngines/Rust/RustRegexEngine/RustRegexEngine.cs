@@ -17,8 +17,7 @@ namespace RustRegexEngineNs
 	public class RustRegexEngine : IRegexEngine
 	{
 		readonly UCRustRegexOptions OptionsControl;
-		static readonly object RustVersionLocker = new object( );
-		static string RustVersion = null;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -37,31 +36,7 @@ namespace RustRegexEngineNs
 
 		public string Name => "Rust";
 
-		public string EngineVersion
-		{
-			get
-			{
-				if( RustVersion == null )
-				{
-					lock( RustVersionLocker )
-					{
-						if( RustVersion == null )
-						{
-							try
-							{
-								RustVersion = RustMatcher.GetRustVersion( NonCancellable.Instance );
-							}
-							catch
-							{
-								RustVersion = "Unknown Version";
-							}
-						}
-					}
-				}
-
-				return RustVersion;
-			}
-		}
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -371,6 +346,22 @@ namespace RustRegexEngineNs
 			pb.Add( @"\\." ); // '\...'
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return RustMatcher.GetRustVersion( NonCancellable.Instance );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 	}
 }

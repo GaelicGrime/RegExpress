@@ -1,7 +1,5 @@
 In order to rebuild DClient:
 
-- Edit the "DClient.d" file if required.
-
 - Download and install 'DMD' compiler for Windows from https://dlang.org/download.html.
 
 - Run 'build.bat'. It will make the 'DClient.exe' file. 

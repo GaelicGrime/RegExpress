@@ -19,6 +19,7 @@ namespace PerlRegexEngineNs
 	public class PerlRegexEngine : IRegexEngine
 	{
 		readonly UCPerlRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
 		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
@@ -50,7 +51,7 @@ namespace PerlRegexEngineNs
 
 		public string Name => "Perl";
 
-		public string EngineVersion => GetPerlVersion( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures | RegexEngineCapabilityEnum.CombineSurrogatePairs;
 
@@ -210,40 +211,32 @@ namespace PerlRegexEngineNs
 		static readonly object Locker = new object( );
 
 
-		string GetPerlVersion( )
+		static string GetPerlVersion( )
 		{
-			if( PerlVersion == null )
+			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
+			string assembly_dir = Path.GetDirectoryName( assembly_location );
+			string perl_dir = Path.Combine( assembly_dir, @"Perl-min\perl" );
+			string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
+
+			string stdout_contents;
+			string stderr_contents;
+
+			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, perl_exe, @"-CS -e ""print 'V=', $^V""", "", out stdout_contents, out stderr_contents ) ||
+				!stdout_contents.StartsWith( "V=" ) )
 			{
-				lock( Locker )
-				{
-					if( PerlVersion == null )
-					{
-						string assembly_location = Assembly.GetExecutingAssembly( ).Location;
-						string assembly_dir = Path.GetDirectoryName( assembly_location );
-						string perl_dir = Path.Combine( assembly_dir, @"Perl-min\perl" );
-						string perl_exe = Path.Combine( perl_dir, @"bin\perl.exe" );
+				if( Debugger.IsAttached ) Debugger.Break( );
+				Debug.WriteLine( "Unknown Perl Get-Version: '{0}', '{1}'", stdout_contents, stderr_contents );
 
-						string stdout_contents;
-						string stderr_contents;
-
-						if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, perl_exe, @"-CS -e ""print 'V=', $^V""", "", out stdout_contents, out stderr_contents ) ||
-							!stdout_contents.StartsWith( "V=" ) )
-						{
-							if( Debugger.IsAttached ) Debugger.Break( );
-							Debug.WriteLine( "Unknown Perl Get-Version: '{0}', '{1}'", stdout_contents, stderr_contents );
-							PerlVersion = "unknown version";
-						}
-						else
-						{
-							stdout_contents = stdout_contents.Trim( );
-							PerlVersion = stdout_contents.Substring( "V=".Length );
-							if( PerlVersion.StartsWith( "v" ) ) PerlVersion = PerlVersion.Substring( 1 );
-						}
-					}
-				}
+				return null;
 			}
+			else
+			{
+				stdout_contents = stdout_contents.Trim( );
+				string version = stdout_contents.Substring( "V=".Length );
+				if( version.StartsWith( "v" ) ) version = version.Substring( 1 );
 
-			return PerlVersion;
+				return version;
+			}
 		}
 
 
@@ -370,5 +363,20 @@ namespace PerlRegexEngineNs
 			return pb.ToRegex( );
 		}
 
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return GetPerlVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }

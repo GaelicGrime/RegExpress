@@ -83,7 +83,7 @@ namespace RegExpressWPF
 				var cbxi = new ComboBoxItem
 				{
 					Tag = eng.Id,
-					Content = eng.Name + " " + ( eng.EngineVersion ?? "" ),
+					Content = eng.Name + " " + ( eng.EngineVersion ?? "unknown version" ),
 					IsSelected = eng.Id == DefaultRegexEngine.Id
 				};
 

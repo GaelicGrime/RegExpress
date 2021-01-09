@@ -16,6 +16,7 @@ namespace BoostRegexEngineNs
 	public class BoostRegexEngine : IRegexEngine
 	{
 		readonly UCBoostRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		struct Key
 		{
@@ -40,7 +41,7 @@ namespace BoostRegexEngineNs
 
 		public string Name => "Boost.Regex";
 
-		public string EngineVersion => BoostRegexInterop.Matcher.GetBoostVersion( );
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
 
@@ -376,6 +377,22 @@ namespace BoostRegexEngineNs
 			}
 
 			return pb.ToRegex( );
+		}
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return BoostRegexInterop.Matcher.GetBoostVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
 		}
 
 	}

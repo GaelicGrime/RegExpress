@@ -51,6 +51,12 @@ namespace SubRegRegexInterop
 	}
 
 
+	String^ Matcher::GetVersion( )
+	{
+		return gcnew String( "04-01-2020" );
+	}
+
+
 	RegexMatches^ Matcher::Matches( String^ text, ICancellable^ cnc )
 	{
 		try

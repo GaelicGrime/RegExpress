@@ -16,8 +16,6 @@ namespace PythonRegexEngineNs
 {
 	class Matcher : IMatcher, ISimpleTextGetter
 	{
-		static string PythonVersion = null;
-		static readonly object Locker = new object( );
 		static readonly Regex RegexMG =
 			new Regex( @"^(?'t'[MG]) (?'s'-?\d+), (?'e'-?\d+)|(?'t'N) (?'i'\d+) <(?'n'.*)>$",
 				RegexOptions.Compiled | RegexOptions.ExplicitCapture );
@@ -64,43 +62,34 @@ namespace PythonRegexEngineNs
 
 		internal static string GetPythonVersion( )
 		{
-			if( PythonVersion == null )
+			string stdout_contents;
+			string stderr_contents;
+
+			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, GetPythonExePath( ), @"-V", "", out stdout_contents, out stderr_contents ) )
 			{
-				lock( Locker )
+				if( Debugger.IsAttached ) Debugger.Break( );
+				Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
+
+				return null;
+			}
+			else
+			{
+				stdout_contents = stdout_contents.Trim( );
+
+				string v = Regex.Match( stdout_contents, @"^Python (\d+(\.\d+)*)" ).Groups[1].Value;
+
+				if( string.IsNullOrWhiteSpace( v ) )
 				{
-					if( PythonVersion == null )
-					{
-						string stdout_contents;
-						string stderr_contents;
+					if( Debugger.IsAttached ) Debugger.Break( );
+					Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
 
-						if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, GetPythonExePath( ), @"-V", "", out stdout_contents, out stderr_contents ) )
-						{
-							if( Debugger.IsAttached ) Debugger.Break( );
-							Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
-							PythonVersion = "unknown version";
-						}
-						else
-						{
-							stdout_contents = stdout_contents.Trim( );
-
-							string v = Regex.Match( stdout_contents, @"^Python (\d+(\.\d+)*)" ).Groups[1].Value;
-
-							if( string.IsNullOrWhiteSpace( v ) )
-							{
-								if( Debugger.IsAttached ) Debugger.Break( );
-								Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
-								PythonVersion = "unknown version";
-							}
-							else
-							{
-								PythonVersion = v;
-							}
-						}
-					}
+					return null;
+				}
+				else
+				{
+					return v;
 				}
 			}
-
-			return PythonVersion;
 		}
 
 

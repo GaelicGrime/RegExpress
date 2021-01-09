@@ -16,6 +16,7 @@ namespace SubRegRegexEngineNs
 	public class SubRegRegexEngine : IRegexEngine
 	{
 		readonly UCSubRegRegexOptions OptionsControl;
+		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
 		public SubRegRegexEngine( )
 		{
@@ -30,7 +31,7 @@ namespace SubRegRegexEngineNs
 
 		public string Name => "SubReg";
 
-		public string EngineVersion => "04-01-2020";
+		public string EngineVersion => LazyVersion.Value;
 
 		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
 
@@ -148,5 +149,21 @@ namespace SubRegRegexEngineNs
 
 		static readonly Regex ColouringRegex = CreateColouringRegex( );
 		static readonly Regex HighlightingRegex = CreateHighlightingRegex( );
+
+
+		static string GetVersion( )
+		{
+			try
+			{
+				return SubRegRegexInterop.Matcher.GetVersion( );
+			}
+			catch( Exception exc )
+			{
+				_ = exc;
+				if( Debugger.IsAttached ) Debugger.Break( );
+
+				return null;
+			}
+		}
 	}
 }
