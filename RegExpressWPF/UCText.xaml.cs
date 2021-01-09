@@ -703,21 +703,17 @@ namespace RegExpressWPF
 				{
 					var first = underline_info.Segments.First( );
 
-					var r = td.Range( first.Index, first.Length );
+					var range = td.Range( first.Index, first.Length );
 
-					switch( r.Start.Parent )
-					{
-					case FrameworkContentElement fce:
-						fce.BringIntoView( );
-						break;
-					case FrameworkElement fe:
-						fe.BringIntoView( );
-						break;
-					}
+					var rect = Rect.Union(
+						range.Start.GetCharacterRect( LogicalDirection.Forward ),
+						range.End.GetCharacterRect( LogicalDirection.Backward ) );
+
+					RtbUtilities.BringIntoView( rtb, rect, isRectRelative: true, fullHorizontalScrollIfInvisible: true );
 
 					if( set_selection && !rtb.IsKeyboardFocused )
 					{
-						TextPointer p = r.Start.GetInsertionPosition( LogicalDirection.Forward );
+						TextPointer p = range.Start.GetInsertionPosition( LogicalDirection.Forward );
 						rtb.Selection.Select( p, p );
 					}
 				} );

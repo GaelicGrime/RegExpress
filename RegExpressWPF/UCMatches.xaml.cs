@@ -1132,22 +1132,41 @@ namespace RegExpressWPF
 						.Select( r => (r.inline.ContentStart, r.inline.ContentEnd) )
 						.ToList( ) );
 
-				inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span.BringIntoView( );
+				/*
+				 * Does not work well with another 'ScrollIntoView' that appears bellow
+				var first_span = inlines_to_underline.FirstOrDefault( ).info?.GetMatchInfo( ).Span;
+
+				if( first_span != null )
+				{
+					var rect = Rect.Union(
+						first_span.ContentStart.GetCharacterRect( LogicalDirection.Forward ),
+						first_span.ContentEnd.GetCharacterRect( LogicalDirection.Backward ) );
+
+					RtbUtilities.ScrollIntoView( rtbMatches, rect, isRelativeRect: true );
+				}
+				*/
 			} );
 
 			if( cnc.IsCancellationRequested ) return;
 
 			ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 			{
-				var first = inlines_to_underline.FirstOrDefault( ).inline;
+				var first_inline = inlines_to_underline.FirstOrDefault( ).inline;
 
-				first?.BringIntoView( );
+				if( first_inline != null )
+				{
+					var rect = Rect.Union(
+						first_inline.ContentStart.GetCharacterRect( LogicalDirection.Forward ),
+						first_inline.ContentEnd.GetCharacterRect( LogicalDirection.Backward ) );
+
+					RtbUtilities.BringIntoView( rtbMatches, rect, isRectRelative: true, fullHorizontalScrollIfInvisible: true );
+				}
 
 				if( set_selection && !rtbMatches.IsKeyboardFocused )
 				{
-					if( first != null )
+					if( first_inline != null )
 					{
-						var p = first.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
+						var p = first_inline.ContentStart.GetInsertionPosition( LogicalDirection.Forward );
 						rtbMatches.Selection.Select( p, p );
 					}
 				}

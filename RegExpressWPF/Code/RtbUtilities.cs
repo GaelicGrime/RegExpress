@@ -562,6 +562,63 @@ namespace RegExpressWPF.Code
 		}
 
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="rtb"></param>
+		/// <param name="rect"></param>
+		/// <param name="isRectRelative">'true' if <paramref name="rect"/> is relative to viewport</param>
+		public static void BringIntoView( RichTextBox rtb, Rect rect, bool isRectRelative, bool fullHorizontalScrollIfInvisible )
+		{
+			Rect absolute_rect = rect;
+			Rect relative_rect = rect;
+
+			if( isRectRelative )
+			{
+				absolute_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+			}
+			else
+			{
+				relative_rect.Offset( -rtb.HorizontalOffset, -rtb.VerticalOffset );
+			}
+
+			Rect viewport = new Rect( 0, 0, rtb.ViewportWidth, rtb.ViewportHeight ); // (relative)
+
+			Thickness padding = new Thickness( 4 );
+
+			if( relative_rect.Bottom > viewport.Bottom - padding.Bottom )
+			{
+				rtb.ScrollToVerticalOffset( Math.Max( 0, absolute_rect.Bottom - rtb.ViewportHeight + padding.Bottom ) );
+			}
+
+			if( relative_rect.Top < viewport.Top + padding.Top )
+			{
+				rtb.ScrollToVerticalOffset( Math.Max( 0, absolute_rect.Top - padding.Top ) );
+			}
+
+			if( relative_rect.Right > viewport.Right - padding.Right )
+			{
+				rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Right - rtb.ViewportWidth + padding.Right ) );
+			}
+
+			if( fullHorizontalScrollIfInvisible )
+			{
+				if( relative_rect.Right < viewport.Left + padding.Left )
+				{
+					rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Right - rtb.ViewportWidth + padding.Right ) );
+				}
+				else if( relative_rect.Left < viewport.Left + padding.Left )
+				{
+					rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Left - padding.Left ) );
+				}
+			}
+			else if( relative_rect.Left < viewport.Left + padding.Left )
+			{
+				rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Left - padding.Left ) );
+			}
+		}
+
+
 		[Conditional( "DEBUG" )]
 		public static void DbgValidateEol( string eol )
 		{
