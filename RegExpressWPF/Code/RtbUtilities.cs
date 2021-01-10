@@ -14,7 +14,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-
+using System.Windows.Threading;
 
 namespace RegExpressWPF.Code
 {
@@ -562,60 +562,102 @@ namespace RegExpressWPF.Code
 		}
 
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="rtb"></param>
-		/// <param name="rect"></param>
-		/// <param name="isRectRelative">'true' if <paramref name="rect"/> is relative to viewport</param>
-		public static void BringIntoView( RichTextBox rtb, Rect rect, bool isRectRelative, bool fullHorizontalScrollIfInvisible )
+		public static void BringIntoViewInvoked( RichTextBox rtb, TextPointer start, TextPointer end, bool fullHorizontalScrollIfInvisible )
 		{
-			Rect absolute_rect = rect;
-			Rect relative_rect = rect;
+			Rect start_rect = start.GetCharacterRect( LogicalDirection.Forward ); // (relative)
+			Rect end_rect = end.GetCharacterRect( LogicalDirection.Backward ); // (relative)
 
-			if( isRectRelative )
+			Rect rect_to_bring; // (relative)
+
+			bool is_multiline = end_rect.Bottom > start_rect.Bottom;
+
+			if( !is_multiline )
 			{
-				absolute_rect.Offset( rtb.HorizontalOffset, rtb.VerticalOffset );
+				rect_to_bring = Rect.Union( start_rect, end_rect ); // (including RTL texts)
 			}
 			else
 			{
-				relative_rect.Offset( -rtb.HorizontalOffset, -rtb.VerticalOffset );
+				rect_to_bring = start_rect;
+
+				// TODO: limit the loop by time?
+
+				for( TextPointer tp = start.GetNextInsertionPosition( LogicalDirection.Forward );
+					tp != null && tp.CompareTo( end ) <= 0;
+					tp = tp.GetNextInsertionPosition( LogicalDirection.Forward ) )
+				{
+					Rect r = tp.GetCharacterRect( LogicalDirection.Forward );
+
+					rect_to_bring.Union( r );
+				}
 			}
 
-			Rect viewport = new Rect( 0, 0, rtb.ViewportWidth, rtb.ViewportHeight ); // (relative)
+			BringIntoViewInvoked( rtb, rect_to_bring, isRectRelative: true, fullHorizontalScrollIfInvisible );
+		}
+
+
+		public static void BringIntoViewInvoked( RichTextBox rtb, Rect rect, bool isRectRelative, bool fullHorizontalScrollIfInvisible )
+		{
+			Rect absolute_rect;
+			Rect relative_rect;
+
+			double ho = rtb.HorizontalOffset;
+			double vo = rtb.VerticalOffset;
+
+			if( isRectRelative )
+			{
+				relative_rect = rect;
+				absolute_rect = Rect.Offset( rect, ho, vo );
+			}
+			else
+			{
+				relative_rect = Rect.Offset( rect, -ho, -vo );
+				absolute_rect = rect;
+			}
+
+			Rect viewport = new Rect( new Size( rtb.ViewportWidth, rtb.ViewportHeight ) ); // (relative)
 
 			Thickness padding = new Thickness( 4 );
 
 			if( relative_rect.Bottom > viewport.Bottom - padding.Bottom )
 			{
-				rtb.ScrollToVerticalOffset( Math.Max( 0, absolute_rect.Bottom - rtb.ViewportHeight + padding.Bottom ) );
+				vo = Math.Max( 0, absolute_rect.Bottom - viewport.Height + padding.Bottom );
+				relative_rect = Rect.Offset( absolute_rect, -ho, -vo );
 			}
 
 			if( relative_rect.Top < viewport.Top + padding.Top )
 			{
-				rtb.ScrollToVerticalOffset( Math.Max( 0, absolute_rect.Top - padding.Top ) );
+				vo = Math.Max( 0, absolute_rect.Top - padding.Top );
+				relative_rect = Rect.Offset( absolute_rect, -ho, -vo );
 			}
 
 			if( relative_rect.Right > viewport.Right - padding.Right )
 			{
-				rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Right - rtb.ViewportWidth + padding.Right ) );
+				ho = Math.Max( 0, absolute_rect.Right - viewport.Width + padding.Right );
+				relative_rect = Rect.Offset( absolute_rect, -ho, -vo );
 			}
 
 			if( fullHorizontalScrollIfInvisible )
 			{
 				if( relative_rect.Right < viewport.Left + padding.Left )
 				{
-					rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Right - rtb.ViewportWidth + padding.Right ) );
+					ho = Math.Max( 0, absolute_rect.Right - rtb.ViewportWidth + padding.Right );
 				}
 				else if( relative_rect.Left < viewport.Left + padding.Left )
 				{
-					rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Left - padding.Left ) );
+					ho = Math.Max( 0, absolute_rect.Left - padding.Left );
 				}
 			}
 			else if( relative_rect.Left < viewport.Left + padding.Left )
 			{
-				rtb.ScrollToHorizontalOffset( Math.Max( 0, absolute_rect.Left - padding.Left ) );
+				ho = Math.Max( 0, absolute_rect.Left - padding.Left );
 			}
+
+			// ('BeginInvoke' is required to work around the problem of uncoloured matches in Text area)
+			rtb.Dispatcher.BeginInvoke( DispatcherPriority.Background, new Action( ( ) =>
+			{
+				rtb.ScrollToVerticalOffset( vo );
+				rtb.ScrollToHorizontalOffset( ho );
+			} ) );
 		}
 
 

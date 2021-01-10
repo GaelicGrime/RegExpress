@@ -1155,11 +1155,8 @@ namespace RegExpressWPF
 
 				if( first_inline != null )
 				{
-					var rect = Rect.Union(
-						first_inline.ContentStart.GetCharacterRect( LogicalDirection.Forward ),
-						first_inline.ContentEnd.GetCharacterRect( LogicalDirection.Backward ) );
-
-					RtbUtilities.BringIntoView( rtbMatches, rect, isRectRelative: true, fullHorizontalScrollIfInvisible: true );
+					RtbUtilities.BringIntoViewInvoked( rtbMatches,
+						first_inline.ContentStart, first_inline.ContentEnd, fullHorizontalScrollIfInvisible: true );
 				}
 
 				if( set_selection && !rtbMatches.IsKeyboardFocused )

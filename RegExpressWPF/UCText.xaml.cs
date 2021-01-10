@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
@@ -702,14 +703,9 @@ namespace RegExpressWPF
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
 					var first = underline_info.Segments.First( );
-
 					var range = td.Range( first.Index, first.Length );
 
-					var rect = Rect.Union(
-						range.Start.GetCharacterRect( LogicalDirection.Forward ),
-						range.End.GetCharacterRect( LogicalDirection.Backward ) );
-
-					RtbUtilities.BringIntoView( rtb, rect, isRectRelative: true, fullHorizontalScrollIfInvisible: true );
+					RtbUtilities.BringIntoViewInvoked( rtb, range.Start, range.End, fullHorizontalScrollIfInvisible: true );
 
 					if( set_selection && !rtb.IsKeyboardFocused )
 					{
