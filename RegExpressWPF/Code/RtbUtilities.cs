@@ -562,7 +562,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public static void BringIntoViewInvoked( RichTextBox rtb, TextPointer start, TextPointer end, bool fullHorizontalScrollIfInvisible )
+		public static void BringIntoViewInvoked( ICancellable cnc, RichTextBox rtb, TextPointer start, TextPointer end, bool fullHorizontalScrollIfInvisible )
 		{
 			Rect start_rect = start.GetCharacterRect( LogicalDirection.Forward ); // (relative)
 			Rect end_rect = end.GetCharacterRect( LogicalDirection.Backward ); // (relative)
@@ -579,17 +579,30 @@ namespace RegExpressWPF.Code
 			{
 				rect_to_bring = start_rect;
 
-				// TODO: limit the loop by time?
+				var max_time = Environment.TickCount + 111;
 
 				for( TextPointer tp = start.GetNextInsertionPosition( LogicalDirection.Forward );
 					tp != null && tp.CompareTo( end ) <= 0;
 					tp = tp.GetNextInsertionPosition( LogicalDirection.Forward ) )
 				{
+					if( cnc.IsCancellationRequested ) return;
+
 					Rect r = tp.GetCharacterRect( LogicalDirection.Forward );
 
 					rect_to_bring.Union( r );
+
+					if( Environment.TickCount > max_time )
+					{
+						r = end.GetCharacterRect( LogicalDirection.Forward );
+						rect_to_bring.Union( r );
+
+						break;
+					}
 				}
+
 			}
+
+			if( cnc.IsCancellationRequested ) return;
 
 			BringIntoViewInvoked( rtb, rect_to_bring, isRectRelative: true, fullHorizontalScrollIfInvisible );
 		}

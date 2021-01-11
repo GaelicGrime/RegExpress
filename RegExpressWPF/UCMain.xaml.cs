@@ -663,6 +663,7 @@ namespace RegExpressWPF
 						{
 							ucMatches.ShowIndeterminateProgress( true );
 							ucMatches.ShowInfo( "The engine is busy, please wait…" );
+							ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 						} );
 			}
 			catch( ThreadInterruptedException )

@@ -1155,7 +1155,7 @@ namespace RegExpressWPF
 
 				if( first_inline != null )
 				{
-					RtbUtilities.BringIntoViewInvoked( rtbMatches,
+					RtbUtilities.BringIntoViewInvoked( cnc, rtbMatches,
 						first_inline.ContentStart, first_inline.ContentEnd, fullHorizontalScrollIfInvisible: true );
 				}
 

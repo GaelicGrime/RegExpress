@@ -705,7 +705,7 @@ namespace RegExpressWPF
 					var first = underline_info.Segments.First( );
 					var range = td.Range( first.Index, first.Length );
 
-					RtbUtilities.BringIntoViewInvoked( rtb, range.Start, range.End, fullHorizontalScrollIfInvisible: true );
+					RtbUtilities.BringIntoViewInvoked( cnc, rtb, range.Start, range.End, fullHorizontalScrollIfInvisible: true );
 
 					if( set_selection && !rtb.IsKeyboardFocused )
 					{

@@ -207,10 +207,6 @@ namespace PerlRegexEngineNs
 		}
 
 
-		static string PerlVersion = null;
-		static readonly object Locker = new object( );
-
-
 		static string GetPerlVersion( )
 		{
 			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
