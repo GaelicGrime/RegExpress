@@ -38,7 +38,7 @@ std::wstring BinaryReader::ReadString( ) const
 
 	s.resize( bytelen / sizeof( s[0] ) );
 
-	ReadBytes( &s.front( ), bytelen );
+	ReadBytes( &s[0], bytelen );
 
 	return s;
 }

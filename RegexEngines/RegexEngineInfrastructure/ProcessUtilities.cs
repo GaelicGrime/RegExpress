@@ -8,6 +8,13 @@ using System.Threading;
 
 namespace RegexEngineInfrastructure
 {
+	public enum EncodingEnum
+	{
+		UTF8,
+		Unicode,
+	}
+
+
 	public static class ProcessUtilities
 	{
 
@@ -15,14 +22,14 @@ namespace RegexEngineInfrastructure
 		static readonly Encoding UnicodeEncoding = new UnicodeEncoding( bigEndian: false, byteOrderMark: false, throwOnInvalidBytes: true );
 
 
-		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<StreamWriter> stdinWriter, out string stdoutContents, out string stderrContents, bool unicode = false )
+		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<StreamWriter> stdinWriter, out string stdoutContents, out string stderrContents, EncodingEnum encoding0 )
 		{
 			var output_sb = new StringBuilder( );
 			var error_sb = new StringBuilder( );
 
 			using( Process p = new Process( ) )
 			{
-				var encoding = unicode ? UnicodeEncoding : Utf8Encoding;
+				Encoding encoding = GetEncoding( encoding0 );
 
 				p.StartInfo.FileName = exePath;
 				p.StartInfo.Arguments = arguments;
@@ -107,14 +114,14 @@ namespace RegexEngineInfrastructure
 		}
 
 
-		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<Stream> stdinWriter, out MemoryStream stdoutContents, out string stderrContents, bool unicode = false )
+		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, Action<Stream> stdinWriter, out MemoryStream stdoutContents, out string stderrContents, EncodingEnum encoding0 )
 		{
 			var stdout_ms = new MemoryStream( );
 			var error_sb = new StringBuilder( );
 
 			using( Process p = new Process( ) )
 			{
-				var encoding = unicode ? UnicodeEncoding : Utf8Encoding;
+				Encoding encoding = GetEncoding( encoding0 );
 
 				p.StartInfo.FileName = exePath;
 				p.StartInfo.Arguments = arguments;
@@ -217,9 +224,9 @@ namespace RegexEngineInfrastructure
 		}
 
 
-		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, string stdinContents, out string stdoutContents, out string stderrContents, bool unicode = false )
+		public static bool InvokeExe( ICancellable cnc, string exePath, string arguments, string stdinContents, out string stdoutContents, out string stderrContents, EncodingEnum encoding0 )
 		{
-			return InvokeExe( cnc, exePath, arguments, ( sw ) => sw.Write( stdinContents ), out stdoutContents, out stderrContents, unicode );
+			return InvokeExe( cnc, exePath, arguments, ( sw ) => sw.Write( stdinContents ), out stdoutContents, out stderrContents, encoding0 );
 		}
 
 
@@ -236,6 +243,18 @@ namespace RegexEngineInfrastructure
 				_ = exc;
 				//?
 				// ignore
+			}
+		}
+
+
+		private static Encoding GetEncoding( EncodingEnum encoding0 )
+		{
+			switch( encoding0 )
+			{
+			case EncodingEnum.UTF8: return Utf8Encoding;
+			case EncodingEnum.Unicode: return UnicodeEncoding;
+			default:
+				throw new NotSupportedException( $"Encoding not supported: {encoding0}" );
 			}
 		}
 	}

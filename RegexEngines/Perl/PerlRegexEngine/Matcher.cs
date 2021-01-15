@@ -180,7 +180,7 @@ print STDERR qq(<END-ERR\x1F/>\n);
 				{
 					sw.WriteLine( PrepareString( Pattern ) );
 					sw.WriteLine( PrepareString( text ) );
-				}, out stdout_contents, out stderr_contents ) )
+				}, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) )
 			{
 				return RegexMatches.Empty;
 			}
@@ -192,15 +192,8 @@ print STDERR qq(<END-ERR\x1F/>\n);
 			{
 				string error_message = Regex.Replace( error_text, @"\s+at -e line \d+, <STDIN> line \d+(?=\.\s*$)", "", RegexOptions.Singleline | RegexOptions.Compiled );
 
-				throw new Exception( $"Perl error: {error_message}" );
+				throw new Exception( error_message );
 			}
-
-			//if( !string.IsNullOrWhiteSpace( error ) )
-			//{
-			//	string error_message = error;
-
-			//	throw new Exception( $"Perl error: {error_message}" );
-			//}
 
 			// try figuring out the names and their numbers
 

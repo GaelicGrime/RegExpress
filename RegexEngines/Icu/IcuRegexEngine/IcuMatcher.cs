@@ -47,7 +47,7 @@ namespace IcuRegexEngineNs
 				}
 			};
 
-			if( !ProcessUtilities.InvokeExe( cnc, GetIcuClientExePath( ), null, stdinWriter, out stdout_contents, out stderr_contents, unicode: true ) )
+			if( !ProcessUtilities.InvokeExe( cnc, GetIcuClientExePath( ), null, stdinWriter, out stdout_contents, out stderr_contents, EncodingEnum.Unicode ) )
 			{
 				return "Unknown version";
 			}
@@ -113,7 +113,7 @@ namespace IcuRegexEngineNs
 				}
 			};
 
-			if( !ProcessUtilities.InvokeExe( cnc, GetIcuClientExePath( ), null, stdinWriter, out stdout_contents, out stderr_contents, unicode: true ) )
+			if( !ProcessUtilities.InvokeExe( cnc, GetIcuClientExePath( ), null, stdinWriter, out stdout_contents, out stderr_contents, EncodingEnum.Unicode ) )
 			{
 				return RegexMatches.Empty;
 			}

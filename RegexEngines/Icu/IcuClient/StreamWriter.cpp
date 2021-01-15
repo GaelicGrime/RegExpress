@@ -90,7 +90,7 @@ std::wstring StreamWriter::Printf( LPCWSTR format, ... )
 	{
 		result.resize( size );
 
-		hr = StringCchVPrintfW( &result.front( ), result.size( ), format, argptr );
+		hr = StringCchVPrintfW( &result[0], result.size( ), format, argptr );
 
 		if( SUCCEEDED( hr ) ) break;
 

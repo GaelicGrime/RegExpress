@@ -5,8 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SubRegRegexEngineNs"
              mc:Ignorable="d"  
-             d:DesignWidth="333"
-             d:DesignHeight="111" Loaded="UserControl_Loaded" >
+             d:DesignWidth="152.346"
+             d:DesignHeight="52.326" Loaded="UserControl_Loaded" >
     <Grid>
         <StackPanel>
 

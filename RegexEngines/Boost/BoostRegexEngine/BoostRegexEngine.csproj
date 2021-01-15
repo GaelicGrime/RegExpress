@@ -84,7 +84,6 @@
   <ItemGroup>
     <Compile Include="BoostRegexEngine.cs" />
     <Compile Include="GrammarEnum.cs" />
-    <Compile Include="NoUnderline.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UCBoostRegexOptions.xaml.cs">
       <DependentUpon>UCBoostRegexOptions.xaml</DependentUpon>

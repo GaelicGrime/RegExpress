@@ -64,7 +64,7 @@ namespace Pcre2RegexInterop
 			mData->mCompileContext = pcre2_compile_context_create( NULL );
 			if( mData->mCompileContext == nullptr )
 			{
-				throw gcnew Exception( "PCRE2 Error : Failed to create compile context." );
+				throw gcnew Exception( "Failed to create compile context." );
 			}
 
 			pcre2_set_compile_extra_options( mData->mCompileContext, extra_compile_options );
@@ -87,7 +87,7 @@ namespace Pcre2RegexInterop
 
 				String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
 
-				throw gcnew Exception( String::Format( "PCRE2 Error {0} at {1}: {2}.", errornumber, erroroffset, message ) );
+				throw gcnew Exception( String::Format( "Error {0} at {1}: {2}.", errornumber, erroroffset, message ) );
 			}
 
 			mData->mRe = re;
@@ -95,7 +95,7 @@ namespace Pcre2RegexInterop
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception ^ exc )
 		{
@@ -141,7 +141,7 @@ namespace Pcre2RegexInterop
 			mData->mMatchContext = pcre2_match_context_create( NULL );
 			if( mData->mMatchContext == nullptr )
 			{
-				throw gcnew Exception( "PCRE2 Error : Failed to create match context" );
+				throw gcnew Exception( "Failed to create match context" );
 			}
 
 			int rc;
@@ -198,14 +198,14 @@ namespace Pcre2RegexInterop
 
 					String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
 
-					throw gcnew Exception( String::Format( "PCRE2 Error {0} : {1}.", rc, message ) );
+					throw gcnew Exception( String::Format( "Error {0}: {1}.", rc, message ) );
 				}
 				}
 			}
 
 			if( rc == 0 )
 			{
-				throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
+				throw gcnew Exception( "'ovector' was not big enough for all the captured substrings" );
 			}
 
 			PCRE2_SIZE* ovector = pcre2_get_ovector_pointer( mData->mMatchData );
@@ -213,8 +213,7 @@ namespace Pcre2RegexInterop
 			if( ovector[0] > ovector[1] )
 			{
 				// TODO: show more details; see 'pcre2demo.c'
-				throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
-					"\\K was used in an assertion to set the match start after its end." ) );
+				throw gcnew Exception( "\\K was used in an assertion to set the match start after its end." );
 			}
 
 			auto match = CreateMatch( mData->mRe, ovector, rc );
@@ -344,7 +343,7 @@ namespace Pcre2RegexInterop
 
 						String^ message = gcnew String( reinterpret_cast<wchar_t*>( buffer ) );
 
-						throw gcnew Exception( String::Format( "PCRE2 Error {0} : {1}.", rc, message ) );
+						throw gcnew Exception( String::Format( "Error {0}: {1}.", rc, message ) );
 					}
 
 					/* Match succeded */
@@ -355,14 +354,13 @@ namespace Pcre2RegexInterop
 
 					if( rc == 0 )
 					{
-						throw gcnew Exception( "PCRE2 Error: ovector was not big enough for all the captured substrings" );
+						throw gcnew Exception( "'ovector' was not big enough for all the captured substrings" );
 					}
 
 					if( ovector[0] > ovector[1] )
 					{
 						// TODO: show more details; see 'pcre2demo.c'
-						throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
-							"\\K was used in an assertion to set the match start after its end." ) );
+						throw gcnew Exception( "\\K was used in an assertion to set the match start after its end." );
 					}
 
 					auto match = CreateMatch( mData->mRe, ovector, rc );
@@ -377,7 +375,7 @@ namespace Pcre2RegexInterop
 		catch( const std::exception & exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception ^ exc )
 		{
@@ -402,8 +400,7 @@ namespace Pcre2RegexInterop
 		if( ovector[0] > ovector[1] )
 		{
 			// TODO: show more details; see 'pcre2demo.c'
-			throw gcnew Exception( String::Format( "PCRE2 Error: {0}",
-				"\\K was used in an assertion to set the match start after its end." ) );
+			throw gcnew Exception( "\\K was used in an assertion to set the match start after its end." );
 		}
 
 		auto match = SimpleMatch::Create( CheckedCast::ToInt32n( ovector[0] ), CheckedCast::ToInt32( ovector[1] - ovector[0] ), this );

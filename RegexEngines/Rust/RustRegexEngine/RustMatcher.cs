@@ -165,7 +165,7 @@ namespace RustRegexEngineNs
 
 		static bool InvokeRustClient( ICancellable cnc, string stdinContents, out string stdoutContents, out string stderrContents )
 		{
-			return ProcessUtilities.InvokeExe( cnc, GetRustClientExePath( ), null, stdinContents, out stdoutContents, out stderrContents );
+			return ProcessUtilities.InvokeExe( cnc, GetRustClientExePath( ), null, stdinContents, out stdoutContents, out stderrContents, EncodingEnum.UTF8 );
 		}
 
 	}
