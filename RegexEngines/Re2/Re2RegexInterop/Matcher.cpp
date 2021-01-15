@@ -161,7 +161,7 @@ namespace Re2RegexInterop
 
 			if( !re->ok( ) )
 			{
-				throw gcnew Exception( String::Format( "RE2 Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
+				throw gcnew Exception( String::Format( "Error {0}: {1}", (int)re->error_code( ), gcnew String( re->error( ).c_str( ) ) ) );
 			}
 
 			mData = new MatcherData{};
@@ -181,7 +181,7 @@ namespace Re2RegexInterop
 		catch( const std::exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception^ )
 		{
@@ -277,7 +277,7 @@ namespace Re2RegexInterop
 		catch( const std::exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception^ exc )
 		{

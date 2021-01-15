@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Pcre2RegexEngineNs"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="412" Loaded="UserControl_Loaded">
+             d:DesignHeight="132.526" d:DesignWidth="204.408" Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
         <Style TargetType="CheckBox">

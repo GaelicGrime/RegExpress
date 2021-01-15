@@ -217,7 +217,7 @@ namespace PerlRegexEngineNs
 			string stdout_contents;
 			string stderr_contents;
 
-			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, perl_exe, @"-CS -e ""print 'V=', $^V""", "", out stdout_contents, out stderr_contents ) ||
+			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, perl_exe, @"-CS -e ""print 'V=', $^V""", "", out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) ||
 				!stdout_contents.StartsWith( "V=" ) )
 			{
 				if( Debugger.IsAttached ) Debugger.Break( );

@@ -189,7 +189,7 @@ namespace DRegexEngineNs
 
 		static bool InvokeDClient( ICancellable cnc, string stdinContents, out string stdoutContents, out string stderrContents )
 		{
-			return ProcessUtilities.InvokeExe( cnc, GetDClientExePath( ), null, stdinContents, out stdoutContents, out stderrContents );
+			return ProcessUtilities.InvokeExe( cnc, GetDClientExePath( ), null, stdinContents, out stdoutContents, out stderrContents, EncodingEnum.UTF8 );
 		}
 	}
 

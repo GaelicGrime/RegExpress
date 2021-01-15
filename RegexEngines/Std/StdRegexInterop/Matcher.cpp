@@ -133,7 +133,7 @@ namespace StdRegexInterop
 		catch( const exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception^ exc )
 		{
@@ -305,7 +305,7 @@ namespace StdRegexInterop
 		catch( const exception& exc )
 		{
 			String^ what = gcnew String( exc.what( ) );
-			throw gcnew Exception( "Error: " + what );
+			throw gcnew Exception( what );
 		}
 		catch( Exception^ exc )
 		{

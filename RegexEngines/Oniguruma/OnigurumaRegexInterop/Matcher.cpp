@@ -376,7 +376,7 @@ namespace OnigurumaRegexInterop
 		//catch( const std::exception & exc )
 		//{
 		//	String^ what = gcnew String( exc.what( ) );
-		//	throw gcnew Exception( "Error: " + what );
+		//	throw gcnew Exception( what );
 		//}
 		catch( Exception^ exc )
 		{

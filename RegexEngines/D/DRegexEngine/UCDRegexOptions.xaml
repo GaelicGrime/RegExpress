@@ -4,8 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DRegexEngineNs"
+             xmlns:ui="clr-namespace:RegexEngineInfrastructure.UI;assembly=RegexEngineInfrastructure"
              mc:Ignorable="d" 
-             d:DesignHeight="133.388" d:DesignWidth="568.98" Loaded="UserControl_Loaded">
+             d:DesignHeight="100.945" d:DesignWidth="209.612" Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
         <Style TargetType="CheckBox">
@@ -18,34 +19,16 @@
 
         <StackPanel>
             <CheckBox IsChecked="{Binding i}">
-                <TextBlock>i <Run>
-                    <Run.Foreground>
-                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Run.Foreground>
-                    – Case insensitive matching</Run></TextBlock>
+                <ui:TextAndNote Text="i" Note="Case insensitive matching"/>
             </CheckBox>
             <CheckBox IsChecked="{Binding m}">
-                <TextBlock>m <Run>
-                    <Run.Foreground>
-                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Run.Foreground>
-                    – Multi-line mode, match ^, $ on start and end line separators as well as start and end of input</Run></TextBlock>
+                <ui:TextAndNote Text="m" Note="Multi-line mode, match ^, $ on start and end line separators as well as start and end of input"/>
             </CheckBox>
             <CheckBox IsChecked="{Binding s}">
-                <TextBlock>s <Run>
-                    <Run.Foreground>
-                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Run.Foreground>
-                    – Single-line mode, makes . match '\n' and '\r' as well</Run></TextBlock>
+                <ui:TextAndNote Text="s" Note="Single-line mode, makes . match '\n' and '\r' as well"/>
             </CheckBox>
             <CheckBox IsChecked="{Binding x}">
-                <TextBlock>x <Run>
-                    <Run.Foreground>
-                        <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
-                    </Run.Foreground>
-                    – Free-form syntax, ignores whitespace in pattern, useful for formatting complex regular expressions
-                </Run></TextBlock>
-                
+                <ui:TextAndNote Text="x" Note="Free-form syntax, ignores whitespace in pattern, useful for formatting complex regular expressions"/>
             </CheckBox>
         </StackPanel>
 

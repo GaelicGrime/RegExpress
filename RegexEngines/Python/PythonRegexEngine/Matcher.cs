@@ -65,7 +65,7 @@ namespace PythonRegexEngineNs
 			string stdout_contents;
 			string stderr_contents;
 
-			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, GetPythonExePath( ), @"-V", "", out stdout_contents, out stderr_contents ) )
+			if( !ProcessUtilities.InvokeExe( NonCancellable.Instance, GetPythonExePath( ), @"-V", "", out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) )
 			{
 				if( Debugger.IsAttached ) Debugger.Break( );
 				Debug.WriteLine( "Unknown Python version: '{0}' '{1}", stdout_contents, stderr_contents );
@@ -159,9 +159,16 @@ except:
 				{
 					sw.WriteLine( PrepareString( Pattern ) );
 					sw.WriteLine( PrepareString( text ) );
-				}, out stdout_contents, out stderr_contents ) )
+				}, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) )
 			{
 				return RegexMatches.Empty;
+			}
+
+			if( !string.IsNullOrWhiteSpace( stderr_contents ) )
+			{
+				string error_message = stderr_contents;
+
+				throw new Exception( error_message );
 			}
 
 			SimpleMatch match = null;

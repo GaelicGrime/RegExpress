@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="RegexEngineInfrastructure.UI.TextAndNote"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RegexEngineInfrastructure.UI"
+             mc:Ignorable="d" 
+             d:DesignHeight="18" d:DesignWidth="200">
+
+    <UserControl.Resources>
+        <Style x:Key="OptionNote" TargetType="Run">
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <SolidColorBrush Opacity="0.77" Color="{x:Static SystemColors.ControlTextColor}"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Run x:Name="txt" Text="Text"/>
+            <Run x:Name="sep" Text=" – " Style="{StaticResource OptionNote}"/>
+            <Run x:Name="note" Text="Note" Style="{StaticResource OptionNote}"/>
+        </TextBlock>
+
+    </Grid>
+</UserControl>

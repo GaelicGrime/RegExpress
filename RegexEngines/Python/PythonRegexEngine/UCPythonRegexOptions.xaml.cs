@@ -1,4 +1,5 @@
 ﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,7 @@ namespace PythonRegexEngineNs
 					var cb = new CheckBox
 					{
 						Tag = o.Flag,
-						Content = CreateTextBlock( o.Flag, o.Note )
+						Content = new TextAndNote { Text = o.Flag, Note = o.Note }
 					};
 
 					pnlOptions.Children.Add( cb );
@@ -121,18 +122,5 @@ namespace PythonRegexEngineNs
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
-
-		static TextBlock CreateTextBlock( string text, string note )
-		{
-			var tb = new TextBlock( );
-			new Run( text, tb.ContentEnd );
-			if( !string.IsNullOrWhiteSpace( note ) )
-			{
-				new Run( " – " + note, tb.ContentEnd )
-					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
-			}
-
-			return tb;
-		}
 	}
 }

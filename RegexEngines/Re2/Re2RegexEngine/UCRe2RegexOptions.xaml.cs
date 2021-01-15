@@ -1,4 +1,5 @@
 ﻿using RegexEngineInfrastructure;
+using RegexEngineInfrastructure.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,7 @@ namespace Re2RegexEngineNs
 				var cb = new CheckBox
 				{
 					Tag = o.FlagName,
-					Content = CreateTextBlock( o.FlagName, o.Note )
+					Content = new TextAndNote { Text = o.FlagName, Note = o.Note }
 
 					// Does not seem useful:
 					//IsChecked = o.DefaultValue
@@ -124,20 +125,6 @@ namespace Re2RegexEngineNs
 			CachedOptions = GetSelectedOptions( );
 
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
-		}
-
-
-		TextBlock CreateTextBlock( string text, string note )
-		{
-			var tb = new TextBlock( );
-			new Run( text, tb.ContentEnd );
-			if( !string.IsNullOrWhiteSpace( note ) )
-			{
-				new Run( " – " + note, tb.ContentEnd )
-					.SetValue( Run.ForegroundProperty, new SolidColorBrush { Opacity = 0.77, Color = SystemColors.ControlTextColor } );
-			}
-
-			return tb;
 		}
 
 
