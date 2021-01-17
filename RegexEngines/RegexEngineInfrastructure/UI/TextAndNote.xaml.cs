@@ -24,26 +24,30 @@ namespace RegexEngineInfrastructure.UI
 		public TextAndNote( )
 		{
 			InitializeComponent( );
-
-			sep.Text = "";
-			note.Text = null;
 		}
 
+
+		// (See: https://stackoverflow.com/questions/18158500/usercontrol-dependency-property-design-time)
+
+
+		public static readonly DependencyProperty TextProperty =
+			DependencyProperty.Register( "Text", typeof( string ), typeof( TextAndNote ), new PropertyMetadata( "(text undefined)" ) );
 
 		public string Text
 		{
-			get => txt.Text;
-			set => txt.Text = value;
+			get { return (string)GetValue( TextProperty ); }
+			set { SetValue( TextProperty, value ); }
 		}
+
+
+		public static readonly DependencyProperty NoteProperty =
+			DependencyProperty.Register( "Note", typeof( string ), typeof( TextAndNote ), new PropertyMetadata( "" ) );
 
 		public string Note
 		{
-			get => note.Text;
-			set
-			{
-				sep.Text = string.IsNullOrWhiteSpace( value ) ? null : " – ";
-				note.Text = value;
-			}
+			get { return (string)GetValue( NoteProperty ); }
+			set { SetValue( NoteProperty, value ); }
 		}
+
 	}
 }

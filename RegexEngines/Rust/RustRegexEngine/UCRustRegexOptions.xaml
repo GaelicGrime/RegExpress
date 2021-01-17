@@ -4,8 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RustRegexEngineNs"
+             xmlns:ui="clr-namespace:RegexEngineInfrastructure.UI;assembly=RegexEngineInfrastructure"
              mc:Ignorable="d" 
-             d:DesignHeight="175.333" d:DesignWidth="264.667" Loaded="UserControl_Loaded">
+             d:DesignHeight="209.333" d:DesignWidth="264.667" Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
         <Style TargetType="CheckBox">
@@ -28,29 +29,37 @@
                 </StackPanel.LayoutTransform>
 
                 <Label Content="Struct:" Target="{Binding ElementName=cbxStruct}" VerticalAlignment="Center"/>
-                <ComboBox x:Name="cbxStruct" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxStruct_SelectionChanged" SelectedIndex="0">
-                    <ComboBoxItem x:Name="cbiRegex" Tag="Regex" Content="Regex"/>
-                    <ComboBoxItem x:Name="cbiRegexBuilder" Tag="RegexBuilder" Content="RegexBuilder"/>
+                <ComboBox x:Name="cbxStruct" SelectedValuePath="Tag" SelectedValue="{Binding struct, FallbackValue='Regex'}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="cbxStruct_SelectionChanged" SelectedIndex="0">
+                    <ComboBoxItem Tag="Regex" Content="Regex"/>
+                    <ComboBoxItem Tag="RegexBuilder" Content="RegexBuilder"/>
                 </ComboBox>
             </StackPanel>
 
             <StackPanel x:Name="pnlRegexBuilderOptions">
 
-                <StackPanel Margin="0 0 0 6" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
-                    <StackPanel Margin="0 0 12 0">
-                        <CheckBox x:Name="chb_case_insensitive">case__insensitive</CheckBox>
-                        <CheckBox x:Name="chb_multi_line">multi__line</CheckBox>
-                        <CheckBox x:Name="chb_dot_matches_new_line">dot__matches__new__line</CheckBox>
-                        <CheckBox x:Name="chb_ignore_whitespace">ignore__whitespace</CheckBox>
-                    </StackPanel>
-                    <StackPanel Margin="0 0 4 0">
-                        <CheckBox x:Name="chb_swap_greed">swap__greed</CheckBox>
-                        <CheckBox x:Name="chb_unicode" IsChecked="True">unicode</CheckBox>
-                        <CheckBox x:Name="chb_octal">octal</CheckBox>
-                    </StackPanel>
-                </StackPanel>
+                <CheckBox IsChecked="{Binding case_insensitive}">
+                    <ui:TextAndNote Text="case_insensitive (i)" Note="letters match both upper and lower case"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding multi_line}">
+                    <ui:TextAndNote Text="multi_line (m)" Note="^ and $ match begin/end of line"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding dot_matches_new_line}">
+                    <ui:TextAndNote Text="dot_matches_new_line (s)" Note="allow . to match \n"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding swap_greed}">
+                    <ui:TextAndNote Text="swap_greed (U)" Note="swap the meaning of x* and x*?"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding ignore_whitespace}">
+                    <ui:TextAndNote Text="ignore_whitespace (x)" Note="ignore whitespace and allow line comments (starting with `#`)"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding unicode}">
+                    <ui:TextAndNote Text="unicode (u)" Note="Unicode support"/>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding octal}">
+                    <ui:TextAndNote Text="octal" Note="support octal syntax"/>
+                </CheckBox>
 
-                <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0 6 0 6">
                     <Grid.LayoutTransform>
                         <TransformGroup>
                             <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
@@ -80,11 +89,11 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Label Grid.Column="0" Grid.Row="0" Content="size__limit:" Target="{Binding ElementName=tbx_size_limit}"/>
-                    <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <TextBox Grid.Column="1" Grid.Row="0" x:Name="tbx_size_limit" TextChanged="tbx_TextChanged" Text="{Binding size_limit, UpdateSourceTrigger=PropertyChanged}" />
                     <Label Grid.Column="0" Grid.Row="1" Content="dfa__size__limit:" Target="{Binding ElementName=tbx_dfa_size_limit}" />
-                    <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <TextBox Grid.Column="1" Grid.Row="1" x:Name="tbx_dfa_size_limit" TextChanged="tbx_TextChanged" Text="{Binding dfa_size_limit, UpdateSourceTrigger=PropertyChanged}" />
                     <Label Grid.Column="0" Grid.Row="2" Content="nest__limit:" Target="{Binding ElementName=tbx_nest_limit}" />
-                    <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="" />
+                    <TextBox Grid.Column="1" Grid.Row="2" x:Name="tbx_nest_limit" TextChanged="tbx_TextChanged" Text="{Binding nest_limit, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
 
             </StackPanel>

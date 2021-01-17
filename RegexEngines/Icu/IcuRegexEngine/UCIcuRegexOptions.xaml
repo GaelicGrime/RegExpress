@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:IcuRegexEngineNs"
              xmlns:ui="clr-namespace:RegexEngineInfrastructure.UI;assembly=RegexEngineInfrastructure"
              mc:Ignorable="d" 
-             d:DesignHeight="202.667" d:DesignWidth="193.334" 
+             d:DesignHeight="202.667" d:DesignWidth="326.75" 
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
