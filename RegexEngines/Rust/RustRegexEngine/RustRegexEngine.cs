@@ -53,8 +53,7 @@ namespace RustRegexEngineNs
 
 		public string[] ExportOptions( )
 		{
-			RustRegexOptions options = OptionsControl.ExportOptions( );
-
+			RustRegexOptions options = OptionsControl.GetSelectedOptions( );
 			var json = JsonSerializer.Serialize( options );
 
 			return new[] { $"json:{json}" };
@@ -63,36 +62,25 @@ namespace RustRegexEngineNs
 
 		public void ImportOptions( string[] options )
 		{
-			string json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
+			var json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
 
-			RustRegexOptions rust_regex_options;
-
+			RustRegexOptions options_obj;
 			if( string.IsNullOrWhiteSpace( json ) )
 			{
-				rust_regex_options = new RustRegexOptions( );
+				options_obj = new RustRegexOptions( );
 			}
 			else
 			{
-				try
-				{
-					rust_regex_options = JsonSerializer.Deserialize<RustRegexOptions>( json );
-				}
-				catch( Exception exc )
-				{
-					_ = exc;
-					if( Debugger.IsAttached ) Debugger.Break( );
-
-					rust_regex_options = new RustRegexOptions( );
-				}
+				options_obj = JsonSerializer.Deserialize<RustRegexOptions>( json );
 			}
 
-			OptionsControl.ImportOptions( rust_regex_options );
+			OptionsControl.SetSelectedOptions( options_obj );
 		}
 
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
+			RustRegexOptions options = OptionsControl.GetSelectedOptions( );
 
 			return new RustMatcher( pattern, options );
 		}
@@ -205,7 +193,7 @@ namespace RustRegexEngineNs
 
 		Regex GetCachedColouringRegex( )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
+			RustRegexOptions options = OptionsControl.GetSelectedOptions( );
 			string key = $"{options.@struct}\x1F{options.octal}\x1F{options.unicode}\x1F{options.ignore_whitespace}";
 
 			lock( CachedColouringRegexes )
@@ -223,7 +211,7 @@ namespace RustRegexEngineNs
 
 		Regex GetCachedHighlightingRegex( )
 		{
-			RustRegexOptions options = OptionsControl.GetCachedOptions( );
+			RustRegexOptions options = OptionsControl.GetSelectedOptions( );
 			string key = $"{options.@struct}\x1F{options.unicode}\x1F{options.ignore_whitespace}";
 
 			lock( CachedHighlightingRegexes )

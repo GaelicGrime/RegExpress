@@ -24,57 +24,29 @@ namespace RustRegexEngineNs
 	partial class UCRustRegexOptions : UserControl
 	{
 		internal event EventHandler<RegexEngineOptionsChangedArgs> Changed;
-		private RustRegexOptions CachedOptions; // (accessible from threads)
-
 
 		bool IsFullyLoaded = false;
 		int ChangeCounter = 0;
+
+		RustRegexOptions Options = new RustRegexOptions( );
 
 
 		public UCRustRegexOptions( )
 		{
 			InitializeComponent( );
+
+			DataContext = Options;
 		}
 
 
-		internal RustRegexOptions ExportOptions( )
+		public RustRegexOptions GetSelectedOptions( )
 		{
-			return GetSelectedOptions( );
+			if( Dispatcher.CheckAccess( ) )
+				return Options;
+			else
+				return Options.Clone( );
 		}
 
-
-		internal void ImportOptions( RustRegexOptions options )
-		{
-			SetSelectedOptions( options );
-		}
-
-
-		internal RustRegexOptions GetCachedOptions( )
-		{
-			return CachedOptions;
-		}
-
-
-		private RustRegexOptions GetSelectedOptions( )
-		{
-			var options = new RustRegexOptions( );
-
-			options.@struct = ( (ComboBoxItem)cbxStruct.SelectedItem )?.Tag?.ToString( );
-
-			options.case_insensitive = chb_case_insensitive.IsChecked == true;
-			options.multi_line = chb_multi_line.IsChecked == true;
-			options.dot_matches_new_line = chb_dot_matches_new_line.IsChecked == true;
-			options.swap_greed = chb_swap_greed.IsChecked == true;
-			options.ignore_whitespace = chb_ignore_whitespace.IsChecked == true;
-			options.unicode = chb_unicode.IsChecked == true;
-			options.octal = chb_octal.IsChecked == true;
-
-			options.size_limit = tbx_size_limit.Text;
-			options.dfa_size_limit = tbx_dfa_size_limit.Text;
-			options.nest_limit = tbx_nest_limit.Text;
-
-			return options;
-		}
 
 		internal void SetSelectedOptions( RustRegexOptions options )
 		{
@@ -82,24 +54,8 @@ namespace RustRegexEngineNs
 			{
 				++ChangeCounter;
 
-				options = options ?? new RustRegexOptions( );
-
-				if( options.@struct == "RegexBuilder" )
-					cbiRegexBuilder.IsSelected = true;
-				else
-					cbiRegex.IsSelected = true;
-
-				chb_case_insensitive.IsChecked = options.case_insensitive;
-				chb_multi_line.IsChecked = options.multi_line;
-				chb_dot_matches_new_line.IsChecked = options.dot_matches_new_line;
-				chb_swap_greed.IsChecked = options.swap_greed;
-				chb_ignore_whitespace.IsChecked = options.ignore_whitespace;
-				chb_unicode.IsChecked = options.unicode;
-				chb_octal.IsChecked = options.octal;
-
-				tbx_size_limit.Text = options.size_limit;
-				tbx_dfa_size_limit.Text = options.dfa_size_limit;
-				tbx_nest_limit.Text = options.nest_limit;
+				Options = options.Clone( );
+				DataContext = Options;
 
 				UpdateControls( );
 			}
@@ -109,11 +65,10 @@ namespace RustRegexEngineNs
 			}
 		}
 
+
 		private void UserControl_Loaded( object sender, RoutedEventArgs e )
 		{
 			if( IsFullyLoaded ) return;
-
-			CachedOptions = GetSelectedOptions( );
 
 			IsFullyLoaded = true;
 
@@ -126,8 +81,6 @@ namespace RustRegexEngineNs
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
 
-			CachedOptions = GetSelectedOptions( );
-
 			Changed?.Invoke( null, new RegexEngineOptionsChangedArgs { PreferImmediateReaction = false } );
 		}
 
@@ -136,8 +89,6 @@ namespace RustRegexEngineNs
 		{
 			if( !IsFullyLoaded ) return;
 			if( ChangeCounter != 0 ) return;
-
-			CachedOptions = GetSelectedOptions( );
 
 			UpdateControls( );
 
@@ -166,6 +117,15 @@ namespace RustRegexEngineNs
 
 				pnlRegexBuilderOptions.IsEnabled = is_builder;
 				pnlRegexBuilderOptions.Opacity = pnlRegexBuilderOptions.IsEnabled ? 1 : 0.75;
+
+				if( is_builder )
+				{
+					pnlRegexBuilderOptions.ClearValue( DataContextProperty ); // (to use inherited context)
+				}
+				else
+				{
+					pnlRegexBuilderOptions.DataContext = new RustRegexOptions( ); // (to show defaults)
+				}
 			}
 			finally
 			{

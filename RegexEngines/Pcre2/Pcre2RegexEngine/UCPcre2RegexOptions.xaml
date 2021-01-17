@@ -35,12 +35,12 @@
                 </ComboBox>
             </StackPanel>
 
-            <Label Margin="0 2 0 0"  Padding="0">
+            <Label Margin="0 2 0 0" Padding="0">
                 <Italic>Compile Options</Italic>
             </Label>
             <StackPanel x:Name="pnlCompileOptions"/>
 
-            <Label Margin="0 2 0 0"  Padding="0">
+            <Label Margin="0 2 0 0" Padding="0">
                 <Italic>Extra Compile Options</Italic>
             </Label>
             <StackPanel x:Name="pnlExtraCompileOptions"/>
