@@ -19,18 +19,16 @@ namespace RegExpressWPF
 	/// </summary>
 	public partial class App : Application
 	{
+
 		[DllImport( "user32" )]
-		static extern bool AllowSetForegroundWindow( Int32 pid );
+		static extern bool IsIconic( IntPtr hWnd );
+
+		[DllImport( "user32" )]
+		static extern bool ShowWindow( IntPtr hWnd, int cmdShow );
+		const int SW_RESTORE = 9;
 
 		[DllImport( "user32" )]
 		static extern bool SetForegroundWindow( IntPtr hWnd );
-
-
-		const string SingleInstanceMutexName = "RegExpress-SingleInstance-Mutex-1";
-		const string SingleInstanceEventName = "RegExpress-SingleInstance-Event-1";
-
-		Mutex mSingleInstanceMutex = null;
-		EventWaitHandle mSingleInstanceEvent;
 
 
 		public App( )
@@ -44,67 +42,18 @@ namespace RegExpressWPF
 
 		private void App_Startup( object sender, StartupEventArgs e )
 		{
-			Debug.Assert( mSingleInstanceMutex == null );
+			var current_process = Process.GetCurrentProcess( );
+			var other_process = Process.GetProcessesByName( current_process.ProcessName ).FirstOrDefault( p => p.Id != current_process.Id );
 
-			bool new_mutex_created;
-			mSingleInstanceMutex = new Mutex( false, SingleInstanceMutexName, out new_mutex_created );
-
-			if( new_mutex_created )
+			if( other_process != null && other_process.MainWindowHandle != IntPtr.Zero )
 			{
-				bool new_event_created;
-				mSingleInstanceEvent = new EventWaitHandle( false, EventResetMode.AutoReset, SingleInstanceEventName, out new_event_created );
-
-				Debug.Assert( new_event_created );
-
-				var thread = new Thread( SingleInstanceThreadProc ) { IsBackground = true };
-				thread.Start( );
-			}
-			else
-			{
-				var current_process = Process.GetCurrentProcess( );
-				var other_process = Process.GetProcessesByName( current_process.ProcessName ).FirstOrDefault( p => p.Id != current_process.Id );
-				Debug.Assert( other_process != null );
-
-				SetForegroundWindow( other_process.MainWindowHandle );
-
-				if( other_process != null )
+				if( IsIconic( other_process.MainWindowHandle ) )
 				{
-					AllowSetForegroundWindow( other_process.Id );
+					if( !ShowWindow( other_process.MainWindowHandle, SW_RESTORE ) ) Debug.Assert( false );
 				}
-
-				mSingleInstanceEvent = new EventWaitHandle( false, EventResetMode.AutoReset, SingleInstanceEventName );
-				mSingleInstanceEvent.Set( );
+				if( !SetForegroundWindow( other_process.MainWindowHandle ) ) Debug.Assert( false );
 
 				Shutdown( );
-			}
-		}
-
-
-		private void SingleInstanceThreadProc( )
-		{
-			for(; ; )
-			{
-				mSingleInstanceEvent.WaitOne( );
-
-				Dispatcher.BeginInvoke( DispatcherPriority.Normal,
-					new Action( ( ) =>
-					{
-						try
-						{
-							var current_process = Process.GetCurrentProcess( );
-							var current_main_hwnd = current_process.MainWindowHandle;
-
-							SetForegroundWindow( current_main_hwnd );
-							//MainWindow.Focus( );
-						}
-						catch( Exception exc )
-						{
-							_ = exc;
-							if( Debugger.IsAttached ) Debugger.Break( );
-
-							// ignore
-						}
-					} ) );
 			}
 		}
 
