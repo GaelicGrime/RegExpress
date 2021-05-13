@@ -44,24 +44,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\c_regex_traits.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\cpp_regex_traits.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\cregex.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\fileiter.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\icu.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\instances.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
     <ClCompile Include="boost-min\libs\regex\src\posix_api.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
@@ -71,28 +53,10 @@
     <ClCompile Include="boost-min\libs\regex\src\regex_debug.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\regex_raw_buffer.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\regex_traits_defaults.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
     <ClCompile Include="boost-min\libs\regex\src\static_mutex.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\usinstances.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\w32_regex_traits.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\wc_regex_traits.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
     <ClCompile Include="boost-min\libs\regex\src\wide_posix_api.cpp">
-      <Filter>Boost</Filter>
-    </ClCompile>
-    <ClCompile Include="boost-min\libs\regex\src\winstances.cpp">
       <Filter>Boost</Filter>
     </ClCompile>
     <ClCompile Include="BoostRegexInterop.cpp">
