@@ -600,6 +600,7 @@ namespace OnigurumaRegexInterop
 		C( ONIG_SYNTAX_PERL, "Perl" );
 		C( ONIG_SYNTAX_PERL_NG, "Perl + named group" );
 		C( ONIG_SYNTAX_RUBY, "Ruby" );
+		C( ONIG_SYNTAX_PYTHON, "Python" );
 
 		mSyntaxOptions = list;
 
@@ -615,6 +616,7 @@ namespace OnigurumaRegexInterop
 		C( ONIG_OPTION_NEGATE_SINGLELINE, "clear ONIG_OPTION_SINGLELINE" );
 		C( ONIG_OPTION_DONT_CAPTURE_GROUP, "only named group captured" );
 		C( ONIG_OPTION_CAPTURE_GROUP, "named and no-named group captured" );
+		C( ONIG_OPTION_IGNORECASE_IS_ASCII, "limit IGNORECASE ((?i)) to a range of ASCII characters" );
 		C( ONIG_OPTION_WORD_IS_ASCII, "ASCII only word (\\w, \\p{Word}, [[:word:]]), ASCII only word bound (\\b)" );
 		C( ONIG_OPTION_DIGIT_IS_ASCII, "ASCII only digit (\\d, \\p{Digit}, [[:digit:]])" );
 		C( ONIG_OPTION_SPACE_IS_ASCII, "ASCII only space (\\s, \\p{Space}, [[:space:]])" );
