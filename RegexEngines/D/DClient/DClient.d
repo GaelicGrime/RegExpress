@@ -30,7 +30,7 @@ void main()
 
 		if( command == "v")
 		{
-			string v = format("%s.%s", version_major, version_minor);
+			string v = format("%s.%03s", version_major, version_minor);
 
 			JSONValue result = JSONValue(["version" : v]);
 
