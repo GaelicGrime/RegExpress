@@ -2,7 +2,7 @@ In order to rebuild DClient:
 
 - Download and install 'DMD' compiler for Windows from https://dlang.org/download.html.
 
-- Run 'build.bat'. It will make the 'DClient.exe' file. 
+- Run 'build.cmd'. It will make the 'DClient.exe' file. 
 
 - Rebuild ("Rebuild All") the main Visual Studio solution. A Custom build step 
   will copy 'DClient.exe' to output folder as 'DClient.bin'.
