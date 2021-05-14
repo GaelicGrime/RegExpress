@@ -4,13 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:StdRegexEngineNs"
+             xmlns:ui="clr-namespace:RegexEngineInfrastructure.UI;assembly=RegexEngineInfrastructure"
              mc:Ignorable="d" d:DesignWidth="191.333" 
              Loaded="UserControl_Loaded"
              >
 
     <UserControl.Resources>
         <Style x:Key="MyCheckbox" TargetType="CheckBox">
-            <Setter Property="Content" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={local:NoUnderline}}"/>
             <EventSetter Event="Checked" Handler="CheckBox_Changed"/>
             <EventSetter Event="Unchecked" Handler="CheckBox_Changed"/>
         </Style>
@@ -39,30 +39,60 @@
                 </ComboBox>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
-                <StackPanel x:Name="pnl1" Orientation="Vertical">
-                    <CheckBox Tag="match_not_bol" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_eol" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_bow" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_eow" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_any" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_not_null" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_continuous" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}"/>
-                </StackPanel>
-                <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="4 0 0 0">
-                    <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}"/>
-                    <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}"/>
-                    <!--
-                    TODO: adjust for C++17.
-                    <CheckBox Tag="multiline" Style="{StaticResource MyCheckbox}"/>
-                    -->
-                </StackPanel>
+            <Label Margin="0 4 0 0" Padding="0">
+                <Italic>match_flag_type</Italic>
+            </Label>
+
+            <StackPanel x:Name="pnl1" Orientation="Vertical" Margin="0 2 0 0">
+                <CheckBox Tag="match_not_bol" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_not_bol" Note="do not treat the first position in the target sequence as the beginning of a line"/>
+                </CheckBox>
+                <CheckBox Tag="match_not_eol" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_not_eol" Note="do not treat the past-the-end position in the target sequence as the end of a line"/>
+                </CheckBox>
+                <CheckBox Tag="match_not_bow" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_not_bow" Note="do not treat the first position in the target sequence as the beginning of a word"/>
+                </CheckBox>
+                <CheckBox Tag="match_not_eow" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_not_eow" Note="do not treat the past-the-end position in the target sequence as the end of a word"/>
+                </CheckBox>
+                <CheckBox Tag="match_any" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_any" Note="if more than one match is possible any match is acceptable"/>
+                </CheckBox>
+                <CheckBox Tag="match_not_null" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_not_null" Note="do not treat an empty subsequence as a match"/>
+                </CheckBox>
+                <CheckBox Tag="match_continuous" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_continuous" Note="do not search for matches other than at the beginning of the target sequence"/>
+                </CheckBox>
+                <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="match_prev_avail" Note="'--first' is a valid iterator; ignore match_not_bol and match_not_bow if set"/>
+                </CheckBox>
             </StackPanel>
 
-            <StackPanel Orientation="Vertical">
+            <Label Margin="0 4 0 0" Padding="0">
+                <Italic>syntax_option_type</Italic>
+            </Label>
+
+            <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="0 4 0 0">
+                <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="icase" Note="make matches case-insensitive"/>
+                </CheckBox>
+                <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="nosubs" Note="the implementaton need not keep track of the contents of capture groups"/>
+                </CheckBox>
+                <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="optimize" Note="the implementation should emphasize speed of matching rather than speed of regular expression compilation"/>
+                </CheckBox>
+                <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="collate" Note="make matches locale-sensitive"/>
+                </CheckBox>
+                <CheckBox Tag="multiline" Style="{StaticResource MyCheckbox}" IsEnabled="False">
+                    <ui:TextAndNote Text="multiline" Note="(not supported)"/>
+                </CheckBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Vertical" Margin="0 4 0 0">
                 <StackPanel.LayoutTransform>
                     <TransformGroup>
                         <ScaleTransform ScaleX="0.9" ScaleY="0.9"/>
@@ -71,7 +101,7 @@
                         <TranslateTransform/>
                     </TransformGroup>
                 </StackPanel.LayoutTransform>
-                <Label Content="__REGEX__MAX__STACK__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_STACK_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 5 0 1" Padding="0"/>
+                <Label Content="__REGEX__MAX__STACK__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_STACK_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 0 0 1" Padding="0"/>
                 <TextBox x:Name="tbREGEX_MAX_STACK_COUNT" Width="150" HorizontalAlignment="Left" TextChanged="tbREGEX_MAX_STACK_COUNT_TextChanged"  />
                 <Label Content="__REGEX__MAX__COMPLEXITY__COUNT:" Target="{Binding ElementName=tbREGEX_MAX_COMPLEXITY_COUNT}" FontStyle="Italic" HorizontalAlignment="Left" Margin="0 3 0 1" Padding="0"/>
                 <TextBox x:Name="tbREGEX_MAX_COMPLEXITY_COUNT" Width="150" HorizontalAlignment="Left" TextChanged="tbREGEX_MAX_STACK_COUNT_TextChanged"  />
