@@ -40,6 +40,28 @@
             </StackPanel>
 
             <Label Margin="0 4 0 0" Padding="0">
+                <Italic>syntax_option_type</Italic>
+            </Label>
+
+            <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="0 4 0 0">
+                <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="icase" Note="make matches case-insensitive"/>
+                </CheckBox>
+                <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="nosubs" Note="do not keep track of the contents of capture groups"/>
+                </CheckBox>
+                <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="optimize" Note="emphasize speed of matching rather than speed of regular expression compilation"/>
+                </CheckBox>
+                <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}">
+                    <ui:TextAndNote Text="collate" Note="make matches locale-sensitive"/>
+                </CheckBox>
+                <CheckBox Tag="multiline" Style="{StaticResource MyCheckbox}" IsEnabled="False">
+                    <ui:TextAndNote Text="multiline" Note="(not supported by std::wregex)"/>
+                </CheckBox>
+            </StackPanel>
+
+            <Label Margin="0 4 0 0" Padding="0">
                 <Italic>match_flag_type</Italic>
             </Label>
 
@@ -67,28 +89,6 @@
                 </CheckBox>
                 <CheckBox Tag="match_prev_avail" Style="{StaticResource MyCheckbox}">
                     <ui:TextAndNote Text="match_prev_avail" Note="'--first' is a valid iterator; ignore match_not_bol and match_not_bow if set"/>
-                </CheckBox>
-            </StackPanel>
-
-            <Label Margin="0 4 0 0" Padding="0">
-                <Italic>syntax_option_type</Italic>
-            </Label>
-
-            <StackPanel x:Name="pnl2" Orientation="Vertical" Margin="0 4 0 0">
-                <CheckBox Tag="icase" Style="{StaticResource MyCheckbox}">
-                    <ui:TextAndNote Text="icase" Note="make matches case-insensitive"/>
-                </CheckBox>
-                <CheckBox Tag="nosubs" Style="{StaticResource MyCheckbox}">
-                    <ui:TextAndNote Text="nosubs" Note="the implementaton need not keep track of the contents of capture groups"/>
-                </CheckBox>
-                <CheckBox Tag="optimize" Style="{StaticResource MyCheckbox}">
-                    <ui:TextAndNote Text="optimize" Note="the implementation should emphasize speed of matching rather than speed of regular expression compilation"/>
-                </CheckBox>
-                <CheckBox Tag="collate" Style="{StaticResource MyCheckbox}">
-                    <ui:TextAndNote Text="collate" Note="make matches locale-sensitive"/>
-                </CheckBox>
-                <CheckBox Tag="multiline" Style="{StaticResource MyCheckbox}" IsEnabled="False">
-                    <ui:TextAndNote Text="multiline" Note="(not supported)"/>
                 </CheckBox>
             </StackPanel>
 
