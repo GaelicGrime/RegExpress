@@ -1,10 +1,10 @@
-﻿using DotNetRegexEngineNs.Matches;
-using RegexEngineInfrastructure;
+﻿using RegexEngineInfrastructure;
 using RegexEngineInfrastructure.Matches;
 using RegexEngineInfrastructure.SyntaxColouring;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -13,35 +13,33 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
-
-namespace DotNetRegexEngineNs
+namespace DotNetCoreRegexEngineNs
 {
-	public class DotNetRegexEngine : IRegexEngine
+	public class DotNetCoreRegexEngine : IRegexEngine
 	{
-		readonly UCDotNetRegexOptions OptionsControl;
+		readonly UCDotNetCoreRegexOptions OptionsControl;
 		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
-		static readonly Dictionary<RegexOptions, Regex> CachedColouringRegexes = new Dictionary<RegexOptions, Regex>( );
-		static readonly Dictionary<RegexOptions, Regex> CachedHighlightingRegexes = new Dictionary<RegexOptions, Regex>( );
+		static readonly Dictionary<string, Regex> CachedColouringRegexes = new Dictionary<string, Regex>( );
+		static readonly Dictionary<string, Regex> CachedHighlightingRegexes = new Dictionary<string, Regex>( );
 
 
-		static DotNetRegexEngine( )
+		static DotNetCoreRegexEngine( )
 		{
 		}
 
-
-		public DotNetRegexEngine( )
+		public DotNetCoreRegexEngine( )
 		{
-			OptionsControl = new UCDotNetRegexOptions( );
+			OptionsControl = new UCDotNetCoreRegexOptions( );
 			OptionsControl.Changed += OptionsControl_Changed;
 		}
 
 
 		#region IRegexEngine
 
-		public string Id => "DotNetRegex";
+		public string Id => "DotNetCoreRegex";
 
-		public string Name => "Regex, .NET Framework";
+		public string Name => "Regex, .NET";
 
 		public string EngineVersion => LazyVersion.Value;
 
@@ -60,7 +58,7 @@ namespace DotNetRegexEngineNs
 
 		public string[] ExportOptions( )
 		{
-			DotNetRegexOptions options = OptionsControl.GetSelectedOptions( );
+			DotNetCoreRegexOptions options = OptionsControl.GetSelectedOptions( );
 			var json = JsonSerializer.Serialize( options );
 
 			return new[] { $"json:{json}" };
@@ -71,14 +69,14 @@ namespace DotNetRegexEngineNs
 		{
 			var json = options.FirstOrDefault( o => o.StartsWith( "json:" ) )?.Substring( "json:".Length );
 
-			DotNetRegexOptions options_obj;
+			DotNetCoreRegexOptions options_obj;
 			if( string.IsNullOrWhiteSpace( json ) )
 			{
-				options_obj = new DotNetRegexOptions( );
+				options_obj = new DotNetCoreRegexOptions( );
 			}
 			else
 			{
-				options_obj = JsonSerializer.Deserialize<DotNetRegexOptions>( json );
+				options_obj = JsonSerializer.Deserialize<DotNetCoreRegexOptions>( json );
 			}
 
 			OptionsControl.SetSelectedOptions( options_obj );
@@ -87,20 +85,15 @@ namespace DotNetRegexEngineNs
 
 		public IMatcher ParsePattern( string pattern )
 		{
-			DotNetRegexOptions options = OptionsControl.GetSelectedOptions( );
-			RegexOptions regex_native_options = options.NativeOptions;
-			TimeSpan timeout = TimeSpan.FromMilliseconds( options.TimeoutMs );
-			if( timeout <= TimeSpan.Zero ) timeout = TimeSpan.FromSeconds( 10 );
+			DotNetCoreRegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			var regex = new Regex( pattern, regex_native_options, timeout );
-
-			return new DotNetMatcher( regex );
+			return new DotNetCoreMatcher( pattern, options );
 		}
 
 
 		public void ColourisePattern( ICancellable cnc, ColouredSegments colouredSegments, string pattern, Segment visibleSegment )
 		{
-			Regex regex = GetCachedColouringRegex( OptionsControl.GetSelectedOptions( ).NativeOptions );
+			Regex regex = GetCachedColouringRegex( OptionsControl.GetSelectedOptions( ) );
 
 			foreach( Match m in regex.Matches( pattern ) )
 			{
@@ -180,7 +173,7 @@ namespace DotNetRegexEngineNs
 			int par_size = 1;
 			int bracket_size = 1;
 
-			Regex regex = GetCachedHighlightingRegex( OptionsControl.GetSelectedOptions( ).NativeOptions );
+			Regex regex = GetCachedHighlightingRegex( OptionsControl.GetSelectedOptions( ) );
 
 			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
@@ -194,41 +187,41 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		static Regex GetCachedColouringRegex( RegexOptions options )
+		static Regex GetCachedColouringRegex( DotNetCoreRegexOptions options )
 		{
-			options &= RegexOptions.IgnorePatternWhitespace; // filter unneeded flags
+			string key = options.IgnorePatternWhitespace.ToString( );
 
 			lock( CachedColouringRegexes )
 			{
-				if( CachedColouringRegexes.TryGetValue( options, out Regex regex ) ) return regex;
+				if( CachedColouringRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
 				regex = CreateCachedColouringRegex( options );
 
-				CachedColouringRegexes.Add( options, regex );
+				CachedColouringRegexes.Add( key, regex );
 
 				return regex;
 			}
 		}
 
 
-		static Regex GetCachedHighlightingRegex( RegexOptions options )
+		static Regex GetCachedHighlightingRegex( DotNetCoreRegexOptions options )
 		{
-			options &= RegexOptions.IgnorePatternWhitespace; // keep this flag only
+			string key = options.IgnorePatternWhitespace.ToString( );
 
 			lock( CachedHighlightingRegexes )
 			{
-				if( CachedHighlightingRegexes.TryGetValue( options, out Regex regex ) ) return regex;
+				if( CachedHighlightingRegexes.TryGetValue( key, out Regex regex ) ) return regex;
 
 				regex = CreateHighlightingRegex( options );
 
-				CachedHighlightingRegexes.Add( options, regex );
+				CachedHighlightingRegexes.Add( key, regex );
 
 				return regex;
 			}
 		}
 
 
-		static Regex CreateCachedColouringRegex( RegexOptions options )
+		static Regex CreateCachedColouringRegex( DotNetCoreRegexOptions options )
 		{
 			// (some patterns includes incomplete constructs)
 
@@ -236,7 +229,7 @@ namespace DotNetRegexEngineNs
 
 			pb.BeginGroup( "comment" );
 			pb.Add( @"\(\?\#.*?(\)|$)" );
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.Add( @"\#[^\n]*" );
+			if( options.IgnorePatternWhitespace ) pb.Add( @"\#[^\n]*" );
 			pb.EndGroup( );
 
 			var escapes_pb = new PatternBuilder( );
@@ -266,12 +259,12 @@ namespace DotNetRegexEngineNs
 		}
 
 
-		static Regex CreateHighlightingRegex( RegexOptions options )
+		static Regex CreateHighlightingRegex( DotNetCoreRegexOptions options )
 		{
 			var pb = new PatternBuilder( );
 
 			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
-			if( options.HasFlag( RegexOptions.IgnorePatternWhitespace ) ) pb.Add( @"\#[^\n]*" ); // line comment
+			if( options.IgnorePatternWhitespace ) pb.Add( @"\#[^\n]*" ); // line comment
 			pb.Add( @"\\[pP]\{.*?(\}|$)" ); // (skip)
 			pb.Add( @"(?'left_par'\()" ); // '('
 			pb.Add( @"(?'right_par'\))" ); // ')'
@@ -287,18 +280,7 @@ namespace DotNetRegexEngineNs
 		{
 			try
 			{
-				// see: https://stackoverflow.com/questions/19096841
-
-				System.Runtime.Versioning.TargetFrameworkAttribute target_framework_attribute =
-					(System.Runtime.Versioning.TargetFrameworkAttribute)
-					Assembly
-						.GetExecutingAssembly( )
-						.GetCustomAttributes( typeof( System.Runtime.Versioning.TargetFrameworkAttribute ), false )
-						.SingleOrDefault( );
-
-				if( target_framework_attribute == null ) return null;
-
-				return Regex.Match( target_framework_attribute.FrameworkName, @"\d+(\.\d+)*", RegexOptions.ExplicitCapture | RegexOptions.Compiled ).Value;
+				return DotNetCoreMatcher.GetVersion( );
 			}
 			catch( Exception exc )
 			{
@@ -308,6 +290,6 @@ namespace DotNetRegexEngineNs
 				return null;
 			}
 		}
+
 	}
 }
-
