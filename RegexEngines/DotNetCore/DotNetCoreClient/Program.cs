@@ -14,6 +14,23 @@ namespace DotNetCoreClient
 			public string cmd { get; set; }
 			public string pattern { get; set; }
 			public string text { get; set; }
+			public Options options { get; set; }
+		}
+
+
+		class Options
+		{
+			public bool IgnoreCase { get; set; }
+			public bool Multiline { get; set; }
+			public bool ExplicitCapture { get; set; }
+			public bool Compiled { get; set; }
+			public bool Singleline { get; set; }
+			public bool IgnorePatternWhitespace { get; set; }
+			public bool RightToLeft { get; set; }
+			public bool ECMAScript { get; set; }
+			public bool CultureInvariant { get; set; }
+
+			public long TimeoutMs { get; set; } = 10_000;
 		}
 
 
@@ -94,8 +111,10 @@ namespace DotNetCoreClient
 
 		private static void GetMatches( InputArgs inputArgs )
 		{
-			var re = new Regex( inputArgs.pattern ); // TODO: add flags
+			RegexOptions options = GetOptions( inputArgs.options );
+			TimeSpan timeout = inputArgs.options == null ? Regex.InfiniteMatchTimeout : TimeSpan.FromMilliseconds( inputArgs.options.TimeoutMs );
 
+			var re = new Regex( inputArgs.pattern, options, timeout );
 			var ret_matches = new List<RetMatch>( );
 
 			foreach( Match m in re.Matches( inputArgs.text ) )
@@ -124,5 +143,24 @@ namespace DotNetCoreClient
 			Console.Out.WriteLine( ret_json );
 		}
 
+
+		private static RegexOptions GetOptions( Options options )
+		{
+			RegexOptions o = RegexOptions.None;
+
+			if( options != null )
+			{
+				if( options.IgnoreCase ) o |= RegexOptions.IgnoreCase;
+				if( options.Multiline ) o |= RegexOptions.Multiline;
+				if( options.ExplicitCapture ) o |= RegexOptions.ExplicitCapture;
+				if( options.Compiled ) o |= RegexOptions.Compiled;
+				if( options.Singleline ) o |= RegexOptions.Singleline;
+				if( options.IgnorePatternWhitespace ) o |= RegexOptions.IgnorePatternWhitespace;
+				if( options.RightToLeft ) o |= RegexOptions.RightToLeft;
+				if( options.CultureInvariant ) o |= RegexOptions.CultureInvariant;
+			}
+
+			return o;
+		}
 	}
 }

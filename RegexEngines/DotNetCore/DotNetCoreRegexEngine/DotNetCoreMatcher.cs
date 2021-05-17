@@ -73,7 +73,7 @@ namespace DotNetCoreRegexEngineNs
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
-			var data = new { cmd = "m", text = text, pattern = Pattern };
+			var data = new { cmd = "m", text = text, pattern = Pattern, options = Options };
 
 			string json = JsonSerializer.Serialize( data );
 
