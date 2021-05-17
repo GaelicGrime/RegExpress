@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace PythonRegexEngineNs
 {
-	class Matcher : IMatcher, ISimpleTextGetter
+	class Matcher : IMatcher
 	{
 		static readonly Regex RegexMG =
 			new Regex( @"^(?'t'[MG]) (?'s'-?\d+), (?'e'-?\d+)|(?'t'N) (?'i'\d+) <(?'n'.*)>$",
@@ -22,7 +22,6 @@ namespace PythonRegexEngineNs
 
 		readonly string Pattern;
 		readonly string[] SelectedOptions;
-		string Text;
 		static readonly List<FlagInfo> FlagInfoList;
 
 
@@ -99,13 +98,11 @@ namespace PythonRegexEngineNs
 		{
 			// TODO: optimise, redesign
 
-			Text = text;
-
 			var all_flags = FlagInfoList.Select( oi => oi.Flag );
 			var selected_flags = SelectedOptions?.Where( o => all_flags.Contains( o ) ) ?? Enumerable.Empty<string>( );
 
-
 			var matches = new List<IMatch>( );
+			ISimpleTextGetter stg = null;
 
 			string arguments = @"-I -E -s -S -X utf8 -c ""
 import sys
@@ -216,7 +213,9 @@ except:
 
 								var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
 
-								match = SimpleMatch.Create( index, length, text_index, text_length, this );
+								if( stg == null ) stg = new SimpleTextGetter( text );
+
+								match = SimpleMatch.Create( index, length, text_index, text_length, stg );
 								matches.Add( match );
 
 								group_i = 0;
@@ -256,15 +255,6 @@ except:
 
 		#endregion IMatcher
 
-		#region ISimpleTextGetter
-
-		public string GetText( int index, int length )
-		{
-			return Text.Substring( index, length );
-		}
-
-		#endregion ISimpleTextGetter
-
 
 		public static IReadOnlyList<FlagInfo> GetOptionInfoList( ) => FlagInfoList;
 
@@ -278,6 +268,7 @@ except:
 
 			return python_exe;
 		}
+
 
 		static string PrepareString( string text )
 		{

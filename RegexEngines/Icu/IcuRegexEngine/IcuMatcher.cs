@@ -14,11 +14,10 @@ using System.Threading.Tasks;
 
 namespace IcuRegexEngineNs
 {
-	class IcuMatcher : IMatcher, ISimpleTextGetter
+	class IcuMatcher : IMatcher
 	{
 		readonly IcuRegexOptions Options;
 		readonly string Pattern;
-		string Text;
 
 
 		public IcuMatcher( string pattern, IcuRegexOptions options )
@@ -65,8 +64,6 @@ namespace IcuRegexEngineNs
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
-			Text = text;
-
 			MemoryStream stdout_contents;
 			string stderr_contents;
 
@@ -93,7 +90,7 @@ namespace IcuRegexEngineNs
 					{
 						bw.Write( "m" );
 						bw.Write( Pattern );
-						bw.Write( Text );
+						bw.Write( text );
 						bw.Write( flags );
 						bw.Write( limit );
 					}
@@ -107,7 +104,7 @@ namespace IcuRegexEngineNs
 				{
 					bw.Write( "m" );
 					bw.Write( Pattern );
-					bw.Write( Text );
+					bw.Write( text );
 					bw.Write( flags );
 					bw.Write( limit );
 				}
@@ -142,6 +139,7 @@ namespace IcuRegexEngineNs
 				// read matches
 
 				List<IMatch> matches = new List<IMatch>( );
+				ISimpleTextGetter stg = null;
 
 				for(; ; )
 				{
@@ -172,7 +170,9 @@ namespace IcuRegexEngineNs
 							Debug.Assert( success );
 							Debug.Assert( match == null );
 
-							match = SimpleMatch.Create( start, length, this );
+							if( stg == null ) stg = new SimpleTextGetter( text );
+
+							match = SimpleMatch.Create( start, length, stg );
 							match.AddGroup( start, length, success, "0" );
 						}
 						else
@@ -198,16 +198,6 @@ namespace IcuRegexEngineNs
 		}
 
 		#endregion IMatcher
-
-
-		#region ISimpleTextGetter
-
-		public string GetText( int index, int length )
-		{
-			return Text.Substring( index, length );
-		}
-
-		#endregion ISimpleTextGetter
 
 
 		static string GetIcuClientExePath( )

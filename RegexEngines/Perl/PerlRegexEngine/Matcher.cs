@@ -14,12 +14,12 @@ using System.Text.RegularExpressions;
 
 namespace PerlRegexEngineNs
 {
-	class Matcher : IMatcher, ISimpleTextGetter
+	class Matcher : IMatcher
 	{
 		readonly string Pattern;
 		readonly string[] SelectedOptions;
-		string Text;
 		static readonly List<ModifierInfo> ModifierInfoList;
+
 
 		public class ModifierInfo
 		{
@@ -67,12 +67,11 @@ namespace PerlRegexEngineNs
 		{
 			// TODO: optimise, redesign
 
-			Text = text;
-
 			var all_modifiers = ModifierInfoList.Select( oi => oi.Modifier );
 			string selected_modifiers = SelectedOptions == null ? "" : string.Concat( SelectedOptions.Where( o => all_modifiers.Contains( o ) ) );
 
 			var matches = new List<IMatch>( );
+			ISimpleTextGetter stg = null;
 
 			string assembly_location = Assembly.GetExecutingAssembly( ).Location;
 			string assembly_dir = Path.GetDirectoryName( assembly_location );
@@ -243,7 +242,9 @@ print STDERR qq(<END-ERR\x1F/>\n);
 						int length = int.Parse( split[2], CultureInfo.InvariantCulture );
 						var (text_index, text_length) = sph.ToTextIndexAndLength( index, length );
 
-						if( match == null ) match = SimpleMatch.Create( index, length, text_index, text_length, this );
+						if( stg == null ) stg = new SimpleTextGetter( text );
+
+						if( match == null ) match = SimpleMatch.Create( index, length, text_index, text_length, stg );
 
 						match.AddGroup( index, length, text_index, text_length, true, deduced_name );
 					}
@@ -256,15 +257,6 @@ print STDERR qq(<END-ERR\x1F/>\n);
 		}
 
 		#endregion IMatcher
-
-		#region ISimpleTextGetter
-
-		public string GetText( int index, int length )
-		{
-			return Text.Substring( index, length );
-		}
-
-		#endregion ISimpleTextGetter
 
 
 		public static IReadOnlyList<ModifierInfo> GetOptionInfoList( ) => ModifierInfoList;
