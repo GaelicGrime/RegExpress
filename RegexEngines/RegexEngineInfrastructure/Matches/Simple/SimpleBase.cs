@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		protected SimpleBase( int index, int length, ISimpleTextGetter textGetter )
 		{
+			Debug.Assert( textGetter != null );
+
 			Index = TextIndex = index;
 			Length = TextLength = length;
 			TextGetter = textGetter;
@@ -22,6 +25,8 @@ namespace RegexEngineInfrastructure.Matches.Simple
 
 		protected SimpleBase( int index, int length, int textIndex, int textLength, ISimpleTextGetter textGetter )
 		{
+			Debug.Assert( textGetter != null );
+
 			Index = index;
 			Length = length;
 			TextIndex = textIndex;

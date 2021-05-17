@@ -16,11 +16,10 @@ using System.Threading.Tasks;
 
 namespace DRegexEngineNs
 {
-	sealed class DMatcher : IMatcher, ISimpleTextGetter
+	sealed class DMatcher : IMatcher
 	{
 		readonly DRegexOptions Options;
 		readonly string Pattern;
-		string Text;
 
 
 		public DMatcher( string pattern, DRegexOptions options )
@@ -52,7 +51,6 @@ namespace DRegexEngineNs
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
-			Text = text;
 			byte[] text_utf8_bytes = Encoding.UTF8.GetBytes( text );
 
 			var flags = new StringBuilder( );
@@ -65,7 +63,7 @@ namespace DRegexEngineNs
 			var obj = new
 			{
 				p = Pattern,
-				t = Text,
+				t = text,
 				f = flags.ToString( ),
 			};
 
@@ -90,6 +88,8 @@ namespace DRegexEngineNs
 			foreach( var m in response.matches )
 			{
 				SimpleMatch match = null;
+
+				ISimpleTextGetter stg = null;
 
 				for( int group_index = 0; group_index < m.groups.Length; group_index++ )
 				{
@@ -119,7 +119,9 @@ namespace DRegexEngineNs
 						Debug.Assert( match == null );
 						Debug.Assert( success );
 
-						match = SimpleMatch.Create( char_start, char_end - char_start, this );
+						if( stg == null ) stg = new SimpleTextGetter( text );
+
+						match = SimpleMatch.Create( char_start, char_end - char_start, stg );
 					}
 
 					Debug.Assert( match != null );
@@ -165,16 +167,6 @@ namespace DRegexEngineNs
 		}
 
 		#endregion IMatcher
-
-
-		#region ISimpleTextGetter
-
-		public string GetText( int index, int length )
-		{
-			return Text.Substring( index, length );
-		}
-
-		#endregion ISimpleTextGetter
 
 
 		static string GetDClientExePath( )

@@ -16,11 +16,10 @@ using System.Threading.Tasks;
 
 namespace RustRegexEngineNs
 {
-	sealed class RustMatcher : IMatcher, ISimpleTextGetter
+	sealed class RustMatcher : IMatcher
 	{
 		readonly RustRegexOptions Options;
 		readonly string Pattern;
-		string Text;
 
 		public RustMatcher( string pattern, RustRegexOptions options )
 		{
@@ -51,7 +50,6 @@ namespace RustRegexEngineNs
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
-			Text = text;
 			byte[] text_utf8_bytes = Encoding.UTF8.GetBytes( text );
 
 			var o = new StringBuilder( );
@@ -68,7 +66,7 @@ namespace RustRegexEngineNs
 			{
 				s = Options.@struct,
 				p = Pattern,
-				t = Text,
+				t = text,
 				o = o.ToString( ),
 				sl = Options.size_limit?.Trim( ) ?? "",
 				dsl = Options.dfa_size_limit?.Trim( ) ?? "",
@@ -92,6 +90,7 @@ namespace RustRegexEngineNs
 			var response = JsonSerializer.Deserialize<RustClientMatchesResponse>( stdout_contents );
 
 			var matches = new List<IMatch>( );
+			ISimpleTextGetter stg = null;
 
 			foreach( var m in response.matches )
 			{
@@ -114,7 +113,9 @@ namespace RustRegexEngineNs
 						Debug.Assert( match == null );
 						Debug.Assert( success );
 
-						match = SimpleMatch.Create( char_start, char_end - char_start, this );
+						if( stg == null ) stg = new SimpleTextGetter( text );
+
+						match = SimpleMatch.Create( char_start, char_end - char_start, stg );
 					}
 
 					Debug.Assert( match != null );
@@ -141,16 +142,6 @@ namespace RustRegexEngineNs
 		}
 
 		#endregion IMatcher
-
-
-		#region ISimpleTextGetter
-
-		public string GetText( int index, int length )
-		{
-			return Text.Substring( index, length );
-		}
-
-		#endregion ISimpleTextGetter
 
 
 		static string GetRustClientExePath( )
