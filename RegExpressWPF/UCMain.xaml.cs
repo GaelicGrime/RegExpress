@@ -49,6 +49,7 @@ namespace RegExpressWPF
 			RegexEngines = new[]
 			{
 				DefaultRegexEngine,
+				new DotNetCoreRegexEngineNs.DotNetCoreRegexEngine( ),
 				new StdRegexEngineNs.StdRegexEngine( ),
 				new BoostRegexEngineNs.BoostRegexEngine( ),
 				new Pcre2RegexEngineNs.Pcre2RegexEngine(),

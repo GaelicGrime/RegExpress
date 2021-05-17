@@ -48,3 +48,11 @@ set Prj=%SolutionDir%\RegexEngines\D\DClient
 
 xcopy /D /R /Y "%Prj%\DClient.exe" "%TargetDir%\*.bin"
 
+
+rem -- .NET 5 --
+
+set Prj=%SolutionDir%\RegexEngines\DotNetCore\DotNetCoreClient
+xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\DotNetCoreClient.exe" "%TargetDir%\DotNet5Client\*.bin"
+xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\*.dll" "%TargetDir%\DotNet5Client\*"
+xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\*.json" "%TargetDir%\DotNet5Client\*"
+

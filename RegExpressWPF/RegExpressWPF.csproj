@@ -76,12 +76,6 @@
       <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Text.Encodings.Web, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Text.Encodings.Web.5.0.0\lib\net461\System.Text.Encodings.Web.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Json, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Text.Json.5.0.0\lib\net461\System.Text.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
@@ -196,6 +190,10 @@
     <ProjectReference Include="..\RegexEngines\Boost\BoostRegexEngine\BoostRegexEngine.csproj">
       <Project>{773e3bd2-e5b0-49b5-af57-12d8ca5c8c8b}</Project>
       <Name>BoostRegexEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\DotNetCore\DotNetCoreRegexEngine\DotNetCoreRegexEngine.csproj">
+      <Project>{84c7adc1-eb9c-41e3-9756-8f9703f13aa1}</Project>
+      <Name>DotNetCoreRegexEngine</Name>
     </ProjectReference>
     <ProjectReference Include="..\RegexEngines\D\DRegexEngine\DRegexEngine.csproj">
       <Project>{7e1d88d9-6992-471e-b456-91716866ce42}</Project>
