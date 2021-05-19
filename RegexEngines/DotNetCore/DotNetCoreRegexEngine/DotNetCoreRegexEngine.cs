@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
+
 namespace DotNetCoreRegexEngineNs
 {
 	public class DotNetCoreRegexEngine : IRegexEngine

@@ -80,7 +80,7 @@ namespace DotNetCoreRegexEngineNs
 			string stdout_contents;
 			string stderr_contents;
 
-			bool r = ProcessUtilities.InvokeExe( NonCancellable.Instance, GetClientExePath( ), null, json, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 );
+			bool r = ProcessUtilities.InvokeExe( cnc, GetClientExePath( ), null, json, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 );
 
 			if( !string.IsNullOrWhiteSpace( stderr_contents ) )
 			{
@@ -114,7 +114,6 @@ namespace DotNetCoreRegexEngineNs
 		}
 
 		#endregion
-
 
 
 		public static string GetVersion( )

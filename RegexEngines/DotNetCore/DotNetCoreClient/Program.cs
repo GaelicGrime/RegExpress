@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+
 namespace DotNetCoreClient
 {
 	class Program
@@ -94,8 +95,6 @@ namespace DotNetCoreClient
 
 		private static void GetVersion( )
 		{
-			// TODO: write to stream?
-
 			var response = new { v = Environment.Version };
 			var response_string = JsonSerializer.Serialize( response );
 
@@ -111,7 +110,7 @@ namespace DotNetCoreClient
 
 		private static void GetMatches( InputArgs inputArgs )
 		{
-			RegexOptions options = GetOptions( inputArgs.options );
+			RegexOptions options = ConvertOptions( inputArgs.options );
 			TimeSpan timeout = inputArgs.options == null ? Regex.InfiniteMatchTimeout : TimeSpan.FromMilliseconds( inputArgs.options.TimeoutMs );
 
 			var re = new Regex( inputArgs.pattern, options, timeout );
@@ -144,7 +143,7 @@ namespace DotNetCoreClient
 		}
 
 
-		private static RegexOptions GetOptions( Options options )
+		private static RegexOptions ConvertOptions( Options options )
 		{
 			RegexOptions o = RegexOptions.None;
 
