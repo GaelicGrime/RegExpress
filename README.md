@@ -6,6 +6,7 @@ A .NET desktop application made in C#, based on Windows Presentation Foundation 
 It includes several Regular Expression engines:
 
 * **[_Regex_](https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=netframework-4.8)** class from .NET Framework 4.8
+* **[_Regex_](https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex?view=net-5.0)** class from .NET 5
 * **[_wregex_](https://docs.microsoft.com/en-us/cpp/standard-library/regex)** class from Standard Template Library, MSVC 14.28.29912
 * **[Boost.Regex](https://www.boost.org/doc/libs/1_75_0/libs/regex/doc/html/index.html)** from Boost C++ Libraries 1.76.0
 * **[PCRE2](https://pcre.org/)** Open Source Regex Library 10.36
