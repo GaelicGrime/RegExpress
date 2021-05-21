@@ -174,9 +174,30 @@
                                     </StackPanel.LayoutTransform>
                                     <Label Content="Newline:" VerticalAlignment="Center" Target="{Binding ElementName=cbxEol}"/>
                                     <ComboBox x:Name="cbxEol" VerticalAlignment="Center" Margin="3 0 0 0" SelectionChanged="CbxEol_SelectionChanged" >
-                                        <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">CRLF (‘\r\n’, 0D 0A)</ComboBoxItem>
-                                        <ComboBoxItem Tag="&#x0D;">CR (‘\r’, 0D)</ComboBoxItem>
-                                        <ComboBoxItem Tag="&#x0A;">LF (‘\n’, 0A)</ComboBoxItem>
+                                        <ComboBox.Resources>
+                                            <Style x:Key="Note" TargetType="TextBlock">
+                                                <Setter Property="Opacity" Value="0.77"/>
+                                                <Setter Property="Margin" Value="4 0 0 0"/>
+                                            </Style>
+                                        </ComboBox.Resources>
+                                        <ComboBoxItem Tag="&#x0D;&#x0A;" IsSelected="True">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock>CRLF</TextBlock>
+                                                <TextBlock Style="{StaticResource Note}">– ‘\r\n’, 0D 0A, Windows</TextBlock>
+                                            </StackPanel>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem Tag="&#x0D;">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock>CR</TextBlock>
+                                                <TextBlock Style="{StaticResource Note}">– ‘\r’, 0D, Mac</TextBlock>
+                                            </StackPanel>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem Tag="&#x0A;">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock>LF</TextBlock>
+                                                <TextBlock Style="{StaticResource Note}">– ‘\n’, 0A, Unix</TextBlock>
+                                            </StackPanel>
+                                        </ComboBoxItem>
                                     </ComboBox>
                                 </StackPanel>
                             </StackPanel>

@@ -173,7 +173,7 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowError( Exception exc )
+		public void ShowError( Exception exc, bool scrollToEnd )
 		{
 			StopAll( );
 
@@ -188,8 +188,15 @@ namespace RegExpressWPF
 			{
 				CancelInfo( );
 				ShowOne( rtbError );
-				runError.Text = exc.Message;
-				rtbError.ScrollToEnd( ); // (the interesting part is at the end)
+				runError.Text = exc.Message.Trim( ) + Environment.NewLine;
+				if( scrollToEnd )
+				{
+					rtbError.ScrollToEnd( );
+				}
+				else
+				{
+					rtbError.ScrollToHome( );
+				}
 			} ) );
 		}
 

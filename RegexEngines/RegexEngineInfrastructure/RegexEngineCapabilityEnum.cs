@@ -11,7 +11,8 @@ namespace RegexEngineInfrastructure
 	public enum RegexEngineCapabilityEnum
 	{
 		Default = 0,
-		NoCaptures = ( 1 << 1 ),
-		CombineSurrogatePairs = ( 1 << 2 ),
+		NoCaptures = 1 << 1,
+		CombineSurrogatePairs = 1 << 2,
+		ScrollErrorsToEnd = 1 << 3,
 	}
 }

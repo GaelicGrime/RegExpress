@@ -38,7 +38,7 @@ namespace RustRegexEngineNs
 
 		public string EngineVersion => LazyVersion.Value;
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures;
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.NoCaptures | RegexEngineCapabilityEnum.ScrollErrorsToEnd;
 
 		public string NoteForCaptures => null;
 

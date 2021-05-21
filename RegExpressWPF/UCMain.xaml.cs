@@ -617,7 +617,7 @@ namespace RegExpressWPF
 						( ) =>
 						{
 							ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
-							ucMatches.ShowError( exc );
+							ucMatches.ShowError( exc, engine.Capabilities.HasFlag( RegexEngineCapabilityEnum.ScrollErrorsToEnd ) );
 							lblMatches.Text = "Error";
 							pnlShowAll.Visibility = Visibility.Collapsed;
 							pnlShowFirst.Visibility = Visibility.Collapsed;

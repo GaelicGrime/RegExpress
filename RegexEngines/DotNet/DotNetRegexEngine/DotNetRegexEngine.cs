@@ -45,7 +45,7 @@ namespace DotNetRegexEngineNs
 
 		public string EngineVersion => LazyVersion.Value;
 
-		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.Default;
+		public RegexEngineCapabilityEnum Capabilities => RegexEngineCapabilityEnum.ScrollErrorsToEnd;
 
 		public string NoteForCaptures => null;
 
