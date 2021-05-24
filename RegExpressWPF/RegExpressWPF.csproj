@@ -243,6 +243,10 @@
       <Project>{9aa90821-f9e5-44eb-a3c2-e38f2f09fdb0}</Project>
       <Name>SubRegRegexEngine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RegexEngines\WebView2\WebView2RegexEngine\WebView2RegexEngine.csproj">
+      <Project>{975235dd-4642-4f24-9752-02401e487103}</Project>
+      <Name>WebView2RegexEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="RegExpress.ico" />
