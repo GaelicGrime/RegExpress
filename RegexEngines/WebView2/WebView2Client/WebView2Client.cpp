@@ -131,7 +131,7 @@ int DoGetVersion( )
 		return 1;
 	}
 
-	std::wcout << L"{\"v\": \"" << v << "\" }" << std::endl;
+	std::wcout << L"{ \"Version\": \"" << v << "\" }" << std::endl;
 
 	return 0;
 }
@@ -293,15 +293,23 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 #define EOL L"\r\n"
 
 						std::wstring script =
-							std::wstring( L"( function() " EOL
-								"{ " EOL ) +
-							L"let re = new RegExp(\"" + pattern + L"\", \"" + flags_adjusted + L"\"); " EOL
-							L"let r = [ ]; let m; " EOL
-							L"while( (m = re.exec(\"" + text + L"\")) != null) " EOL
+							std::wstring( ) +
+							L"( function() " EOL
 							L"{ " EOL
+							L" try " EOL
+							L" { " EOL
+							L"  let re = new RegExp(\"" + pattern + L"\", \"" + flags_adjusted + L"\"); " EOL
+							L"  let r = [ ]; let m; " EOL
+							L"  while( (m = re.exec(\"" + text + L"\")) != null) " EOL
+							L"  { " EOL
 							L"   r.push( { i: m.indices, g: m.indices.groups } );" EOL
-							L"} " EOL
-							L"return r; " EOL
+							L"  } " EOL
+							L"  return { \"Matches\": r }; " EOL
+							L" } " EOL
+							L" catch( err ) " EOL
+							L" { " EOL
+							L"  return { \"Error\": err.message }" EOL
+							L" } " EOL
 							L"} )()";
 
 

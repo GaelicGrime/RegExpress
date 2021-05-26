@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace WebView2RegexEngineNs
@@ -17,16 +18,26 @@ namespace WebView2RegexEngineNs
 	public class WebView2Matcher : IMatcher
 	{
 
-		public class VersionResponse
+		public class ResponseVersion
 		{
-			public string v { get; set; }
+			public string Version { get; set; }
 		}
 
 
-		public class MatchResponse // (a list of such objects)
+		public class ResponseMatch
 		{
-			public Dictionary<string, int[]> g { get; set; }
-			public List<int[]> i { get; set; }
+			[JsonPropertyName( "g" )]
+			public Dictionary<string, int[]> Groups { get; set; }
+
+			[JsonPropertyName( "i" )]
+			public List<int[]> Indices { get; set; }
+		}
+
+
+		public class ResponseMatches
+		{
+			public List<ResponseMatch> Matches { get; set; }
+			public string Error { get; set; }
 		}
 
 
@@ -58,9 +69,9 @@ namespace WebView2RegexEngineNs
 			{
 				try
 				{
-					var v = JsonSerializer.Deserialize<VersionResponse>( stdout_contents );
+					var v = JsonSerializer.Deserialize<ResponseVersion>( stdout_contents );
 
-					version = v.v;
+					version = v.Version;
 				}
 				catch( Exception )
 				{
@@ -112,32 +123,47 @@ namespace WebView2RegexEngineNs
 
 			SimpleTextGetter stg = new SimpleTextGetter( text );
 
-			List<MatchResponse> client_matches = JsonSerializer.Deserialize<List<MatchResponse>>( stdout_contents );
+			ResponseMatches client_response = JsonSerializer.Deserialize<ResponseMatches>( stdout_contents );
 
-			if( client_matches == null )
+			if( client_response == null )
 			{
-				throw new Exception( "Failed" );
+				throw new Exception( "JavaScript failed." );
 			}
+
+			if( !string.IsNullOrWhiteSpace( client_response.Error ) )
+			{
+				throw new Exception( client_response.Error );
+			}
+
+			string[] distributed_names = FigureOutGroupNames( client_response );
+			Debug.Assert( distributed_names[0] == null );
 
 			List<IMatch> matches = new List<IMatch>( );
 
-			foreach( var cm in client_matches )
+			foreach( var cm in client_response.Matches )
 			{
-				if( cm.i.Any( ) )
+				if( cm.Indices.Any( ) )
 				{
-					var start = cm.i[0][0];
-					var end = cm.i[0][1];
+					var start = cm.Indices[0][0];
+					var end = cm.Indices[0][1];
 
 					var sm = SimpleMatch.Create( start, end - start, stg );
 
-					// TODO: determine names
-
 					sm.AddGroup( sm.Index, sm.Length, true, "0" ); // (default group)
 
-					for( int j = 1; j < cm.i.Count; ++j )
+					for( int i = 1; i < cm.Indices.Count; ++i )
 					{
-						var name = j.ToString( CultureInfo.InvariantCulture );
-						var g = cm.i[j];
+						string name;
+						if( i < distributed_names.Length && distributed_names[i] != null )
+						{
+							name = distributed_names[i];
+						}
+						else
+						{
+							name = i.ToString( CultureInfo.InvariantCulture );
+						}
+
+						var g = cm.Indices[i];
 
 						if( g == null )
 						{
@@ -145,8 +171,8 @@ namespace WebView2RegexEngineNs
 						}
 						else
 						{
-							start = cm.i[j][0];
-							end = cm.i[j][1];
+							start = cm.Indices[i][0];
+							end = cm.Indices[i][1];
 
 							sm.AddGroup( start, end - start, true, name );
 						}
@@ -161,6 +187,79 @@ namespace WebView2RegexEngineNs
 
 		#endregion IMatcher
 
+
+		private string[] FigureOutGroupNames( ResponseMatches clientResponse )
+		{
+			if( clientResponse.Matches == null ) return new string[0];
+
+			var possible_indices = new Dictionary<string, HashSet<int>>( );
+
+			foreach( var m in clientResponse.Matches )
+			{
+				foreach( var g in m.Groups )
+				{
+					string group_name = g.Key;
+					int[] group_index = g.Value;
+
+					var possible_indices_this_group = new List<int>( );
+
+					for( var i = 1; i < m.Indices.Count; ++i )
+					{
+						if( m.Indices[i] == null ) continue;
+
+						if( group_index[0] == m.Indices[i][0] && group_index[1] == m.Indices[i][1] )
+						{
+							possible_indices_this_group.Add( i );
+						}
+					}
+
+					HashSet<int> existing_possible_indices;
+
+					if( !possible_indices.TryGetValue( group_name, out existing_possible_indices ) )
+					{
+						possible_indices.Add( group_name, possible_indices_this_group.ToHashSet( ) );
+					}
+					else
+					{
+						possible_indices[group_name].UnionWith( possible_indices_this_group );
+					}
+				}
+			}
+
+			// order by number of possibilities
+
+			var ordered = possible_indices.OrderBy( kv => kv.Value.Count ).ToArray( );
+
+			//// exclude previous, more probable possibilities
+
+			//for( int i = 1; i < ordered.Length; ++i )
+			//{
+			//	for( int j = 0; j < i; ++j )
+			//	{
+			//		ordered[i].Value.ExceptWith( ordered[j].Value );
+			//	}
+			//}
+
+			int max_group_number = ordered.SelectMany( kv => kv.Value ).Max( );
+
+			string[] distributed_names = new string[max_group_number + 1];
+
+			// keep one (first) possibility, which is not used yet
+
+			for( int i = 0; i < ordered.Length; ++i )
+			{
+				foreach( int k in ordered[i].Value )
+				{
+					if( distributed_names[k] == null )
+					{
+						distributed_names[k] = ordered[i].Key;
+						break;
+					}
+				}
+			}
+
+			return distributed_names;
+		}
 
 		private static void WriteJavaScriptString( TextWriter sw, string text )
 		{

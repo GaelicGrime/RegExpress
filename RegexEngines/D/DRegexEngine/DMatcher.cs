@@ -127,7 +127,7 @@ namespace DRegexEngineNs
 					Debug.Assert( match != null );
 
 					// try to identify the named group by index and length;
-					// cannot be done univocally in situations like "(?P<name1>(?P<name2>(.))", when index and length are the same
+					// cannot be done univocally in situations like "(?P<name1>(?P<name2>(.))", because index and length are the same
 
 					string name;
 
