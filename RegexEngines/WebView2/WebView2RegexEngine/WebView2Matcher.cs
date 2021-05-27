@@ -37,6 +37,9 @@ namespace WebView2RegexEngineNs
 		public class ResponseMatches
 		{
 			public List<ResponseMatch> Matches { get; set; }
+
+			public string S { get; set; } //...........
+
 			public string Error { get; set; }
 		}
 
@@ -97,19 +100,36 @@ namespace WebView2RegexEngineNs
 				Options.u ? "u" : ""
 				);
 
-			string stdout_contents;
+			//.........string stdout_contents;
 			string stderr_contents;
 
-			Action<StreamWriter> stdin_writer = new Action<StreamWriter>( sw =>
+			//..........
+			//Action<StreamWriter> stdin_writer = new Action<StreamWriter>( sw =>
+			//{
+			//	sw.Write( "m \"" );
+			//	WriteJavaScriptString( sw, Pattern );
+			//	sw.Write( "\" \"" );
+			//	sw.Write( flags );
+			//	sw.Write( "\" \"" );
+			//	WriteJavaScriptString( sw, text );
+			//	sw.Write( "\"" );
+			//} );
+
+			Action<Stream> stdin_writer = s =>
 			{
-				sw.Write( "m \"" );
-				WriteJavaScriptString( sw, Pattern );
-				sw.Write( "\" \"" );
-				sw.Write( flags );
-				sw.Write( "\" \"" );
-				WriteJavaScriptString( sw, text );
-				sw.Write( "\"" );
-			} );
+				using( var sw = new StreamWriter( s, Encoding.UTF8 ) )
+				{
+					sw.Write( "m \"" );
+					WriteJavaScriptString( sw, Pattern );
+					sw.Write( "\" \"" );
+					sw.Write( flags );
+					sw.Write( "\" \"" );
+					WriteJavaScriptString( sw, text );
+					sw.Write( "\"" );
+				}
+			};
+
+			MemoryStream stdout_contents;
 
 			if( !ProcessUtilities.InvokeExe( cnc, GetClientExePath( ), "i", stdin_writer, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) )
 			{
@@ -121,9 +141,10 @@ namespace WebView2RegexEngineNs
 				throw new Exception( stderr_contents );
 			}
 
-			SimpleTextGetter stg = new SimpleTextGetter( text );
+			string o = Encoding.UTF8.GetString( stdout_contents.ToArray( ) );
 
-			ResponseMatches client_response = JsonSerializer.Deserialize<ResponseMatches>( stdout_contents );
+			ResponseMatches client_response = JsonSerializer.Deserialize<ResponseMatches>( "" );//..... stdout_contents );
+			client_response = JsonSerializer.Deserialize<ResponseMatches>( client_response.S );
 
 			if( client_response == null )
 			{
@@ -138,6 +159,7 @@ namespace WebView2RegexEngineNs
 			string[] distributed_names = FigureOutGroupNames( client_response );
 			Debug.Assert( distributed_names[0] == null );
 
+			SimpleTextGetter stg = new SimpleTextGetter( text );
 			List<IMatch> matches = new List<IMatch>( );
 
 			foreach( var cm in client_response.Matches )
@@ -261,6 +283,8 @@ namespace WebView2RegexEngineNs
 			return distributed_names;
 		}
 
+
+		//...............
 		private static void WriteJavaScriptString( TextWriter sw, string text )
 		{
 			foreach( var c in text )
@@ -273,6 +297,23 @@ namespace WebView2RegexEngineNs
 				else
 				{
 					sw.Write( "\\u{0:X4}", unchecked((uint)c) );
+				}
+			}
+		}
+
+
+		private static void WriteJavaScriptString( BinaryWriter bw, string text )
+		{
+			foreach( var c in text )
+			{
+				if( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) || ( c >= '0' && c <= '9' ) ||
+					"`~!@#$%*()-_=+[]{};:',./?".Contains( c ) )
+				{
+					bw.Write( c );
+				}
+				else
+				{
+					bw.Write( $"\\u{unchecked((uint)c):X4}" );
 				}
 			}
 		}

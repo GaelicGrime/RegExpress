@@ -101,7 +101,7 @@ int APIENTRY WinMain(
 		return DoMatch( hInst, argv[2], argv[3], argv[4] );
 	}
 
-	if( lstrcmpiW( argv[1], L"t" ) == 0 ) // "t" -- test things
+	if( lstrcmpiW( argv[1], L"a" ) == 0 ) // "a" -- return arguments to STDERR (for testing)
 	{
 		std::wcerr << L"Command line: '" << command_line << "'" << std::endl;
 
@@ -109,6 +109,22 @@ int APIENTRY WinMain(
 		{
 			std::wcerr << i << ": '" << argv[i] << "'" << std::endl;
 		}
+
+		return 0;
+	}
+
+	if( lstrcmpiW( argv[1], L"t" ) == 0 ) // "t" -- return arguments and STDIN contents to STDERR (for testing)
+	{
+		std::wcerr << L"Command line: '" << command_line << "'" << std::endl;
+
+		for( int i = 0; i < argc; ++i )
+		{
+			std::wcerr << i << ": '" << argv[i] << "'" << std::endl;
+		}
+
+		std::getline( std::wcin, stdin_contents, L'\r' );
+
+		std::wcerr << L"STDIN: '" << stdin_contents << "'" << std::endl;
 
 		return 0;
 	}
@@ -200,7 +216,7 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 	// The parameters to ShowWindow explained:
 	// hWnd: the value returned from CreateWindow
 	// nCmdShow: the fourth parameter from WinMain
-	ShowWindow( hWnd, SW_HIDE );
+	ShowWindow( hWnd, SW_SHOW );
 	//UpdateWindow( hWnd );
 
 
@@ -288,30 +304,74 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 						//	} ).Get( ) );
 
 
-						std::wstring flags_adjusted = std::wstring( flags ) + L"gd";
+						std::wstring flags_adjusted = std::wstring( flags );
+
+						bool use_exec = flags_adjusted.erase( std::remove( flags_adjusted.begin( ), flags_adjusted.end( ), L'E' ), flags_adjusted.end( ) ) != flags_adjusted.end( );
+
+						flags_adjusted += L"gd";
+
+						std::wstring script;
 
 #define EOL L"\r\n"
 
-						std::wstring script =
-							std::wstring( ) +
-							L"( function() " EOL
-							L"{ " EOL
-							L" try " EOL
-							L" { " EOL
-							L"  let re = new RegExp(\"" + pattern + L"\", \"" + flags_adjusted + L"\"); " EOL
-							L"  let r = [ ]; let m; " EOL
-							L"  while( (m = re.exec(\"" + text + L"\")) != null) " EOL
-							L"  { " EOL
-							L"   r.push( { i: m.indices, g: m.indices.groups } );" EOL
-							L"  } " EOL
-							L"  return { \"Matches\": r }; " EOL
-							L" } " EOL
-							L" catch( err ) " EOL
-							L" { " EOL
-							L"  return { \"Error\": err.message }" EOL
-							L" } " EOL
-							L"} )()";
+						if( use_exec )
+						{
+							// 'RegExp.prototype.exec' function
 
+							script =
+								std::wstring( ) +
+								L"( function() " EOL
+								L"{ " EOL
+								L" try " EOL
+								L" { " EOL
+								L"  let pattern = \"" + pattern + L"\";" EOL
+								L"  let text = \"" + text + L"\";" EOL
+								L"  let re = new RegExp(pattern, \"" + flags_adjusted + L"\"); " EOL
+								L"  let r = [ ]; let m; let l = -2;" EOL
+								L"  while( (m = re.exec(text)) !== null) " EOL
+								L"  { " EOL
+								L"   if( l == re.lastIndex ) break; else l = re.lastIndex; " EOL
+								L"   r.push( { i: m.indices, g: m.indices.groups } );" EOL
+								L"  } " EOL
+								L"  return { \"Matches\": r }; " EOL
+								L" } " EOL
+								L" catch( err ) " EOL
+								L" { " EOL
+								L"  return { \"Error\": err.message }" EOL
+								L" } " EOL
+								L"} )()";
+						}
+						else
+						{
+							// 'String.prototype.matchAll' function:
+
+							script =
+								std::wstring( ) +
+								L"( function() " EOL
+								L"{ " EOL
+								L" try " EOL
+								L" { " EOL
+								L"  let pattern = \"" + pattern + L"\";" EOL
+								L"  let text = \"" + text + L"\";" EOL
+								L"  let re = new RegExp(pattern, \"" + flags_adjusted + L"\"); " EOL
+								L"  let r = [ ]; " EOL
+								L"  for( const m of text.matchAll( re ) ) " EOL
+								L"  { " EOL
+								L"   r.push( { i: m.indices, g: m.indices.groups } );" EOL
+								L"  } " EOL
+								//.............
+							L"  alert(pattern); " EOL
+							L"  alert(text); " EOL
+							L"  alert(JSON.stringify(r)); " EOL
+								//........L"  return { \"Matches\": r }; " EOL
+								L"  return { \"Matches\": r, \"S\": JSON.stringify(r) }; " EOL
+								L" } " EOL
+								L" catch( err ) " EOL
+								L" { " EOL
+								L"  return { \"Error\": err.message }" EOL
+								L" } " EOL
+								L"} )()";
+						}
 
 						webviewWindow->ExecuteScript( script.c_str( ),
 							Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
@@ -328,7 +388,7 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 									}
 
 									LPCWSTR json = resultObjectAsJson;
-									//MessageBox( hWnd, json, L"Result", MB_OKCANCEL );
+									MessageBox( hWnd, json, L"Result", MB_OKCANCEL );//...........
 
 									std::wcout << json << std::endl;
 
