@@ -18,6 +18,8 @@ namespace WebView2RegexEngineNs
 		readonly UCWebView2RegexOptions OptionsControl;
 		static readonly Lazy<string> LazyVersion = new Lazy<string>( GetVersion );
 
+		static readonly Dictionary<object, Regex> CachedColouringRegexes = new Dictionary<object, Regex>( );
+		static readonly Dictionary<object, Regex> CachedHighlightingRegexes = new Dictionary<object, Regex>( );
 
 		public WebView2RegexEngine( )
 		{
@@ -93,6 +95,49 @@ namespace WebView2RegexEngineNs
 
 				if( cnc.IsCancellationRequested ) return;
 
+				// escapes, '\...'
+				{
+					var g = m.Groups["escape"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						// we need captures because of '*?'
+						foreach( Capture c in g.Captures )
+						{
+							if( cnc.IsCancellationRequested ) return;
+
+							var intersection = Segment.Intersection( visibleSegment, c.Index, c.Length );
+
+							if( !intersection.IsEmpty )
+							{
+								colouredSegments.Escapes.Add( intersection );
+							}
+						}
+
+						continue;
+					}
+				}
+
+				if( cnc.IsCancellationRequested ) return;
+
+				// named groups, '(?<name>...)'
+				{
+					var g = m.Groups["name"];
+					if( g.Success )
+					{
+						if( cnc.IsCancellationRequested ) return;
+
+						var intersection = Segment.Intersection( visibleSegment, g.Index, g.Length );
+
+						if( !intersection.IsEmpty )
+						{
+							colouredSegments.GroupNames.Add( intersection );
+						}
+
+						continue;
+					}
+				}
 			}
 		}
 
@@ -107,8 +152,6 @@ namespace WebView2RegexEngineNs
 			HighlightHelper.CommonHighlighting( cnc, highlights, pattern, selectionStart, selectionEnd, visibleSegment, regex, par_size, bracket_size );
 		}
 
-
-
 		#endregion
 
 
@@ -121,12 +164,7 @@ namespace WebView2RegexEngineNs
 		{
 			WebView2RegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			//.........
-			return PatternBuilder.AlwaysFailsRegex;
-
-			/*if( options.UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
-
-			object key = options.UREGEX_COMMENTS;
+			object key = options.u;
 
 			lock( CachedColouringRegexes )
 			{
@@ -137,7 +175,7 @@ namespace WebView2RegexEngineNs
 				CachedColouringRegexes.Add( key, regex );
 
 				return regex;
-			}*/
+			}
 		}
 
 
@@ -145,12 +183,7 @@ namespace WebView2RegexEngineNs
 		{
 			WebView2RegexOptions options = OptionsControl.GetSelectedOptions( );
 
-			//.............
-			return PatternBuilder.AlwaysFailsRegex;
-
-			/*if( options.UREGEX_LITERAL ) return PatternBuilder.AlwaysFailsRegex;
-
-			object key = options.UREGEX_COMMENTS;
+			object key = options.u;
 
 			lock( CachedHighlightingRegexes )
 			{
@@ -161,87 +194,58 @@ namespace WebView2RegexEngineNs
 				CachedHighlightingRegexes.Add( key, regex );
 
 				return regex;
-			}*/
+			}
 		}
 
 
 		Regex CreateColouringRegex( WebView2RegexOptions options )
 		{
-			//.............
-			return PatternBuilder.AlwaysFailsRegex;
-			/*
 			var pb_escape = new PatternBuilder( );
 
 			pb_escape.BeginGroup( "escape" );
 			pb_escape.Add( @"\\c[A-Za-z]" ); // \cx control char
-			pb_escape.Add( @"\\[NpP]\{.*?(\} | $)" ); // named character, property
-			pb_escape.Add( @"\\[uUx][0-9a-fA-F]+" ); // hexadecimal char
-			pb_escape.Add( @"\\x\{[0-9a-fA-F]+(\}|$)" ); // hexadecimal char
-			pb_escape.Add( @"\\0[0-7]+" ); // octal
-			pb_escape.Add( @"\\Q.*?(\\E|$)" ); // quoted part
+			pb_escape.Add( @"\\x[0-9a-fA-F]{1,2}" ); // hexadecimal char
+			pb_escape.Add( @"\\u[0-9a-fA-F]{1,4}" ); // hexadecimal char
+
+			if( options.u )
+			{
+				// language=regex
+				pb_escape.Add( @"\\u\{[0-9a-fA-F]+(\}|$)" ); // hexadecimal char
+															 // language=regex
+				pb_escape.Add( @"\\(p|P)\{.*?(\}|$)" ); // unicode property
+			}
+
+
 			pb_escape.Add( @"\\." ); // \.
 			pb_escape.EndGroup( );
 
 			var pb = new PatternBuilder( );
 
-			pb.BeginGroup( "comment" );
-			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
-			if( options.UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
-			pb.EndGroup( );
+			pb.AddGroup( null, $@"\[\]?({pb_escape.ToPattern( )} |.)*?(\]|$)" );
 
+			// language=regex
 			pb.Add( @"\(\?(?'name'<(?![=!]).*?(>|$))" );
+			// language=regex
 			pb.Add( @"(?'name'\\k<.*?(>|$))" );
-
-			string posix_bracket = @"(?'escape'\[:.*?(:\]|$))"; // [:...:], use escape colour
-
-			pb.Add( $@"
-						\[
-						\]?
-						(?> {posix_bracket} | \[(?<c>) | ({pb_escape.ToPattern( )} | [^\[\]])+ | \](?<-c>))*
-						(?(c)(?!))
-						\]
-						" );
 
 			pb.Add( pb_escape.ToPattern( ) );
 
 			return pb.ToRegex( );
-			*/
 		}
 
 
 		Regex CreateHighlightingRegex( WebView2RegexOptions options )
 		{
-			//.............
-			return PatternBuilder.AlwaysFailsRegex;
-
-			/*var pb = new PatternBuilder( );
-
-			pb.Add( @"\(\?\#.*?(\)|$)" ); // comment
-
-			if( options.UREGEX_COMMENTS ) pb.Add( @"\#.*?(\n|$)" ); // line-comment
-			pb.Add( @"\\Q.*?(\\E|$)" ); // quoted part
+			var pb = new PatternBuilder( );
 
 			pb.Add( @"(?'left_par'\()" ); // '('
 			pb.Add( @"(?'right_par'\))" ); // ')'
-			pb.Add( @"\\[NpPx]\{.*?(\}|$)" ); // (skip)
+			pb.Add( @"\\[pPu]\{.*?(\}|$)" ); // (skip)
 			pb.Add( @"(?'left_brace'\{).*?((?'right_brace'\})|$)" ); // '{...}'
-
-			string posix_bracket = @"(\[:.*?(:\]|$))"; // [:...:]
-
-			pb.Add( $@"
-						(?'left_bracket'\[)
-						\]?
-						(?> {posix_bracket} | (?'left_bracket'\[)(?<c>) | (\\. | [^\[\]])+ | (?'right_bracket'\])(?<-c>))*
-						(?(c)(?!))
-						(?'right_bracket'\])?
-						|
-						(?'right_bracket'\])
-						" );
-
-			pb.Add( @"\\." ); // '\...'
+			pb.Add( @"(?'left_bracket'\[) \]? (\\.|.)*? ((?'right_bracket'\])|$)" ); // '[...]'
+			pb.Add( @"\\." ); // (skip)
 
 			return pb.ToRegex( );
-			*/
 		}
 
 

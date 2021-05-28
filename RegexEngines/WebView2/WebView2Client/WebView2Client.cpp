@@ -42,6 +42,17 @@ int APIENTRY WinMain(
 {
 	//AttachConsole( ATTACH_PARENT_PROCESS ); // (does not seem to have effect)
 
+	setlocale( LC_ALL, ".utf8" ); // this seems to be enough
+
+	//SetConsoleCP( CP_UTF8 );
+	//SetConsoleOutputCP( CP_UTF8 );
+
+	//std::locale utf8_locale( "en_US.UTF-8" );
+	//std::wcin.imbue( utf8_locale );
+	//std::wcout.imbue( utf8_locale );
+	//std::wcerr.imbue( utf8_locale );
+
+
 	HRESULT hr = CoInitializeEx( nullptr, COINIT_APARTMENTTHREADED );
 
 	if( hr != S_OK && hr != S_FALSE )
@@ -71,36 +82,6 @@ int APIENTRY WinMain(
 	}
 
 
-	if( lstrcmpiW( argv[1], L"v" ) == 0 ) // "v" -- get version
-	{
-		return DoGetVersion( );
-	}
-
-
-	std::wstring stdin_contents;
-
-	if( lstrcmpiW( argv[1], L"i" ) == 0 ) // "i" -- get data from STDIN instead of command-line arguments
-	{
-		std::getline( std::wcin, stdin_contents, L'\r' );
-
-		stdin_contents = L"\"" + ( argv[0] + ( L"\" " + stdin_contents ) );
-
-		command_line = stdin_contents.c_str( );
-		argv = CommandLineToArgvW( command_line, &argc );
-	}
-
-	if( lstrcmpiW( argv[1], L"m" ) == 0 ) // "m" -- get matches
-	{
-		if( argc < 5 )
-		{
-			std::wcerr << L"Invalid command line: '" << command_line << "'." << std::endl;
-
-			return 1;
-		}
-
-		return DoMatch( hInst, argv[2], argv[3], argv[4] );
-	}
-
 	if( lstrcmpiW( argv[1], L"a" ) == 0 ) // "a" -- return arguments to STDERR (for testing)
 	{
 		std::wcerr << L"Command line: '" << command_line << "'" << std::endl;
@@ -122,11 +103,45 @@ int APIENTRY WinMain(
 			std::wcerr << i << ": '" << argv[i] << "'" << std::endl;
 		}
 
+		std::wstring stdin_contents;
 		std::getline( std::wcin, stdin_contents, L'\r' );
+
+		MessageBox( NULL, stdin_contents.c_str( ), L"STDIN", MB_OK );
 
 		std::wcerr << L"STDIN: '" << stdin_contents << "'" << std::endl;
 
 		return 0;
+	}
+
+
+	if( lstrcmpiW( argv[1], L"v" ) == 0 ) // "v" -- get version
+	{
+		return DoGetVersion( );
+	}
+
+
+	std::wstring stdin_contents;
+
+	if( lstrcmpiW( argv[1], L"i" ) == 0 ) // "i" -- get data from STDIN instead of command-line arguments
+	{
+		std::getline( std::wcin, stdin_contents, L'\r' );
+
+		stdin_contents = L"\"" + ( argv[0] + ( L"\" " + stdin_contents ) );
+
+		command_line = stdin_contents.c_str( );
+		argv = CommandLineToArgvW( command_line, &argc );
+	}
+
+	if( lstrcmpiW( argv[1], L"m" ) == 0 ) // "m" -- get matches: 'm "pattern" "flags" "text"'
+	{
+		if( argc < 5 )
+		{
+			std::wcerr << L"Invalid command line: '" << command_line << "'." << std::endl;
+
+			return 1;
+		}
+
+		return DoMatch( hInst, argv[2], argv[3], argv[4] );
 	}
 
 	std::wcerr << L"Invalid command line: '" << command_line << "'." << std::endl;
@@ -216,7 +231,7 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 	// The parameters to ShowWindow explained:
 	// hWnd: the value returned from CreateWindow
 	// nCmdShow: the fourth parameter from WinMain
-	ShowWindow( hWnd, SW_SHOW );
+	ShowWindow( hWnd, SW_HIDE );
 	//UpdateWindow( hWnd );
 
 
@@ -359,12 +374,7 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 								L"  { " EOL
 								L"   r.push( { i: m.indices, g: m.indices.groups } );" EOL
 								L"  } " EOL
-								//.............
-							L"  alert(pattern); " EOL
-							L"  alert(text); " EOL
-							L"  alert(JSON.stringify(r)); " EOL
-								//........L"  return { \"Matches\": r }; " EOL
-								L"  return { \"Matches\": r, \"S\": JSON.stringify(r) }; " EOL
+								L"  return { \"Matches\": r }; " EOL
 								L" } " EOL
 								L" catch( err ) " EOL
 								L" { " EOL
@@ -388,7 +398,7 @@ int DoMatch( HINSTANCE hInstance, LPCWSTR pattern, LPCWSTR flags, LPCWSTR text )
 									}
 
 									LPCWSTR json = resultObjectAsJson;
-									MessageBox( hWnd, json, L"Result", MB_OKCANCEL );//...........
+									//MessageBox( hWnd, json, L"Result", MB_OKCANCEL );
 
 									std::wcout << json << std::endl;
 

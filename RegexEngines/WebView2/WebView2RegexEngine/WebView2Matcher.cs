@@ -38,8 +38,6 @@ namespace WebView2RegexEngineNs
 		{
 			public List<ResponseMatch> Matches { get; set; }
 
-			public string S { get; set; } //...........
-
 			public string Error { get; set; }
 		}
 
@@ -100,36 +98,20 @@ namespace WebView2RegexEngineNs
 				Options.u ? "u" : ""
 				);
 
-			//.........string stdout_contents;
+			string stdout_contents;
 			string stderr_contents;
 
-			//..........
-			//Action<StreamWriter> stdin_writer = new Action<StreamWriter>( sw =>
-			//{
-			//	sw.Write( "m \"" );
-			//	WriteJavaScriptString( sw, Pattern );
-			//	sw.Write( "\" \"" );
-			//	sw.Write( flags );
-			//	sw.Write( "\" \"" );
-			//	WriteJavaScriptString( sw, text );
-			//	sw.Write( "\"" );
-			//} );
-
-			Action<Stream> stdin_writer = s =>
+			Action<StreamWriter> stdin_writer = new Action<StreamWriter>( sw =>
 			{
-				using( var sw = new StreamWriter( s, Encoding.UTF8 ) )
-				{
-					sw.Write( "m \"" );
-					WriteJavaScriptString( sw, Pattern );
-					sw.Write( "\" \"" );
-					sw.Write( flags );
-					sw.Write( "\" \"" );
-					WriteJavaScriptString( sw, text );
-					sw.Write( "\"" );
-				}
-			};
+				sw.Write( "m \"" );
+				WriteJavaScriptString( sw, Pattern );
+				sw.Write( "\" \"" );
+				sw.Write( flags );
+				sw.Write( "\" \"" );
+				WriteJavaScriptString( sw, text );
+				sw.Write( "\"" );
+			} );
 
-			MemoryStream stdout_contents;
 
 			if( !ProcessUtilities.InvokeExe( cnc, GetClientExePath( ), "i", stdin_writer, out stdout_contents, out stderr_contents, EncodingEnum.UTF8 ) )
 			{
@@ -141,10 +123,7 @@ namespace WebView2RegexEngineNs
 				throw new Exception( stderr_contents );
 			}
 
-			string o = Encoding.UTF8.GetString( stdout_contents.ToArray( ) );
-
-			ResponseMatches client_response = JsonSerializer.Deserialize<ResponseMatches>( "" );//..... stdout_contents );
-			client_response = JsonSerializer.Deserialize<ResponseMatches>( client_response.S );
+			ResponseMatches client_response = JsonSerializer.Deserialize<ResponseMatches>( stdout_contents );
 
 			if( client_response == null )
 			{
@@ -218,6 +197,8 @@ namespace WebView2RegexEngineNs
 
 			foreach( var m in clientResponse.Matches )
 			{
+				if( m.Groups == null ) continue;
+
 				foreach( var g in m.Groups )
 				{
 					string group_name = g.Key;
@@ -262,7 +243,7 @@ namespace WebView2RegexEngineNs
 			//	}
 			//}
 
-			int max_group_number = ordered.SelectMany( kv => kv.Value ).Max( );
+			int max_group_number = ordered.Any( ) ? ordered.SelectMany( kv => kv.Value ).Max( ) : 0;
 
 			string[] distributed_names = new string[max_group_number + 1];
 
@@ -284,7 +265,6 @@ namespace WebView2RegexEngineNs
 		}
 
 
-		//...............
 		private static void WriteJavaScriptString( TextWriter sw, string text )
 		{
 			foreach( var c in text )
@@ -297,23 +277,6 @@ namespace WebView2RegexEngineNs
 				else
 				{
 					sw.Write( "\\u{0:X4}", unchecked((uint)c) );
-				}
-			}
-		}
-
-
-		private static void WriteJavaScriptString( BinaryWriter bw, string text )
-		{
-			foreach( var c in text )
-			{
-				if( ( c >= 'a' && c <= 'z' ) || ( c >= 'A' && c <= 'Z' ) || ( c >= '0' && c <= '9' ) ||
-					"`~!@#$%*()-_=+[]{};:',./?".Contains( c ) )
-				{
-					bw.Write( c );
-				}
-				else
-				{
-					bw.Write( $"\\u{unchecked((uint)c):X4}" );
 				}
 			}
 		}
