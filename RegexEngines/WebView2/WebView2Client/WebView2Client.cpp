@@ -12,10 +12,10 @@ using namespace Microsoft::WRL;
 // Global variables
 
 // The main window class name.
-static TCHAR szWindowClass[] = _T( "RegExpressWebViewClient" );
+static TCHAR szWindowClass[] = _T( "RegExpressWebView2Client" );
 
 // The string that appears in the application's title bar.
-static TCHAR szTitle[] = _T( "RegExpressWebViewClient" );
+static TCHAR szTitle[] = _T( "RegExpressWebView2Client" );
 
 HINSTANCE hInst;
 
@@ -106,7 +106,7 @@ int APIENTRY WinMain(
 		std::wstring stdin_contents;
 		std::getline( std::wcin, stdin_contents, L'\r' );
 
-		MessageBox( NULL, stdin_contents.c_str( ), L"STDIN", MB_OK );
+		//MessageBox( NULL, stdin_contents.c_str( ), L"STDIN", MB_OK );
 
 		std::wcerr << L"STDIN: '" << stdin_contents << "'" << std::endl;
 
