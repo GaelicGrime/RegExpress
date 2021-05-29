@@ -180,8 +180,8 @@ namespace RegexEngineInfrastructure
 					}
 				}
 
-				KillThread( writing_thread );
-				KillThread( reading_thread );
+				StopThread( writing_thread );
+				StopThread( reading_thread );
 
 				if( cancel )
 				{
@@ -230,7 +230,7 @@ namespace RegexEngineInfrastructure
 		}
 
 
-		private static void KillThread( Thread thread )
+		private static void StopThread( Thread thread )
 		{
 			try
 			{

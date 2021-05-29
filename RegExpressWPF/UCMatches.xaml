@@ -49,7 +49,7 @@
                     <Run x:Name="runInfo" />
                 </Paragraph>
                 <BlockUIContainer Margin="4">
-                    <Button x:Name="btnCancel" Content="Cancel" Width="75" FontStyle="Normal" FontFamily="Segoe UI" FontSize="12" BorderThickness="1" HorizontalAlignment="Left" Click="btnCancel_Click" Visibility="Hidden"/>
+                    <Button x:Name="btnCancel" Content="Cancel" Width="59" FontFamily="Segoe UI" FontSize="11" FontStyle="Normal" BorderThickness="1" HorizontalAlignment="Left" Click="btnCancel_Click" />
                 </BlockUIContainer>
             </FlowDocument>
         </RichTextBox>
