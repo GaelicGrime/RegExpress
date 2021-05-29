@@ -4,10 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegExpressWPF", "RegExpressWPF\RegExpressWPF.csproj", "{FEA5F50A-0481-4467-9ABE-CCBB3EFADF84}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3CD2B961-0544-4C45-9F42-05D4814312A8} = {3CD2B961-0544-4C45-9F42-05D4814312A8}
-		{BCFFBB75-0B0F-469D-B622-6F128C03D391} = {BCFFBB75-0B0F-469D-B622-6F128C03D391}
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{60FA2836-7AB6-44CD-A1C9-63566306D6FF}"
 	ProjectSection(SolutionItems) = preProject

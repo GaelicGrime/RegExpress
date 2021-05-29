@@ -98,7 +98,7 @@
                         </TextBlock>
                     </StackPanel>
                 </StackPanel>
-                <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" LostFocus="UcMatches_LostFocus"/>
+                <local:UCMatches x:Name="ucMatches" Grid.Row="1" Margin="0,0,0,0" SelectionChanged="UcMatches_SelectionChanged" Cancelled="ucMatches_Cancelled" LostFocus="UcMatches_LostFocus"/>
             </Grid>
         </Grid>
 

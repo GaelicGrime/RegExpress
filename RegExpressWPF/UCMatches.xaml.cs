@@ -104,6 +104,7 @@ namespace RegExpressWPF
 
 
 		public event EventHandler SelectionChanged;
+		public event EventHandler Cancelled;
 
 
 		public UCMatches( )
@@ -159,11 +160,12 @@ namespace RegExpressWPF
 		}
 
 
-		public void ShowInfo( string text )
+		public void ShowInfo( string text, bool showCancelButton )
 		{
 			runInfo.Text = text;
 			rtbInfo.ScrollToHome( );
 			rtbInfo.Visibility = Visibility.Visible;
+			btnCancel.Visibility = showCancelButton ? Visibility.Visible : Visibility.Collapsed;
 		}
 
 
@@ -371,6 +373,12 @@ namespace RegExpressWPF
 			adorner_layer.Add( ExternalUnderliningAdorner );
 
 			AlreadyLoaded = true;
+		}
+
+
+		private void btnCancel_Click( object sender, RoutedEventArgs e )
+		{
+			Cancelled?.Invoke( this, null );
 		}
 
 
@@ -1205,6 +1213,7 @@ namespace RegExpressWPF
 			}
 
 			pbProgress.Visibility = Visibility.Hidden;
+			ShowIndeterminateProgress( false );
 		}
 
 
