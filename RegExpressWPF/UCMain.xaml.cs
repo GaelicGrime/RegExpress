@@ -625,8 +625,8 @@ namespace RegExpressWPF
 				}
 				catch( Exception exc )
 				{
-					//.........
-					//.........
+					if( cnc.IsCancellationRequested ) return;
+
 					UITaskHelper.BeginInvoke( this, CancellationToken.None,
 						( ) =>
 						{
@@ -640,11 +640,11 @@ namespace RegExpressWPF
 					Debug.Assert( !is_good );
 				}
 
+				if( cnc.IsCancellationRequested ) return;
+
 				if( is_good )
 				{
 					int count = matches.Count;
-
-					if( cnc.IsCancellationRequested ) return;
 
 					var matches_to_show = first_only ?
 						new RegexMatches( Math.Min( 1, count ), matches.Matches.Take( 1 ) ) :
