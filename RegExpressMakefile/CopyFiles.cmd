@@ -56,3 +56,11 @@ xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\DotNetCoreClient.exe" "
 xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\*.dll" "%TargetDir%\DotNet5Client\*"
 xcopy /D /R /Y "%Prj%\bin\x64\%ConfigurationName%\net5.0\*.json" "%TargetDir%\DotNet5Client\*"
 
+
+rem -- WebView2 --
+
+set Prj=%SolutionDir%\RegexEngines\WebView2\WebView2Client
+
+xcopy /D /R /Y "%SolutionDir%\x64\%ConfigurationName%\WebView2Loader.dll" "%TargetDir%\*"
+xcopy /D /R /Y "%SolutionDir%\x64\%ConfigurationName%\WebView2Client.exe" "%TargetDir%\*.bin"
+

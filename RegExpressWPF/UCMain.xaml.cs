@@ -61,6 +61,7 @@ namespace RegExpressWPF
 				new PythonRegexEngineNs.PythonRegexEngine(),
 				new RustRegexEngineNs.RustRegexEngine(),
 				new DRegexEngineNs.DRegexEngine(),
+				new WebView2RegexEngineNs.WebView2RegexEngine(),
 			};
 
 			btnNewTab.Visibility = Visibility.Hidden;
