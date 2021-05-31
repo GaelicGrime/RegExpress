@@ -41,11 +41,16 @@
             </FlowDocument>
         </RichTextBox>
 
-        <RichTextBox x:Name="rtbInfo" Panel.ZIndex="8" Style="{StaticResource Info}" IsReadOnly="True" IsReadOnlyCaretVisible="True" Visibility="Hidden">
+        <RichTextBox x:Name="rtbInfo" Panel.ZIndex="8" Style="{StaticResource Info}" IsReadOnly="True" IsReadOnlyCaretVisible="True" 
+                     IsDocumentEnabled="True"
+                     Visibility="Hidden">
             <FlowDocument>
                 <Paragraph>
                     <Run x:Name="runInfo" />
                 </Paragraph>
+                <BlockUIContainer Margin="4">
+                    <Button x:Name="btnCancel" Content="Cancel" Width="59" FontFamily="Segoe UI" FontSize="11" FontStyle="Normal" BorderThickness="1" HorizontalAlignment="Left" Click="btnCancel_Click" />
+                </BlockUIContainer>
             </FlowDocument>
         </RichTextBox>
 
@@ -57,7 +62,7 @@
             </FlowDocument>
         </RichTextBox>
 
-        <StackPanel x:Name="pnlDebug" Panel.ZIndex="20" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="10 5">
+        <StackPanel x:Name="pnlDebug" Panel.ZIndex="20" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Background="#FFF4D8B8" Margin="10 5" Visibility="Collapsed">
             <Label x:Name="lblDbgInfo">(Debug information here)</Label>
             <Button x:Name="btnDbgSave" Content="save" Click="btnDbgSave_Click" />
             <Button x:Name="btnDbgLoad" Content="load" Click="btnDbgLoad_Click" />

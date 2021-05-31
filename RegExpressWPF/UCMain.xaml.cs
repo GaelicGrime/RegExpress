@@ -355,6 +355,17 @@ namespace RegExpressWPF
 		}
 
 
+		private void ucMatches_Cancelled( object sender, EventArgs e )
+		{
+			if( !IsFullyLoaded ) return;
+			if( IsInChange ) return;
+
+			FindMatchesLoop.SendStop( );
+
+			ucMatches.ShowError( new Exception( "Operation cancelled." ), false );
+		}
+
+
 		private void UcMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
 			if( !IsFullyLoaded ) return;
@@ -408,7 +419,7 @@ namespace RegExpressWPF
 
 			if( preferImmediateReaction )
 			{
-				ucMatches.ShowInfo( "Matching…" );
+				ucMatches.ShowInfo( "Matching…", false );
 				lblMatches.Text = "Matches";
 
 				FindMatchesLoop.SendRedoAsap( );
@@ -614,6 +625,8 @@ namespace RegExpressWPF
 				}
 				catch( Exception exc )
 				{
+					if( cnc.IsCancellationRequested ) return;
+
 					UITaskHelper.BeginInvoke( this, CancellationToken.None,
 						( ) =>
 						{
@@ -627,11 +640,11 @@ namespace RegExpressWPF
 					Debug.Assert( !is_good );
 				}
 
+				if( cnc.IsCancellationRequested ) return;
+
 				if( is_good )
 				{
 					int count = matches.Count;
-
-					if( cnc.IsCancellationRequested ) return;
 
 					var matches_to_show = first_only ?
 						new RegexMatches( Math.Min( 1, count ), matches.Matches.Take( 1 ) ) :
@@ -664,7 +677,7 @@ namespace RegExpressWPF
 						( ) =>
 						{
 							ucMatches.ShowIndeterminateProgress( true );
-							ucMatches.ShowInfo( "The engine is busy, please wait…" );
+							ucMatches.ShowInfo( "The engine is busy, please wait…", true );
 							ucText.SetMatches( RegexMatches.Empty, cbShowCaptures.IsChecked == true, GetEolOption( ) );
 						} );
 			}

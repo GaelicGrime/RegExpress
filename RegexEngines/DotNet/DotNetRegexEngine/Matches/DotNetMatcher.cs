@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -24,10 +25,61 @@ namespace DotNetRegexEngineNs.Matches
 
 		public RegexMatches Matches( string text, ICancellable cnc )
 		{
-			MatchCollection dotnet_matches = mRegex.Matches( text );
-			IEnumerable<DotNetRegexMatch> matches = dotnet_matches.OfType<Match>( ).Select( m => new DotNetRegexMatch( m ) );
+			bool cancelled = false;
+			Exception exception = null;
+			DotNetRegexMatch[] matches = null;
 
-			return new RegexMatches( dotnet_matches.Count, matches );
+			var thread = new Thread( ( ) =>
+			{
+				try
+				{
+					var dotnet_matches = mRegex.Matches( text ); // no timeouts
+
+					matches = // must do here to achieve the timeouts
+						dotnet_matches
+							.OfType<Match>( )
+							.TakeWhile( m => !cnc.IsCancellationRequested )
+							.Select( m => new DotNetRegexMatch( m ) )
+							.ToArray( );
+				}
+				catch( ThreadInterruptedException )
+				{
+					cancelled = true;
+				}
+				catch( ThreadAbortException )
+				{
+					cancelled = true;
+				}
+				catch( Exception exc )
+				{
+					exception = exc;
+				}
+			} )
+			{
+				IsBackground = true
+			};
+
+			thread.Start( );
+
+			for(; ; )
+			{
+				if( thread.Join( 222 ) ) break;
+
+				if( cnc.IsCancellationRequested )
+				{
+					thread.Interrupt( );
+					if( !thread.Join( 1 ) ) thread.Abort( );
+					thread.Join( 1 );
+
+					break;
+				}
+			}
+
+			if( exception != null ) throw exception;
+
+			if( cancelled || cnc.IsCancellationRequested ) return RegexMatches.Empty;
+
+			return new RegexMatches( matches.Length, matches );
 		}
 
 		#endregion IMatcher
