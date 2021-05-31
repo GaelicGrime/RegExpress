@@ -234,7 +234,7 @@ namespace RegexEngineInfrastructure
 		{
 			try
 			{
-				if( thread.Join( 11 ) ) thread.Interrupt( );
+				if( !thread.Join( 11 ) ) thread.Interrupt( );
 				if( !thread.Join( 11 ) ) thread.Abort( );
 				thread.Join( 11 );
 			}
