@@ -614,8 +614,6 @@ namespace RegExpressWPF
 					{
 						indeterminate_progress_thread.Start( );
 
-						Console.Beep(  );
-
 						matches = parsed_pattern.Matches( text, cnc );
 					}
 					finally

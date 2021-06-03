@@ -29,7 +29,7 @@ namespace RegExpressWPF.Code
 		readonly Action<ICancellable> Action;
 		readonly int[] Timeouts;
 		readonly Thread TheThread = null;
-		Command LastCancellingCommand = Command.None;
+		Command CancellingCommand = Command.None;
 
 
 		public ResumableLoop( Action<ICancellable> action, int timeout1, int timeout2 = 0, int timeout3 = 0 )
@@ -124,8 +124,8 @@ namespace RegExpressWPF.Code
 				{
 					var command = GetCommand( 0 );
 
-					if( command == Command.None ) command = LastCancellingCommand;
-					LastCancellingCommand = Command.None;
+					if( command == Command.None ) command = CancellingCommand;
+					CancellingCommand = Command.None;
 					if( command == Command.None ) command = GetCommand( -1 );
 
 					if( command == Command.Terminate ) break;
@@ -140,7 +140,7 @@ namespace RegExpressWPF.Code
 
 						for( var i = 0; ; i = Math.Min( i + 1, Timeouts.Length - 1 ) )
 						{
-							command = GetCommand( Timeouts[i] );		 
+							command = GetCommand( Timeouts[i] );
 
 							if( command != Command.WaitAndExecute ) break;
 						}
@@ -150,7 +150,7 @@ namespace RegExpressWPF.Code
 					}
 
 					Debug.Assert( command == Command.None || command == Command.Execute );
-					Debug.Assert( LastCancellingCommand == Command.None );
+					Debug.Assert( CancellingCommand == Command.None );
 
 					try
 					{
@@ -191,16 +191,12 @@ namespace RegExpressWPF.Code
 		{
 			get
 			{
-				Command command = GetCommand( 0 );
-
-				if( command != Command.None )
+				if( CancellingCommand == Command.None )
 				{
-					LastCancellingCommand = command;
-
-					return true;
+					CancellingCommand = GetCommand( 0 );
 				}
 
-				return LastCancellingCommand != Command.None;
+				return CancellingCommand != Command.None;
 			}
 		}
 
