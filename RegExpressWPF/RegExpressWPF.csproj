@@ -102,6 +102,7 @@
     </ApplicationDefinition>
     <Compile Include="Adorners\UnderliningAdorner.cs" />
     <Compile Include="Adorners\WhitespaceAdorner.cs" />
+    <Compile Include="Code\ResumableLoop2.cs" />
     <Compile Include="Code\RtbTextHelper.cs" />
     <Compile Include="Code\ResumableLoop.cs" />
     <Compile Include="Code\StyleInfo.cs" />

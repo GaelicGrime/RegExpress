@@ -76,6 +76,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ICancellable2.cs" />
     <Compile Include="Matches\Simple\SimpleTextGetter.cs" />
     <Compile Include="ProcessUtilities.cs" />
     <Compile Include="ICancellable.cs" />

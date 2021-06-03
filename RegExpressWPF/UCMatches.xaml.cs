@@ -260,9 +260,9 @@ namespace RegExpressWPF
 				}
 			}
 
-			ShowMatchesLoop.SendStop( );
-			LocalUnderliningLoop.SendStop( );
-			ExternalUnderliningLoop.SendStop( );
+			ShowMatchesLoop.SendRewind( );
+			LocalUnderliningLoop.SendRewind( );
+			ExternalUnderliningLoop.SendRewind( );
 			LocalUnderliningAdorner.SetRangesToUnderline( null ); //?
 			ExternalUnderliningAdorner.SetRangesToUnderline( null ); //?
 
@@ -276,15 +276,15 @@ namespace RegExpressWPF
 				LastExternalUnderliningSegments = null;
 			}
 
-			ShowMatchesLoop.SendRestart( );
-			LocalUnderliningLoop.SendRestart( );
-			ExternalUnderliningLoop.SendRestart( );
+			ShowMatchesLoop.SendWaitAndExecute( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
 		public void SetExternalUnderlining( IReadOnlyList<Segment> segments, bool setSelection )
 		{
-			ExternalUnderliningLoop.SendStop( );
+			ExternalUnderliningLoop.SendRewind( );
 
 			lock( this )
 			{
@@ -292,7 +292,7 @@ namespace RegExpressWPF
 				LastExternalUnderliningSetSelection = setSelection;
 			}
 
-			ExternalUnderliningLoop.SendRestart( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
@@ -352,9 +352,9 @@ namespace RegExpressWPF
 
 		public void StopAll( )
 		{
-			ShowMatchesLoop.SendStop( );
-			LocalUnderliningLoop.SendStop( );
-			ExternalUnderliningLoop.SendStop( );
+			ShowMatchesLoop.SendRewind( );
+			LocalUnderliningLoop.SendRewind( );
+			ExternalUnderliningLoop.SendRewind( );
 		}
 
 
@@ -388,7 +388,7 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 			if( !rtbMatches.IsFocused ) return;
 
-			LocalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
 
 			SelectionChanged?.Invoke( this, null );
 
@@ -398,8 +398,8 @@ namespace RegExpressWPF
 
 		private void rtbMatches_GotFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningLoop.SendRestart( );
-			ExternalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 
 			//...?SelectionChanged?.Invoke( this, null );
 
@@ -416,7 +416,7 @@ namespace RegExpressWPF
 
 		private void rtbMatches_LostFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
@@ -425,7 +425,7 @@ namespace RegExpressWPF
 			lock( MatchInfos )
 			{
 				MatchInfos.Clear( );
-				ExternalUnderliningLoop.SendRestart( );
+				ExternalUnderliningLoop.SendWaitAndExecute( );
 			}
 
 			string text;
@@ -701,7 +701,7 @@ namespace RegExpressWPF
 			} );
 
 
-			ExternalUnderliningLoop.SendRestart( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
