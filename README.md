@@ -18,6 +18,7 @@ It includes several Regular Expression engines:
 * **[Python](https://www.python.org/)** 3.9.5
 * **[Rust](https://docs.rs/regex)** 1.52.1 (*Regex* and *RegexBuilder* structs)
 * **[D](https://dlang.org/articles/regular-expression.html)** 2.096.1 (*std.regex* module)
+* **[Microsoft Edge WebView2](https://docs.microsoft.com/en-us/microsoft-edge/webview2/)** 1.0.774.44 (*RegExp* JavaScript object) — _experimental_
 
 <br/>
 
@@ -47,7 +48,7 @@ The sources contain code written in C#, C, C++ and C++/CLI. Can be compiled with
 * .NET desktop development
 * Desktop development with C++, incuding C++/CLI support.
 
-The Regular Expression libraries (minimal parts) are included. No additional installations are needed, however to alter the helper Rust component, the Cargo package manager is required. To alter the helper D component, the DMD compiler is required.
+The Regular Expression libraries (minimal parts) are included. No additional installations are needed, however to alter the helper Rust component, the Cargo package manager is required. To alter the helper D component, the DMD compiler is required. To deal with _RegExp_ JavaScript object, the Microsoft Edge browser must be present.
 
 Only “x64” platform is supported.
 
