@@ -34,9 +34,10 @@ namespace RegExpressWPF.Code
 
 		public ResumableLoop( Action<ICancellable> action, int timeout1, int timeout2 = 0, int timeout3 = 0 )
 		{
-			Action = action;
-
+			Debug.Assert( action != null );
 			Debug.Assert( timeout1 > 0 );
+
+			Action = action;
 
 			if( timeout2 <= 0 ) timeout2 = timeout1;
 			if( timeout3 <= 0 ) timeout3 = timeout2;
@@ -91,7 +92,7 @@ namespace RegExpressWPF.Code
 		}
 
 
-		Command GetCommand( int timeoutMs )
+		Command WaitForCommand( int timeoutMs )
 		{
 			int n = WaitHandle.WaitAny( Events, timeoutMs );
 
@@ -122,11 +123,20 @@ namespace RegExpressWPF.Code
 			{
 				for(; ; )
 				{
-					var command = GetCommand( 0 );
+					Command command;
 
-					if( command == Command.None ) command = CancellingCommand;
-					CancellingCommand = Command.None;
-					if( command == Command.None ) command = GetCommand( -1 );
+					if( CancellingCommand == Command.None )
+					{
+						command = WaitForCommand( -1 );
+					}
+					else
+					{
+						command = WaitForCommand( 0 );
+
+						if( command == Command.None ) command = CancellingCommand;
+
+						CancellingCommand = Command.None;
+					}
 
 					if( command == Command.Terminate ) break;
 					if( command == Command.Rewind ) continue;
@@ -140,7 +150,7 @@ namespace RegExpressWPF.Code
 
 						for( var i = 0; ; i = Math.Min( i + 1, Timeouts.Length - 1 ) )
 						{
-							command = GetCommand( Timeouts[i] );
+							command = WaitForCommand( Timeouts[i] );
 
 							if( command != Command.WaitAndExecute ) break;
 						}
@@ -193,7 +203,7 @@ namespace RegExpressWPF.Code
 			{
 				if( CancellingCommand == Command.None )
 				{
-					CancellingCommand = GetCommand( 0 );
+					CancellingCommand = WaitForCommand( 0 );
 				}
 
 				return CancellingCommand != Command.None;

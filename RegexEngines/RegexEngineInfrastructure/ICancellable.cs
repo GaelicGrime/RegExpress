@@ -23,7 +23,9 @@ namespace RegexEngineInfrastructure
 
 		}
 
+
 		#region ICancellable
+
 		public bool IsCancellationRequested
 		{
 			get
