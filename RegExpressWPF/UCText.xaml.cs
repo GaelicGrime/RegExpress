@@ -164,9 +164,9 @@ namespace RegExpressWPF
 				}
 			}
 
-			RecolouringLoop.SendStop( );
-			LocalUnderliningLoop.SendStop( );
-			ExternalUnderliningLoop.SendStop( );
+			RecolouringLoop.SendRewind( );
+			LocalUnderliningLoop.SendRewind( );
+			ExternalUnderliningLoop.SendRewind( );
 
 			lock( this )
 			{
@@ -179,9 +179,9 @@ namespace RegExpressWPF
 
 			MatchesUpdatedEvent.Set( );
 
-			RecolouringLoop.SendRestart( );
-			LocalUnderliningLoop.SendRestart( );
-			ExternalUnderliningLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
@@ -218,7 +218,7 @@ namespace RegExpressWPF
 
 		public void SetExternalUnderlining( UnderlineInfo underlineInfo, bool setSelection )
 		{
-			ExternalUnderliningLoop.SendStop( );
+			ExternalUnderliningLoop.SendRewind( );
 
 			lock( this )
 			{
@@ -226,15 +226,15 @@ namespace RegExpressWPF
 				LastExternalUnderlineSetSelection = setSelection;
 			}
 
-			ExternalUnderliningLoop.SendRestart( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 
 		public void StopAll( )
 		{
-			RecolouringLoop.SendStop( );
-			LocalUnderliningLoop.SendStop( );
-			ExternalUnderliningLoop.SendStop( );
+			RecolouringLoop.SendRewind( );
+			LocalUnderliningLoop.SendRewind( );
+			ExternalUnderliningLoop.SendRewind( );
 		}
 
 
@@ -267,7 +267,7 @@ namespace RegExpressWPF
 			if( ChangeEventHelper.IsInChange ) return;
 			if( !rtb.IsFocused ) return;
 
-			LocalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
 
 			UndoRedoHelper.HandleSelectionChanged( );
 
@@ -282,9 +282,9 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendStop( );
-			LocalUnderliningLoop.SendStop( );
-			ExternalUnderliningLoop.SendStop( );
+			RecolouringLoop.SendRewind( );
+			LocalUnderliningLoop.SendRewind( );
+			ExternalUnderliningLoop.SendRewind( );
 
 			UndoRedoHelper.HandleTextChanged( e );
 
@@ -307,7 +307,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
 		}
 
 
@@ -316,14 +316,14 @@ namespace RegExpressWPF
 			if( !AlreadyLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
 		}
 
 
 		private void rtb_GotFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningLoop.SendRestart( );
-			ExternalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
+			ExternalUnderliningLoop.SendWaitAndExecute( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -338,7 +338,7 @@ namespace RegExpressWPF
 
 		private void rtb_LostFocus( object sender, RoutedEventArgs e )
 		{
-			LocalUnderliningLoop.SendRestart( );
+			LocalUnderliningLoop.SendWaitAndExecute( );
 		}
 
 

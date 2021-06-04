@@ -70,7 +70,7 @@ namespace RegExpressWPF.Adorners
 			{
 				mShowWhitespaces = yes;
 
-				Loop.SendRestart( );
+				Loop.SendWaitAndExecute( );
 			}
 
 			// switching to "No" is handled here; the thread does not deal with it
@@ -157,7 +157,7 @@ namespace RegExpressWPF.Adorners
 
 			PreviousTextChangedTime = Environment.TickCount;
 
-			Loop.SendRestart( );
+			Loop.SendWaitAndExecute( );
 		}
 
 
@@ -168,7 +168,7 @@ namespace RegExpressWPF.Adorners
 			if( !mShowWhitespaces ) return;
 
 			InvalidateVisual( ); // to redraw what we already have, in new positions
-			Loop.SendRestart( );
+			Loop.SendWaitAndExecute( );
 		}
 
 
@@ -231,7 +231,7 @@ namespace RegExpressWPF.Adorners
 			if( IsDbgDisabled ) return;
 
 			DelayedInvalidateVisual( );
-			Loop.SendRestart( );
+			Loop.SendWaitAndExecute( );
 		}
 
 

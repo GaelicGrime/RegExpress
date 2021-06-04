@@ -101,7 +101,7 @@ namespace RegExpressWPF
 		[SuppressMessage( "Design", "CA1031:Do not catch general exception types", Justification = "<Pending>" )]
 		private void Window_Closing( object sender, System.ComponentModel.CancelEventArgs e )
 		{
-			AutoSaveLoop.SendStop( );
+			AutoSaveLoop.SendRewind( );
 
 			try
 			{
@@ -123,7 +123,7 @@ namespace RegExpressWPF
 		{
 			if( !IsFullyLoaded ) return;
 
-			AutoSaveLoop.SendRestart( );
+			AutoSaveLoop.SendWaitAndExecute( );
 		}
 
 

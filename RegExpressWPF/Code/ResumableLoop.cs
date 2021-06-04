@@ -12,39 +12,47 @@ namespace RegExpressWPF.Code
 {
 	public sealed class ResumableLoop : ICancellable, IDisposable
 	{
-		enum Status
+		enum Command
 		{
 			None,
 			Terminate,
-			Stop,
-			Restart,
-			RedoAsap,
+			Rewind,
+			WaitAndExecute,
+			Execute,
 		}
 
 		readonly AutoResetEvent TerminateEvent = new AutoResetEvent( initialState: false );
-		readonly AutoResetEvent StopEvent = new AutoResetEvent( initialState: false );
-		readonly AutoResetEvent RestartEvent = new AutoResetEvent( initialState: false );
-		readonly AutoResetEvent RedoAsapEvent = new AutoResetEvent( initialState: false );
+		readonly AutoResetEvent RewindEvent = new AutoResetEvent( initialState: false );
+		readonly AutoResetEvent WaitAndExecuteEvent = new AutoResetEvent( initialState: false );
+		readonly AutoResetEvent ExecuteEvent = new AutoResetEvent( initialState: false );
 		readonly AutoResetEvent[] Events;
-
-		bool IsTerminateRequestDetected;
-		bool IsStopRequestDetected;
-		bool IsRestartRequestDetected;
-		bool IsRedoAsapRequestDetected;
-
-		Thread TheThread = null;
+		readonly Action<ICancellable> Action;
+		readonly int[] Timeouts;
+		readonly Thread TheThread = null;
+		Command CancellingCommand = Command.None;
 
 
 		public ResumableLoop( Action<ICancellable> action, int timeout1, int timeout2 = 0, int timeout3 = 0 )
 		{
-			if( timeout1 <= 0 ) throw new ArgumentException( "Invalid timeout: " + timeout1 );
+			Action = action;
+
+			Debug.Assert( timeout1 > 0 );
 
 			if( timeout2 <= 0 ) timeout2 = timeout1;
 			if( timeout3 <= 0 ) timeout3 = timeout2;
 
-			Events = new[] { TerminateEvent, StopEvent, RestartEvent, RedoAsapEvent };
+			Timeouts = new[] { timeout1, timeout2, timeout3 };
 
-			StartWorker( action, timeout1, timeout2, timeout3 );
+			Events = new[] { TerminateEvent, RewindEvent, WaitAndExecuteEvent, ExecuteEvent };
+
+			TheThread = new Thread( ThreadProc )
+			{
+				IsBackground = true,
+				Priority = ThreadPriority.BelowNormal,
+				Name = nameof( ResumableLoop )
+			};
+
+			TheThread.Start( );
 		}
 
 
@@ -56,22 +64,21 @@ namespace RegExpressWPF.Code
 		}
 
 
-		public void SendStop( )
+		public void SendRewind( )
 		{
-			RestartEvent.Reset( ); //?
-			StopEvent.Set( );
+			RewindEvent.Set( );
 		}
 
 
-		public void SendRestart( )
+		public void SendWaitAndExecute( )
 		{
-			RestartEvent.Set( );
+			WaitAndExecuteEvent.Set( );
 		}
 
 
-		public void SendRedoAsap( )
+		public void SendExecute( )
 		{
-			RedoAsapEvent.Set( );
+			ExecuteEvent.Set( );
 		}
 
 
@@ -84,159 +91,73 @@ namespace RegExpressWPF.Code
 		}
 
 
-		void StartWorker( Action<ICancellable> action, int timeout1, int timeout2, int timeout3 )
+		Command GetCommand( int timeoutMs )
 		{
-			if( TheThread != null ) throw new InvalidOperationException( "Thread already started." );
-
-			TheThread = new Thread( ( ) => ThreadProc( action, timeout1, timeout2, timeout3 ) )
-			{
-				IsBackground = true,
-				Priority = ThreadPriority.BelowNormal,
-				Name = nameof( ResumableLoop )
-			};
-
-			TheThread.Start( );
-		}
-
-
-		Status GetStatus( int timeoutMs )
-		{
-			if( IsTerminateRequestDetected ) return Status.Terminate;
-
-			if( IsStopRequestDetected )
-			{
-				if( TerminateEvent.WaitOne( 0 ) ) // since 'terminate' has higher priority
-				{
-					IsTerminateRequestDetected = true;
-					IsStopRequestDetected = false;
-					IsRestartRequestDetected = false;
-					IsRedoAsapRequestDetected = false;
-
-					return Status.Terminate;
-				}
-
-				return Status.Stop;
-			}
-
-			if( IsRestartRequestDetected || IsRedoAsapRequestDetected )
-			{
-				if( TerminateEvent.WaitOne( 0 ) ) // since 'terminate' has higher priority
-				{
-					IsTerminateRequestDetected = true;
-					IsStopRequestDetected = false;
-					IsRestartRequestDetected = false;
-					IsRedoAsapRequestDetected = false;
-
-					return Status.Terminate;
-				}
-
-				if( StopEvent.WaitOne( 0 ) ) // since 'stop' has higher priority over 'restart'
-				{
-					Debug.Assert( !IsTerminateRequestDetected );
-					IsStopRequestDetected = true;
-					IsRestartRequestDetected = false;
-					IsRedoAsapRequestDetected = false;
-
-					return Status.Stop;
-				}
-
-				return IsRedoAsapRequestDetected ? Status.RedoAsap : Status.Restart;
-			}
-
 			int n = WaitHandle.WaitAny( Events, timeoutMs );
 
 			switch( n )
 			{
 			case 0:
-				IsTerminateRequestDetected = true;
-				return Status.Terminate;
+				return Command.Terminate;
 			case 1:
-				IsStopRequestDetected = true;
-				return Status.Stop;
+				return Command.Rewind;
 			case 2:
-				IsRestartRequestDetected = true;
-				return Status.Restart;
+				return Command.WaitAndExecute;
 			case 3:
-				IsRedoAsapRequestDetected = true;
-				return Status.RedoAsap;
+				return Command.Execute;
 			case WaitHandle.WaitTimeout:
-				return Status.None;
+				break;
 			default:
 				Debug.Assert( false );
 				break;
 			}
 
-			return Status.None;
+			return Command.None;
 		}
 
 
-		void ThreadProc( Action<ICancellable> action, int timeout1, int timeout2, int timeout3 )
+		void ThreadProc( )
 		{
-			Debug.Assert( timeout1 > 0 );
-			Debug.Assert( timeout2 > 0 );
-			Debug.Assert( timeout3 > 0 );
-
-			int[] timeouts = new[] { timeout1, timeout2, timeout3 };
-
-			IsRestartRequestDetected = false;
-			IsRedoAsapRequestDetected = false;
-
 			try
 			{
-				IsTerminateRequestDetected = false;
-
 				for(; ; )
 				{
-					IsStopRequestDetected = false;
+					var command = GetCommand( 0 );
 
-					var status = GetStatus( -1 );
+					if( command == Command.None ) command = CancellingCommand;
+					CancellingCommand = Command.None;
+					if( command == Command.None ) command = GetCommand( -1 );
 
-					if( status == Status.Terminate ) break;
+					if( command == Command.Terminate ) break;
+					if( command == Command.Rewind ) continue;
 
-					if( status == Status.Stop ) continue;
-					if( status != Status.Restart && status != Status.RedoAsap ) { Debug.Assert( false ); continue; }
+					Debug.Assert( command == Command.WaitAndExecute || command == Command.Execute );
 
-					Debug.Assert( status == Status.Restart || status == Status.RedoAsap );
-					Debug.Assert( !IsStopRequestDetected );
-					Debug.Assert( IsRestartRequestDetected || IsRedoAsapRequestDetected );
-
-					if( !IsRedoAsapRequestDetected )
+					if( command == Command.WaitAndExecute )
 					{
-						// wait for "silience"
+						// wait for other commands that might cancel the intention for execution;
+						// if another 'WaitAndExecute', then repeat the pause
 
-						for( var i = 0; ; i = Math.Min( i + 1, timeouts.Length - 1 ) )
+						for( var i = 0; ; i = Math.Min( i + 1, Timeouts.Length - 1 ) )
 						{
-							IsRestartRequestDetected = false;
+							command = GetCommand( Timeouts[i] );
 
-							status = GetStatus( timeouts[i] );
-
-							if( status == Status.Terminate ) break;
-							if( status == Status.Stop ) break;
-							if( status == Status.Restart ) continue;
-							if( status == Status.RedoAsap ) { Debug.Assert( IsRedoAsapRequestDetected ); break; }
-							if( status == Status.None ) break; // (i.e. timeout, "silence")
-							Debug.Assert( false );
+							if( command != Command.WaitAndExecute ) break;
 						}
+
+						if( command == Command.Terminate ) break;
+						if( command == Command.Rewind ) continue;
 					}
 
-					if( status == Status.Terminate ) break;
-
-					IsRedoAsapRequestDetected = false;
-
-					Debug.Assert( !IsRestartRequestDetected );
-
-					if( status == Status.Stop ) continue;
-
-					Debug.Assert( status == Status.None || status == Status.RedoAsap );
-
+					Debug.Assert( command == Command.None || command == Command.Execute );
+					Debug.Assert( CancellingCommand == Command.None );
 
 					try
 					{
-						action( this ); //
+						Action( this ); //
 					}
 					catch( OperationCanceledException ) // also 'TaskCanceledException'
 					{
-						IsStopRequestDetected = true; //?
 					}
 					catch( Exception exc )
 					{
@@ -265,15 +186,22 @@ namespace RegExpressWPF.Code
 
 
 		#region ICancellable
+
 		public bool IsCancellationRequested
 		{
 			get
 			{
-				return GetStatus( 0 ) != Status.None;
+				if( CancellingCommand == Command.None )
+				{
+					CancellingCommand = GetCommand( 0 );
+				}
+
+				return CancellingCommand != Command.None;
 			}
 		}
 
 		#endregion ICancellable
+
 
 		#region IDisposable Support
 
@@ -287,8 +215,10 @@ namespace RegExpressWPF.Code
 				{
 					// TODO: dispose managed state (managed objects).
 
-					using( StopEvent ) { }
-					using( RestartEvent ) { }
+					using( TerminateEvent ) { }
+					using( RewindEvent ) { }
+					using( WaitAndExecuteEvent ) { }
+					using( ExecuteEvent ) { }
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -316,5 +246,4 @@ namespace RegExpressWPF.Code
 
 		#endregion IDisposable Support
 	}
-
 }

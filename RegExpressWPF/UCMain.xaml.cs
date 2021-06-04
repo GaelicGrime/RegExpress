@@ -278,8 +278,8 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			FindMatchesLoop.SendRestart( );
-			UpdateWhitespaceWarningLoop.SendRestart( );
+			FindMatchesLoop.SendWaitAndExecute( );
+			UpdateWhitespaceWarningLoop.SendWaitAndExecute( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -290,9 +290,9 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			FindMatchesLoop.SendRestart( );
-			ShowTextInfoLoop.SendRestart( );
-			UpdateWhitespaceWarningLoop.SendRestart( );
+			FindMatchesLoop.SendWaitAndExecute( );
+			ShowTextInfoLoop.SendWaitAndExecute( );
+			UpdateWhitespaceWarningLoop.SendWaitAndExecute( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -303,7 +303,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			ShowTextInfoLoop.SendRestart( );
+			ShowTextInfoLoop.SendWaitAndExecute( );
 		}
 
 
@@ -316,7 +316,7 @@ namespace RegExpressWPF
 			{
 				ucTextHadFocus = true;
 
-				ShowTextInfoLoop.SendRestart( );
+				ShowTextInfoLoop.SendWaitAndExecute( );
 			}
 		}
 
@@ -360,7 +360,7 @@ namespace RegExpressWPF
 			if( !IsFullyLoaded ) return;
 			if( IsInChange ) return;
 
-			FindMatchesLoop.SendStop( );
+			FindMatchesLoop.SendRewind( );
 
 			ucMatches.ShowError( new Exception( "Operation cancelled." ), false );
 		}
@@ -422,11 +422,11 @@ namespace RegExpressWPF
 				ucMatches.ShowInfo( "Matching…", false );
 				lblMatches.Text = "Matches";
 
-				FindMatchesLoop.SendRedoAsap( );
+				FindMatchesLoop.SendExecute( );
 			}
 			else
 			{
-				FindMatchesLoop.SendRestart( );
+				FindMatchesLoop.SendWaitAndExecute( );
 			}
 
 			Changed?.Invoke( this, null );
@@ -441,7 +441,7 @@ namespace RegExpressWPF
 			ucPattern.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 			ucText.ShowWhiteSpaces( cbShowWhitespaces.IsChecked == true );
 
-			UpdateWhitespaceWarningLoop.SendRestart( );
+			UpdateWhitespaceWarningLoop.SendWaitAndExecute( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -471,8 +471,8 @@ namespace RegExpressWPF
 			if( IsInChange ) return;
 
 			ucPattern.SetRegexOptions( CurrentRegexEngine, GetEolOption( ) );
-			FindMatchesLoop.SendRestart( );
-			ShowTextInfoLoop.SendRestart( );
+			FindMatchesLoop.SendWaitAndExecute( );
+			ShowTextInfoLoop.SendWaitAndExecute( );
 
 			Changed?.Invoke( this, null );
 		}
@@ -543,9 +543,9 @@ namespace RegExpressWPF
 
 		private void RestartAll( )
 		{
-			FindMatchesLoop.SendRestart( );
-			ShowTextInfoLoop.SendRestart( );
-			UpdateWhitespaceWarningLoop.SendRestart( );
+			FindMatchesLoop.SendWaitAndExecute( );
+			ShowTextInfoLoop.SendWaitAndExecute( );
+			UpdateWhitespaceWarningLoop.SendWaitAndExecute( );
 		}
 
 
@@ -559,9 +559,9 @@ namespace RegExpressWPF
 
 		private void StopAll( )
 		{
-			FindMatchesLoop.SendStop( );
-			UpdateWhitespaceWarningLoop.SendStop( );
-			ShowTextInfoLoop.SendStop( );
+			FindMatchesLoop.SendRewind( );
+			UpdateWhitespaceWarningLoop.SendRewind( );
+			ShowTextInfoLoop.SendRewind( );
 		}
 
 

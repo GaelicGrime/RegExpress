@@ -124,8 +124,8 @@ namespace RegExpressWPF
 
 			if( IsLoaded )
 			{
-				RecolouringLoop.SendRestart( );
-				HighlightingLoop.SendRestart( );
+				RecolouringLoop.SendWaitAndExecute( );
+				HighlightingLoop.SendWaitAndExecute( );
 			}
 		}
 
@@ -145,8 +145,8 @@ namespace RegExpressWPF
 
 		public void StopAll( )
 		{
-			RecolouringLoop.SendStop( );
-			HighlightingLoop.SendStop( );
+			RecolouringLoop.SendRewind( );
+			HighlightingLoop.SendRewind( );
 		}
 
 
@@ -185,8 +185,8 @@ namespace RegExpressWPF
 			LeftHighlightedCurlyBrace = Segment.Empty;
 			RightHighlightedCurlyBrace = Segment.Empty;
 
-			RecolouringLoop.SendRestart( );
-			HighlightingLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
+			HighlightingLoop.SendWaitAndExecute( );
 
 			TextChanged?.Invoke( this, null );
 		}
@@ -199,7 +199,7 @@ namespace RegExpressWPF
 			if( !rtb.IsFocused ) return;
 
 			UndoRedoHelper.HandleSelectionChanged( );
-			HighlightingLoop.SendRestart( );
+			HighlightingLoop.SendWaitAndExecute( );
 		}
 
 
@@ -208,8 +208,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendRestart( );
-			HighlightingLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
+			HighlightingLoop.SendWaitAndExecute( );
 		}
 
 
@@ -218,8 +218,8 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			RecolouringLoop.SendRestart( );
-			HighlightingLoop.SendRestart( );
+			RecolouringLoop.SendWaitAndExecute( );
+			HighlightingLoop.SendWaitAndExecute( );
 		}
 
 
@@ -228,7 +228,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingLoop.SendRestart( );
+			HighlightingLoop.SendWaitAndExecute( );
 
 			if( Properties.Settings.Default.BringCaretIntoView )
 			{
@@ -246,7 +246,7 @@ namespace RegExpressWPF
 			if( !IsLoaded ) return;
 			if( ChangeEventHelper.IsInChange ) return;
 
-			HighlightingLoop.SendRestart( );
+			HighlightingLoop.SendWaitAndExecute( );
 		}
 
 
