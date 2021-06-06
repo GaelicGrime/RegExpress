@@ -49,8 +49,8 @@ namespace RegExpressWPF
 		readonly StyleInfo PatternCharGroupBracketHighlightStyleInfo;
 		readonly StyleInfo PatternRangeCurlyBraceHighlightStyleInfo;
 
-		Segment LeftHighlightedParantesis = Segment.Empty;
-		Segment RightHighlightedParantesis = Segment.Empty;
+		Segment LeftHighlightedParenthesis = Segment.Empty;
+		Segment RightHighlightedParenthesis = Segment.Empty;
 		Segment LeftHighlightedBracket = Segment.Empty;
 		Segment RightHighlightedBracket = Segment.Empty;
 		Segment LeftHighlightedCurlyBrace = Segment.Empty;
@@ -178,8 +178,8 @@ namespace RegExpressWPF
 
 			UndoRedoHelper.HandleTextChanged( e );
 
-			LeftHighlightedParantesis = Segment.Empty;
-			RightHighlightedParantesis = Segment.Empty;
+			LeftHighlightedParenthesis = Segment.Empty;
+			RightHighlightedParenthesis = Segment.Empty;
 			LeftHighlightedBracket = Segment.Empty;
 			RightHighlightedBracket = Segment.Empty;
 			LeftHighlightedCurlyBrace = Segment.Empty;
@@ -363,8 +363,8 @@ namespace RegExpressWPF
 				Segment.Except( uncovered_segments, s );
 			}
 
-			Segment.Except( uncovered_segments, LeftHighlightedParantesis );
-			Segment.Except( uncovered_segments, RightHighlightedParantesis );
+			Segment.Except( uncovered_segments, LeftHighlightedParenthesis );
+			Segment.Except( uncovered_segments, RightHighlightedParenthesis );
 			Segment.Except( uncovered_segments, LeftHighlightedBracket );
 			Segment.Except( uncovered_segments, RightHighlightedBracket );
 			Segment.Except( uncovered_segments, LeftHighlightedCurlyBrace );
@@ -469,10 +469,10 @@ namespace RegExpressWPF
 			{
 				ChangeEventHelper.Invoke( CancellationToken.None, ( ) =>
 				{
-					TryHighlight( ref LeftHighlightedParantesis, highlights?.LeftPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref LeftHighlightedParenthesis, highlights?.LeftPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
-					TryHighlight( ref RightHighlightedParantesis, highlights?.RightPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
+					TryHighlight( ref RightHighlightedParenthesis, highlights?.RightPar ?? Segment.Empty, td, PatternParaHighlightStyleInfo );
 					if( cnc.IsCancellationRequested ) return;
 
 					TryHighlight( ref LeftHighlightedBracket, highlights?.LeftBracket ?? Segment.Empty, td, PatternCharGroupBracketHighlightStyleInfo );

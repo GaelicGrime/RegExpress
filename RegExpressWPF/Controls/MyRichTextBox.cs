@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Documents;
-
+using System.Windows.Input;
 
 namespace RegExpressWPF.Controls
 {
@@ -20,13 +20,35 @@ namespace RegExpressWPF.Controls
 		public int LastGetTextDataDuration { get; private set; } = 0;
 
 
+		static readonly RoutedUICommand[] CommandsToDisable = new[]
+			{
+				EditingCommands.ToggleBold,
+				EditingCommands.ToggleBullets,
+				EditingCommands.ToggleItalic,
+				EditingCommands.ToggleNumbering,
+				EditingCommands.ToggleSubscript,
+				EditingCommands.ToggleSuperscript,
+				EditingCommands.ToggleUnderline,
+				EditingCommands.DecreaseFontSize,
+				EditingCommands.IncreaseFontSize,
+				EditingCommands.AlignCenter,
+				EditingCommands.AlignJustify,
+				EditingCommands.AlignLeft,
+				EditingCommands.AlignRight,
+				EditingCommands.IncreaseIndentation,
+				EditingCommands.DecreaseIndentation,
+			};
+
+
 		public MyRichTextBox( )
 		{
+			AddCommandBindings( );
 		}
 
 
 		public MyRichTextBox( FlowDocument document ) : base( document )
 		{
+			AddCommandBindings( );
 		}
 
 
@@ -88,5 +110,28 @@ namespace RegExpressWPF.Controls
 
 			base.OnTextChanged( e );
 		}
+
+
+		void AddCommandBindings( )
+		{
+			foreach( var c in CommandsToDisable )
+			{
+				CommandBindings.Add( new CommandBinding( c, executed: BlockedExecuted, canExecute: BlockedCanExecute ) );
+			}
+		}
+
+
+		void BlockedCanExecute( object sender, CanExecuteRoutedEventArgs e )
+		{
+			e.CanExecute = false;
+			e.Handled = true;
+		}
+
+
+		void BlockedExecuted( object sender, ExecutedRoutedEventArgs e )
+		{
+			e.Handled = true;
+		}
+
 	}
 }

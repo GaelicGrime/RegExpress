@@ -56,7 +56,7 @@ namespace RegexEngineInfrastructure.SyntaxColouring
 
 				if( cnc.IsCancellationRequested ) return;
 
-				// parantheses, '(', ')', '\(', '\)' depending on syntax
+				// parentheses, '(', ')', '\(', '\)' depending on syntax
 				{
 					var g = m.Groups["left_par"];
 					if( g.Success )
