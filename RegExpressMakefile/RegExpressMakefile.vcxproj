@@ -40,30 +40,30 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <NMakeBuildCommandLine>@rem echo -- BUILD --
-CopyFiles $(Configuration)
+..\CopyFiles $(Configuration)
 </NMakeBuildCommandLine>
     <NMakeOutput>RegExpressMakefile.exe</NMakeOutput>
     <NMakeCleanCommandLine>@echo -- CLEAN --</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>@rem echo -- REBUILD --
-CopyFiles $(Configuration)
+..\CopyFiles $(Configuration)
 </NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <NMakeBuildCommandLine>@rem echo -- BUILD --
-CopyFiles $(Configuration)
+..\CopyFiles $(Configuration)
 </NMakeBuildCommandLine>
     <NMakeOutput>RegExpressMakefile.exe</NMakeOutput>
     <NMakeCleanCommandLine>@echo -- CLEAN --</NMakeCleanCommandLine>
     <NMakeReBuildCommandLine>@rem echo -- REBUILD --
-CopyFiles $(Configuration)
+..\CopyFiles $(Configuration)
 </NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="CopyFiles.cmd" />
+    <None Include="..\CopyFiles.cmd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

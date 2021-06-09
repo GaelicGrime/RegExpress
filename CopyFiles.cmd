@@ -6,7 +6,7 @@ set ThisCmdPath=%~dp0
 rem echo %ConfigurationName%
 rem echo %ThisCmdPath%
 
-set SolutionDir=%ThisCmdPath%\..
+set SolutionDir=%ThisCmdPath%
 set TargetDir=%SolutionDir%\RegExpressWPF\bin\x64\%ConfigurationName%
 
 rem echo %SolutionDir%
