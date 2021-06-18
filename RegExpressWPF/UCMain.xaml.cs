@@ -608,6 +608,8 @@ namespace RegExpressWPF
 
 				try
 				{
+					UITaskHelper.BeginInvoke( this, CancellationToken.None, ( ) => ucMatches.ShowMatchingInProgress( true ) );
+
 					parsed_pattern = engine.ParsePattern( pattern );
 					var indeterminate_progress_thread = new Thread( IndeterminateProgressThreadProc ) { IsBackground = true };
 					try
@@ -638,6 +640,10 @@ namespace RegExpressWPF
 						} );
 
 					Debug.Assert( !is_good );
+				}
+				finally
+				{
+					UITaskHelper.BeginInvoke( this, CancellationToken.None, ( ) => ucMatches.ShowMatchingInProgress( false ) );
 				}
 
 				if( cnc.IsCancellationRequested ) return;

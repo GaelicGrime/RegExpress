@@ -228,6 +228,12 @@ namespace RegExpressWPF
 		}
 
 
+		public void ShowMatchingInProgress( bool yes )
+		{
+			pnlHourglass.Visibility = yes ? Visibility.Visible : Visibility.Hidden;
+		}
+
+
 		public void SetMatches( string text, RegexMatches matches, bool showFirstOnly, bool showSucceededGroupsOnly, bool showCaptures )
 		{
 			if( matches == null ) throw new ArgumentNullException( nameof( matches ) );

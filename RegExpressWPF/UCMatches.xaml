@@ -68,5 +68,9 @@
             <Button x:Name="btnDbgLoad" Content="load" Click="btnDbgLoad_Click" />
         </StackPanel>
 
+        <Grid x:Name="pnlHourglass" Panel.ZIndex="30" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0 0 1 3" Opacity="0.44" Visibility="Hidden" >
+            <TextBlock Text="⏳"/>
+        </Grid>
+
     </Grid>
 </UserControl>
